@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>401 - Acceso Denegado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/errors.css') }}">
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-code color-403">401</h1>
+        <h2 class="error-title">Acceso Denegado</h2>
+        <p class="error-message">
+            No tienes los permisos necesarios para acceder a este recurso.
+        </p>
+        <a href="/" class="home-link">Volver al Inicio</a>
+    </div>
+</body>
+</html>

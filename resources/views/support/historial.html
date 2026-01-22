@@ -1,0 +1,396 @@
+{% extends "layout/layout_support.html" %}
+{% block title %}Historial de Tickets{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">📜 Historial de Tickets</h2>
+        <p class="text-gray-600">Registro completo de tickets cerrados y resueltos</p>
+    </div>
+
+    <!-- Estadísticas del Historial -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Total Cerrados</p>
+                    <p class="text-3xl font-bold">{{ historial|length }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Este Mes</p>
+                    <p class="text-3xl font-bold" id="stat-mes">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Esta Semana</p>
+                    <p class="text-3xl font-bold" id="stat-semana">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Tiempo Promedio</p>
+                    <p class="text-3xl font-bold" id="stat-promedio">--</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-gray-700">Buscar en Historial</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar por cliente</label>
+                <div class="relative">
+                    <input type="text" id="searchCliente" placeholder="Nombre del cliente..." 
+                           class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por tipo</label>
+                <select id="filterTipo" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Todos los tipos</option>
+                    <option value="tecnico">Técnico</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="consulta">Consulta</option>
+                    <option value="soporte">Soporte</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Período</label>
+                <select id="filterPeriodo" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="todos">Todo el historial</option>
+                    <option value="hoy">Hoy</option>
+                    <option value="semana">Esta semana</option>
+                    <option value="mes">Este mes</option>
+                    <option value="trimestre">Último trimestre</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                <span id="results-count">{{ historial|length }}</span> tickets en el historial
+            </div>
+            <button id="clearFilters" class="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                Limpiar filtros
+            </button>
+        </div>
+    </div>
+
+    <!-- Timeline de Tickets -->
+    {% if historial %}
+    <div class="space-y-4" id="historial-container">
+        {% for ticket in historial %}
+        <div class="ticket-historial bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 border-green-500"
+             data-cliente="{{ ticket.cliente_nombre or ticket.cliente or 'Sin nombre' }}"
+             data-tipo="{{ ticket.tipo_incidencia or ticket.tipo or 'general' }}"
+             data-fecha="{{ ticket.fecha_creacion or '' }}">
+            
+            <div class="p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-4 flex-1">
+                        <!-- Icono de estado -->
+                        <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+
+                        <!-- Información del ticket -->
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-mono font-semibold">
+                                    #{{ ticket._id[:8] }}...
+                                </span>
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                    ✓ {{ ticket.estado|title }}
+                                </span>
+                            </div>
+
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">
+                                {{ ticket.cliente_nombre or ticket.cliente or "Cliente sin nombre" }}
+                            </h3>
+
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                    </svg>
+                                    <span>{{ ticket.tipo_incidencia or ticket.tipo or "No especificado" }}</span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span>{{ ticket.fecha_creacion or "N/A" }}</span>
+                                </div>
+
+                                {% if ticket.asesor or ticket.asignado_a %}
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    <span>{{ ticket.asesor or ticket.asignado_a }}</span>
+                                </div>
+                                {% endif %}
+
+                                {% if ticket.prioridad %}
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 rounded text-xs font-semibold
+                                        {% if ticket.prioridad == 'alta' or ticket.prioridad == 'Alta' %}bg-red-100 text-red-700
+                                        {% elif ticket.prioridad == 'media' or ticket.prioridad == 'Media' %}bg-yellow-100 text-yellow-700
+                                        {% else %}bg-green-100 text-green-700{% endif %}">
+                                        Prioridad: {{ ticket.prioridad|title }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if ticket.descripcion or ticket.detalle %}
+                            <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-700">{{ (ticket.descripcion or ticket.detalle)[:200] }}{% if (ticket.descripcion or ticket.detalle)|length > 200 %}...{% endif %}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="flex flex-col gap-2 ml-4">
+                        <button onclick="verDetalles('{{ ticket._id }}')" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium whitespace-nowrap">
+                            Ver detalles
+                        </button>
+                        <button onclick="descargarPDF('{{ ticket._id }}')" 
+                                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-medium whitespace-nowrap">
+                            📄 PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación (placeholder) -->
+    <div class="mt-6 flex justify-center">
+        <div class="flex gap-2">
+            <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                ← Anterior
+            </button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">
+                1
+            </button>
+            <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                2
+            </button>
+            <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                3
+            </button>
+            <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                Siguiente →
+            </button>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Estado vacío -->
+    <div class="bg-white rounded-xl shadow-md p-12 text-center">
+        <svg class="w-24 h-24 mx-auto mb-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">No hay tickets en el historial</h3>
+        <p class="text-gray-600 text-lg">Los tickets cerrados aparecerán aquí</p>
+    </div>
+    {% endif %}
+
+    <!-- Mensaje de sin resultados -->
+    <div id="no-results" class="hidden bg-white rounded-xl shadow-md p-12 text-center">
+        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <p class="text-gray-500 text-lg">No se encontraron tickets con estos filtros</p>
+        <button onclick="clearAllFilters()" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Limpiar filtros
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("📜 Inicializando Historial");
+    
+    const searchInput = document.getElementById("searchCliente");
+    const filterTipo = document.getElementById("filterTipo");
+    const filterPeriodo = document.getElementById("filterPeriodo");
+    const clearBtn = document.getElementById("clearFilters");
+    const resultsCount = document.getElementById("results-count");
+    const historialContainer = document.getElementById("historial-container");
+    const noResults = document.getElementById("no-results");
+    
+    const tickets = Array.from(document.querySelectorAll(".ticket-historial"));
+    
+    // Calcular estadísticas
+    calcularEstadisticas();
+    
+    function calcularEstadisticas() {
+        const ahora = new Date();
+        const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+        const inicioSemana = new Date(ahora);
+        inicioSemana.setDate(ahora.getDate() - ahora.getDay());
+        
+        let ticketsMes = 0;
+        let ticketsSemana = 0;
+        
+        tickets.forEach(ticket => {
+            const fechaStr = ticket.dataset.fecha;
+            if (!fechaStr || fechaStr === 'N/A') return;
+            
+            try {
+                const fecha = new Date(fechaStr.replace(' ', 'T'));
+                if (fecha >= inicioMes) ticketsMes++;
+                if (fecha >= inicioSemana) ticketsSemana++;
+            } catch (e) {
+            }
+        });
+        
+        document.getElementById('stat-mes').textContent = ticketsMes;
+        document.getElementById('stat-semana').textContent = ticketsSemana;
+    }
+    
+    function filtrarTickets() {
+        const searchVal = searchInput.value.toLowerCase();
+        const tipoVal = filterTipo.value.toLowerCase();
+        const periodoVal = filterPeriodo.value;
+        
+        let visibleCount = 0;
+        const ahora = new Date();
+        
+        tickets.forEach(ticket => {
+            const cliente = ticket.dataset.cliente.toLowerCase();
+            const tipo = ticket.dataset.tipo.toLowerCase();
+            const fechaStr = ticket.dataset.fecha;
+            
+            let matchSearch = !searchVal || cliente.includes(searchVal);
+            let matchTipo = !tipoVal || tipo.includes(tipoVal);
+            let matchPeriodo = true;
+            
+            if (periodoVal !== 'todos' && fechaStr && fechaStr !== 'N/A') {
+                try {
+                    const fecha = new Date(fechaStr.replace(' ', 'T'));
+                    
+                    switch(periodoVal) {
+                        case 'hoy':
+                            matchPeriodo = fecha.toDateString() === ahora.toDateString();
+                            break;
+                        case 'semana':
+                            const inicioSemana = new Date(ahora);
+                            inicioSemana.setDate(ahora.getDate() - ahora.getDay());
+                            matchPeriodo = fecha >= inicioSemana;
+                            break;
+                        case 'mes':
+                            matchPeriodo = fecha.getMonth() === ahora.getMonth() && 
+                                          fecha.getFullYear() === ahora.getFullYear();
+                            break;
+                        case 'trimestre':
+                            const hace3Meses = new Date(ahora);
+                            hace3Meses.setMonth(ahora.getMonth() - 3);
+                            matchPeriodo = fecha >= hace3Meses;
+                            break;
+                    }
+                } catch (e) {
+                    matchPeriodo = false;
+                }
+            }
+            
+            const match = matchSearch && matchTipo && matchPeriodo;
+            
+            if (match) {
+                ticket.style.display = '';
+                visibleCount++;
+            } else {
+                ticket.style.display = 'none';
+            }
+        });
+        
+        resultsCount.textContent = visibleCount;
+        
+        if (visibleCount === 0 && historialContainer) {
+            historialContainer.classList.add('hidden');
+            noResults.classList.remove('hidden');
+        } else if (historialContainer) {
+            historialContainer.classList.remove('hidden');
+            noResults.classList.add('hidden');
+        }
+    }
+    
+    function clearAllFilters() {
+        searchInput.value = '';
+        filterTipo.value = '';
+        filterPeriodo.value = 'todos';
+        filtrarTickets();
+    }
+    
+    searchInput.addEventListener('input', filtrarTickets);
+    filterTipo.addEventListener('change', filtrarTickets);
+    filterPeriodo.addEventListener('change', filtrarTickets);
+    clearBtn.addEventListener('click', clearAllFilters);
+    
+    // Funciones globales
+    window.verDetalles = function(ticketId) {
+        alert(`Ver detalles del ticket: ${ticketId}\n\nAquí puedes implementar un modal con información completa.`);
+    };
+    
+    window.descargarPDF = function(ticketId) {
+        alert(`Generando PDF para ticket: ${ticketId}\n\nAquí puedes implementar la generación de PDF.`);
+    };
+    
+    window.clearAllFilters = clearAllFilters;
+});
+</script>
+{% endblock %}

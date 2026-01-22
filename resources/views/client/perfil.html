@@ -1,0 +1,244 @@
+{% extends "layout/layout_cliente.html" %}
+{% block title %}Configuración de Perfil{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+    /* --- LAYOUT PRINCIPAL --- */
+    .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    @media (min-width: 992px) { .profile-grid { grid-template-columns: 280px 1fr; } }
+
+    /* --- MENÚ LATERAL --- */
+    .nav-pills .nav-link { color: #64748b; font-weight: 500; padding: 1rem; border-radius: 0.75rem; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s; }
+    .nav-pills .nav-link:hover { background-color: #f8fafc; color: #1e293b; }
+    .nav-pills .nav-link.active { background-color: #eef2ff; color: #4f46e5; font-weight: 600; }
+    .nav-pills i { font-size: 1.25rem; }
+
+    /* --- AVATAR --- */
+    .avatar-profile { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin: 0 auto 1rem; }
+    .avatar-placeholder { width: 100px; height: 100px; border-radius: 50%; background: #e0e7ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; margin: 0 auto 1rem; border: 4px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+    /* --- INPUTS --- */
+    .form-label { font-weight: 600; font-size: 0.875rem; color: #334155; margin-bottom: 0.5rem; }
+    .form-control { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1rem; font-size: 0.875rem; color: #1e293b; }
+    .form-control:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); outline: none; }
+    .form-control:disabled { background-color: #f1f5f9; color: #64748b; }
+
+    /* --- 2FA SWITCH --- */
+    .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; border-radius: 34px; transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .3s; }
+    input:checked + .slider { background-color: #10b981; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    
+    .fade-up { animation: fadeUp 0.5s ease-out forwards; opacity: 0; transform: translateY(10px); }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="max-w-7xl mx-auto p-6 fade-up">
+    
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="ri-user-settings-line text-indigo-600"></i> Configuración de Perfil
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Gestiona tu información personal, pagos y seguridad.</p>
+    </div>
+
+    <div id="messageBox" class="alert d-none rounded-lg border-0 shadow-sm mb-6" role="alert"></div>
+
+    <div class="profile-grid">
+        
+        <div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center mb-6">
+                {% if session['usuario_foto'] %}
+                    <img src="{{ url_for('static', filename='images/perfiles/' ~ session['usuario_foto']) }}" class="avatar-profile">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        {{ session['usuario_nombre'][0]|upper }}{{ session.get('usuario_apellidos', '')[0]|upper if session.get('usuario_apellidos') else '' }}
+                    </div>
+                {% endif %}
+                <h5 class="font-bold text-gray-800 text-lg">{{ (cliente or {}).get('cliente_nombre', 'Usuario') }} {{ (cliente or {}).get('cliente_apellidos', 'Usuario') }}</h5>
+                <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">{{ (cliente or {}).get('usuario_rol_nombre', 'Rol') }}</p>
+                <span class="badge bg-indigo-50 text-indigo-600 mt-2 px-2 py-1 rounded text-xs">Activo</span>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-3 nav-pills flex-column" role="tablist">
+                <a href="#profile" data-bs-toggle="tab" class="nav-link active"><i class="ri-id-card-line"></i> Perfil</a>
+                <a href="#security" data-bs-toggle="tab" class="nav-link"><i class="ri-shield-keyhole-line"></i> Seguridad</a>
+                <a href="#account" data-bs-toggle="tab" class="nav-link text-danger hover:bg-red-50 hover:text-red-600"><i class="ri-delete-bin-line"></i> Cuenta</a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <div class="tab-content">
+                
+                <div class="tab-pane fade show active" id="profile">
+                    <h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <i class="ri-user-line text-indigo-500"></i> Información Personal
+                    </h4>
+                    
+                    <form>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre(s)</label>
+                                <input type="text" class="form-control" value="{{ (cliente or {}).get('cliente_nombre', '') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellidos</label>
+                                <input type="text" class="form-control" value="{{ (cliente or {}).get('cliente_apellidos', '') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" value="{{ (cliente or {}).get('cliente_email', '') }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" value="{{ (cliente or {}).get('cliente_telefono', '') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">RFC</label>
+                                <input type="text" class="form-control bg-gray-50" value="{{ (cliente or {}).get('rfc', 'No registrado') }}" disabled>
+                            </div>
+                        </div>
+
+                        <hr class="my-6 border-gray-100">
+                        <h5 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wide">Dirección</h5>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Estado</label>
+                                <input type="text" class="form-control" value="{{ (cliente or {}).get('usuario_estado_nombre', '') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Municipio</label>
+                                <input type="text" class="form-control" value="{{ (cliente or {}).get('usuario_municipio_nombre', '') }}">
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Colonia / Calle</label>
+                                <input type="text" class="form-control" value="{{ (cliente or {}).get('usuario_colonia_nombre', '') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">C.P.</label>
+                                <input type="text" class="form-control" value="{{ (cliente or {}).get('cliente_cp', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" class="btn btn-primary px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 border-0">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="security">
+                    <h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2"><i class="ri-shield-check-line text-indigo-500"></i> Seguridad</h4>
+                    <form class="mb-8">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4"><label class="form-label">Contraseña Actual</label><input type="password" class="form-control"></div>
+                            <div class="col-md-4"><label class="form-label">Nueva Contraseña</label><input type="password" class="form-control"></div>
+                            <div class="col-md-4"><button class="btn btn-dark w-100">Actualizar</button></div>
+                        </div>
+                    </form>
+                    <hr class="my-5 border-gray-100">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div><h5 class="font-bold text-gray-700 mb-1">Autenticación de Dos Pasos (2FA)</h5><p class="text-sm text-gray-500 mb-0">Protege tu cuenta.</p></div>
+                        <label class="switch"><input type="checkbox" id="twoFactorToggle"><span class="slider"></span></label>
+                    </div>
+                    <div id="status2FA" class="alert p-3 text-sm rounded-lg mb-4"></div>
+                    <div id="twoFactorBox" class="bg-gray-50 p-4 rounded-xl border border-gray-200 d-none">
+                        <label class="form-label">Método de Verificación</label>
+                        <select id="twoFactorMethod" class="form-select mb-4">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="app">📱 App Autenticadora</option>
+                            <option value="email">📧 Correo Electrónico</option>
+                        </select>
+                        <div id="appContent" class="text-center d-none mb-4"><div class="bg-white p-3 d-inline-block rounded border"><div id="qrPlaceholder">Cargando QR...</div></div><p class="text-xs text-muted mt-2 font-mono" id="setupKey"></p></div>
+                        <div id="emailContent" class="alert alert-info d-none text-sm"><i class="ri-mail-send-line"></i> Se enviará un código.</div>
+                        <div id="verifySection" class="d-none">
+                            <label class="form-label">Ingresa el código</label>
+                            <div class="input-group"><input type="text" class="form-control text-center" id="otpCodeVerify"><button class="btn btn-primary" id="verifyAndEnable">Verificar</button></div>
+                        </div>
+                    </div>
+                    <div id="2faDeactivationSection" class="d-none text-center mt-4"><button class="btn btn-outline-danger btn-sm" id="disable2FA">Desactivar 2FA</button></div>
+                </div>
+
+                <div class="tab-pane fade" id="account">
+                    <div class="border border-red-100 bg-red-50 rounded-xl p-6">
+                        <h4 class="text-red-600 font-bold mb-2 flex items-center gap-2"><i class="ri-alarm-warning-line"></i> Zona de Peligro</h4>
+                        <p class="text-sm text-red-800 mb-4">Eliminar tu cuenta es irreversible.</p>
+                        <button class="btn btn-danger border-0 bg-red-600 hover:bg-red-700">Solicitar Eliminación</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="https://js.openpay.mx/openpay.v1.min.js"></script>
+<script type="text/javascript" src="https://js.openpay.mx/openpay-data.v1.min.js"></script>
+
+<script>
+$(function(){
+    // ==================== LOGICA 2FA ====================
+    let is2FA = {{ 'true' if session['2fa_enabled'] else 'false' }};
+    
+    function uiUpdate() {
+        if(is2FA) {
+            $('#status2FA').removeClass('alert-warning').addClass('alert-success bg-emerald-100 text-emerald-700').html('<i class="ri-check-line"></i> 2FA Activado');
+            $('#2faDeactivationSection').removeClass('d-none');
+            $('#twoFactorToggle').prop('checked', true).prop('disabled', true);
+        } else {
+            $('#status2FA').removeClass('alert-success').addClass('alert-warning bg-amber-100 text-amber-800').html('<i class="ri-alert-line"></i> 2FA Desactivado');
+            $('#2faDeactivationSection').addClass('d-none');
+            $('#twoFactorToggle').prop('checked', false).prop('disabled', false);
+        }
+    }
+    uiUpdate();
+
+    $('#twoFactorToggle').change(function() {
+        if(this.checked) $('#twoFactorBox').removeClass('d-none');
+        else $('#twoFactorBox').addClass('d-none');
+    });
+
+    $('#twoFactorMethod').change(function() {
+        let m = $(this).val();
+        $('#verifySection').removeClass('d-none');
+        if(m === 'app') { $('#appContent').removeClass('d-none'); $('#emailContent').addClass('d-none'); }
+        if(m === 'email') { $('#appContent').addClass('d-none'); $('#emailContent').removeClass('d-none'); }
+        
+        // AJAX call dummy
+        $.ajax({
+            url: "{{ url_for('routes.generate_2fa_setup') }}",
+            method: 'POST', contentType: 'application/json', data: JSON.stringify({tipo: m}),
+            success: function(res) {
+                if(m==='app' && res.status==='success') {
+                    $('#qrPlaceholder').html(`<img src="${res.qr_image}" width="120">`);
+                    $('#setupKey').text(res.secret_key);
+                }
+            }
+        });
+    });
+
+    $('#verifyAndEnable').click(function() {
+        let code = $('#otpCodeVerify').val();
+        $.ajax({
+            url: "{{ url_for('routes.verify_and_enable_2fa') }}",
+            method: 'POST', contentType: 'application/json', data: JSON.stringify({code: code}),
+            success: function(res) {
+                if(res.status === 'success') {
+                    is2FA = true; uiUpdate(); $('#twoFactorBox').addClass('d-none');
+                    alert('¡Activado!');
+                } else {
+                    alert('Código incorrecto');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

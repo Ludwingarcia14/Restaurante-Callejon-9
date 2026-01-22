@@ -1,0 +1,315 @@
+{% extends "layout/layout_support.html" %}
+{% block title %}Tickets Activos{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Header con estadísticas rápidas -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">📩 Tickets Activos</h2>
+        <p class="text-gray-600">Gestiona y visualiza todos los tickets del sistema</p>
+    </div>
+
+    <!-- Mini estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Total Tickets</p>
+                    <p class="text-2xl font-bold" id="stat-total">{{ tickets|length }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 p-4 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Pendientes</p>
+                    <p class="text-2xl font-bold" id="stat-pendientes">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Resueltos</p>
+                    <p class="text-2xl font-bold" id="stat-resueltos">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Críticos</p>
+                    <p class="text-2xl font-bold" id="stat-criticos">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros modernos -->
+    <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-gray-700">Filtros</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select id="filterEstado" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <option value="">Todos los estados</option>
+                    <option value="pendiente">🟡 Pendiente</option>
+                    <option value="en_revision">🔵 En revisión</option>
+                    <option value="resuelto">🟢 Resuelto</option>
+                    <option value="cerrado">⚫ Cerrado</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                <select id="filterPrioridad" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <option value="">Todas las prioridades</option>
+                    <option value="baja">🟢 Baja</option>
+                    <option value="media">🟡 Media</option>
+                    <option value="alta">🔴 Alta</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar cliente</label>
+                <div class="relative">
+                    <input type="text" id="searchCliente" placeholder="Escribe el nombre del cliente..." 
+                           class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                <span id="results-count">{{ tickets|length }}</span> tickets encontrados
+            </div>
+            <button id="clearFilters" class="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition">
+                Limpiar filtros
+            </button>
+        </div>
+    </div>
+
+    <!-- Vista de Cards-->
+    <div id="cardsView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for ticket in tickets %}
+        <div class="ticket-card bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+             data-estado="{{ ticket.estado }}" 
+             data-prioridad="{{ ticket.prioridad }}" 
+             data-cliente="{{ ticket.cliente_nombre }}">
+            
+            <!-- Header del card -->
+            <div class="p-4 bg-gradient-to-r {% if ticket.prioridad == 'alta' %}from-red-50 to-red-100{% elif ticket.prioridad == 'media' %}from-yellow-50 to-yellow-100{% else %}from-green-50 to-green-100{% endif %}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-gray-600">ID: {{ ticket.id[:8] }}...</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold
+                        {% if ticket.estado == 'pendiente' %}bg-yellow-200 text-yellow-800
+                        {% elif ticket.estado == 'en_revision' %}bg-blue-200 text-blue-800
+                        {% elif ticket.estado == 'resuelto' %}bg-green-200 text-green-800
+                        {% else %}bg-gray-200 text-gray-800{% endif %}">
+                        {{ ticket.estado|title }}
+                    </span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">{{ ticket.cliente_nombre }}</h3>
+            </div>
+
+            <!-- Contenido del card -->
+            <div class="p-4 space-y-3">
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span class="font-medium">{{ ticket.tipo_incidencia }}</span>
+                </div>
+
+                <div class="flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-gray-600">{{ ticket.fecha_creacion }}</span>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold px-2 py-1 rounded
+                            {% if ticket.prioridad == 'alta' %}bg-red-100 text-red-700
+                            {% elif ticket.prioridad == 'media' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-green-100 text-green-700{% endif %}">
+                            {% if ticket.prioridad == 'alta' %}🔴{% elif ticket.prioridad == 'media' %}🟡{% else %}🟢{% endif %}
+                            {{ ticket.prioridad|upper }}
+                        </span>
+                        <button class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                onclick="verDetalles('{{ ticket.id }}')">
+                            Ver detalles
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mensaje si no hay tickets -->
+    <div id="noResults" class="hidden text-center py-12">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-gray-500 text-lg">No se encontraron tickets con estos filtros</p>
+        <button onclick="clearAllFilters()" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Limpiar filtros
+        </button>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const estadoFilter = document.getElementById("filterEstado");
+    const prioridadFilter = document.getElementById("filterPrioridad");
+    const searchInput = document.getElementById("searchCliente");
+    const cardsView = document.getElementById("cardsView");
+    const noResults = document.getElementById("noResults");
+    const resultsCount = document.getElementById("results-count");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+    
+    const cards = Array.from(document.querySelectorAll(".ticket-card"));
+
+    // Calcular estadísticas iniciales
+    updateStats();
+
+    function updateStats() {
+        const visibleCards = cards.filter(card => card.style.display !== "none");
+        
+        const pendientes = visibleCards.filter(c => 
+            c.dataset.estado === "pendiente"
+        ).length;
+        
+        const resueltos = visibleCards.filter(c => 
+            c.dataset.estado === "resuelto" || c.dataset.estado === "cerrado"
+        ).length;
+        
+        const criticos = visibleCards.filter(c => 
+            c.dataset.prioridad === "alta"
+        ).length;
+
+        document.getElementById("stat-total").textContent = cards.length;
+        document.getElementById("stat-pendientes").textContent = pendientes;
+        document.getElementById("stat-resueltos").textContent = resueltos;
+        document.getElementById("stat-criticos").textContent = criticos;
+    }
+
+    function filterTickets() {
+        const estadoVal = estadoFilter.value.toLowerCase();
+        const prioridadVal = prioridadFilter.value.toLowerCase();
+        const searchVal = searchInput.value.toLowerCase();
+
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const estado = card.dataset.estado.toLowerCase();
+            const prioridad = card.dataset.prioridad.toLowerCase();
+            const cliente = card.dataset.cliente.toLowerCase();
+
+            const match = (!estadoVal || estado === estadoVal) &&
+                          (!prioridadVal || prioridad === prioridadVal) &&
+                          (!searchVal || cliente.includes(searchVal));
+
+            if (match) {
+                card.style.display = "";
+                card.classList.add("animate-fadeIn");
+                visibleCount++;
+            } else {
+                card.style.display = "none";
+            }
+        });
+
+        // Actualizar contador
+        resultsCount.textContent = visibleCount;
+
+        if (visibleCount === 0) {
+            cardsView.classList.add("hidden");
+            noResults.classList.remove("hidden");
+        } else {
+            cardsView.classList.remove("hidden");
+            noResults.classList.add("hidden");
+        }
+    }
+
+    function clearAllFilters() {
+        estadoFilter.value = "";
+        prioridadFilter.value = "";
+        searchInput.value = "";
+        filterTickets();
+    }
+
+    // Event listeners
+    estadoFilter.addEventListener("change", filterTickets);
+    prioridadFilter.addEventListener("change", filterTickets);
+    searchInput.addEventListener("input", filterTickets);
+    clearFiltersBtn.addEventListener("click", clearAllFilters);
+
+    // Función global para ver detalles
+    window.verDetalles = function(ticketId) {
+        alert(`Ver detalles del ticket: ${ticketId}\n\nAquí puedes implementar un modal con la información completa del ticket.`);
+    };
+
+    window.clearAllFilters = clearAllFilters;
+});
+</script>
+
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.ticket-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ticket-card:hover {
+    transform: translateY(-4px);
+}
+</style>
+{% endblock %}

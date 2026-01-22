@@ -1,0 +1,240 @@
+{% extends "layout/layout.html" %}
+
+{% block title %}Crear Publicación - Carrusel{% endblock %}
+
+{% block content %}
+<style>
+    /* Animación para el spinner del preloader */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin-custom { animation: spin 1s linear infinite; }
+    
+    .image-preview-container {
+        width: 100%;
+        height: 200px;
+        border-radius: 12px;
+        border: 2px dashed #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background-color: #f8fafc;
+    }
+    #preview-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+</style>
+
+<div class="max-w-6xl mx-auto p-6">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+        
+        <div class="border-b border-gray-200 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-image-fill text-indigo-600"></i>
+                    Nueva Publicación para Carrusel
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Configura el contenido visual y el destino automático según el tipo de publicación.</p>
+            </div>
+            <a href="/dashboard/admin" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm font-medium flex items-center gap-2">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <div id="preloader" class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex flex-col items-center justify-center hidden z-50">
+            <div class="bg-white rounded-xl shadow-2xl p-8 text-center w-96 border border-gray-100">
+                <div class="mb-4">
+                    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin-custom mx-auto"></div>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Publicando...</h2>
+                <p class="text-sm text-gray-500 mb-4">Subiendo imagen y guardando datos</p>
+                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="mt-2 text-xs font-bold text-indigo-600 text-right">0%</p>
+            </div>
+        </div>
+
+        <form id="carouselForm" method="POST" action="{{ url_for('routes.carousel_create') }}" enctype="multipart/form-data" class="space-y-6">
+            
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
+                    <i class="bi bi-gear-fill me-1"></i> Configuración de Destino
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Publicación <span class="text-red-500">*</span></label>
+                        <select id="tipo_contenido" name="tipo" required class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm">
+                            <option value="expo">Expo</option>
+                            <option value="caravana">Caravana</option>
+                            <option value="publicacion" selected>Publicación General</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-6 border-b border-gray-100 pb-2">
+                    <i class="bi bi-chat-left-text me-1"></i> Contenido de la Diapositiva
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Título Principal <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-type-h1"></i>
+                            </span>
+                            <input type="text" name="titulo" id="inputTitulo" required 
+                                   class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
+                                   placeholder="Ej: Gran Expo Financiera 2026">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción corta <span class="text-red-500">*</span></label>
+                        <textarea name="descripcion" rows="3" required
+                                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
+                                  placeholder="Escribe el texto informativo..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-6 border-b border-gray-100 pb-2">
+                    <i class="bi bi-link-45deg me-1"></i> Llamados a la Acción (Automático)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Texto del Botón</label>
+                        <input type="text" name="btn_texto" id="btn_texto" 
+                               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
+                               placeholder="Ej: Ver más">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Enlace generado (Solo lectura)</label>
+                        <input type="text" name="btn_link" id="btn_link" readonly
+                               class="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-indigo-600 font-semibold cursor-not-allowed outline-none transition shadow-sm"
+                               placeholder="URL generada automáticamente...">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-6 border-b border-gray-100 pb-2">
+                    <i class="bi bi-camera me-1"></i> Imagen de Fondo
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Imagen <span class="text-red-500">*</span></label>
+                        <input type="file" name="imagen" id="imgInput" accept="image/*" required
+                               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                    </div>
+                    <div class="image-preview-container">
+                        <span id="preview-placeholder" class="text-gray-400 text-sm">Vista previa</span>
+                        <img id="preview-img" alt="Vista previa">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
+                <button type="reset" id="resetBtn" class="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition shadow-sm">
+                    <i class="bi bi-eraser"></i> Limpiar
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 hover:shadow-md transition shadow-sm flex items-center gap-2">
+                    <i class="bi bi-cloud-arrow-up"></i> Publicar Publicación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        const inputTitulo = document.getElementById('inputTitulo');
+        const selectTipo = document.getElementById('tipo_contenido');
+        const inputLink = document.getElementById('btn_link');
+        const btnTexto = document.getElementById('btn_texto');
+
+        // Función para generar el slug (limpiar texto para URL)
+        function generateSlug(text) {
+            return text.toString().toLowerCase()
+                .replace(/\s+/g, '-')           // Reemplaza espacios con -
+                .replace(/[^\w\-]+/g, '')       // Elimina caracteres no válidos
+                .replace(/\-\-+/g, '-')         // Reemplaza múltiples - con uno solo
+                .replace(/^-+/, '')             // Elimina - al inicio
+                .replace(/-+$/, '');            // Elimina - al final
+        }
+
+        // Lógica de Generación de URL automática
+        function updateUrl() {
+            const tipo = selectTipo.value;
+            const slug = generateSlug(inputTitulo.value);
+            
+            if(slug) {
+                // Genera el link basado en el tipo: /landing/expo/mi-titulo
+                inputLink.value = `/landing/${tipo}/${slug}`;
+                
+                // Sugerencia de texto para el botón si está vacío
+                if(!btnTexto.value) {
+                    btnTexto.value = (tipo === 'publicacion') ? 'Leer más' : `Ver ${tipo}`;
+                }
+            } else {
+                inputLink.value = '';
+            }
+        }
+
+        // Eventos para actualizar la URL en tiempo real
+        inputTitulo.addEventListener('input', updateUrl);
+        selectTipo.addEventListener('change', updateUrl);
+
+        // --- Vista Previa de Imagen ---
+        const imgInput = document.getElementById('imgInput');
+        const previewImg = document.getElementById('preview-img');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
+
+        imgInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                    previewPlaceholder.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            previewImg.style.display = 'none';
+            previewPlaceholder.style.display = 'block';
+        });
+
+        // --- Manejo del Envío ---
+        document.getElementById("carouselForm").addEventListener("submit", async function (e) {
+            e.preventDefault(); 
+            const preloader = document.getElementById("preloader");
+            preloader.classList.remove("hidden");
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch(this.action, { method: "POST", body: formData });
+                const result = await response.json();
+                preloader.classList.add("hidden");
+                
+                if (result.success) {
+                    Swal.fire({ icon: 'success', title: '¡Publicado!', text: 'Los datos se han guardado con éxito.' });
+                    this.reset();
+                    previewImg.style.display = 'none';
+                    previewPlaceholder.style.display = 'block';
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: result.error || 'Error al guardar.' });
+                }
+            } catch (error) {
+                preloader.classList.add("hidden");
+                Swal.fire({ icon: 'error', title: 'Error de Red', text: 'No se pudo conectar con el servidor.' });
+            }
+        });
+    });
+</script>
+{% endblock %}

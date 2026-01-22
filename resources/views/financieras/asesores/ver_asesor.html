@@ -1,0 +1,180 @@
+{% extends "layout/layout_financieras.html" %}
+
+{% block page_title %}Detalle de Asesor | Dashboard Financieras{% endblock %}
+{% block header_title %}Visión General del Asesor{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="#">Asesores</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalle</li>
+            </ol>
+        </nav>
+        <div>
+            <button class="btn btn-outline-secondary me-2"><i class="bi bi-envelope"></i> Contactar</button>
+            <button class="btn btn-primary"><i class="bi bi-pencil-square"></i> Editar Asignaciones</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <img src="{{ asesor.foto_url|default('https://via.placeholder.com/150') }}" 
+                             class="rounded-circle img-thumbnail" alt="Foto Asesor" style="width: 120px; height: 120px;">
+                    </div>
+                    <h4 class="card-title mb-1">{{ asesor.nombre }} {{ asesor.apellido }}</h4>
+                    <p class="text-muted mb-3">{{ asesor.cargo }} - ID: #{{ asesor.id }}</p>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <p class="mb-2"><strong><i class="bi bi-geo-alt"></i> Sucursal:</strong> {{ asesor.sucursal }}</p>
+                        <p class="mb-2"><strong><i class="bi bi-telephone"></i> Teléfono:</strong> {{ asesor.telefono }}</p>
+                        <p class="mb-2"><strong><i class="bi bi-envelope"></i> Email:</strong> {{ asesor.email }}</p>
+                        <p class="mb-0"><strong><i class="bi bi-calendar-check"></i> Antigüedad:</strong> {{ asesor.fecha_ingreso }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 mb-4">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="card-title opacity-75">Clientes Asignados</h6>
+                            <h2 class="display-6 fw-bold">{{ estadisticas.total_clientes }}</h2>
+                            <small><i class="bi bi-arrow-up"></i> {{ estadisticas.nuevos_mes }} nuevos este mes</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-success shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="card-title opacity-75">Cartera Colocada</h6>
+                            <h2 class="display-6 fw-bold">${{ estadisticas.monto_cartera }}</h2>
+                            <small>Monto total en préstamos activos</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-danger shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="card-title opacity-75">Tasa de Morosidad</h6>
+                            <h2 class="display-6 fw-bold">{{ estadisticas.porcentaje_mora }}%</h2>
+                            <small>{{ estadisticas.clientes_mora }} clientes en atraso</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Metas del Mes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Colocación de Créditos</span>
+                            <span class="fw-bold">{{ estadisticas.meta_colocacion_actual }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ estadisticas.meta_colocacion_actual }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Recuperación de Cartera</span>
+                            <span class="fw-bold">{{ estadisticas.meta_recuperacion_actual }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ estadisticas.meta_recuperacion_actual }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Cartera de Clientes</h5>
+                    <div class="input-group w-25">
+                        <input type="text" class="form-control form-control-sm" placeholder="Buscar cliente...">
+                        <button class="btn btn-outline-secondary btn-sm" type="button">Buscar</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Estado Crédito</th>
+                                <th>Monto Otorgado</th>
+                                <th>Saldo Restante</th>
+                                <th>Prox. Pago</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in clientes_asignados %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-2">
+                                            <h6 class="mb-0 fw-bold">{{ cliente.nombre }}</h6>
+                                            <small class="text-muted">RFC: {{ cliente.rfc }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if cliente.estatus == 'Al corriente' %}
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3">Al día</span>
+                                    {% elif cliente.estatus == 'Atrasado' %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-3">Atraso leve</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3">Mora</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ cliente.monto_otorgado }}</td>
+                                <td class="fw-bold">${{ cliente.saldo_pendiente }}</td>
+                                <td>{{ cliente.fecha_proximo_pago }}</td>
+                                <td>
+                                    <a href="/cliente/{{ cliente.id }}" class="btn btn-sm btn-light text-primary" title="Ver detalle">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">Este asesor no tiene clientes asignados.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white">
+                    <nav>
+                        <ul class="pagination justify-content-end mb-0">
+                            <li class="page-item disabled"><a class="page-link" href="#">Anterior</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

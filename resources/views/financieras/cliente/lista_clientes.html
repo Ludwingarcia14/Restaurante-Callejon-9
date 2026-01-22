@@ -1,0 +1,84 @@
+{% extends "layout/layout_financieras.html" %}
+{% block page_title %}Gestión de Clientes{% endblock %}
+{% block header_title %}Equipo de Clientes{% endblock %}
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Gestión de Clientes y Asignación de Asesores</h5>
+        </div>
+        <div class="card-body">
+            <table id="clientes_f_table" class="table table-hover w-100">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Asesor Asignado</th>
+                        <th>Status Documentos</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCliente" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Expediente del Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 border-end">
+                        <h6><i class="bi bi-person-badge"></i> Asesor Actual</h6>
+                        <p id="info_asesor" class="text-muted">Cargando...</p>
+                        <hr>
+                        <label class="form-label small fw-bold">Reasignar Asesor</label>
+                        <select class="form-select" id="select_nuevo_asesor">
+                            <option value="">Seleccione un asesor...</option>
+                            {% for asesor in asesores %}
+                            <option value="{{ asesor._id }}">{{ asesor.usuario_nombre }} {{ asesor.usuario_apellidos }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-primary btn-sm mt-2 w-100" id="btn_guardar_asesor">Actualizar Asesor</button>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-file-earmark-text"></i> Documentación</h6>
+                        <ul class="list-group list-group-flush" id="lista_documentos">
+                            </ul>
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <h6 class="small fw-bold text-uppercase">Datos para Evaluación</h6>
+                            <div id="info_evaluacion" class="small">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    var table = $('#clientes_f_table').DataTable({
+        ajax: '/dashboard/financiera/clientes/data',
+        columns: [
+            { data: 'nombre' },
+            { data: 'asesor_nombre' },
+            { data: 'status_docs' },
+            { 
+                data: '_id',
+                render: d => `<button class="btn btn-sm btn-outline-primary" onclick="verDetalle('${d}')">Ver / Gestionar</button>`
+            }
+        ]
+    });
+});
+
+function verDetalle(id) {
+    // Lógica para cargar datos del cliente por AJAX y abrir el modal
+    $('#modalCliente').modal('show');
+}
+</script>
+{% endblock %}

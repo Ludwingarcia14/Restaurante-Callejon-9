@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Soporte / Ayuda</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+  <!-- NAVBAR -->
+  <nav class="bg-gradient-to-r from-yellow-600 to-yellow-400 text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="text-lg font-bold">Mi Crédito</div>
+        <ul class="flex gap-6">
+            <li>
+                <a href="{{ url_for('routes.dashboard_client') }}"
+                   class="hover:underline {{ 'underline' if request.endpoint == 'routes.perfil' else '' }}">
+                   Inicio
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('routes.perfil_cliente') }}"
+                   class="hover:underline {{ 'underline' if request.endpoint == 'routes.perfil' else '' }}">
+                   Perfil
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('routes.documentos_view') }}"
+                   class="hover:underline {{ 'underline' if request.endpoint == 'routes.documentos' else '' }}">
+                   Documentos
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('routes.credito_view') }}"
+                   class="hover:underline {{ 'underline' if request.endpoint == 'routes.credito' else '' }}">
+                   Crédito
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('routes.soporte') }}"
+                   class="hover:underline {{ 'underline' if request.endpoint == 'routes.soporte' else '' }}">
+                   Soporte
+                </a>
+            </li>
+        </ul>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO -->
+  <div class="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-3xl shadow-xl">
+
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Soporte / Ayuda</h1>
+
+    <!-- Pestañas -->
+    <div class="mb-6 border-b border-gray-300">
+      <nav class="flex space-x-4">
+        <button class="tab-btn bg-yellow-200 px-4 py-2 rounded-t-lg font-semibold" data-tab="tickets">Tickets</button>
+        <button class="tab-btn px-4 py-2 rounded-t-lg font-semibold" data-tab="faq">Preguntas Frecuentes</button>
+        <button class="tab-btn px-4 py-2 rounded-t-lg font-semibold" data-tab="chat">Chat / Contacto</button>
+      </nav>
+    </div>
+
+    <!-- Contenido de pestañas -->
+    <div id="tickets" class="tab-content">
+
+      <div class="mb-4 p-6 bg-yellow-50 rounded-xl shadow-md">
+        <h2 class="text-2xl font-semibold mb-4">Crear un Ticket de Soporte</h2>
+        <form action="{{ url_for('routes.crear_ticket') }}" method="POST" class="flex flex-col gap-4">
+          <input type="text" name="asunto" placeholder="Asunto" class="p-2 border rounded-lg">
+          <textarea name="descripcion" placeholder="Descripción del problema" rows="4" class="p-2 border rounded-lg"></textarea>
+          <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700">Enviar Ticket</button>
+        </form>
+      </div>
+
+      <div class="mb-4 flex gap-4">
+        <button id="btn-mostrar" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+          Ver mis Tickets
+        </button>
+        <button id="btn-ocultar" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400">
+          Ocultar Tickets
+        </button>
+      </div>
+
+      <div id="lista-tickets" class="hidden">
+        <h2 class="text-2xl font-semibold mb-3">Mis Tickets</h2>
+        {% if tickets %}
+        <ul class="space-y-3">
+          {% for t in tickets %}
+          <li class="p-4 bg-gray-50 rounded-lg shadow-md">
+            <p><strong>Asunto:</strong> {{ t.asunto }}</p>
+            <p><strong>Descripción:</strong> {{ t.descripcion }}</p>
+            <p><strong>Estado:</strong> {{ t.estado }}</p>
+            <p><strong>Fecha:</strong> {{ t.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500">No tienes tickets aún.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div id="faq" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-3">Preguntas Frecuentes</h2>
+      <ul class="space-y-2">
+        <li class="p-3 bg-gray-50 rounded-lg shadow-md">
+          <p><strong>Q:</strong> ¿Cómo puedo cambiar mi contraseña?</p>
+          <p><strong>A:</strong> Ve a tu perfil y selecciona "Editar contraseña".</p>
+        </li>
+        <li class="p-3 bg-gray-50 rounded-lg shadow-md">
+          <p><strong>Q:</strong> ¿Cómo puedo solicitar un crédito?</p>
+          <p><strong>A:</strong> En la sección "Crédito" haz clic en "Nueva Solicitud" y completa el formulario.</p>
+        </li>
+        <li class="p-3 bg-gray-50 rounded-lg shadow-md">
+          <p><strong>Q:</strong> ¿Dónde puedo ver mis documentos?</p>
+          <p><strong>A:</strong> En la sección "Documentos" encontrarás todos los archivos cargados.</p>
+        </li>
+        <li class="p-3 bg-gray-50 rounded-lg shadow-md">
+          <p><strong>Q:</strong> ¿Cómo puedo contactar a mi asesor?</p>
+          <p><strong>A:</strong> En la sección "Asesor Asignado" encontrarás su contacto y WhatsApp.</p>
+        </li>
+        <li class="p-3 bg-gray-50 rounded-lg shadow-md">
+          <p><strong>Q:</strong> ¿Cómo puedo crear un ticket de soporte?</p>
+          <p><strong>A:</strong> En esta misma sección, completa el formulario de tickets.</p>
+        </li>
+      </ul>
+    </div>
+
+    <div id="chat" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-4">Chat en Vivo / Contacto</h2>
+      <p class="mb-4">Puedes contactar a nuestro soporte directamente vía WhatsApp:</p>
+      <a href="https://wa.me/{{ whatsapp_soporte | replace('+','') }}" target="_blank"
+         class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Iniciar Chat en WhatsApp</a>
+    </div>
+
+  </div>
+
+  <script>
+    // Pestañas
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('bg-yellow-200'));
+        tab.classList.add('bg-yellow-200');
+        const target = tab.dataset.tab;
+        contents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(target).classList.remove('hidden');
+      });
+    });
+
+    // Mostrar/Ocultar Tickets
+    const btnMostrar = document.getElementById('btn-mostrar');
+    const btnOcultar = document.getElementById('btn-ocultar');
+    const listaTickets = document.getElementById('lista-tickets');
+
+    btnMostrar.addEventListener('click', () => {
+      listaTickets.classList.remove('hidden');
+    });
+
+    btnOcultar.addEventListener('click', () => {
+      listaTickets.classList.add('hidden');
+    });
+  </script>
+
+</body>
+</html>

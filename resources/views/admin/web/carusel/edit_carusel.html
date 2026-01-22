@@ -1,0 +1,223 @@
+{% extends "layout/layout.html" %}
+
+{% block title %}Edición de Publicación{% endblock %}
+
+{% block content %}
+<style>
+    .image-preview-container {
+        width: 100%;
+        height: 250px;
+        border-radius: 12px;
+        border: 2px dashed #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background-color: #f8fafc;
+        position: relative;
+    }
+    #preview-img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* Estilos para el Switch en Tailwind puro */
+    .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4f46e5;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+        background-color: #4f46e5;
+    }
+</style>
+
+<div class="max-w-6xl mx-auto p-6">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+        
+        <div class="border-b border-gray-200 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-pencil-square text-indigo-600"></i>
+                    Editar Publicación
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Modifica la información y el contenido visual del carrusel.</p>
+            </div>
+            <a href="{{ url_for('routes.viewcarousel') }}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm font-medium flex items-center gap-2">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <form action="{{ url_for('routes.admin_carousel_update', carousel_id=carousel._id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
+                            <i class="bi bi-file-text me-1"></i> Información General
+                        </h3>
+
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Título Principal <span class="text-red-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="bi bi-type-h1"></i>
+                                    </span>
+                                    <input type="text" name="titulo" value="{{ carousel.titulo }}" required 
+                                           class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm placeholder-gray-400"
+                                           placeholder="Ej: Gran Expo 2026">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Descripción Corta</label>
+                                <textarea name="descripcion" rows="3"
+                                          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm placeholder-gray-400"
+                                          placeholder="Breve resumen del evento...">{{ carousel.descripcion }}</textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Evento</label>
+                                    <div class="relative">
+                                        <select name="tipo" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm appearance-none">
+                                            <option value="expo" {% if carousel.tipo == 'expo' %}selected{% endif %}>Expo</option>
+                                            <option value="caravana" {% if carousel.tipo == 'caravana' %}selected{% endif %}>Caravana</option>
+                                            <option value="noticia" {% if carousel.tipo == 'noticia' %}selected{% endif %}>Noticia</option>
+                                            <option value="otro" {% if carousel.tipo == 'otro' %}selected{% endif %}>Otro</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                            <i class="bi bi-chevron-down text-xs"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                                    <div class="flex items-center">
+                                        <label for="activo" class="flex items-center cursor-pointer relative">
+                                            <input type="checkbox" name="activo" id="activo" class="sr-only peer" {% if carousel.activo %}checked{% endif %}>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                            <span class="ml-3 text-sm font-medium text-gray-600">Visible en web</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-2 border-b border-gray-100 pb-2">
+                            <i class="bi bi-link-45deg me-1"></i> Botón de Acción
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Texto del Botón</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="bi bi-hand-index-thumb"></i>
+                                    </span>
+                                    <input type="text" name="btn_texto" value="{{ carousel.btn_texto }}"
+                                           class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
+                                           placeholder="Ej: Ver más">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Enlace (URL)</label>
+                                <input type="text" name="btn_link" value="{{ carousel.btn_link }}"
+                                       class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm"
+                                       placeholder="/landing/expo/...">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="lg:col-span-5">
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 h-full">
+                        <h3 class="text-sm font-bold text-gray-700 mb-4 text-center">Imagen Destacada</h3>
+                        
+                        <div class="image-preview-container bg-white mb-4 shadow-inner group relative">
+                            {% if carousel.imagen %}
+                                <img src="{{ url_for('static', filename=carousel.imagen) }}" id="preview-img" class="transition-opacity duration-300">
+                                <div id="no-image-placeholder" class="hidden flex-col items-center justify-center text-gray-400">
+                                    <i class="bi bi-image text-4xl mb-2"></i>
+                                    <span class="text-sm">Sin imagen</span>
+                                </div>
+                            {% else %}
+                                <img id="preview-img" class="hidden">
+                                <div id="no-image-placeholder" class="flex flex-col items-center justify-center text-gray-400">
+                                    <i class="bi bi-image text-4xl mb-2"></i>
+                                    <span class="text-sm">Vista previa</span>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center pointer-events-none"></div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block w-full">
+                                <span class="sr-only">Elegir imagen</span>
+                                <input type="file" name="imagen" id="imgInput" accept="image/*"
+                                       class="block w-full text-sm text-gray-500
+                                       file:mr-4 file:py-2.5 file:px-4
+                                       file:rounded-full file:border-0
+                                       file:text-sm file:font-semibold
+                                       file:bg-indigo-50 file:text-indigo-700
+                                       hover:file:bg-indigo-100 cursor-pointer transition-colors
+                                       focus:outline-none">
+                            </label>
+                            <p class="text-xs text-center text-gray-400">
+                                Formato recomendado: JPG/PNG, 1200x600px
+                            </p>
+                            <p id="filename-display" class="text-xs text-center font-medium text-indigo-600 truncate px-4">
+                                {% if carousel.imagen %}Archivo actual conservado{% else %}Ningún archivo seleccionado{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
+                <a href="{{ url_for('routes.viewcarousel') }}" class="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition shadow-sm bg-white">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 hover:shadow-md transition shadow-sm flex items-center gap-2">
+                    <i class="bi bi-save"></i> Guardar Cambios
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const imgInput = document.getElementById('imgInput');
+        const previewImg = document.getElementById('preview-img');
+        const placeholder = document.getElementById('no-image-placeholder');
+        const filenameDisplay = document.getElementById('filename-display');
+
+        imgInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (file) {
+                // Actualizar texto del nombre
+                filenameDisplay.textContent = file.name;
+                filenameDisplay.classList.remove('text-gray-400');
+                filenameDisplay.classList.add('text-indigo-600');
+
+                // Vista previa
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    if(placeholder) placeholder.classList.add('hidden');
+                    if(placeholder) placeholder.classList.remove('flex');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Registro Clientes - Potencial PyME</title>
+
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script
+            src="https://www.google.com/recaptcha/api.js?render=6LdN3eQrAAAAAMUaNDJkiYIOxX5ObS6be1J94wjm&badge=bottomright"></script>
+
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+            * { box-sizing: border-box; }
+
+            /* ===== ESTILOS BASE (COPIADOS DE LOGIN) ===== */
+            body {
+                margin: 0;
+                padding: 0;
+                height: 100vh;
+                background: linear-gradient(135deg, #0b1a3d 0%, #1e3a6c 100%); 
+                font-family: 'Inter', sans-serif;
+                color: #f0f0f0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+            }
+            .overlay { 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+                background-size: 20px 20px;
+                z-index: 0; 
+            }
+            .login-card {
+                background-color: rgba(255, 255, 255, 0.1); 
+                backdrop-filter: blur(15px); 
+                border-radius: 25px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 0 8px rgba(255, 255, 255, 0.05); 
+                padding: 40px;
+                /* Aumentar el ancho máximo para el formulario de registro */
+                max-width: 550px; 
+                width: 95%;
+                animation: fadeIn 1.2s ease-out;
+                z-index: 1;
+                color: #e0e0e0;
+            }
+
+            @keyframes fadeIn { 
+                from { opacity: 0; transform: scale(0.9) translateY(20px); } 
+                to { opacity: 1; transform: scale(1) translateY(0); } 
+            }
+
+            .logo { width: 160px; margin: 0 auto 30px; display: block; filter: brightness(1.2); }
+
+            h2 { 
+                text-align: center; 
+                margin-bottom: 35px; 
+                font-weight: 700; 
+                font-size: 28px; 
+                color: #fff; 
+                letter-spacing: 1px;
+            }
+
+            /* Modificación: Usar grid para una mejor disposición de campos en el registro */
+            form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+            .full-width { grid-column: 1 / -1; } /* Clave para los campos que ocupan todo el ancho */
+
+            .input-group { position: relative; display: flex; align-items: center; }
+            /* Ajustar el estilo de los iconos para input-group cuando no se usen */
+            .input-group svg { position: absolute; left: 14px; width: 20px; height: 20px; fill: #b8c3d7; pointer-events: none; }
+            /* Ajustar el padding izquierdo de los inputs que no tienen icono (como Fecha de Nacimiento) */
+            input[name="cliente_fechaN"] { padding-left: 16px; }
+
+
+            input, select {
+                width: 100%;
+                padding: 16px 16px 16px 48px;
+                border: none;
+                border-radius: 12px;
+                background-color: rgba(255, 255, 255, 0.1); 
+                color: #fff; 
+                font-size: 16px;
+                transition: all 0.3s ease;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+                /* Estilos para el campo <select> */
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                cursor: pointer;
+            }
+
+            /* Ajustar colores de texto de opciones para que sean visibles */
+            select option {
+                background-color: #1e3a6c; 
+                color: #fff;
+            }
+
+            input::placeholder { color: #b8c3d7; opacity: 0.8; }
+            input:focus, select:focus { 
+                background-color: rgba(255, 255, 255, 0.2); 
+                outline: none; 
+                box-shadow: 0 0 0 3px #5ea9ff; 
+            }
+            
+            button {
+                grid-column: 1 / -1; /* Botón de submit siempre en full width */
+                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 16px 0;
+                background: linear-gradient(90deg, #007aff, #005cc9);
+                color: #fff;
+                font-weight: 700;
+                border: none;
+                border-radius: 12px;
+                font-size: 17px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 10px 25px rgba(0, 122, 255, 0.3);
+            }
+            button:disabled {
+                background: #4f5b72;
+                cursor: not-allowed;
+                box-shadow: none;
+            }
+            button:hover:enabled { 
+                background: linear-gradient(90deg, #005cc9, #007aff);
+                transform: translateY(-2px); 
+                box-shadow: 0 12px 30px rgba(0, 122, 255, 0.4); 
+            }
+
+            .btn-text { display: inline-block; }
+
+            .spinner {
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #fff;
+                border-radius: 50%;
+                width: 18px;
+                height: 18px;
+                margin-left: 10px;
+                display: none;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+            .footer-text { margin-top: 25px; text-align: center; font-size: 13px; color: #a3b0c8; }
+            
+            .alert-error {
+                background-color: rgba(220, 53, 69, 0.2);
+                color: #ff9999;
+                border: 1px solid #dc3545;
+                padding: 14px 18px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                font-size: 15px;
+                display: none;
+                align-items: center;
+                gap: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: all 0.5s ease;
+            }
+            .alert-error.show { display: flex; opacity: 1; transform: translateY(0); }
+            .alert-error svg { fill: #dc3545 !important; }
+            
+            .forgot-password a {
+                color: #007aff;
+                text-decoration: none;
+                font-weight: 600;
+                transition: color 0.2s;
+            }
+            .footer-text a {
+                position: relative;
+                color: #ffffff;
+                font-size: 15px;
+                text-decoration: none;
+                font-weight: 500;
+            }
+
+            .footer-text a::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                bottom: -4px;
+                width: 100%;
+                height: 2px;
+                color: #0044ff;
+                background: linear-gradient(90deg, #007aff, #7928ca);
+                transform: scaleX(0);
+                transform-origin: right;
+                transition: transform 0.3s ease;
+            }
+
+            .footer-text a:hover::after {
+                color: #0044ff;
+                transform: scaleX(1);
+                transform-origin: left;
+            }
+
+            /* Estilo para el icono del select */
+            .select-icon {
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 16px;
+                height: 16px;
+                fill: #b8c3d7;
+                pointer-events: none;
+                z-index: 2;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="overlay"></div>
+        <div class="login-card">
+            <img src="{{ url_for('static', filename='img/logopyme.png') }}"
+                alt="Logo" class="logo" />
+
+            <h2>Registro de Nuevo Cliente</h2>
+
+            <div id="error-msg" class="alert-error">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                </svg>
+                <span id="error-text"></span>
+            </div>
+
+            <form id="registerForm" action="{{ url_for('routes.register_client_saved') }}" method="post" novalidate>
+                <input type="hidden" name="g-recaptcha-response"
+                    id="g-recaptcha-response">
+                
+                <input type="hidden" name="asesorID" id="asesorIdInput" value="">
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                    <input type="text" name="cliente_nombre"
+                        placeholder="Nombre(s)" required />
+                </div>
+
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                    <input type="text" name="cliente_apellidos"
+                        placeholder="Apellidos" required />
+                </div>
+
+                <div class="input-group full-width">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path
+                            d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                    </svg>
+                    <input type="email" name="cliente_email"
+                        placeholder="Correo Electrónico" required />
+                </div>
+
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path
+                            d="M20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.01.24l-2.14 2.14c-2.73-1.44-5.18-3.89-6.62-6.62l2.14-2.14c.27-.27.35-.66.24-1.01C8.75 5.45 8.5 4.25 8.5 3c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1C3 13.04 10.96 21 21 21c.55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z" />
+                    </svg>
+                    <input type="tel" name="cliente_telefono"
+                        placeholder="Teléfono (opcional)" />
+                </div>
+
+                <div class="input-group">
+                    <input type="date" name="cliente_fechaN"
+                        placeholder="Fecha de Nacimiento" required />
+                </div>
+
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path
+                            d="M17 8V7a5 5 0 0 0-10 0v1H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1zm-6-1a3 3 0 0 1 6 0v1H11V7zm6 10H7v-5h10v5z" />
+                    </svg>
+                    <input type="password" name="cliente_clave"
+                        placeholder="Crear Contraseña" required />
+                </div>
+
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path
+                            d="M17 8V7a5 5 0 0 0-10 0v1H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1zm-6-1a3 3 0 0 1 6 0v1H11V7zm6 10H7v-5h10v5z" />
+                    </svg>
+                    <input type="password" name="cliente_clave_confirm"
+                        placeholder="Confirmar Contraseña" required />
+                </div>
+
+                <button type="submit" id="registerButton">
+                    <span class="btn-text">Registrar y Acceder</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+
+            <div class="footer-text" style="margin-top: 20px;">
+                ¿Ya tienes una cuenta? <a
+                    href="{{ url_for('routes.login_client') }}">Inicia sesión
+                    aquí</a>
+            </div>
+            <div class="footer-text">
+                Portal exclusivo para clientes de Potencial PyME.
+            </div>
+        </div>
+
+        <script>
+            // =========================================================
+            // >>> LÓGICA PARA CAPTURAR EL asesorID DE LA URL <<<
+            // =========================================================
+            document.addEventListener('DOMContentLoaded', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const asesorIdInput = document.getElementById('asesorIdInput');
+                const asesorID = urlParams.get('asesorID');
+                
+                // 1. Si se encuentra el ID en la URL, se rellena el campo oculto
+                if (asesorID) {
+                    asesorIdInput.value = asesorID;
+                    console.log(`Asesor ID capturado y listo para enviar: ${asesorID}`);
+                    
+                    // Opcional: Limpiar el sessionStorage si estaba ahí (solo si vienes de la URL)
+                    sessionStorage.removeItem('referralAsesorID'); 
+                } else if (sessionStorage.getItem('referralAsesorID')) {
+                    // 2. Si no está en la URL, se intenta recuperar del sessionStorage
+                    const storedAsesorID = sessionStorage.getItem('referralAsesorID');
+                    asesorIdInput.value = storedAsesorID;
+                    console.log(`Asesor ID recuperado de sessionStorage: ${storedAsesorID}`);
+                    
+                    // Nota: El backend debe manejar si el asesorID es nulo (asignación aleatoria)
+                }
+            });
+            // =========================================================
+            // >>> FIN LÓGICA DE REFERENCIA <<<
+            // =========================================================
+
+
+            const form = document.getElementById("registerForm");
+            const button = document.getElementById("registerButton");
+            const btnText = button.querySelector(".btn-text");
+            const spinner = button.querySelector(".spinner");
+            const errorMsg = document.getElementById("error-msg");
+            const errorText = document.getElementById("error-text");
+            const siteKey = '6LdN3eQrAAAAAMUaNDJkiYIOxX5ObS6be1J94wjm'; 
+
+            // Función para mostrar errores de validación local
+            function displayError(message) {
+                errorText.textContent = message;
+                errorMsg.classList.add("show");
+                setTimeout(() => {
+                    errorMsg.classList.remove("show");
+                }, 5000); 
+            }
+            
+            // Función para validar que las contraseñas coincidan
+            function validatePasswords() {
+                const password = form.querySelector('input[name="cliente_clave"]').value;
+                const confirmPassword = form.querySelector('input[name="cliente_clave_confirm"]').value;
+                
+                if (!password || !confirmPassword) {
+                    displayError("Los campos de contraseña son obligatorios.");
+                    return false;
+                }
+
+                if (password !== confirmPassword) {
+                    displayError("Las contraseñas no coinciden.");
+                    return false;
+                }
+                if (password.length < 8) {
+                    displayError("La contraseña debe tener al menos 8 caracteres.");
+                    return false;
+                }
+                return true;
+            }
+
+            // Al enviar el formulario (petición AJAX/Fetch)
+            form.addEventListener("submit", async function(e) {
+                e.preventDefault(); 
+                
+                // 1. Validaciones locales (Contraseñas, Campos vacíos obligatorios de HTML)
+                if (!form.reportValidity() || !validatePasswords()) {
+                    return; // Detiene el proceso si falla la validación local
+                }
+                
+                // 2. Mostrar Modal de Carga (SweetAlert2 Preloader)
+                Swal.fire({
+                    title: 'Registrando cliente...',
+                    html: 'Por favor, espera. Estamos verificando tu información.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // 3. Obtener el token de reCAPTCHA v3
+                let recaptchaToken;
+                try {
+                    recaptchaToken = await grecaptcha.execute(siteKey);
+                } catch (error) {
+                    Swal.close();
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error de verificación",
+                        text: "No se pudo generar el token reCAPTCHA. Inténtalo de nuevo."
+                    });
+                    return;
+                }
+                
+                // 4. Preparar datos para el envío (incluyendo el token)
+                const formData = new FormData(form);
+                formData.set("g-recaptcha-response", recaptchaToken); 
+
+                // 5. Enviar petición AJAX
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    Swal.close(); // Cerrar modal de carga
+
+                    if (response.ok && result.success) {
+                        // ÉXITO
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Registro Exitoso!',
+                            text: result.message,
+                            timer: 3000,
+                            showConfirmButton: false,
+                            didClose: () => {
+                                // Limpiar sessionStorage del ID de referencia al finalizar el registro
+                                sessionStorage.removeItem('referralAsesorID');
+                                window.location.href = result.redirect_url; // Redirigir al login o dashboard
+                            }
+                        });
+
+                    } else {
+                        // ERROR (Status 400 o 500)
+                        let errorMessages = result.errors ? result.errors.join('<br>') : result.message || 'Ocurrió un error desconocido.';
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Fallo en el Registro',
+                            html: errorMessages,
+                            footer: 'Por favor, revisa tus datos e inténtalo de nuevo.'
+                        });
+                    }
+
+                } catch (error) {
+                    Swal.close();
+                    console.error("Fetch error:", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de Conexión',
+                        text: 'No se pudo contactar al servidor. Revisa tu conexión a internet.'
+                    });
+                }
+                
+            });
+        </script>
+    </body>
+</html>

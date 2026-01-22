@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>Panel - {% block title %}Dashboard{% endblock %}</title>
+
+        <meta name="csrf-token" content="{{ session.get('_csrf_token') }}">
+        
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+        
+        <link rel="shortcut icon"
+            href="{{ url_for('static', filename='img/Logo2.png') }}" 
+            type="image/x-icon">
+    </head>
+    <body
+        class="bg-gradient-to-br from-gray-50 to-gray-200 text-gray-800 font-sans flex min-h-screen">
+
+        <aside
+            class="w-64 bg-white border-r border-gray-200 shadow-lg flex flex-col">
+            <div class="h-20 flex items-center justify-center">
+                <img
+                    src="{{ url_for('static', filename='img/Logo2.png') }}"
+                    alt="Logo" class="w-29">
+            </div>
+            <div class="px-6 py-4 border-b border-gray-200 text-center">
+                {% if session['usuario_foto'] %}
+                    <img src="{{ url_for('static', filename='images/perfiles/' ~ session['usuario_foto']) }}" alt="Foto de Perfil" class="w-16 h-16 rounded-full mx-auto mb-2 shadow-md">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/default.png') }}" alt="Foto de Perfil por Defecto" class="w-16 h-16 rounded-full mx-auto mb-2 shadow-md">
+                {% endif %}
+                <p class="font-medium">
+                    {{ session['usuario_nombre'] }} {{
+                    session.get('usuario_apellidos', '') }}
+                </p>
+                <p class="text-sm text-gray-500">{{ session['usuario_email']
+                    }}</p>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 space-y-2 text-sm">
+                <a href="{{ url_for('routes.dashboard_financiera') }}"
+                    class="block px-4 py-2 rounded-lg bg-gray-100 font-semibold transition">
+                    <i class="bi bi-house-door me-2"></i> Inicio
+                </a>
+
+                <div>
+                    <button onclick="toggleMenu('adminSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center">
+                        <span><i class="bi bi-person-badge me-2"></i> Asesores</span>
+                        <span id="icon-admin">▼</span>
+                    </button>
+                    <div id="adminSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="{{ url_for('routes.dashboard_asesorcreate') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-person-plus me-2"></i> Nuevo Asesor
+                        </a>
+                        <a href="{{ url_for('routes.dashboard_asesor_lista') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-ul me-2"></i> Lista de Asesores
+                        </a>
+                    </div>
+                </div>
+
+
+                <div>
+                    <button onclick="toggleMenu('consultaSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center">
+                        <span><i class="bi bi-search me-2"></i> Proyección Financiera</span>
+                        <span id="icon-consulta">▼</span>
+                    </button>
+                    <div id="consultaSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="{{ url_for('routes.dashboard_liquidados') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-file-earmark-plus me-2"></i> Proyeccion liquidados
+                        </a>
+                        <!-- <a href="{{ url_for('routes.api_reporte_liquidaciones') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-file-earmark-plus me-2"></i> Proyeccion liquidados
+                        </a> -->
+                        <a href="{{ url_for('routes.dashboard_mora') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-task me-2"></i> Proyeccion mora
+                        </a>
+                        <a href="{{ url_for('routes.dashboard_pagos') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-task me-2"></i> Proyeccion pagos
+                        </a>
+                        <a href="{{ url_for('routes.dashboard_prestamos') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-task me-2"></i> Proyeccion prestamos
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="toggleMenu('consultaSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center">
+                        <span><i class="bi bi-search me-2"></i> Consultas y reportes</span>
+                        <span id="icon-consulta">▼</span>
+                    </button>
+                    <div id="consultaSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="{{ url_for('routes.dashboard_asesorcreate') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-file-earmark-plus me-2"></i> Nueva consulta y reportes
+                        </a>
+                        <a href="{{ url_for('routes.dashboard_consulta_reporte') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-task me-2"></i> Lista de consultas y reportes
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="toggleMenu('evaluacionesSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center">
+                        <span><i class="bi bi-clipboard-check me-2"></i> Evaluaciones de Crédito</span>
+                        <span id="icon-evaluaciones">▼</span>
+                    </button>
+                    <div id="evaluacionesSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="{{ url_for('routes.dashboard_create_evaluacion') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-file-plus me-2"></i> Nueva Evaluación
+                        </a>
+                        <a href="{{ url_for('routes.dashboard_views_evaluaciones') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-check me-2"></i> Lista de Evaluaciones
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="toggleMenu('prudctosSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center">
+                        <span><i class="bi bi-book me-2"></i> Productos/Catalogo</span>
+                        <span id="icon-prudctos">▼</span>
+                    </button>
+                    <div id="prudctosSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="{{ url_for('routes.prestamos_lista') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-pencil-square me-2"></i> Gestion de prestamos
+                        </a>
+                        <a href="{{ url_for('routes.catalogos') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-collection me-2"></i> Catálogos
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="toggleMenu('chatOptions')"
+                        class="w-full text-left block px-4 py-2 rounded-lg hover:bg-gray-100 transition flex justify-between items-center text-blue-600 font-semibold">
+                        <span><i class="bi bi-chat-dots me-2"></i> Chat</span>
+                        <span id="icon-chat">▼</span>
+                    </button>
+                    <div id="chatOptions"
+                        class="ml-6 mt-2 space-y-1 hidden">
+                        <a href
+                            class="block w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 transition text-sm">
+                            <i class="bi bi-file-text me-2"></i> Analizar SAT
+                        </a>
+                        <a href
+                            class="block w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 transition text-sm">
+                            <i class="bi bi-bank me-2"></i> Analizar Estados de Cuenta
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="toggleMenu('clientesSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center">
+                        <span><i class="bi bi-people me-2"></i> Clientes</span>
+                        <span id="icon-clientes">▼</span>
+                    </button>
+                    <div id="clientesSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="#"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-person-plus me-2"></i> Nuevo Cliente
+                        </a>
+                        <a href="{{ url_for('routes.financiera_clientes_lista') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-list-ul me-2"></i> Lista de Clientes
+                        </a>
+                    </div>
+                </div>
+                
+                <a href="#"
+                    class="block px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+                    <i class="bi bi-calculator me-2"></i> Cotizaciones
+                </a>
+                
+                <div>
+                    <button onclick="toggleMenu('configuracionSubmenu')"
+                        class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 to-blue-50">
+                        <span><i class="bi bi-gear me-2"></i> Configuración</span>
+                        <span id="icon-configuracion">▼</span>
+                    </button>
+                    <div id="configuracionSubmenu"
+                        class="ml-4 mt-1 space-y-1 hidden">
+                        <a href="{{ url_for('routes.dashboard_configuracion') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-purple-100 text-sm font-semibold text-purple-600">
+                            <i class="bi bi-sliders me-2"></i> Dashboard Config
+                        </a>
+                        <a href="{{ url_for('routes.configuracion_general') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-toggles me-2"></i> Configuración General
+                        </a>
+                        <a href="{{ url_for('routes.auditoria') }}"
+                            class="block px-4 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                            <i class="bi bi-clipboard-data me-2"></i> Auditoría
+                        </a>
+                    </div>
+                </div>
+                
+                <a href="calendario.php"
+                    class="block px-4 py-2 rounded-lg hover:bg-gray-100 transition text-blue-600">
+                    <i class="bi bi-calendar-event me-2"></i> Calendario
+                </a>
+            </nav>
+
+            <div class="p-4 mt-auto text-center">
+                <a href="{{ url_for('routes.logout') }}"
+                    class="inline-block bg-red-100 text-red-500 px-4 py-2 rounded-full hover:bg-red-200 hover:text-red-600 text-sm shadow-sm">
+                    <i class="bi bi-door-open"></i> Cerrar sesión
+                </a>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-10 overflow-y-auto">
+            
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">{{ self.title() }}</h1>
+                
+                <div class="flex items-center space-x-6 bg-white px-6 py-3 rounded-full shadow-sm border border-gray-200">
+                    
+                    <div class="text-right">
+                         <span class="text-sm font-medium text-gray-700">
+                            {{ session['usuario_nombre'] }} {{ session.get('usuario_apellidos', '') }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        {% if session['usuario_foto'] %}
+                            <img src="{{ url_for('static', filename='images/perfiles/' ~ session['usuario_foto']) }}" alt="Foto de Perfil" class="w-9 h-9 rounded-full border-2 border-gray-200">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/perfiles/default.png') }}" alt="Foto de Perfil por Defecto" class="w-9 h-9 rounded-full border-2 border-gray-200">
+                        {% endif %}
+                    </div>
+
+                    <div class="border-l h-10 border-gray-200"></div>
+
+                    <div class="relative">
+                        <button id="btnNotificaciones" class="relative text-gray-600 hover:text-blue-600 text-2xl focus:outline-none">
+                            <i class="bi bi-bell"></i>
+                            
+                            {% set notificaciones = notificaciones|default([]) %}
+                            {% if notificaciones|length > 0 %}
+                            <span class="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 border-2 border-white">
+                                {{ notificaciones|length }}
+                            </span>
+                            {% endif %}
+                        </button>
+
+                        <div id="listaNotificaciones" class="hidden absolute right-0 mt-3 w-80 bg-white text-gray-700 border border-gray-200 rounded-lg shadow-xl overflow-hidden z-50">
+                            <div class="px-4 py-2 bg-gray-50 font-semibold border-b text-gray-800">Notificaciones</div>
+                            <ul class="max-h-60 overflow-y-auto">
+                                {% for noti in notificaciones %}
+                                <li class="px-4 py-3 hover:bg-gray-50 border-b text-sm">
+                                    {{ noti.mensaje }}
+                                    <div class="text-xs text-gray-400 mt-1">{{ noti.fecha }}</div>
+                                </li>
+                                {% else %}
+                                <li class="px-4 py-3 text-gray-400 text-sm text-center">No hay notificaciones.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {% block content %}{% endblock %}
+        </main>
+
+        <script>
+            // Script para menús colapsables
+            function toggleMenu(id) {
+                const submenu = document.getElementById(id);
+                submenu.classList.toggle('hidden');
+                
+                // Intenta encontrar el ícono; no todos los botones lo tienen
+                const iconId = 'icon-' + id.replace('Submenu', '').toLowerCase();
+                const icon = document.getElementById(iconId);
+                
+                // Verifica si el ícono existe antes de cambiar su texto
+                if (icon) {
+                    icon.textContent = submenu.classList.contains('hidden') ? '▼' : '▲';
+                }
+            }
+
+            // --- NUEVO SCRIPT (de layout_cliente) ---
+            // Script para dropdown de notificaciones
+            const btnNotif = document.getElementById("btnNotificaciones");
+            const listaNotif = document.getElementById("listaNotificaciones");
+
+            if (btnNotif) {
+                btnNotif.addEventListener("click", () => {
+                    listaNotif.classList.toggle("hidden");
+                });
+            }
+
+            // Ocultar notificaciones si se hace clic fuera
+            window.addEventListener("click", (e) => {
+                if (btnNotif && !btnNotif.contains(e.target) && !listaNotif.contains(e.target)) {
+                    listaNotif.classList.add("hidden");
+                }
+            });
+        </script>
+    </body>
+</html>

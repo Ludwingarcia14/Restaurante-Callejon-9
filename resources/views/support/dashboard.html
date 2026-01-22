@@ -1,0 +1,341 @@
+{% extends "layout/layout_support.html" %}
+{% block page_title %}Panel de Soporte{% endblock %}
+{% block header_title %}Dashboard Soporte{% endblock %}
+
+{% block content %}
+<script>
+document.addEventListener("DOMContentLoaded", async () => {    
+    try {
+        const res = await fetch("/api/dashboard/soporte");
+        
+        
+        if (!res.ok) {
+            throw new Error(`Error HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        if (!data.resumen) {
+            throw new Error("El objeto 'resumen' no existe en la respuesta");
+        }
+
+        // === MÉTRICAS ===
+        const elTotal = document.getElementById("tickets-total");
+        const elAbiertos = document.getElementById("tickets-abiertos");
+        const elCerrados = document.getElementById("tickets-cerrados");
+        const elCriticos = document.getElementById("tickets-criticos");
+        
+        if (elTotal) {
+            elTotal.innerText = data.resumen.total || 0;
+            console.log("Total tickets:", data.resumen.total);
+        }
+        if (elAbiertos) {
+            elAbiertos.innerText = data.resumen.abiertos || 0;
+            console.log("Abiertos:", data.resumen.abiertos);
+        }
+        if (elCerrados) {
+            elCerrados.innerText = data.resumen.cerrados || 0;
+            console.log("Cerrados:", data.resumen.cerrados);
+        }
+        if (elCriticos) {
+            elCriticos.innerText = data.resumen.criticos || 0;
+            console.log("Críticos:", data.resumen.criticos);
+        }
+
+        // === TICKETS ===
+        const tbody = document.getElementById("tabla-tickets");
+        if (tbody && data.tickets) {
+            console.log("Tickets encontrados:", data.tickets.length);
+            
+            if (data.tickets.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-gray-500">
+                            No hay tickets registrados
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = data.tickets.map(t => `
+                    <tr class="border-b hover:bg-gray-50 transition">
+                        <td class="py-2 px-3 text-xs">${t._id || "—"}</td>
+                        <td class="py-2 px-3">${t.cliente || "Sin especificar"}</td>
+                        <td class="py-2 px-3">${t.tipo || "General"}</td>
+                        <td class="py-2 px-3">
+                            <span class="px-2 py-1 rounded text-xs ${
+                                t.estado === "pendiente" ? "bg-yellow-100 text-yellow-800" :
+                                t.estado === "en_revision" ? "bg-blue-100 text-blue-800" :
+                                t.estado === "cerrado" ? "bg-gray-100 text-gray-800" : 
+                                "bg-green-100 text-green-800"
+                            }">
+                                ${t.estado}
+                            </span>
+                        </td>
+                        <td class="py-2 px-3">
+                            <span class="px-2 py-1 rounded text-xs ${
+                                t.prioridad === "alta" ? "bg-red-100 text-red-800" :
+                                t.prioridad === "media" ? "bg-orange-100 text-orange-800" :
+                                "bg-green-100 text-green-800"
+                            }">
+                                ${t.prioridad || "media"}
+                            </span>
+                        </td>
+                        <td class="py-2 px-3">${t.asignado_a || "Sin asignar"}</td>
+                    </tr>
+                `).join("");
+            }
+        }
+
+        // === ALERTAS ===
+        const listaAlertas = document.getElementById("lista-alertas");
+        if (listaAlertas) {
+            if (!data.alertas || data.alertas.length === 0) {
+                listaAlertas.innerHTML = `
+                    <li class="bg-gray-100 text-gray-500 p-3 rounded-lg text-center">
+                        Sin alertas pendientes
+                    </li>
+                `;
+            } else {
+                listaAlertas.innerHTML = data.alertas.map(a => `
+                    <li class="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <strong class="text-red-700">Ticket #${a._id.slice(-6)}</strong>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Estado: <span class="font-semibold">${a.estado}</span>
+                                </p>
+                            </div>
+                            <span class="text-xs text-gray-500">${a.fecha_creacion || ""}</span>
+                        </div>
+                    </li>
+                `).join("");
+            }
+        }
+
+        // === GRÁFICA DE ESTADOS ===
+        const graf1 = document.getElementById("grafica-volumen");
+        if (graf1 && data.estados && data.estados.length > 0) {
+            console.log("Estados para gráfica:", data.estados);
+            const ctx1 = graf1.getContext("2d");
+            new Chart(ctx1, {
+                type: "bar",
+                data: {
+                    labels: data.estados.map(e => e.estado || "sin estado"),
+                    datasets: [{
+                        label: "Tickets",
+                        data: data.estados.map(e => e.cantidad || 0),
+                        backgroundColor: [
+                            "rgba(59, 130, 246, 0.8)",
+                            "rgba(16, 185, 129, 0.8)",
+                            "rgba(245, 158, 11, 0.8)",
+                            "rgba(239, 68, 68, 0.8)"
+                        ],
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Tickets: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+            console.log("✅ Gráfica de estados creada");
+        } else {
+            console.warn("⚠️ No hay datos de estados para graficar");
+        }
+
+        // === GRÁFICA EVOLUCIÓN ===
+        const graf2 = document.getElementById("grafica-tiempo");
+        if (graf2 && data.evolucion && data.evolucion.length > 0) {
+            console.log("Evolución para gráfica:", data.evolucion);
+            const ctx2 = graf2.getContext("2d");
+            new Chart(ctx2, {
+                type: "line",
+                data: {
+                    labels: data.evolucion.map(e => e.mes || ""),
+                    datasets: [{
+                        label: "Tickets por Mes",
+                        data: data.evolucion.map(e => e.cantidad || 0),
+                        borderColor: "rgba(239, 68, 68, 0.8)",
+                        backgroundColor: "rgba(239, 68, 68, 0.1)",
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: "rgba(239, 68, 68, 1)",
+                        pointBorderColor: "#fff",
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Tickets: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        } else {
+            console.warn("⚠️ No hay datos de evolución para graficar");
+            graf2.parentElement.innerHTML = `
+                <h3 class="font-semibold mb-2">Evolución</h3>
+                <div class="text-center py-8 text-gray-500">
+                    Sin datos históricos disponibles
+                </div>
+            `;
+        }
+
+
+    } catch (err) {
+        console.error("Error crítico:", err);
+        console.error("Stack trace:", err.stack);
+        
+        // Mostrar error en pantalla
+        const container = document.querySelector(".grid");
+        if (container) {
+            const errorDiv = document.createElement("div");
+            errorDiv.className = "col-span-12 bg-red-100 border-l-4 border-red-500 p-4 rounded";
+            errorDiv.innerHTML = `
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">⚠️</span>
+                    <div>
+                        <h3 class="font-bold text-red-800">Error al cargar el dashboard</h3>
+                        <p class="text-red-700 mt-1">${err.message}</p>
+                        <p class="text-sm text-red-600 mt-2">
+                            Abre la consola del navegador (F12) para más detalles
+                        </p>
+                    </div>
+                </div>
+            `;
+            container.insertBefore(errorDiv, container.firstChild);
+        }
+    }
+});
+</script>
+
+<!-- ESTRUCTURA DEL DASHBOARD -->
+<div class="grid grid-cols-12 gap-6 mt-6">
+    <!-- MÉTRICAS -->
+    <div class="col-span-12 md:col-span-3">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="text-sm font-medium opacity-90">Total Tickets</div>
+            <div class="text-3xl font-bold mt-2" id="tickets-total">
+                <span class="animate-pulse">...</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-span-12 md:col-span-3">
+        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="text-sm font-medium opacity-90">Abiertos</div>
+            <div class="text-3xl font-bold mt-2" id="tickets-abiertos">
+                <span class="animate-pulse">...</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-span-12 md:col-span-3">
+        <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="text-sm font-medium opacity-90">Cerrados</div>
+            <div class="text-3xl font-bold mt-2" id="tickets-cerrados">
+                <span class="animate-pulse">...</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-span-12 md:col-span-3">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="text-sm font-medium opacity-90">Críticos</div>
+            <div class="text-3xl font-bold mt-2" id="tickets-criticos">
+                <span class="animate-pulse">...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICAS -->
+    <div class="col-span-12 md:col-span-6 mt-4">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="font-semibold text-lg mb-4 text-gray-800">📊 Volumen por estado</h3>
+            <canvas id="grafica-volumen" width="400" height="200"></canvas>
+        </div>
+    </div>
+    
+    <div class="col-span-12 md:col-span-6 mt-4">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="font-semibold text-lg mb-4 text-gray-800">📈 Evolución temporal</h3>
+            <canvas id="grafica-tiempo" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- TABLA DE TICKETS -->
+    <div class="col-span-12 md:col-span-8 mt-4">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="font-semibold text-lg mb-4 text-gray-800">📋 Tickets recientes</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50">
+                        <tr class="border-b-2 border-gray-200">
+                            <th class="py-3 px-4 font-semibold text-gray-700">ID</th>
+                            <th class="py-3 px-4 font-semibold text-gray-700">Cliente</th>
+                            <th class="py-3 px-4 font-semibold text-gray-700">Tipo</th>
+                            <th class="py-3 px-4 font-semibold text-gray-700">Estado</th>
+                            <th class="py-3 px-4 font-semibold text-gray-700">Prioridad</th>
+                            <th class="py-3 px-4 font-semibold text-gray-700">Asignado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-tickets">
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-gray-400">
+                                <div class="flex items-center justify-center">
+                                    <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Cargando tickets...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="col-span-12 md:col-span-4 mt-4">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="font-semibold text-lg mb-4 text-gray-800">🔔 Alertas</h3>
+            <ul id="lista-alertas" class="space-y-3">
+                <li class="bg-gray-100 text-gray-500 p-4 rounded-lg text-center animate-pulse">
+                    Cargando alertas...
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

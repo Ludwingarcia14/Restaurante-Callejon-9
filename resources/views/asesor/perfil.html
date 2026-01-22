@@ -1,0 +1,442 @@
+{% extends "layout/layout_asesor.html" %}
+{% block title %}Configuración de Perfil{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+    /* Layout */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    @media (min-width: 992px) {
+        .profile-grid {
+            grid-template-columns: 280px 1fr;
+        }
+    }
+
+    /* Estilo de Tarjeta Moderna */
+    .card-modern {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    /* Menú Lateral */
+    .nav-profile .nav-link {
+        display: flex; align-items: center; gap: 0.75rem; padding: 1rem;
+        color: #64748b; font-weight: 500; border-radius: 0.75rem; transition: all 0.2s;
+    }
+    .nav-profile .nav-link:hover { background-color: #f8fafc; color: #1e293b; }
+    .nav-profile .nav-link.active {
+        background-color: #eef2ff; color: #4f46e5; font-weight: 600; border: 1px solid #e0e7ff;
+    }
+    .nav-profile i { font-size: 1.25rem; }
+
+    /* Avatar */
+    .avatar-container {
+        width: 100px; height: 100px; background: #eef2ff; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.5rem; color: #4f46e5; margin: 0 auto 1rem;
+        border: 4px solid white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); font-weight: bold;
+    }
+
+    /* Inputs */
+    .form-control {
+        border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1rem; font-size: 0.875rem;
+    }
+    .form-control:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); outline: none; }
+    .form-control:disabled { background-color: #f8fafc; color: #64748b; }
+
+    /* Switch 2FA */
+    .toggle-switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    input:checked + .toggle-slider { background-color: #10b981; }
+    input:checked + .toggle-slider:before { transform: translateX(24px); }
+
+    /* Caja 2FA */
+    .box-2fa { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; margin-top: 1.5rem; display: none; animation: fadeIn 0.3s ease-out; }
+    .box-2fa.active { display: block; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="max-w-7xl mx-auto p-6 fade-up">
+
+    <div class="flex items-center gap-3 mb-8">
+        <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+            <i class="ri-user-settings-line text-2xl"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Perfil de Asesor</h1>
+            <p class="text-sm text-gray-500">Administra tu información y configuración de cuenta.</p>
+        </div>
+    </div>
+
+    <div id="messageBox" class="d-none alert rounded-lg shadow-sm border-0 mb-6 flex items-center gap-3" role="alert"></div>
+
+    <div class="profile-grid">
+        
+        <div>
+            <div class="card-modern p-6 mb-6 text-center">
+                <div class="avatar-container">
+                    {{ session['usuario_nombre'][0].upper() }}
+                </div>
+                <h3 class="font-bold text-gray-800 text-lg">{{ session['usuario_nombre'] }}</h3>
+                <p class="text-sm text-gray-500 mt-1 badge bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full">Asesor Activo</p>
+            </div>
+
+            <div class="card-modern p-3 nav-profile" role="tablist">
+                <a href="#profile" data-bs-toggle="tab" class="nav-link active" role="tab">
+                    <i class="ri-id-card-line"></i> <span>Mi Perfil</span>
+                </a>
+                <a href="#account" data-bs-toggle="tab" class="nav-link" role="tab">
+                    <i class="ri-settings-3-line"></i> <span>Cuenta</span>
+                </a>
+                <a href="#security" data-bs-toggle="tab" class="nav-link" role="tab">
+                    <i class="ri-shield-keyhole-line"></i> <span>Seguridad</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="card-modern p-8 tab-content">
+            
+            <div class="tab-pane fade show active" id="profile">
+                <h3 class="text-lg font-bold text-gray-800 mb-6 border-b border-gray-100 pb-4 flex items-center gap-2">
+                    <i class="ri-user-line text-indigo-500"></i> Información Personal y Laboral
+                </h3>
+
+                {% if asesor and usuario %}
+                <form>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Nombre Completo</label>
+                            <input type="text" class="form-control" value="{{ usuario.usuario_nombre }} {{ usuario.usuario_apellidos }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Correo Electrónico</label>
+                            <input type="email" class="form-control" value="{{ usuario.usuario_email }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">RFC</label>
+                            <input type="text" class="form-control font-monospace" id="rfcField" value="{{ asesor.rfc }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Zona Asignada</label>
+                            <input type="text" class="form-control" value="{{ asesor.zona }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Supervisor</label>
+                            <input type="text" class="form-control" value="{{ asesor.supervisor }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Estado</label>
+                            <input type="text" class="form-control text-success fw-bold" value="{{ asesor.estado }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Fecha de Ingreso</label>
+                            <input type="text" class="form-control" id="fechaIngreso" value="{{ asesor.fecha_ingreso }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary small">Días Activo</label>
+                            <input type="text" class="form-control text-primary fw-bold" id="diasActivo" value="0" disabled>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border mt-4 text-muted small d-flex align-items-center gap-2">
+                        <i class="ri-information-line text-primary fs-5"></i>
+                        Esta información es administrada por el Super Administrador.
+                    </div>
+                </form>
+
+                <hr class="my-5 border-gray-100">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="p-4 rounded-2xl border bg-gradient-to-br from-white to-blue-50 text-center hover:shadow-md transition">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="ri-trophy-fill text-xl"></i>
+                            </div>
+                            <h2 class="display-6 fw-bold text-blue-700 mb-0">A+</h2>
+                            <small class="text-muted text-uppercase fw-bold">Calificación</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-4 rounded-2xl border bg-gradient-to-br from-white to-emerald-50 text-center hover:shadow-md transition">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="ri-line-chart-fill text-xl"></i>
+                            </div>
+                            <h2 class="display-6 fw-bold text-emerald-700 mb-0">98%</h2>
+                            <small class="text-muted text-uppercase fw-bold">Efectividad</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="ri-error-warning-line display-4 text-warning"></i>
+                    <p class="mt-2">No se encontró información del asesor.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="account">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="ri-settings-3-line text-indigo-500"></i> Configuración de Cuenta
+                </h3>
+                <p class="text-muted mb-4">Configura tu cuenta o elimina tu usuario del sistema.</p>
+                
+                <div class="p-4 border border-red-100 bg-red-50 rounded-xl flex items-center justify-between">
+                    <div>
+                        <strong class="text-danger d-block">Zona de Peligro</strong>
+                        <small class="text-danger-emphasis">La eliminación es irreversible.</small>
+                    </div>
+                    <button class="btn btn-danger btn-sm px-4">Eliminar Cuenta</button>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="security">
+                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i class="ri-shield-keyhole-line text-indigo-500"></i> Seguridad
+                </h3>
+
+                <form class="mb-5">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Contraseña Actual</label>
+                            <input type="password" class="form-control" placeholder="********">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Nueva Contraseña</label>
+                            <input type="password" class="form-control" placeholder="********">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Confirmar</label>
+                            <input type="password" class="form-control" placeholder="********">
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-dark px-4">Actualizar Contraseña</button>
+                    </div>
+                </form>
+
+                <hr class="my-5 border-gray-100">
+
+                <h5 class="font-bold text-gray-700 mb-3">Autenticación de Dos Pasos (2FA)</h5>
+                <div id="status2FA" class="alert mb-4"></div>
+
+                <div id="2faControlPanel">
+                    <div id="2faActivationSection">
+                        <div class="d-flex align-items-center justify-content-between p-3 border rounded-xl bg-light mb-3">
+                            <div>
+                                <strong class="d-block text-dark">Activar 2FA</strong>
+                                <small class="text-muted">Añade una capa extra de seguridad.</small>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="twoFactorToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="box-2fa" id="twoFactorBox">
+                            <label class="form-label fw-bold mb-2">1. Método de verificación</label>
+                            <select id="twoFactorMethod" class="form-control mb-4">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="email">📧 Correo Electrónico</option>
+                                <option value="app">📱 App Autenticadora</option>
+                            </select>
+
+                            <div id="methodContent" style="display: none;">
+                                <div id="appContent" style="display: none;" class="text-center mb-4">
+                                    <div class="p-3 bg-white border rounded d-inline-block mb-3">
+                                        <div id="qrPlaceholder" class="text-muted small">Cargando QR...</div>
+                                    </div>
+                                    <p class="small text-muted">Clave: <strong id="setupKey" class="font-monospace bg-light px-2 rounded">...</strong></p>
+                                </div>
+
+                                <div id="emailContent" style="display: none;" class="alert alert-info small mb-4">
+                                    <i class="ri-mail-send-line me-1"></i> Se enviará un código a tu correo registrado.
+                                </div>
+
+                                <div class="row justify-content-center">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-center d-block fw-bold">2. Código de 6 dígitos</label>
+                                        <input type="text" class="form-control text-center fs-5 letter-spacing-2 mb-3" id="otpCodeVerify" placeholder="000000" maxlength="6">
+                                        <button class="btn btn-primary w-100 mb-2" id="verifyAndEnable">Verificar y Activar</button>
+                                        <button class="btn btn-light w-100 btn-sm text-muted" id="cancel2FA">Cancelar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="2faDeactivationSection" style="display: none;" class="text-center p-4 bg-success-subtle border border-success-subtle rounded-xl">
+                        <i class="ri-shield-check-fill text-success fs-1 mb-2"></i>
+                        <h5 class="text-success fw-bold">Tu cuenta está protegida</h5>
+                        <p class="text-success-emphasis small mb-3">La autenticación de dos pasos está activa.</p>
+                        <button class="btn btn-outline-danger btn-sm" id="disable2FA">Desactivar protección</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(function(){
+    // --- LÓGICA 2FA (Mantenida) ---
+    let is2FAActive = {{ 'true' if session['2fa_enabled'] else 'false' }};
+
+    function showMessage(message, type = 'info') {
+        const box = $('#messageBox');
+        let icon = 'ri-information-line';
+        let colorClass = 'alert-info';
+
+        if(type === 'success') { colorClass = 'alert-success'; icon = 'ri-checkbox-circle-line'; }
+        if(type === 'error') { colorClass = 'alert-danger'; icon = 'ri-error-warning-line'; }
+        if(type === 'warning') { colorClass = 'alert-warning'; icon = 'ri-alert-line'; }
+
+        box.attr('class', `d-flex alert rounded-lg shadow-sm border mb-6 flex items-center gap-3 ${colorClass}`);
+        box.html(`<i class="${icon} fs-5"></i> <span>${message}</span>`);
+    }
+
+    function updateSecurityStatusUI() {
+        const statusDiv = $('#status2FA');
+        if (is2FAActive) {
+            statusDiv.attr('class', 'alert alert-success d-flex align-items-center gap-2');
+            statusDiv.html('<i class="ri-check-double-line fs-5"></i> <strong>Estado:</strong> 2FA ACTIVADO');
+            $('#2faActivationSection').hide();
+            $('#2faDeactivationSection').show();
+        } else {
+            statusDiv.attr('class', 'alert alert-warning d-flex align-items-center gap-2');
+            statusDiv.html('<i class="ri-error-warning-fill fs-5"></i> <strong>Estado:</strong> 2FA DESACTIVADO');
+            $('#2faActivationSection').show();
+            $('#2faDeactivationSection').hide();
+            $('#twoFactorToggle').prop('checked', false);
+            resetTwoFactorBox();
+        }
+    }
+
+    function resetTwoFactorBox() {
+        $('#twoFactorMethod').val('');
+        $('#methodContent, #appContent, #emailContent').hide();
+        $('#twoFactorBox').removeClass('active');
+        $('#otpCodeVerify').val('');
+    }
+
+    // --- AJAX Backend ---
+    function generateReal2FAKey(method) {
+        if(method === 'app') {
+            $('#qrPlaceholder').html('<div class="spinner-border text-primary spinner-border-sm" role="status"></div>');
+            $('#setupKey').text('Generando...');
+        } else {
+            showMessage("Enviando código...", 'info');
+        }
+
+        $.ajax({
+            url: "{{ url_for('routes.generate_2fa_setup') }}", 
+            method: 'POST', contentType: "application/json", 
+            data: JSON.stringify({ tipo: method }),
+            success: function(response) {
+                if (response.status === 'success') {
+                    if (method === 'app') {
+                        $('#qrPlaceholder').html(`<img src="${response.qr_image}" class="img-fluid" style="max-width: 150px;">`);
+                        $('#setupKey').text(response.secret_key);
+                    } else {
+                        showMessage(`✅ Código enviado a tu correo.`, 'success');
+                    }
+                } else {
+                    showMessage(`❌ Error: ${response.message}`, 'error');
+                }
+            },
+            error: function() { showMessage("Error de conexión.", 'error'); }
+        }); 
+    }
+  
+    function verifyAndEnableReal2FA(code) { 
+        $.ajax({ 
+            url: "{{ url_for('routes.verify_and_enable_2fa') }}",
+            method: 'POST', contentType: "application/json",
+            data: JSON.stringify({ code: code }),
+            success: function(response) {
+                if (response.status === 'success') { 
+                    is2FAActive = true;
+                    updateSecurityStatusUI();
+                    showMessage(`✅ 2FA activada con éxito!`, 'success');
+                } else {
+                    showMessage(`❌ ${response.message}`, 'error'); 
+                }
+            },
+            error: function() { showMessage("Error de servidor.", 'error'); }
+        });
+    }
+
+    // --- Events ---
+    $('#twoFactorToggle').change(function() {
+        if(this.checked) $('#twoFactorBox').addClass('active');
+        else resetTwoFactorBox();
+    });
+
+    $('#twoFactorMethod').change(function() {
+        let m = $(this).val();
+        $('#methodContent, #appContent, #emailContent').hide();
+        if(m) {
+            $('#methodContent').show();
+            if(m === 'app') $('#appContent').show();
+            else $('#emailContent').show();
+            generateReal2FAKey(m);
+        }
+    });
+
+    $('#verifyAndEnable').click(function() {
+        let code = $('#otpCodeVerify').val();
+        if(code.length !== 6) showMessage('Código inválido', 'error');
+        else verifyAndEnableReal2FA(code);
+    });
+
+    $('#disable2FA').click(function() {
+        if(confirm("¿Desactivar 2FA?")) {
+            // Aquí iría tu ajax real de desactivación
+            is2FAActive = false;
+            updateSecurityStatusUI();
+            showMessage('2FA desactivada.', 'warning');
+        }
+    });
+
+    // --- LÓGICA PERFIL (Días y RFC) ---
+    function calcularDias() {
+        let fecha = $('#fechaIngreso').val();
+        if(fecha) {
+            let diff = new Date() - new Date(fecha);
+            let dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+            if(dias > 0) $('#diasActivo').val(dias);
+        }
+    }
+    
+    function formatRFC() {
+        let rfc = $('#rfcField').val() || '';
+        if(rfc.length > 3) $('#rfcField').val(rfc.substring(0,4) + '-' + rfc.substring(4,10) + '-' + rfc.substring(10));
+    }
+
+    calcularDias();
+    formatRFC();
+    updateSecurityStatusUI();
+});
+</script>
+{% endblock %}

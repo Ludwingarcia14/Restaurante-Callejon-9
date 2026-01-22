@@ -1,0 +1,402 @@
+{% extends "layout/layout_support.html" %}
+{% block title %}Gestión de Equipo{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">👥 Gestión de Equipo</h2>
+        <p class="text-gray-600">Asigna y redistribuye tickets entre asesores internos</p>
+    </div>
+
+    <!-- Estadísticas del equipo -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Asesores Activos</p>
+                    <p class="text-3xl font-bold">{{ asesores|length }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Tickets Asignados</p>
+                    <p class="text-3xl font-bold" id="stat-asignados">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Sin Asignar</p>
+                    <p class="text-3xl font-bold" id="stat-sin-asignar">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Promedio por Asesor</p>
+                    <p class="text-3xl font-bold" id="stat-promedio">0</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Asesores -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Lista de Asesores -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    Asesores Internos
+                </h3>
+
+                <div class="space-y-3" id="asesores-list">
+                    {% if asesores %}
+                        {% for asesor in asesores %}
+                        <div class="asesor-card p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border-l-4 border-purple-500 hover:shadow-md transition cursor-pointer"
+                             data-asesor="{{ asesor.nombre }}"
+                             onclick="filtrarPorAsesor('{{ asesor.nombre }}')">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                                        {{ asesor.nombre.split()[0][0] }}{{ asesor.nombre.split()[1][0] if asesor.nombre.split()|length > 1 else '' }}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800">{{ asesor.nombre }}</p>
+                                        <p class="text-xs text-gray-500">{{ asesor.email }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <span class="inline-block px-3 py-1 bg-purple-200 text-purple-800 rounded-full text-sm font-bold asesor-count" data-asesor="{{ asesor.nombre }}">
+                                        0
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-8 text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <p>No hay asesores internos registrados</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button onclick="mostrarTodos()" class="mt-4 w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                    Mostrar todos los tickets
+                </button>
+            </div>
+        </div>
+
+        <!-- Tickets para asignar -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <span id="tickets-title">Tickets Activos</span>
+                    </h3>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold" id="tickets-count">
+                        {{ tickets|length }} tickets
+                    </span>
+                </div>
+
+                <!-- Filtros rápidos -->
+                <div class="flex gap-2 mb-4 flex-wrap">
+                    <button onclick="filtrarPorEstado('pendiente')" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition text-sm font-medium">
+                        🟡 Pendientes
+                    </button>
+                    <button onclick="filtrarPorEstado('en_revision')" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition text-sm font-medium">
+                        🔵 En Revisión
+                    </button>
+                    <button onclick="filtrarSinAsignar()" class="px-3 py-1 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition text-sm font-medium">
+                        ⚠️ Sin Asignar
+                    </button>
+                </div>
+
+                <!-- Lista de tickets -->
+                <div class="space-y-3 max-h-[600px] overflow-y-auto" id="tickets-container">
+                    {% for ticket in tickets %}
+                    <div class="ticket-item p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition"
+                         data-ticket-id="{{ ticket.id }}"
+                         data-asesor="{{ ticket.asesor }}"
+                         data-estado="{{ ticket.estado }}">
+                        
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">
+                                        #{{ ticket.id[:8] }}
+                                    </span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold
+                                        {% if ticket.estado == 'pendiente' %}bg-yellow-100 text-yellow-800
+                                        {% elif ticket.estado == 'en_revision' %}bg-blue-100 text-blue-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ ticket.estado|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                                <h4 class="font-bold text-gray-800">{{ ticket.cliente_nombre }}</h4>
+                                <p class="text-sm text-gray-600">{{ ticket.area }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-500 mb-1">Asesor asignado</label>
+                                <select class="asesor-select w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        data-ticket-id="{{ ticket.id }}"
+                                        onchange="asignarAsesor('{{ ticket.id }}', this.value)">
+                                    <option value="">Sin asignar</option>
+                                    {% for asesor in asesores %}
+                                    <option value="{{ asesor.nombre }}" {% if ticket.asesor == asesor.nombre %}selected{% endif %}>
+                                        {{ asesor.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-500 mb-1">Estado</label>
+                                <select class="estado-select w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        data-ticket-id="{{ ticket.id }}"
+                                        onchange="cambiarEstado('{{ ticket.id }}', this.value)">
+                                    <option value="pendiente" {% if ticket.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                    <option value="en_revision" {% if ticket.estado == 'en_revision' %}selected{% endif %}>En Revisión</option>
+                                    <option value="resuelto" {% if ticket.estado == 'resuelto' %}selected{% endif %}>Resuelto</option>
+                                    <option value="cerrado" {% if ticket.estado == 'cerrado' %}selected{% endif %}>Cerrado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if not tickets %}
+                <div class="text-center py-12 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-lg">No hay tickets disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {    
+    actualizarEstadisticas();
+    
+    function actualizarEstadisticas() {
+        const tickets = document.querySelectorAll('.ticket-item');
+        const asesores = document.querySelectorAll('.asesor-card');
+        
+        // Resetear contadores
+        document.querySelectorAll('.asesor-count').forEach(el => el.textContent = '0');
+        
+        let asignados = 0;
+        let sinAsignar = 0;
+        
+        // Contar por asesor
+        const contadores = {};
+        
+        tickets.forEach(ticket => {
+            const asesor = ticket.querySelector('.asesor-select').value;
+            
+            if (asesor) {
+                asignados++;
+                contadores[asesor] = (contadores[asesor] || 0) + 1;
+            } else {
+                sinAsignar++;
+            }
+        });
+        
+        // Actualizar badges de asesores
+        Object.keys(contadores).forEach(asesor => {
+            const badge = document.querySelector(`.asesor-count[data-asesor="${asesor}"]`);
+            if (badge) {
+                badge.textContent = contadores[asesor];
+            }
+        });
+        
+        // Actualizar estadísticas generales
+        document.getElementById('stat-asignados').textContent = asignados;
+        document.getElementById('stat-sin-asignar').textContent = sinAsignar;
+        
+        const numAsesores = asesores.length || 1;
+        const promedio = Math.round(asignados / numAsesores);
+        document.getElementById('stat-promedio').textContent = promedio;
+    }
+    
+    window.asignarAsesor = async function(ticketId, asesor) {
+        console.log(`Asignando ticket ${ticketId} a ${asesor}`);
+        
+        try {
+            const res = await fetch('/api/soporte/actualizar-ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: ticketId,
+                    asesor: asesor || "No asignado"
+                })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success || data.mensaje) {
+                mostrarNotificacion('Asesor asignado correctamente', 'success');
+                actualizarEstadisticas();
+            } else {
+                mostrarNotificacion('Error al asignar asesor', 'error');
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            mostrarNotificacion('Error de conexión', 'error');
+        }
+    };
+    
+    window.cambiarEstado = async function(ticketId, nuevoEstado) {
+        console.log(`Cambiando estado de ${ticketId} a ${nuevoEstado}`);
+        
+        try {
+            const res = await fetch('/api/soporte/actualizar-ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: ticketId,
+                    estado: nuevoEstado
+                })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success || data.mensaje) {
+                mostrarNotificacion('Estado actualizado', 'success');
+                
+                // Actualizar visualmente el estado
+                const ticketEl = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+                if (ticketEl) {
+                    ticketEl.dataset.estado = nuevoEstado;
+                }
+            } else {
+                mostrarNotificacion('Error al cambiar estado', 'error');
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            mostrarNotificacion('Error de conexión', 'error');
+        }
+    };
+    
+    window.filtrarPorAsesor = function(asesor) {
+        const tickets = document.querySelectorAll('.ticket-item');
+        let count = 0;
+        
+        tickets.forEach(ticket => {
+            const ticketAsesor = ticket.querySelector('.asesor-select').value;
+            if (ticketAsesor === asesor) {
+                ticket.style.display = '';
+                count++;
+            } else {
+                ticket.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('tickets-title').textContent = `Tickets de ${asesor}`;
+        document.getElementById('tickets-count').textContent = `${count} tickets`;
+    };
+    
+    window.filtrarPorEstado = function(estado) {
+        const tickets = document.querySelectorAll('.ticket-item');
+        let count = 0;
+        
+        tickets.forEach(ticket => {
+            if (ticket.dataset.estado === estado) {
+                ticket.style.display = '';
+                count++;
+            } else {
+                ticket.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('tickets-title').textContent = `Tickets ${estado.replace('_', ' ')}`;
+        document.getElementById('tickets-count').textContent = `${count} tickets`;
+    };
+    
+    window.filtrarSinAsignar = function() {
+        const tickets = document.querySelectorAll('.ticket-item');
+        let count = 0;
+        
+        tickets.forEach(ticket => {
+            const asesor = ticket.querySelector('.asesor-select').value;
+            if (!asesor) {
+                ticket.style.display = '';
+                count++;
+            } else {
+                ticket.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('tickets-title').textContent = 'Tickets sin asignar';
+        document.getElementById('tickets-count').textContent = `${count} tickets`;
+    };
+    
+    window.mostrarTodos = function() {
+        const tickets = document.querySelectorAll('.ticket-item');
+        tickets.forEach(ticket => ticket.style.display = '');
+        document.getElementById('tickets-title').textContent = 'Tickets Activos';
+        document.getElementById('tickets-count').textContent = `${tickets.length} tickets`;
+    };
+    
+    function mostrarNotificacion(mensaje, tipo) {
+        // Crear notificación toast
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white font-medium z-50 ${
+            tipo === 'success' ? 'bg-green-500' : 'bg-red-500'
+        }`;
+        toast.textContent = mensaje;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

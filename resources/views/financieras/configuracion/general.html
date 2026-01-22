@@ -1,0 +1,356 @@
+{% extends "layout/layout_financieras.html" %}
+{% block title %}Configuración General{% endblock %}
+
+{% block content %}
+<style>
+    .config-section {
+        border-left: 4px solid #3b82f6;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #10b981;
+    }
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+</style>
+
+<div class="bg-white max-w-6xl mx-auto p-8 rounded-xl shadow-xl">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-3xl font-bold mb-2">⚙️ Configuración General</h2>
+            <p class="text-gray-600">Ajusta los parámetros principales de tu sistema financiero</p>
+        </div>
+        <a href="{{ url_for('routes.dashboard_configuracion') }}" class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition">
+            ← Volver
+        </a>
+    </div>
+
+    <form id="configForm">
+        <!-- TASAS DE INTERÉS Y MORA -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">💰 Tasas de Interés y Mora</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Tasa de Interés Anual (%) *</label>
+                    <input type="number" name="tasa_interes_anual" step="0.01" min="0" max="100" 
+                           value="{{ config.tasa_interes_anual|default(18.0) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-sm text-gray-500 mt-1">Tasa nominal anual aplicada a los créditos</p>
+                </div>
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Tasa de Mora Mensual (%) *</label>
+                    <input type="number" name="tasa_mora_mensual" step="0.01" min="0" max="100" 
+                           value="{{ config.tasa_mora_mensual|default(5.0) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-sm text-gray-500 mt-1">Penalización por pagos vencidos</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- PLAZOS -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">📅 Plazos de Crédito</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Plazo Mínimo (meses) *</label>
+                    <input type="number" name="plazo_minimo_meses" step="1" min="1" 
+                           value="{{ config.plazo_minimo_meses|default(6) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Plazo Máximo (meses) *</label>
+                    <input type="number" name="plazo_maximo_meses" step="1" min="1" 
+                           value="{{ config.plazo_maximo_meses|default(60) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- MONTOS -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">💵 Montos de Crédito</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Monto Mínimo ($) *</label>
+                    <input type="number" name="monto_minimo" step="0.01" min="0" 
+                           value="{{ config.monto_minimo|default(5000.00) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Monto Máximo ($) *</label>
+                    <input type="number" name="monto_maximo" step="0.01" min="0" 
+                           value="{{ config.monto_maximo|default(500000.00) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- COMISIONES E IMPUESTOS -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">📊 Comisiones e Impuestos</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Comisión por Apertura (%) *</label>
+                    <input type="number" name="comision_apertura_porcentaje" step="0.01" min="0" max="100" 
+                           value="{{ config.comision_apertura_porcentaje|default(2.0) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-sm text-gray-500 mt-1">Porcentaje sobre el monto del crédito</p>
+                </div>
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">IVA (%) *</label>
+                    <input type="number" name="iva_porcentaje" step="0.01" min="0" max="100" 
+                           value="{{ config.iva_porcentaje|default(16.0) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- PARÁMETROS DE COBRANZA -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">🗓️ Parámetros de Cobranza</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Día de Corte Mensual *</label>
+                    <input type="number" name="dia_corte_mensual" step="1" min="1" max="31" 
+                           value="{{ config.dia_corte_mensual|default(15) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-sm text-gray-500 mt-1">Día del mes para el vencimiento de pagos</p>
+                </div>
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Días de Gracia *</label>
+                    <input type="number" name="dias_gracia" step="1" min="0" 
+                           value="{{ config.dias_gracia|default(5) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-sm text-gray-500 mt-1">Días adicionales antes de aplicar mora</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- SCORE CREDITICIO -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">📈 Score Crediticio</legend>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Score Mínimo para Aprobación *</label>
+                    <input type="number" name="score_minimo_aprobacion" step="1" min="300" max="850" 
+                           value="{{ config.score_minimo_aprobacion|default(650) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-sm text-gray-500 mt-1">Score mínimo para aprobar automáticamente</p>
+                </div>
+                <div class="flex items-center">
+                    <div class="bg-blue-50 p-4 rounded border border-blue-200 w-full">
+                        <p class="text-sm text-gray-600 mb-1">Rango de Score</p>
+                        <p class="font-bold text-blue-700">300 - 850</p>
+                        <p class="text-xs text-gray-500 mt-1">Bueno: 670+, Excelente: 750+</p>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- POLÍTICAS -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">📋 Políticas y Opciones</legend>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between bg-white p-4 rounded border">
+                    <div>
+                        <p class="font-semibold text-gray-800">Permitir Renovación de Créditos</p>
+                        <p class="text-sm text-gray-500">Los clientes pueden renovar sus créditos al finalizar el plazo</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="permite_renovacion" 
+                               {% if config.permite_renovacion %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between bg-white p-4 rounded border">
+                    <div>
+                        <p class="font-semibold text-gray-800">Permitir Pago Anticipado</p>
+                        <p class="text-sm text-gray-500">Los clientes pueden liquidar antes del plazo establecido</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="permite_pago_anticipado" 
+                               {% if config.permite_pago_anticipado %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block mb-2 font-semibold text-gray-700">Penalización por Pago Anticipado (%)</label>
+                    <input type="number" name="penalizacion_pago_anticipado" step="0.01" min="0" max="100" 
+                           value="{{ config.penalizacion_pago_anticipado|default(0.0) }}" 
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-sm text-gray-500 mt-1">0% = sin penalización. Se aplica sobre el saldo pendiente</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- NOTIFICACIONES -->
+        <fieldset class="config-section border rounded-lg p-6 mb-6">
+            <legend class="text-lg font-bold px-2 text-blue-700">📧 Notificaciones</legend>
+            <div>
+                <label class="block mb-2 font-semibold text-gray-700">Email para Notificaciones</label>
+                <input type="email" name="email_notificaciones" 
+                       value="{{ config.email_notificaciones|default('') }}" 
+                       class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                       placeholder="notificaciones@financiera.com">
+                <p class="text-sm text-gray-500 mt-1">Correo donde se recibirán alertas y notificaciones del sistema</p>
+            </div>
+        </fieldset>
+
+        <!-- BOTONES -->
+        <div class="flex justify-between items-center mt-8 pt-6 border-t">
+            <button type="button" onclick="resetForm()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold">
+                🔄 Restablecer
+            </button>
+            <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-semibold shadow-lg">
+                💾 Guardar Configuración
+            </button>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Enviar formulario
+document.getElementById("configForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {};
+    
+    // Convertir FormData a objeto JSON
+    for (let [key, value] of formData.entries()) {
+        if (key === 'permite_renovacion' || key === 'permite_pago_anticipado') {
+            data[key] = formData.get(key) === 'on';
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    // Agregar valores de checkboxes no marcados
+    if (!data.permite_renovacion) data.permite_renovacion = false;
+    if (!data.permite_pago_anticipado) data.permite_pago_anticipado = false;
+
+    try {
+        const response = await fetch("{{ url_for('routes.update_configuracion_general') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Configuración Guardada!',
+                text: 'Los cambios se han aplicado correctamente',
+                confirmButtonColor: '#3b82f6'
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.error || 'No se pudo guardar la configuración',
+                confirmButtonColor: '#d33'
+            });
+        }
+
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error en la petición: ' + error,
+            confirmButtonColor: '#d33'
+        });
+    }
+});
+
+function resetForm() {
+    Swal.fire({
+        title: '¿Restablecer formulario?',
+        text: 'Se perderán los cambios no guardados',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, restablecer',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('configForm').reset();
+        }
+    });
+}
+
+// Validaciones en tiempo real
+document.querySelector('[name="plazo_minimo_meses"]').addEventListener('change', function() {
+    const minimo = parseInt(this.value);
+    const maximo = parseInt(document.querySelector('[name="plazo_maximo_meses"]').value);
+    
+    if (minimo > maximo) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'El plazo mínimo no puede ser mayor al máximo',
+            confirmButtonColor: '#f59e0b'
+        });
+        this.value = maximo;
+    }
+});
+
+document.querySelector('[name="monto_minimo"]').addEventListener('change', function() {
+    const minimo = parseFloat(this.value);
+    const maximo = parseFloat(document.querySelector('[name="monto_maximo"]').value);
+    
+    if (minimo > maximo) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'El monto mínimo no puede ser mayor al máximo',
+            confirmButtonColor: '#f59e0b'
+        });
+        this.value = maximo;
+    }
+});
+</script>
+{% endblock %}

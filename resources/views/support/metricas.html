@@ -1,0 +1,382 @@
+{% extends "layout/layout_support.html" %}
+{% block title %}Métricas del Área de Soporte{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">📊 Centro de Métricas</h2>
+        <p class="text-gray-600">Análisis completo del desempeño del área de soporte</p>
+    </div>
+
+    <!-- Métricas Principales -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white transform hover:scale-105 transition">
+            <div class="text-center">
+                <p class="text-sm opacity-90 mb-2">Total Tickets</p>
+                <p class="text-5xl font-bold mb-2" id="metric-total">0</p>
+                <div class="text-xs opacity-75">Histórico completo</div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-yellow-500 to-orange-500 p-6 rounded-xl shadow-lg text-white transform hover:scale-105 transition">
+            <div class="text-center">
+                <p class="text-sm opacity-90 mb-2">Pendientes</p>
+                <p class="text-5xl font-bold mb-2" id="metric-abiertos">0</p>
+                <div class="text-xs opacity-75">Requieren atención</div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-xl shadow-lg text-white transform hover:scale-105 transition">
+            <div class="text-center">
+                <p class="text-sm opacity-90 mb-2">Resueltos</p>
+                <p class="text-5xl font-bold mb-2" id="metric-cerrados">0</p>
+                <div class="text-xs opacity-75">Completados exitosamente</div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-pink-600 p-6 rounded-xl shadow-lg text-white transform hover:scale-105 transition">
+            <div class="text-center">
+                <p class="text-sm opacity-90 mb-2">Alta Prioridad</p>
+                <p class="text-5xl font-bold mb-2" id="metric-criticos">0</p>
+                <div class="text-xs opacity-75">Requieren acción urgente</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Adicionales -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Tasa de Resolución</p>
+                    <p class="text-3xl font-bold text-gray-800" id="tasa-resolucion">0%</p>
+                </div>
+                <div class="text-purple-500">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Tickets Activos</p>
+                    <p class="text-3xl font-bold text-gray-800" id="tickets-activos">0</p>
+                </div>
+                <div class="text-blue-500">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Promedio Diario</p>
+                    <p class="text-3xl font-bold text-gray-800" id="promedio-diario">0</p>
+                </div>
+                <div class="text-green-500">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas Principales -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Distribución por Estado</h3>
+                <div class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">En tiempo real</div>
+            </div>
+            <div style="height: 300px; max-height: 300px; position: relative; overflow: hidden;">
+                <canvas id="grafEstados"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Análisis de Prioridad</h3>
+                <div class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">Comparativa</div>
+            </div>
+            <div style="height: 300px; max-height: 300px; position: relative; overflow: hidden;">
+                <canvas id="grafCriticas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas Secundarias -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Top 5 Asuntos Frecuentes</h3>
+                <div class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">Ranking</div>
+            </div>
+            <div style="height: 300px; max-height: 300px; position: relative; overflow: hidden;">
+                <canvas id="grafTipos"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Carga de Trabajo por Asesor</h3>
+                <div class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Asignación</div>
+            </div>
+            <div style="height: 300px; max-height: 300px; position: relative; overflow: hidden;">
+                <canvas id="grafAsesores"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Estadísticas Detalladas -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-6">
+            <h3 class="text-xl font-bold text-white">📋 Estadísticas Detalladas</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-3">Por Estado</h4>
+                    <div class="space-y-2" id="stats-estados">
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-3">Por Prioridad</h4>
+                    <div class="space-y-2" id="stats-prioridad">
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-3">Asesores</h4>
+                    <div class="space-y-2" id="stats-asesores">
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span class="text-sm text-gray-600">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    if (typeof Chart === 'undefined') {
+        console.error(" Chart.js no está cargado");
+        alert("Error: Chart.js no está disponible. Verifica layout_support.html");
+        return;
+    }
+    
+    if (window.METRICAS_INICIADAS) {
+        console.warn(" Métricas ya iniciadas - ABORTANDO");
+        return;
+    }
+    window.METRICAS_INICIADAS = true;
+    
+ 
+    const charts = {};
+    
+    async function cargarMetricas() {
+        try {
+            const res = await fetch("/api/dashboard/soporte");
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const data = await res.json();
+            console.log("Datos recibidos");
+
+            // Actualizar métricas
+            if (data.resumen) {
+                document.getElementById("metric-total").textContent = data.resumen.total || 0;
+                document.getElementById("metric-abiertos").textContent = data.resumen.abiertos || 0;
+                document.getElementById("metric-cerrados").textContent = data.resumen.cerrados || 0;
+                document.getElementById("metric-criticos").textContent = data.resumen.criticos || 0;
+                
+                const total = data.resumen.total || 1;
+                const cerrados = data.resumen.cerrados || 0;
+                const activos = data.resumen.abiertos || 0;
+                
+                document.getElementById("tasa-resolucion").textContent = ((cerrados / total) * 100).toFixed(1) + "%";
+                document.getElementById("tickets-activos").textContent = activos;
+                document.getElementById("promedio-diario").textContent = Math.ceil(total / 30);
+            }
+
+            // Preparar datos
+            const estadosLabels = [];
+            const estadosValues = [];
+            if (data.estados && data.estados.length > 0) {
+                data.estados.forEach(e => {
+                    estadosLabels.push(e.estado || "Sin estado");
+                    estadosValues.push(e.cantidad || 0);
+                });
+            }
+
+            const totalTickets = data.resumen?.total || 1;
+            const criticosCount = data.resumen?.criticos || 0;
+            const normalesCount = totalTickets - criticosCount;
+
+            // GRÁFICA 1: Estados
+            charts.estados = new Chart(document.getElementById("grafEstados"), {
+                type: "doughnut",
+                data: {
+                    labels: estadosLabels,
+                    datasets: [{
+                        data: estadosValues,
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#6b7280'],
+                        borderWidth: 3,
+                        borderColor: "#fff"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        legend: { position: "right", labels: { padding: 15, font: { size: 12 } } }
+                    }
+                }
+            });
+
+            // GRÁFICA 2: Prioridades
+            charts.criticas = new Chart(document.getElementById("grafCriticas"), {
+                type: "pie",
+                data: {
+                    labels: ["Alta Prioridad", "Prioridad Normal"],
+                    datasets: [{
+                        data: [criticosCount, normalesCount],
+                        backgroundColor: ["#ef4444", "#60a5fa"],
+                        borderWidth: 3,
+                        borderColor: "#fff"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: {
+                        legend: { position: "bottom", labels: { padding: 15, font: { size: 12 } } }
+                    }
+                }
+            });
+
+            // GRÁFICA 3: Asuntos
+            charts.tipos = new Chart(document.getElementById("grafTipos"), {
+                type: "bar",
+                data: {
+                    labels: estadosLabels.slice(0, 5),
+                    datasets: [{
+                        label: "Cantidad",
+                        data: estadosValues.slice(0, 5),
+                        backgroundColor: "#3b82f6",
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.8,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            // GRÁFICA 4: Asesores
+            const asesoresData = {};
+            if (data.tickets) {
+                data.tickets.forEach(t => {
+                    const asesor = t.asignado_a || "Sin asignar";
+                    asesoresData[asesor] = (asesoresData[asesor] || 0) + 1;
+                });
+            }
+
+            charts.asesores = new Chart(document.getElementById("grafAsesores"), {
+                type: "bar",
+                data: {
+                    labels: Object.keys(asesoresData).slice(0, 5),
+                    datasets: [{
+                        label: "Tickets Asignados",
+                        data: Object.values(asesoresData).slice(0, 5),
+                        backgroundColor: "#10b981",
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.8,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            // Tablas de estadísticas
+            let htmlEstados = '';
+            if (data.estados) {
+                data.estados.forEach(e => {
+                    const pct = ((e.cantidad / totalTickets) * 100).toFixed(1);
+                    htmlEstados += `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
+                            <span class="text-sm text-gray-700 capitalize">${e.estado}</span>
+                            <span class="text-sm font-bold text-gray-900">${e.cantidad} (${pct}%)</span>
+                        </div>
+                    `;
+                });
+                document.getElementById("stats-estados").innerHTML = htmlEstados;
+            }
+
+            document.getElementById("stats-prioridad").innerHTML = `
+                <div class="flex justify-between items-center p-2 bg-red-50 rounded">
+                    <span class="text-sm text-red-700">Alta</span>
+                    <span class="text-sm font-bold text-red-900">${criticosCount}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span class="text-sm text-gray-700">Normal</span>
+                    <span class="text-sm font-bold text-gray-900">${normalesCount}</span>
+                </div>
+            `;
+
+            let htmlAsesores = '';
+            Object.entries(asesoresData).slice(0, 5).forEach(([asesor, count]) => {
+                htmlAsesores += `
+                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
+                        <span class="text-sm text-gray-700">${asesor}</span>
+                        <span class="text-sm font-bold text-gray-900">${count}</span>
+                    </div>
+                `;
+            });
+            document.getElementById("stats-asesores").innerHTML = htmlAsesores || '<div class="text-sm text-gray-500">Sin datos</div>';
+
+
+        } catch (err) {
+            console.error(" ERROR:", err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al cargar métricas',
+                text: err.message,
+                confirmButtonColor: '#3b82f6'
+            });
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', cargarMetricas);
+    } else {
+        cargarMetricas();
+    }
+})();
+</script>
+{% endblock %}

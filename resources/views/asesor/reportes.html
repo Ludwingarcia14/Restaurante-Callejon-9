@@ -1,0 +1,203 @@
+{% extends 'layout/layout_asesor.html' %}
+{% block title %}Panel de asesor{% endblock %}
+
+{% block content %}
+<!-- Tarjetas de reportes -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="statsContainer">
+            <!-- Tarjeta Total de Créditos -->
+            <div class="card-hover p-8 bg-white shadow-xl rounded-2xl border border-gray-100 hover:border-blue-300 transition cursor-pointer animate-fade-up" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="stat-circle p-4 bg-blue-100 rounded-full">
+                        <i class="bi bi-credit-card text-3xl text-blue-600"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total</p>
+                    </div>
+                </div>
+                <p class="text-5xl font-bold text-blue-600 mb-2" id="totalCreditos">{{ total_creditos }}</p>
+                <p class="text-gray-700 font-medium">Total de Créditos</p>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="flex items-center text-sm text-green-600">
+                        <i class="bi bi-arrow-up mr-1"></i>
+                        <span class="font-semibold">100%</span>
+                        <span class="text-gray-500 ml-2">de la cartera</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta En Mora -->
+            <div class="card-hover p-8 bg-white shadow-xl rounded-2xl border border-gray-100 hover:border-red-300 transition cursor-pointer animate-fade-up" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="stat-circle p-4 bg-red-100 rounded-full">
+                        <i class="bi bi-exclamation-triangle text-3xl text-red-600"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Alerta</p>
+                    </div>
+                </div>
+                <p class="text-5xl font-bold text-red-600 mb-2" id="morosos">{{ morosos }}</p>
+                <p class="text-gray-700 font-medium">En Mora</p>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="flex items-center text-sm text-red-600">
+                        <i class="bi bi-graph-down mr-1"></i>
+                        <span class="font-semibold" id="porcentajeMora">0%</span>
+                        <span class="text-gray-500 ml-2">del total</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta Activos -->
+            <div class="card-hover p-8 bg-white shadow-xl rounded-2xl border border-gray-100 hover:border-green-300 transition cursor-pointer animate-fade-up" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="stat-circle p-4 bg-green-100 rounded-full">
+                        <i class="bi bi-check-circle text-3xl text-green-600"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Saludable</p>
+                    </div>
+                </div>
+                <p class="text-5xl font-bold text-green-600 mb-2" id="activos">{{ activos }}</p>
+                <p class="text-gray-700 font-medium">Activos</p>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="flex items-center text-sm text-green-600">
+                        <i class="bi bi-arrow-up mr-1"></i>
+                        <span class="font-semibold" id="porcentajeActivos">0%</span>
+                        <span class="text-gray-500 ml-2">del total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección adicional de insights -->
+        <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 animate-fade-up" style="animation-delay: 0.4s">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="bi bi-graph-up text-purple-600 mr-2"></i>
+                    Resumen Ejecutivo
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Tasa de Morosidad</span>
+                        <span class="font-bold text-red-600" id="tasaMorosidad">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Tasa de Cumplimiento</span>
+                        <span class="font-bold text-green-600" id="tasaCumplimiento">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Estado de Cartera</span>
+                        <span class="font-bold text-blue-600" id="estadoCartera">Evaluando...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-600 to-blue-600 p-6 rounded-2xl shadow-xl text-white animate-fade-up" style="animation-delay: 0.5s">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="bi bi-lightbulb mr-2"></i>
+                    Recomendaciones
+                </h3>
+                <div class="space-y-3 text-sm" id="recomendaciones">
+                    <p class="flex items-start">
+                        <i class="bi bi-check-circle-fill mr-2 mt-1"></i>
+                        <span>Mantén un seguimiento constante de los créditos en mora</span>
+                    </p>
+                    <p class="flex items-start">
+                        <i class="bi bi-check-circle-fill mr-2 mt-1"></i>
+                        <span>Contacta proactivamente a clientes próximos a vencer</span>
+                    </p>
+                    <p class="flex items-start">
+                        <i class="bi bi-check-circle-fill mr-2 mt-1"></i>
+                        <span>Analiza patrones de pago para mejorar la gestión</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+         <script>
+        // Animación de números contadores
+        function animateCounter(element, target) {
+            const duration = 2000;
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        // Inicializar animaciones cuando carga la página
+        window.addEventListener('load', () => {
+            const totalCreditos = parseInt(document.getElementById('totalCreditos').textContent) || 0;
+            const morosos = parseInt(document.getElementById('morosos').textContent) || 0;
+            const activos = parseInt(document.getElementById('activos').textContent) || 0;
+
+            // Animar contadores
+            animateCounter(document.getElementById('totalCreditos'), totalCreditos);
+            animateCounter(document.getElementById('morosos'), morosos);
+            animateCounter(document.getElementById('activos'), activos);
+
+            // Calcular porcentajes
+            setTimeout(() => {
+                const porcentajeMora = totalCreditos > 0 ? ((morosos / totalCreditos) * 100).toFixed(1) : 0;
+                const porcentajeActivos = totalCreditos > 0 ? ((activos / totalCreditos) * 100).toFixed(1) : 0;
+                const tasaCumplimiento = totalCreditos > 0 ? (100 - porcentajeMora).toFixed(1) : 0;
+
+                document.getElementById('porcentajeMora').textContent = porcentajeMora + '%';
+                document.getElementById('porcentajeActivos').textContent = porcentajeActivos + '%';
+                document.getElementById('tasaMorosidad').textContent = porcentajeMora + '%';
+                document.getElementById('tasaCumplimiento').textContent = tasaCumplimiento + '%';
+
+                // Estado de cartera
+                let estadoCartera = 'Excelente';
+                if (porcentajeMora > 10) estadoCartera = 'Atención Requerida';
+                else if (porcentajeMora > 5) estadoCartera = 'Bueno';
+                document.getElementById('estadoCartera').textContent = estadoCartera;
+
+                // Recomendaciones dinámicas
+                const recomendacionesDiv = document.getElementById('recomendaciones');
+                if (porcentajeMora > 10) {
+                    recomendacionesDiv.innerHTML = `
+                        <p class="flex items-start">
+                            <i class="bi bi-exclamation-circle-fill mr-2 mt-1"></i>
+                            <span>⚠️ Prioriza el seguimiento de créditos en mora inmediatamente</span>
+                        </p>
+                        <p class="flex items-start">
+                            <i class="bi bi-telephone-fill mr-2 mt-1"></i>
+                            <span>Establece un plan de contacto intensivo con clientes morosos</span>
+                        </p>
+                        <p class="flex items-start">
+                            <i class="bi bi-calendar-check mr-2 mt-1"></i>
+                            <span>Programa recordatorios de pago automatizados</span>
+                        </p>
+                    `;
+                }
+            }, 2000);
+        });
+
+        // Efecto hover en tarjetas
+        document.querySelectorAll('.card-hover').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Actualizar hora actual
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+{% endblock %}

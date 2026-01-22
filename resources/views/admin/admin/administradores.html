@@ -1,0 +1,355 @@
+{% extends "layout/layout.html" %}
+{% block title %}Crear Administrador{% endblock %}
+
+{% block content %}
+<style>
+    /* Animación personalizada para el spinner */
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin-custom {
+        animation: spin 1s linear infinite;
+    }
+</style>
+
+<div class="max-w-6xl mx-auto p-6">
+    
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+        
+        <div class="border-b border-gray-200 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-person-plus-fill text-indigo-600"></i>
+                    Nuevo Administrador
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Registra un nuevo usuario con permisos de acceso al sistema.</p>
+            </div>
+            <a href="/dashboard/admin" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm font-medium flex items-center gap-2">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <div id="preloader" class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex flex-col items-center justify-center hidden z-50 transition-opacity">
+            <div class="bg-white rounded-xl shadow-2xl p-8 text-center w-96 border border-gray-100">
+                <div class="mb-4">
+                    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin-custom mx-auto"></div>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Procesando...</h2>
+                <p class="text-sm text-gray-500 mb-4">Guardando información en el servidor</p>
+                
+                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="mt-2 text-xs font-bold text-indigo-600 text-right">0%</p>
+            </div>
+        </div>
+
+        <form id="adminForm" method="POST" action="/dashboard/admin/create" class="space-y-6">
+            
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
+                    <i class="bi bi-card-heading me-1"></i> Datos Personales
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombres <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            <input type="text" name="nombre" required 
+                                   class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm"
+                                   placeholder="Ej: Juan Carlos">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            <input type="text" name="apellido" required 
+                                   class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm"
+                                   placeholder="Ej: Pérez López">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-telephone"></i>
+                            </span>
+                            <input type="tel" name="telefono" 
+                                   class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm"
+                                   placeholder="(55) 1234-5678">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-6 border-b border-gray-100 pb-2">
+                    <i class="bi bi-geo-alt me-1"></i> Dirección
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">C.P.</label>
+                        <div class="relative">
+                            <input type="text" name="cp" id="cp_input" maxlength="5"
+                                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm"
+                                   placeholder="00000">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-search"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Estado <span class="text-red-500">*</span></label>
+                        <select name="estado_id" id="estado_select" required 
+                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm cursor-pointer">
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Municipio <span class="text-red-500">*</span></label>
+                        <select name="municipio_id" id="municipio_select" required disabled
+                                class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm disabled:bg-gray-100 disabled:text-gray-400 cursor-pointer">
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Colonia <span class="text-red-500">*</span></label>
+                        <select name="colonia_id" id="colonia_select" required disabled
+                                class="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm disabled:bg-gray-100 disabled:text-gray-400 cursor-pointer">
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 mt-6 border-b border-gray-100 pb-2">
+                    <i class="bi bi-shield-lock me-1"></i> Credenciales
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input type="email" name="correo" required 
+                                   class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm"
+                                   placeholder="admin@empresa.com">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="bi bi-key"></i>
+                            </span>
+                            <input type="password" name="contrasena" 
+                                   class="pl-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm"
+                                   placeholder="••••••••">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Rol <span class="text-red-500">*</span></label>
+                        <select name="tipo_persona" required 
+                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 outline-none transition shadow-sm cursor-pointer">
+                            <option value="">Seleccione un rol</option>
+                            {% for rol in roles %}
+                            <option value="{{ rol.Rol_id }}">{{ rol.Rol_nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="fecha_alta" value="{{ current_date }}">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
+                <button type="reset" class="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 hover:text-gray-900 transition shadow-sm flex items-center gap-2">
+                    <i class="bi bi-eraser"></i> Limpiar
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 hover:shadow-md transition shadow-sm flex items-center gap-2">
+                    <i class="bi bi-save"></i> Guardar Administrador
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        // --- Lógica de SEPOMEX (Carga dinámica de direcciones) ---
+        const cpInput = document.getElementById('cp_input');
+        const estadoSelect = document.getElementById('estado_select');
+        const municipioSelect = document.getElementById('municipio_select');
+        const coloniaSelect = document.getElementById('colonia_select');
+
+        function populateSelect(selectEl, items, valueKey, textKey) {
+            selectEl.innerHTML = `<option value="">Seleccione...</option>`;
+            items.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i[valueKey];
+                opt.textContent = i[textKey];
+                selectEl.appendChild(opt);
+            });
+        }
+
+        // Cargar estados al inicio
+        fetch('/api/sepomex/estados')
+            .then(r => r.json())
+            .then(data => populateSelect(estadoSelect, data, 'id', 'nombre'));
+
+        estadoSelect.addEventListener('change', () => {
+            const estadoId = estadoSelect.value;
+            municipioSelect.disabled = true;
+            coloniaSelect.disabled = true;
+            municipioSelect.innerHTML = '<option>Cargando...</option>';
+            coloniaSelect.innerHTML = '<option value="">Seleccione...</option>';
+            cpInput.value = '';
+
+            if (estadoId) {
+                fetch(`/api/sepomex/municipios/${estadoId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        populateSelect(municipioSelect, data, 'id', 'nombre');
+                        municipioSelect.disabled = false;
+                    });
+            }
+        });
+
+        municipioSelect.addEventListener('change', () => {
+            const municipioId = municipioSelect.value;
+            coloniaSelect.disabled = true;
+            coloniaSelect.innerHTML = '<option>Cargando...</option>';
+            cpInput.value = '';
+
+            if (municipioId) {
+                fetch(`/api/sepomex/colonias/${municipioId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        populateSelect(coloniaSelect, data, 'id', 'nombre');
+                        coloniaSelect.dataset.colonias = JSON.stringify(data);
+                        coloniaSelect.disabled = false;
+                    });
+            }
+        });
+
+        coloniaSelect.addEventListener('change', () => {
+            const colonias = JSON.parse(coloniaSelect.dataset.colonias || '[]');
+            const selId = coloniaSelect.value;
+            const colData = colonias.find(c => c.id == selId);
+            if (colData) cpInput.value = colData.codigo_postal;
+        });
+
+        cpInput.addEventListener('input', () => {
+            const cp = cpInput.value;
+            if (cp.length === 5) {
+                fetch(`/api/sepomex/cp/${cp}`)
+                    .then(r => {
+                        if (!r.ok) throw new Error('CP no encontrado');
+                        return r.json();
+                    })
+                    .then(data => {
+                        estadoSelect.value = data.estado.id;
+                        const onMunicipiosLoaded = () => {
+                            municipioSelect.value = data.municipio.id;
+                            municipioSelect.dispatchEvent(new Event('change'));
+                            municipioSelect.removeEventListener('DOMSubtreeModified', onMunicipiosLoaded);
+                        };
+                        municipioSelect.addEventListener('DOMSubtreeModified', onMunicipiosLoaded);
+                        estadoSelect.dispatchEvent(new Event('change'));
+                    })
+                    .catch(err => console.error(err.message));
+            }
+        });
+
+        // --- Manejo del Envío del Formulario (Preloader + Fetch) ---
+        document.getElementById("adminForm").addEventListener("submit", async function (e) {
+            e.preventDefault(); 
+
+            const preloader = document.getElementById("preloader");
+            const progressBar = document.getElementById("progress-bar");
+            const progressText = document.getElementById("progress-text");
+
+            preloader.classList.remove("hidden"); // Mostrar overlay
+
+            const formData = new FormData(this);
+
+            // Simulación visual de progreso
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.floor(Math.random() * 10);
+                    if(progress > 90) progress = 90;
+                    progressBar.style.width = progress + "%";
+                    progressText.textContent = progress + "%";
+                }
+            }, 200);
+
+            try {
+                const response = await fetch(this.action, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+                // Completar progreso
+                clearInterval(interval);
+                progressBar.style.width = "100%";
+                progressText.textContent = "100%";
+
+                setTimeout(() => {
+                    preloader.classList.add("hidden");
+                    
+                    if (response.status) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Guardado!',
+                            text: 'Administrador creado correctamente.',
+                            confirmButtonColor: '#4f46e5'
+                        }).then(() => {
+                            // Opcional: redirigir o limpiar formulario
+                            // window.location.href = '/dashboard/admin'; 
+                            this.reset();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: result.error || 'Ocurrió un error inesperado.',
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                }, 600);
+
+            } catch (error) {
+                clearInterval(interval);
+                preloader.classList.add("hidden");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo conectar con el servidor.',
+                    confirmButtonColor: '#d33'
+                });
+            }
+        });
+
+        // Mensajes Flash de sesión
+        {% if session.get('success') %}
+        Swal.fire({icon: 'success', title: '¡Éxito!', text: "{{ session.get('success') }}", confirmButtonColor: '#4f46e5'});
+        {% endif %}
+        {% if session.get('error') %}
+        Swal.fire({icon: 'error', title: 'Error', text: "{{ session.get('error') }}", confirmButtonColor: '#d33'});
+        {% endif %}
+    });
+</script>
+{% endblock %}

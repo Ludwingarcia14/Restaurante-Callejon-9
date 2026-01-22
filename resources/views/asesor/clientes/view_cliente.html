@@ -1,0 +1,385 @@
+{% extends 'layout/layout_asesor.html' %}
+{% block title %}Detalles del Cliente{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+    /* Animación de entrada suave */
+    .fade-up { animation: fadeUp 0.5s ease-out forwards; opacity: 0; transform: translateY(15px); }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    
+    /* Skeleton Loading */
+    .skeleton { background: #e2e8f0; border-radius: 0.5rem; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+    /* Estilos para el Gráfico Circular (Gauge) */
+    .circle-chart { transform: rotate(-90deg); }
+    .circle-bg { stroke: #f3f4f6; stroke-width: 8; fill: none; }
+    .circle-progress { stroke-width: 8; stroke-linecap: round; fill: none; transition: stroke-dasharray 1s ease-in-out; }
+</style>
+
+<div class="max-w-7xl mx-auto p-6">
+
+    <div class="mb-6 fade-up">
+        <a href="{{ url_for('routes.asesor_clientes_lista') }}" 
+           class="inline-flex items-center gap-2 text-gray-500 hover:text-indigo-600 font-medium transition">
+            <i class="ri-arrow-left-line text-lg"></i> Volver al listado
+        </a>
+    </div>
+
+    {% if not cliente %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 h-64"></div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 h-40"></div>
+            </div>
+            <div class="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 h-96"></div>
+        </div>
+    {% else %}
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 fade-up">
+        
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Monto Solicitado</p>
+                <p class="text-lg font-bold text-gray-800">
+                    ${{ "{:,.2f}".format(cliente.monto_solicitado|float) if cliente.monto_solicitado else '0.00' }}
+                </p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="ri-money-dollar-circle-line text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Ingresos (IA)</p>
+                <p class="text-lg font-bold text-emerald-600">
+                    {% if analisis_financiero %}
+                        ${{ "{:,.0f}".format(analisis_financiero.ingresos_promedio|float) }}
+                    {% else %}
+                        <span class="text-gray-300 text-sm font-normal">--</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i class="ri-line-chart-line text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Score Buró</p>
+                <p class="text-lg font-bold {{ 'text-red-500' if cliente.score_buro and cliente.score_buro < 600 else 'text-indigo-600' }}">
+                    {{ cliente.score_buro if cliente.score_buro else 'N/A' }} <span class="text-xs font-normal text-gray-400">pts</span>
+                </p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <i class="ri-speed-up-line text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Capacidad (30%)</p>
+                {% if analisis_financiero %}
+                    <p class="text-lg font-bold text-gray-700">
+                        ${{ "{:,.0f}".format(analisis_financiero.ingresos_promedio * 0.30) }}
+                    </p>
+                {% else %}
+                    <span class="text-gray-300 text-sm">--</span>
+                {% endif %}
+            </div>
+            <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                <i class="ri-calculator-line text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-up" style="animation-delay: 0.1s;">
+
+        <div class="space-y-6">
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-10"></div>
+                
+                <div class="relative">
+                    <div class="w-24 h-24 rounded-full bg-white p-1 mx-auto mb-4 shadow-md">
+                        <div class="w-full h-full rounded-full bg-indigo-50 flex items-center justify-center text-3xl font-bold text-indigo-600 border border-indigo-100">
+                            {{ cliente.cliente_nombre[0]|upper }}{{ cliente.cliente_apellidos[0]|upper }}
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-xl font-bold text-gray-800 mb-1">
+                        {{ cliente.cliente_nombre }} {{ cliente.cliente_apellidos }}
+                    </h2>
+                    <p class="text-sm text-gray-500 font-mono mb-4">ID: #{{ cliente._id|string|truncate(8, True, '') }}</p>
+
+                    {% set estado_simple = 'activo' if cliente.cliente_status_revision in [2, 'aprobado_pyme', 'con_financiera', 'activo'] else 'moroso' if cliente.cliente_status_revision in [3, 'moroso'] else 'pendiente' %}
+                    
+                    {% if estado_simple == 'activo' %}
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Activo
+                        </span>
+                    {% elif estado_simple == 'moroso' %}
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span> Moroso
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold border border-amber-200">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span> Pendiente
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-50 pb-2">Gestión</h3>
+                <div class="space-y-3">
+                    <a href="{{ url_for('routes.asesor_visita', id_cliente=cliente._id) }}" 
+                       class="flex items-center justify-center gap-2 w-full py-2.5 bg-white border border-indigo-100 text-indigo-600 font-medium rounded-xl hover:bg-indigo-50 transition shadow-sm">
+                        <i class="ri-map-pin-user-line text-lg"></i> Registrar Visita
+                    </a>
+                    
+                    {% if tiene_documentos %}
+                        <a href="{{ url_for('routes.asesor_cliente_documentos', id_cliente=cliente._id) }}"
+                           class="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
+                            <i class="ri-folder-user-line text-lg"></i> Ver Expediente
+                        </a>
+                    {% else %}
+                        <button disabled class="flex items-center justify-center gap-2 w-full py-2.5 bg-gray-100 text-gray-400 font-medium rounded-xl cursor-not-allowed border border-gray-200">
+                            <i class="ri-file-warning-line text-lg"></i> Sin Documentos
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-50 pb-2">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Solicitudes</h3>
+                    <span class="bg-indigo-50 text-indigo-600 text-xs font-bold px-2 py-0.5 rounded-md">{{ solicitudes|length }}</span>
+                </div>
+                
+                {% if solicitudes %}
+                    <div class="space-y-4 max-h-64 overflow-y-auto pr-1">
+                    {% for solicitud in solicitudes %}
+                        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-indigo-100 transition">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800">Solicitud #{{ solicitud._id|string|truncate(6, True, '') }}</p>
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700">
+                                        {{ solicitud.get('estado', 'N/A') }}
+                                    </span>
+                                </div>
+                                <i class="ri-file-list-3-line text-gray-300 text-xl"></i>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <a href="{{ url_for('routes.asesor_seguimiento', id_solicitud=solicitud._id) }}" class="text-center py-1.5 bg-white border border-gray-200 text-xs font-medium text-gray-600 rounded-lg hover:text-indigo-600 transition">Seguimiento</a>
+                                <a href="{{ url_for('routes.asesor_validacion', id_solicitud=solicitud._id) }}" class="text-center py-1.5 bg-white border border-gray-200 text-xs font-medium text-gray-600 rounded-lg hover:text-indigo-600 transition">Validación</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-6">
+                        <p class="text-sm text-gray-400">Sin solicitudes activas</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-white flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center">
+                        <i class="ri-contacts-book-line text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Contacto y Ubicación</h3>
+                </div>
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 pb-1 mb-2">Contacto</h4>
+                        <div class="flex items-start gap-3">
+                            <i class="ri-mail-line text-gray-400 mt-1"></i>
+                            <div>
+                                <p class="text-xs text-gray-500">Correo</p>
+                                <p class="text-base font-medium text-gray-800 break-all">{{ cliente.cliente_email }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i class="ri-phone-line text-gray-400 mt-1"></i>
+                            <div>
+                                <p class="text-xs text-gray-500">Teléfono</p>
+                                <p class="text-base font-medium text-gray-800">{{ cliente.cliente_telefono }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 pb-1 mb-2">Dirección</h4>
+                        <div class="flex items-start gap-3">
+                            <i class="ri-map-pin-line text-gray-400 mt-1"></i>
+                            <div>
+                                {% set direccion = [cliente.get('cliente_domicilio_calle'), cliente.get('cliente_domicilio_colonia'), cliente.get('cliente_domicilio_cp'), cliente.get('cliente_domicilio_ciudad'), cliente.get('cliente_domicilio_estado')] %}
+                                <p class="text-base text-gray-700 leading-relaxed">
+                                    {{ direccion | select('string') | join(', ') or 'Sin dirección registrada.' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if datos_sat %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-white flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="ri-government-line text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Validación Fiscal (SAT)</h3>
+                            <p class="text-xs text-gray-400">Datos de Constancia de Situación Fiscal</p>
+                        </div>
+                    </div>
+                    
+                    {% if datos_sat.vigente == 'Vigente' %}
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                            <i class="ri-checkbox-circle-fill"></i> Vigente
+                        </span>
+                    {% else %}
+                        <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200 flex items-center gap-1">
+                            <i class="ri-error-warning-fill"></i> No Vigente
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 pb-1 mb-2">Datos Generales</h4>
+                        <div class="flex flex-col">
+                            <span class="text-xs text-gray-500">RFC</span>
+                            <span class="text-lg font-mono font-bold text-gray-800">{{ datos_sat.rfc }}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-xs text-gray-500">Emisión Constancia</span>
+                            <span class="text-sm font-medium text-gray-700">{{ datos_sat.fecha_emision }}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 pb-1 mb-2">Actividad</h4>
+                        <div class="flex flex-col">
+                            <span class="text-xs text-gray-500">Régimen Principal</span>
+                            <span class="text-sm font-medium text-indigo-700 bg-indigo-50 p-2 rounded-lg border border-indigo-100">
+                                {{ datos_sat.regimen_fiscal or "No detectado" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if analisis_financiero %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-white flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i class="ri-bank-card-line text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Salud Financiera</h3>
+                            <p class="text-xs text-gray-400">Análisis IA: {{ analisis_financiero.meses_analizados }} meses</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold border {{ 'bg-green-100 text-green-700 border-green-200' if 'sólido' in analisis_financiero.evaluacion|lower else 'bg-yellow-100 text-yellow-700 border-yellow-200' }}">
+                        {{ analisis_financiero.evaluacion }}
+                    </span>
+                </div>
+
+                <div class="p-6">
+                    <div class="flex items-center gap-6 mb-6">
+                        
+                        <div class="relative w-24 h-24 flex-shrink-0 mx-auto md:mx-0">
+                            <svg class="w-full h-full circle-chart" viewBox="0 0 36 36">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle-progress {{ 'stroke-emerald-500' if financial_score and financial_score.score >= 70 else 'stroke-amber-500' }}" 
+                                      stroke-dasharray="{{ financial_score.score if financial_score else 0 }}, 100" 
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                                <span class="block text-xl font-bold text-gray-800">{{ financial_score.score if financial_score else 'N/D' }}</span>
+                                <span class="text-[8px] text-gray-400 uppercase">Score</span>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <p class="text-xs text-gray-500 mb-1">Promedio Depósitos</p>
+                                <p class="text-lg font-bold text-gray-800">${{ "{:,.2f}".format(analisis_financiero.promedio_depositos|float) }}</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <p class="text-xs text-gray-500 mb-1">Saldo Diario Prom.</p>
+                                <p class="text-lg font-bold text-gray-800">${{ "{:,.2f}".format(analisis_financiero.saldo_promedio|float) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-500">Estabilidad de Flujo</span>
+                            <span class="font-bold text-blue-600">Alta</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5">
+                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if analisis_buro %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-white flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+                        <i class="ri-shield-check-line text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Perfil de Riesgo (Buró)</h3>
+                </div>
+                
+                <div class="p-6 grid grid-cols-2 gap-6">
+                    <div class="text-center flex flex-col justify-center">
+                        <div class="relative w-20 h-20 mx-auto flex items-center justify-center rounded-full border-4 {{ 'border-red-500' if cliente.score_buro and cliente.score_buro < 600 else 'border-green-500' }}">
+                            <div class="text-center">
+                                <span class="block text-xl font-bold text-gray-800">{{ cliente.score_buro or '--' }}</span>
+                                <span class="text-[8px] text-gray-400 uppercase">Score</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">{{ 'Riesgo Alto' if cliente.score_buro and cliente.score_buro < 600 else 'Riesgo Bajo' }}</p>
+                    </div>
+
+                    <div class="space-y-3 border-l border-gray-100 pl-4">
+                        <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                            <span class="text-sm text-gray-500">Créditos Activos</span>
+                            <span class="font-bold text-gray-800">{{ analisis_buro.METRICAS_CLAVE.creditos_activos_totales if analisis_buro.METRICAS_CLAVE else 'N/D' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                            <span class="text-sm text-gray-500">Deuda Total</span>
+                            <span class="font-bold text-gray-800">${{ "{:,.0f}".format(analisis_buro.METRICAS_CLAVE.saldo_actual_total_activo|float) if analisis_buro.METRICAS_CLAVE else '0' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">MOP Riesgo</span>
+                            <span class="font-bold {{ 'text-red-600' if analisis_buro.METRICAS_CLAVE.mop_alto_riesgo_detectado else 'text-green-600' }}">
+                                {{ 'DETECTADO' if analisis_buro.METRICAS_CLAVE.mop_alto_riesgo_detectado else 'NO' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div> </div>
+    {% endif %}
+
+</div>
+{% endblock %}

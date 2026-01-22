@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potencial PYME - Registro Corporativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#8CC63F',
+                            blue: '#2D7ABF',
+                            orange: '#F39200',
+                            salmon: '#FF6F4F',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-3xl w-full space-y-8 bg-white p-10 rounded-xl shadow-xl border-t-4 border-brand-blue relative overflow-hidden">
+        
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-brand-green opacity-10 rounded-full blur-xl"></div>
+        <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-brand-blue opacity-5 rounded-full blur-xl"></div>
+
+        <header class="text-center relative z-10">
+            <div class="flex items-end justify-center mb-2">
+                <h1 class="text-5xl font-bold tracking-tight leading-none text-brand-green">
+                    POTENC<span class="relative inline-block">i<span class="absolute top-0 left-1/2 transform -translate-x-1/2 -mt-1 text-brand-green text-lg">•</span></span>AL
+                </h1>
+                <h1 class="text-5xl font-bold tracking-tight leading-none text-brand-blue ml-2">
+                    PYME
+                </h1>
+                <div class="w-4 h-4 rounded-full bg-brand-blue mb-8 ml-1 shadow-sm"></div>
+            </div>
+
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 text-lg font-light tracking-wide">Hacemos de ti un líder de mercado</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+                <div class="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 w-4 h-4 rounded-full bg-brand-orange shadow-sm hidden sm:block"></div>
+            </div>
+        </header>
+
+        <form class="mt-8 space-y-6 relative z-10">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="col-span-1 md:col-span-2">
+                    <label for="correo" class="block text-sm font-medium text-slate-700 mb-1">Correo electrónico empresarial</label>
+                    <input type="email" id="correo" class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm shadow-sm placeholder-gray-400" placeholder="ejemplo@empresa.com">
+                </div>
+
+                <div>
+                    <label for="telefono" class="block text-sm font-medium text-slate-700 mb-1">
+                        Número de teléfono <span class="text-red-500">*</span>
+                    </label>
+                    <input type="tel" id="telefono" class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm shadow-sm">
+                </div>
+
+                <div>
+                    <label for="nombreRL" class="block text-sm font-medium text-slate-700 mb-1">
+                        Nombre de R.L <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="nombreRL" class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm shadow-sm">
+                </div>
+
+                <div class="col-span-1 md:col-span-2">
+                    <label for="empresa" class="block text-sm font-medium text-slate-700 mb-1">Nombre de la empresa / Razón Social</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                        <input type="text" id="empresa" class="block w-full pl-10 px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm" placeholder="Tu Empresa S.A. de C.V.">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="rfc" class="block text-sm font-medium text-slate-700 mb-1">
+                        RFC <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="rfc" class="uppercase block w-full px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm shadow-sm">
+                </div>
+
+                <div>
+                    <label for="ciec" class="block text-sm font-medium text-slate-700 mb-1">
+                        CIEC <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" id="ciec" class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm shadow-sm">
+                </div>
+
+                <div class="col-span-1 md:col-span-2">
+                    <label for="apellidos" class="block text-sm font-medium text-slate-700 mb-1">
+                        Apellidos <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="apellidos" class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-brand-blue focus:border-brand-blue transition duration-200 text-slate-900 sm:text-sm shadow-sm">
+                </div>
+
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 mt-6">
+                <p class="text-xs text-slate-500 text-justify leading-relaxed mb-4">
+                    POTENCIAL PYME se compromete a proteger y respetar tu privacidad. Solo usaremos tu información para administrar tu cuenta y proporcionar los servicios solicitados.
+                </p>
+
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="check1" type="checkbox" class="h-4 w-4 text-brand-blue border-gray-300 rounded focus:ring-brand-blue cursor-pointer">
+                        </div>
+                        <div class="ml-3 text-xs">
+                            <label for="check1" class="font-medium text-slate-700 cursor-pointer">Acepto recibir otras comunicaciones de POTENCIAL PYME.</label>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-3">
+                        <p class="text-xs text-slate-500 text-justify leading-relaxed mb-2">
+                            Necesitamos almacenar tus datos para darte el servicio.
+                        </p>
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="check2" type="checkbox" class="h-4 w-4 text-brand-blue border-gray-300 rounded focus:ring-brand-blue cursor-pointer">
+                            </div>
+                            <div class="ml-3 text-xs">
+                                <label for="check2" class="font-medium text-slate-700 cursor-pointer">
+                                    Acepto que POTENCIAL PYME almacene y trate mis datos personales. <span class="text-red-500">*</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-2">
+                Consulta nuestra <a href="#" class="underline hover:text-brand-blue">Política de Privacidad</a> para darte de baja.
+            </p>
+
+            <div class="pt-4">
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-brand-salmon hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-salmon transition-all transform hover:-translate-y-0.5">
+                    ENVIAR FORMULARIO
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

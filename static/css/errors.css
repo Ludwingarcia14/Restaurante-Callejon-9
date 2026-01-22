@@ -1,0 +1,84 @@
+body {
+    font-family: "Segoe UI", sans-serif;
+    /* 1. Fondo del body cambiado a casi negro */
+    background: #121212; 
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.error-container {
+    text-align: center;
+    /* 2. Fondo del contenedor cambiado a gris oscuro */
+    background: #1e1e1e; 
+    padding: 40px 50px;
+    border-radius: 20px;
+    /* 3. Sombra reemplazada por un borde sutil */
+    border: 1px solid #333;
+    animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.error-code {
+    font-size: 7rem;
+    margin: 0;
+    font-weight: 900;
+}
+
+/* Estos colores de acento usualmente se ven bien en modo oscuro */
+.color-400 { color: #D35400; }
+.color-401 { color: #C0392B; }
+.color-402 { color: #8E44AD; }
+.color-403 { color: #E74C3C; }
+.color-404 { color: #2980B9; }
+
+.error-title {
+    font-size: 2rem;
+    margin: 10px 0 15px 0;
+    /* 4. Color de texto cambiado a gris claro */
+    color: #e0e0e0;
+}
+
+.error-message {
+    font-size: 1.15rem;
+    margin-bottom: 30px;
+    /* 5. Color de texto secundario cambiado a gris más suave */
+    color: #adb5bd;
+}
+
+.home-link, .secondary-link {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+/* El botón primario azul se ve bien en modo oscuro, no se cambia */
+.home-link {
+    background: #3498DB;
+    color: white;
+}
+
+.home-link:hover {
+    background: #217dbb;
+}
+
+/* 6. Botón secundario invertido */
+.secondary-link {
+    margin-left: 10px;
+    background: #343a40; /* Fondo gris oscuro */
+    color: #f8f9fa;      /* Texto claro */
+}
+
+.secondary-link:hover {
+    background: #495057; /* Un poco más claro al hacer hover */
+}

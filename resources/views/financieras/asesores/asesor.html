@@ -1,0 +1,363 @@
+{% extends "layout/layout_financieras.html" %}
+
+{% block page_title %}Nuevo Asesor{% endblock %}
+{% block header_title %}Gestión de Asesores{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+<div class="container-fluid py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 text-gray-800">
+            <i class="bi bi-person-plus-fill text-primary me-2"></i>Alta de Asesor
+        </h4>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/financiera/asesores">Asesores</a></li>
+                <li class="breadcrumb-item active">Nuevo</li>
+            </ol>
+        </nav>
+    </div>
+
+    <form id="adminForm" method="POST" action="/financiera/asesor/create" class="needs-validation" novalidate>
+        <div class="row">
+            
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-person-lines-fill me-2"></i>Información Personal</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombres <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                                    <input type="text" name="nombre" class="form-control" required placeholder="Ej. Juan Carlos">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellidos <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                                    <input type="text" name="apellido" class="form-control" required placeholder="Ej. Pérez López">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Corporativo <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" name="correo" class="form-control" required placeholder="asesor@financiera.com">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
+                                    <input type="tel" name="telefono" class="form-control" placeholder="(55) 0000-0000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-geo-alt-fill me-2"></i>Ubicación y Zona</h6>
+                        <small class="text-muted"><i class="bi bi-info-circle"></i> Ingresa el CP para autocompletar</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Código Postal</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-123"></i></span>
+                                    <input type="text" name="cp" id="cp_input" class="form-control" maxlength="5" placeholder="00000">
+                                    <button class="btn btn-outline-secondary" type="button" id="btn_search_cp"><i class="bi bi-search"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Estado</label>
+                                <select name="estado_id" id="estado_select" class="form-select" required>
+                                    <option value="">Seleccione...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Municipio</label>
+                                <select name="municipio_id" id="municipio_select" class="form-select" required disabled>
+                                    <option value="">Seleccione estado primero</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Colonia</label>
+                                <select name="colonia_id" id="colonia_select" class="form-select" required disabled>
+                                    <option value="">Seleccione municipio primero</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-shield-lock-fill me-2"></i>Cuenta y Acceso</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Rol del Sistema <span class="text-danger">*</span></label>
+                            <select name="tipo_persona" class="form-select" required>
+                                <option value="" selected disabled>Seleccionar Rol...</option>
+                                {% for rol in roles %}
+                                <option value="{{ rol.Rol_id }}">{{ rol.Rol_nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Define los permisos dentro del panel.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña Temporal</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+                                <input type="password" name="contrasena" class="form-control" placeholder="******">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Fecha de Alta</label>
+                            <input type="date" name="fecha_alta" class="form-control bg-light" value="{{ current_date }}" readonly>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary py-2">
+                                <i class="bi bi-save me-2"></i>Guardar Asesor
+                            </button>
+                            <a href="/financiera/asesores" class="btn btn-outline-secondary py-2">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info border-0 shadow-sm d-flex align-items-center" role="alert">
+                    <i class="bi bi-lightbulb-fill fs-4 me-3"></i>
+                    <div class="small">
+                        Asegúrese de que el correo electrónico sea único en el sistema para evitar conflictos de acceso.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    const cpInput = $('#cp_input');
+    const estadoSelect = $('#estado_select');
+    const municipioSelect = $('#municipio_select');
+    const coloniaSelect = $('#colonia_select');
+
+    // Inicializar Select2 en colonias
+    coloniaSelect.select2({
+        width: '100%',
+        placeholder: 'Seleccione una colonia',
+        allowClear: true,
+        minimumResultsForSearch: 0
+    });
+
+    function populateSelect(selectEl, items, valueKey, textKey) {
+        selectEl.empty().append('<option value="">Seleccione una opción</option>');
+        items.forEach(i => {
+            const text = i.codigo_postal
+                ? `${i[textKey]} | ${i.codigo_postal}`
+                : i[textKey];
+            selectEl.append(new Option(text, i[valueKey], false, false));
+        });
+    }
+
+    function populateColonias(data) {
+        coloniaSelect.empty().append('<option value="">Seleccione una colonia</option>');
+        data.forEach(i => {
+            const text = i.codigo_postal
+                ? `${i.nombre} | ${i.codigo_postal}`
+                : i.nombre;
+            coloniaSelect.append(new Option(text, i.id, false, false));
+        });
+        coloniaSelect.data('colonias', JSON.stringify(data));
+        coloniaSelect.trigger('change');
+    }
+
+    // Cargar estados
+    fetch('/api/sepomex/estados')
+        .then(r => r.json())
+        .then(data => populateSelect(estadoSelect, data, 'id', 'nombre'));
+
+    // Cambio de estado → cargar municipios
+    estadoSelect.on('change', function() {
+        const estadoId = $(this).val();
+        municipioSelect.prop('disabled', true)
+            .empty()
+            .append('<option>Cargando...</option>');
+        populateColonias([]);
+        cpInput.val('');
+
+        if (estadoId) {
+            fetch(`/api/sepomex/municipios/${estadoId}`)
+                .then(r => r.json())
+                .then(data => {
+                    populateSelect(municipioSelect, data, 'id', 'nombre');
+                    municipioSelect.prop('disabled', false);
+                });
+        }
+    });
+
+    // Cambio de municipio → cargar colonias
+    municipioSelect.on('change', function() {
+        const municipioId = $(this).val();
+        cpInput.val('');
+        coloniaSelect.prop('disabled', true);
+
+        if (municipioId) {
+            fetch(`/api/sepomex/colonias/${municipioId}`)
+                .then(r => r.json())
+                .then(data => {
+                    populateColonias(data);
+                    coloniaSelect.prop('disabled', false);
+                });
+        }
+    });
+
+    // Cambio de colonia → actualizar CP
+    coloniaSelect.on('select2:select', function() {
+        const selId = $(this).val();
+        const colonias = JSON.parse(coloniaSelect.data('colonias') || '[]');
+        const colData = colonias.find(c => c.id == selId);
+        if (colData) cpInput.val(colData.codigo_postal);
+    });
+
+    // Autocompletar por CP
+    cpInput.on('input', function() {
+        const cp = $(this).val();
+        if (cp.length === 5) {
+            fetch(`/api/sepomex/cp/${cp}`)
+                .then(r => {
+                    if (!r.ok) throw new Error('CP no encontrado');
+                    return r.json();
+                })
+                .then(data => {
+                    estadoSelect.val(data.estado.id).trigger('change');
+
+                    const checkMunicipios = setInterval(() => {
+                        if (municipioSelect.find('option').length > 1) {
+                            municipioSelect.val(data.municipio.id).trigger('change');
+                            clearInterval(checkMunicipios);
+
+                            const colonias = JSON.parse(coloniaSelect.data('colonias') || '[]');
+                            const col = colonias.find(c => c.codigo_postal === cp);
+                            if (col) coloniaSelect.val(col.id).trigger('change');
+                        }
+                    }, 100);
+                })
+                .catch(err => console.error(err.message));
+        }
+    });
+
+    // Preloader y submit
+    const form = $('#adminForm');
+    form.on('submit', async function(e) {
+        e.preventDefault();
+
+        const preloader = $("#preloader");
+        const progressBar = $("#progress-bar");
+        const progressText = $("#progress-text");
+
+        preloader.removeClass("hidden");
+
+        const formData = new FormData(this);
+        let progress = 0;
+
+        const interval = setInterval(() => {
+            if (progress < 90) {
+                progress += 10;
+                progressBar.css('width', progress + "%");
+                progressText.text(progress + "%");
+            }
+        }, 300);
+
+        try {
+            const response = await fetch(this.action, {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            clearInterval(interval);
+
+            progressBar.css('width', '100%');
+            progressText.text('100%');
+
+            setTimeout(() => {
+                preloader.addClass("hidden");
+
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Guardado correctamente!',
+                        text: 'El asesor fue registrado con éxito.',
+                        confirmButtonColor: '#3085d6'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.error || 'Ocurrió un error inesperado.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+            }, 800);
+
+        } catch (error) {
+            clearInterval(interval);
+            preloader.addClass("hidden");
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error en la petición',
+                text: error.toString(),
+                confirmButtonColor: '#d33'
+            });
+        }
+    });
+
+    // Mensajes de sesión
+    {% if session.get('success') %}
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: "{{ session.get('success') }}",
+            confirmButtonColor: '#3085d6'
+        });
+    {% endif %}
+
+    {% if session.get('error') %}
+        Swal.fire({
+            icon: 'error',
+            title: '¡Error!',
+            text: "{{ session.get('error') }}",
+            confirmButtonColor: '#d33'
+        });
+    {% endif %}
+});
+</script>
+
+
+{% endblock %}

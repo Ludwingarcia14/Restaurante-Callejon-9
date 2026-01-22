@@ -1,0 +1,239 @@
+{% extends "layout/layout.html" %}
+{% block title %}Panel de consultoria ante el SAT{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+    /* Área de Dropzone Mejorada */
+    .dropzone-modern {
+        border: 2px dashed #cbd5e1;
+        border-radius: 1rem;
+        background-color: #f8fafc;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dropzone-modern:hover {
+        border-color: #4f46e5;
+        background-color: #eef2ff;
+    }
+    
+    .dropzone-modern.dragover {
+        border-color: #4f46e5;
+        background-color: #eef2ff;
+        transform: scale(1.01);
+    }
+
+    /* Animación de entrada */
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* Tarjeta de resultados */
+    .result-card {
+        border-left: 4px solid #4f46e5;
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+    }
+</style>
+
+<div class="max-w-4xl mx-auto p-6">
+
+    <div class="text-center mb-8 fade-in-up">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4 text-indigo-600 text-3xl">
+            <i class="ri-file-search-line"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800">Analizador de Constancias SAT</h1>
+        <p class="text-gray-500 mt-2">Sube tu PDF y obtén un análisis automático de la situación fiscal.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 fade-in-up" style="animation-delay: 0.1s;">
+        
+        <form id="iaForm" enctype="multipart/form-data">
+            <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">Documento PDF</label>
+            
+            <div id="dropzone" class="dropzone-modern p-10 flex flex-col items-center justify-center text-center group"
+                 ondragover="event.preventDefault(); this.classList.add('dragover');" 
+                 ondragleave="event.preventDefault(); this.classList.remove('dragover');" 
+                 onclick="document.getElementById('pdfFile').click();">
+                
+                <div class="mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12v8m0-8l-3 3m3-3l3 3m0-6v6m0 0H9m3 0h3"/>
+                    </svg>
+                </div>
+                
+                <h3 class="text-lg font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors">
+                    Arrastra tu archivo aquí
+                </h3>
+                <p class="text-sm text-gray-400 mt-1" id="dropzoneText">o haz clic para explorar tus archivos</p>
+                <span class="mt-4 px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-full font-medium border border-gray-200">
+                    Solo formato .PDF
+                </span>
+            </div>
+
+            <input type="file" id="pdfFile" name="pdf_file" accept=".pdf" class="hidden" required>
+
+            <div class="mt-6 flex justify-end">
+                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" id="analyzeBtn">
+                    <i class="ri-magic-line"></i> Analizar Documento
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="resultado" class="mt-8 fade-in-up" style="animation-delay: 0.2s;"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const form = document.getElementById('iaForm');
+    const resultadoDiv = document.getElementById('resultado');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('pdfFile');
+    const dropzoneText = document.getElementById('dropzoneText');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+
+    // Feedback visual al seleccionar archivo
+    function updateFileInfo(fileName) {
+        // Al seleccionar, cambiamos el texto y mostramos un icono de PDF
+        dropzoneText.innerHTML = `<span class="text-emerald-600 font-semibold flex items-center justify-center gap-2"><i class="ri-file-pdf-line text-lg"></i> ${fileName}</span>`;
+        dropzone.classList.add('border-emerald-400', 'bg-emerald-50');
+    }
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) updateFileInfo(fileInput.files[0].name);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type === "application/pdf") {
+            fileInput.files = files;
+            updateFileInfo(files[0].name);
+        } else {
+            Swal.fire('Archivo no válido', 'Por favor sube un PDF.', 'warning');
+        }
+    });
+
+    // Renderizado de Resultados
+    function mostrarResultadoAnalisis(analysis) {
+        const vigencia = analysis.vigente || "No especificado";
+        const regimen = analysis.regimen_fiscal || "No especificado";
+        const giroEmpresa = analysis.giro || "No especificado";
+        const actividades = analysis.actividades_economicas || "No especificado";
+        const regimenes = analysis.regimenes_fiscales || "No especificado";
+
+        // Badges condicionales
+        const badgeVigencia = vigencia === 'Sí' || vigencia === 'Vigente' 
+            ? '<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold border border-emerald-200 flex items-center gap-1 w-fit"><i class="ri-check-double-line"></i> Vigente</span>'
+            : '<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-bold border border-red-200 flex items-center gap-1 w-fit"><i class="ri-close-circle-line"></i> No Vigente / Caducada</span>';
+
+        let html = `
+            <div class="result-card p-8 bg-white rounded-xl shadow-lg">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                    <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <i class="ri-file-list-3-fill text-indigo-600 text-2xl"></i> Resultado del Análisis
+                    </h4>
+                    <span class="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded">ID: ${Date.now().toString().slice(-6)}</span>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h5 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="ri-calendar-check-line"></i> Estatus de Vigencia
+                        </h5>
+                        ${badgeVigencia}
+                        <p class="text-xs text-gray-400 mt-2 italic flex items-start gap-1">
+                            <i class="ri-information-line"></i> Se considera vigente si la emisión es menor a 3 meses.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <h5 class="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2">
+                            Actividad Económica
+                        </h5>
+                        <p class="text-gray-800 font-medium text-lg mb-1">${giroEmpresa}</p>
+                        <div class="text-sm text-gray-500">
+                            <span class="font-semibold">Detalle:</span> ${actividades}
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <h5 class="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2">
+                            Régimen Fiscal
+                        </h5>
+                        <p class="text-gray-800 font-medium text-lg mb-1">${regimen}</p>
+                        <div class="text-sm text-gray-500">
+                            <span class="font-semibold">Clasificación detectada:</span> ${regimenes}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                    <button onclick="document.getElementById('pdfFile').click()" class="text-sm text-indigo-600 font-medium hover:text-indigo-800 flex items-center gap-1">
+                        <i class="ri-refresh-line"></i> Analizar otro documento
+                    </button>
+                </div>
+            </div>
+        `;
+        resultadoDiv.innerHTML = html;
+        // Scroll suave al resultado
+        resultadoDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Envío del formulario
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+
+        if (!fileInput.files[0]) {
+            Swal.fire('Atención', 'Debes seleccionar un archivo primero.', 'info');
+            return;
+        }
+
+        // UI Loading
+        analyzeBtn.disabled = true;
+        analyzeBtn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Procesando...';
+        
+        Swal.fire({
+            title: 'Analizando Constancia',
+            html: 'Nuestro motor de IA está leyendo el documento...',
+            timerProgressBar: true,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        const data = new FormData(form);
+
+        try {
+            const res = await fetch('{{ url_for("routes.ia_analize") }}', { method: 'POST', body: data });
+            const json = await res.json();
+            Swal.close();
+
+            if (res.ok && json.analysis) {
+                mostrarResultadoAnalisis(json.analysis);
+                const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 3000});
+                Toast.fire({icon: 'success', title: 'Análisis completado'});
+            } else {
+                resultadoDiv.innerHTML = `<div class="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 flex items-center gap-2"><i class="ri-error-warning-line text-xl"></i> ${json.error || 'Error desconocido'}</div>`;
+            }
+        } catch (error) {
+            Swal.close();
+            Swal.fire('Error de Conexión', 'No se pudo conectar con el servidor.', 'error');
+        } finally {
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="ri-magic-line"></i> Analizar Documento';
+        }
+    });
+</script>
+
+{% endblock %}

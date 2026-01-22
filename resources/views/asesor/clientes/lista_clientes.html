@@ -1,0 +1,339 @@
+{% extends 'layout/layout_asesor.html' %}
+{% block title %}Mis Clientes Asignados{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.tailwindcss.min.css">
+
+<style>
+    .p-5 {
+    padding: 1rem !important;
+}
+    /* --- Estilos DataTables (Igual que Admin/Financieras) --- */
+    .dataTables_wrapper { padding: 0; width: 100%; }
+    .dataTables_filter input {
+        border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 1rem; outline: none; font-size: 0.875rem; width: 250px;
+    }
+    .dataTables_filter input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    .dataTables_length select {
+        border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.3rem 2rem 0.3rem 0.8rem; font-size: 0.875rem;
+    }
+    table.dataTable thead th {
+        background-color: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0 !important; padding: 1rem 1.5rem !important; text-align: left;
+    }
+    table.dataTable tbody td {
+        padding: 1rem 1.5rem !important; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 0.875rem; vertical-align: middle;
+    }
+
+    /* --- 📌 ESTILOS MEJORADOS DEL PAGINADO --- */
+    .dataTables_paginate {
+        padding: 1rem !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+    }
+
+    .dataTables_paginate .paginate_button {
+        font-size: 0.75rem;
+        padding: 0.45rem 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: white !important;
+        color: #475569 !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    /* Hover */
+    .dataTables_paginate .paginate_button:hover {
+        background: #f1f5f9 !important;
+        color: #4f46e5 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    /* Activa */
+    .dataTables_paginate .paginate_button.current {
+        background: #eef2ff !important;
+        color: #4338ca !important;
+        border-color: #c7d2fe !important;
+        font-weight: 700;
+    }
+
+    /* Deshabilitada */
+    .dataTables_paginate .paginate_button.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        border-color: #e5e7eb;
+    }
+
+    /* Flechas */
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next,
+    .dataTables_paginate .paginate_button.first,
+    .dataTables_paginate .paginate_button.last {
+        font-weight: 600;
+        padding: 0.45rem 0.75rem;
+    }
+
+    .dataTables_paginate .paginate_button:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+    }
+
+    /* Animaciones */
+    .fade-up { animation: fadeUp 0.5s ease-out forwards; opacity: 0; transform: translateY(15px); }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* Placeholders skeleton */
+    .skeleton-box {
+        background: #e2e8f0;
+        border-radius: 0.5rem;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+</style>
+
+<div class="max-w-7xl mx-auto p-6">
+
+    <div class="mb-8 fade-up">
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="ri-user-star-line text-indigo-600"></i> Mis Clientes Asignados
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">Gestiona y da seguimiento a tu cartera de clientes.</p>
+    </div>
+
+    <!-- Skeleton -->
+    <div id="skeletonCards" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        {% for i in range(4) %}
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+            <div class="w-full">
+                <div class="skeleton-box h-4 w-24 mb-3"></div>
+                <div class="skeleton-box h-8 w-16"></div>
+            </div>
+            <div class="skeleton-box h-12 w-12 rounded-xl"></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Contenido real -->
+    <div id="realContent" style="display:none;">
+
+        <!-- Tarjetas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 fade-up">
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex justify-between items-center group hover:shadow-md transition">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Clientes</p>
+                    <h3 class="text-3xl font-bold text-blue-600 mt-1" id="totalClientes">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                    <i class="ri-group-line"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 flex justify-between items-center group hover:shadow-md transition">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Activos</p>
+                    <h3 class="text-3xl font-bold text-emerald-600 mt-1" id="activosCount">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                    <i class="ri-checkbox-circle-line"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-red-100 flex justify-between items-center group hover:shadow-md transition">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Morosos</p>
+                    <h3 class="text-3xl font-bold text-red-600 mt-1" id="morososCount">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                    <i class="ri-error-warning-line"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-100 flex justify-between items-center group hover:shadow-md transition">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Pendientes</p>
+                    <h3 class="text-3xl font-bold text-amber-600 mt-1" id="pendientesCount">0</h3>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                    <i class="ri-time-line"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden fade-up delay-100">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Directorio de Clientes</h3>
+                <button class="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg text-xs font-medium border border-gray-200 hover:bg-gray-100 transition">
+                    <i class="ri-download-cloud-2-line mr-1"></i> Exportar
+                </button>
+            </div>
+
+            <div class="p-0">
+                <table id="clientesTable" class="w-full text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Contacto</th>
+                            <th>Estado</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientesTableBody">
+                        {% for cliente in clientes %}
+                        {% set estado_simple = 'activo' if cliente.cliente_status_revision in [2, 'aprobado_pyme', 'con_financiera', 'activo'] else 'moroso' if cliente.cliente_status_revision in [3, 'moroso'] else 'pendiente' %}
+
+                        <tr class="client-row hover:bg-gray-50 transition" data-estado="{{ estado_simple }}">
+
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-sm border border-indigo-100">
+                                        {{ cliente.cliente_nombre[0]|upper }}{{ cliente.cliente_apellidos[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900 text-sm">
+                                            {{ cliente.cliente_nombre }} {{ cliente.cliente_apellidos }}
+                                        </div>
+                                        <div class="text-xs text-gray-400 font-mono">
+                                            ID: #{{ cliente._id|string|truncate(6, True, '') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="flex flex-col gap-1">
+                                    <div class="text-xs text-gray-600 flex items-center gap-1">
+                                        <i class="ri-mail-line text-gray-400"></i>
+                                        {{ cliente.cliente_email }}
+                                    </div>
+                                    <div class="text-xs text-gray-600 flex items-center gap-1">
+                                        <i class="ri-phone-line text-gray-400"></i>
+                                        {{ cliente.cliente_telefono }}
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                {% if estado_simple == 'activo' %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Activo
+                                </span>
+                                {% elif estado_simple == 'moroso' %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                    Moroso
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    Pendiente
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-right">
+                                <button onclick="verDetallesCliente('{{ url_for('routes.dashboard_asesor_ver_cliente', id_cliente=cliente._id) }}')" class="px-3 py-1.5 bg-white border border-gray-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 hover:border-indigo-200 transition shadow-sm">
+                                    Ver Detalles
+                                </button>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+
+<script>
+
+    let tablaClientes;
+    const totalClientes = document.getElementById('totalClientes');
+    const activosCount = document.getElementById('activosCount');
+    const morososCount = document.getElementById('morososCount');
+    const pendientesCount = document.getElementById('pendientesCount');
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        tablaClientes = $('#clientesTable').DataTable({
+            pageLength: 10,
+            responsive: true,
+            language: {
+                search: "",
+                searchPlaceholder: "🔍 Buscar...",
+                lengthMenu: "Mostrar _MENU_",
+                info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                paginate: { first: "«", last: "»", next: "Siguiente", previous: "Anterior" },
+                zeroRecords: "No se encontraron resultados",
+                emptyTable: "No hay datos disponibles"
+            },
+            dom: '<"flex flex-col md:flex-row justify-between items-center p-5 border-b border-gray-100 gap-4"lf>rt<"flex flex-col md:flex-row justify-between items-center p-5 bg-gray-50 border-t border-gray-100 gap-4"ip>'
+        });
+
+        contarClientes();
+
+        setTimeout(() => {
+            document.getElementById("skeletonCards").style.display = "none";
+            document.getElementById("realContent").style.display = "block";
+            tablaClientes.columns.adjust().draw();
+        }, 800);
+    });
+
+    function contarClientes() {
+        let rows = document.querySelectorAll('.client-row');
+        let total = rows.length;
+        let activos = 0, morosos = 0, pendientes = 0;
+
+        rows.forEach(row => {
+            let estado = row.dataset.estado;
+            if (estado === "activo") activos++;
+            else if (estado === "moroso") morosos++;
+            else pendientes++;
+        });
+
+        animateCounter(totalClientes, total);
+        animateCounter(activosCount, activos);
+        animateCounter(morososCount, morosos);
+        animateCounter(pendientesCount, pendientes);
+    }
+
+    function animateCounter(element, target) {
+        let start = 0;
+        let duration = 1000;
+        let steps = target > 0 ? 20 : 1; 
+        let increment = target / steps;
+
+        if(target === 0) { element.textContent = 0; return; }
+
+        let interval = setInterval(() => {
+            start += increment;
+            if (start >= target) {
+                element.textContent = target;
+                clearInterval(interval);
+            } else {
+                element.textContent = Math.ceil(start);
+            }
+        }, duration / steps);
+    }
+
+    function verDetallesCliente(url) {
+        window.location.href = url;
+    }
+
+</script>
+
+{% endblock %}

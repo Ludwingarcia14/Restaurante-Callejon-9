@@ -1,0 +1,79 @@
+{% extends "layout/layout_financieras.html" %}
+{% block title %}Editar Préstamo{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-8">
+    <div class="bg-white rounded-xl shadow-lg p-8 max-w-4xl mx-auto">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">✏️ Editar Préstamo: {{ prestamo.datbasicos_clave }}</h2>
+
+        <form id="formEditarPrestamo">
+            <input type="hidden" name="_id" value="{{ prestamo._id }}">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Cliente</label>
+                    <input type="text" value="{{ prestamo.cliente_nombre }}" class="w-full p-2 border bg-gray-100 rounded" readonly>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Monto ($)</label>
+                    <input type="number" step="0.01" name="monto" value="{{ prestamo.prestamo_monto }}" class="w-full p-2 border rounded">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Plazo (Meses)</label>
+                    <input type="number" name="plazo" value="{{ prestamo.prestamo_plazo }}" class="w-full p-2 border rounded">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Tasa Interés (%)</label>
+                    <input type="number" step="0.01" name="tasa" value="{{ prestamo.prestamo_tasa_interes }}" class="w-full p-2 border rounded">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Estado</label>
+                    <select name="estado" class="w-full p-2 border rounded">
+                        {% for est in estados %}
+                        <option value="{{ est }}" {% if prestamo.prestamo_estado == est %}selected{% endif %}>{{ est }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Fecha Vencimiento</label>
+                    <input type="date" name="fecha_vencimiento" value="{{ prestamo.prestamo_fecha_vencimiento }}" class="w-full p-2 border rounded">
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-gray-700 font-bold mb-2">Motivo</label>
+                <input type="text" name="motivo" value="{{ prestamo.prestamo_motivo }}" class="w-full p-2 border rounded">
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-gray-700 font-bold mb-2">Observaciones</label>
+                <textarea name="observaciones" rows="3" class="w-full p-2 border rounded">{{ prestamo.prestamo_observaciones }}</textarea>
+            </div>
+
+            <div class="flex justify-end gap-4 mt-8">
+                <a href="{{ url_for('routes.prestamos_lista') }}" class="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancelar</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('formEditarPrestamo').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('/dashboard/financiera/prestamos/update', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire('¡Actualizado!', data.message, 'success').then(() => window.location.href = "{{ url_for('routes.prestamos_lista') }}");
+            } else { Swal.fire('Error', data.message, 'error'); }
+        });
+    });
+</script>
+{% endblock %}

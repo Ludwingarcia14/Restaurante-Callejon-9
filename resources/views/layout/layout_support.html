@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Soporte - {% block title %}Dashboard{% endblock %}</title>
+    <meta name="csrf-token" content="{{ session.get('_csrf_token') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='assets/img/Logo2.png') }}" type="image/x-icon">
+</head>
+<body class="bg-gray-50 flex min-h-screen text-gray-800 font-sans">
+
+    <aside class="w-64 bg-white border-r shadow-md flex flex-col">
+        <div class="h-20 flex items-center justify-center">
+            <img src="{{ url_for('static', filename='img/Logo2.png') }}" alt="Logo" class="w-28">
+        </div>
+        
+        <div class="px-6 py-4 border-b text-center">
+
+            <img
+                src="{{ url_for('static', filename='perfiles/ludwin.jpg') }}"
+                alt="Foto de perfil"
+                class="w-16 h-16 rounded-full mx-auto mb-2 shadow-md object-cover"
+            />
+            <p class="font-medium">{{ session['usuario_nombre'] }}</p>
+            <p class="text-sm text-gray-500">{{ session['usuario_email'] }}</p>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-2 text-sm font-medium">
+            <a href="{{ url_for('routes.dashboard_soporte') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.dashboard_soporte' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
+                🏠 <span>Inicio</span>
+            </a>
+
+            <a href="{{ url_for('routes.soporte_tickets') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.soporte_tickets' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
+                📩 <span>Tickets activos</span>
+            </a>
+
+            <a href="{{ url_for('routes.soporte_historial') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.soporte_historial' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
+                🗄 <span>Historial</span>
+            </a>
+
+            <a href="{{ url_for('routes.soporte_metricas') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.soporte_metricas' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
+                📊 <span>Métricas</span>
+            </a>
+
+            <a href="{{ url_for('routes.soporte_comunicacion') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.soporte_comunicacion' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
+                👥 <span>Comunicación</span>
+            </a>
+
+            <a href="{{ url_for('routes.soporte_alertas') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.soporte_alertas' %}bg-red-100 text-red-600 shadow-sm{% else %}text-gray-700 hover:bg-red-50 hover:text-red-600{% endif %}">
+                🚨 <span>Alertas</span>
+            </a>
+
+            <a href="{{ url_for('routes.soporte_gestion') }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                      {% if request.endpoint == 'routes.soporte_gestion' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
+                🧑‍💼 <span>Gestión del equipo</span>
+            </a>
+        </nav>
+
+
+        <div class="p-4 mt-auto text-center">
+            <a href="{{ url_for('routes.logout') }}"
+               class="inline-block bg-red-100 text-red-500 px-4 py-2 rounded-full hover:bg-red-200 text-sm shadow-sm">
+                <i class="bi bi-door-open"></i> Cerrar sesión
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-10 overflow-y-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-700">{{ self.title() }}</h1>
+            
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">{{ session['usuario_nombre'] }}</span>
+                
+                <img 
+                    src="{{ usuario_foto if usuario_foto else url_for('static', filename='img/icon.png') }}" 
+                    alt="Foto de perfil" 
+                    class="w-8 h-8 rounded-full object-cover"
+                >
+                </div>
+        </div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+<script>
+function toggleMenu(id) {
+    const submenu = document.getElementById(id);
+    submenu.classList.toggle('hidden');
+    const iconId = 'icon-' + id.replace('Submenu', '').toLowerCase();
+    const icon = document.getElementById(iconId);
+    if (icon) icon.textContent = submenu.classList.contains('hidden') ? '▼' : '▲';
+}
+</script>
+<!-- 💬 Botón flotante de ayuda -->
+<div id="helpBubble"
+     class="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full 
+            flex items-center justify-center cursor-pointer shadow-lg 
+            hover:bg-blue-700 transition z-50">
+    💬
+</div>
+
+<!-- 🪟 Ventana de chat -->
+<div id="helpChat"
+     class="fixed bottom-24 right-6 w-80 bg-white rounded-xl shadow-xl 
+            border hidden flex flex-col z-50">
+
+    <div class="bg-blue-600 text-white px-4 py-3 rounded-t-xl flex justify-between items-center">
+        <span class="font-semibold">Centro de ayuda</span>
+        <button id="closeHelpChat" class="text-white text-lg">✕</button>
+    </div>
+
+    <div class="p-4 text-sm text-gray-700 flex-1 overflow-y-auto">
+        <p class="mb-2">👋 Hola, ¿en qué podemos ayudarte?</p>
+        <p class="text-gray-500">
+            Puedes consultar el estado de tu ticket o hablar con un asesor.
+        </p>
+    </div>
+
+    <div class="p-3 border-t">
+        <a href="/dashboard/soporte/comunicacion"
+           class="block text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+            Ir al chat de soporte
+        </a>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const bubble = document.getElementById("helpBubble");
+    const chat = document.getElementById("helpChat");
+    const closeBtn = document.getElementById("closeHelpChat");
+
+    bubble.addEventListener("click", () => {
+        chat.classList.toggle("hidden");
+    });
+
+    closeBtn.addEventListener("click", () => {
+        chat.classList.add("hidden");
+    });
+});
+</script>
+
+</body>
+</html>

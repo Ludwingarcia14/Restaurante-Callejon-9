@@ -1,0 +1,302 @@
+{% extends "layout/layout_support.html" %}
+{% block title %}Comunicación con el Cliente o Asesor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+    <div class="flex justify-center">
+
+        <!-- ========================================== -->
+        <!-- CHAT FAQ (PREGUNTAS FRECUENTES) -->
+        <div class="bg-white rounded-xl shadow-md">
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-700 p-4 rounded-t-xl">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    🤖 Asistente Virtual FAQ
+                </h2>
+                <p class="text-purple-100 text-sm mt-1">
+                    Respuestas rápidas 24/7
+                </p>
+            </div>
+
+            <div id="faqChatContainer" class="border-t p-4 h-96 overflow-y-auto bg-gradient-to-br from-purple-50 to-indigo-50">
+                <div class="flex flex-col space-y-4" id="faqMessages">
+                    <!-- Mensaje inicial del bot -->
+                    <div class="flex gap-2">
+                        <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-white text-sm">🤖</span>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl rounded-tl-none shadow-sm max-w-xs">
+                            <p class="text-sm text-gray-800">
+                                ¡Hola! 👋 Soy tu asistente virtual.<br><br>
+                                Escribe el número de lo que necesitas:
+                            </p>
+                            <ul class="text-sm text-gray-700 mt-2 space-y-1">
+                                <li><strong>1.</strong> ⏰ Horarios de atención</li>
+                                <li><strong>2.</strong> 🎫 Estado de mi ticket</li>
+                                <li><strong>3.</strong> 📝 Crear un nuevo ticket</li>
+                                <li><strong>4.</strong> 📞 Información de contacto</li>
+                                <li><strong>5.</strong> ⚡ Reportar algo urgente</li>
+                            </ul>
+                            <p class="text-xs text-gray-400 mt-2">
+                                También puedes escribir con tus propias palabras.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicador de escritura -->
+                <div id="faqTyping" class="hidden flex gap-2 mt-3">
+                    <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm">🤖</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm">
+                        <div class="flex gap-1">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="faqForm" class="p-4 bg-white border-t rounded-b-xl">
+                <div class="flex gap-2">
+                    <input type="text" id="faqInput" placeholder="Escribe 1-5 o tu pregunta..." 
+                           class="flex-1 p-2 border rounded-lg text-sm">
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Enviar
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 text-center">
+                    💡 Prueba: "1", "2", "horarios", "contacto"
+                </p>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<style>
+@keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+}
+.animate-bounce {
+    animation: bounce 1.4s infinite ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const faqMessages = document.getElementById("faqMessages");
+    const faqForm = document.getElementById("faqForm");
+    const faqInput = document.getElementById("faqInput");
+    const faqTyping = document.getElementById("faqTyping");
+
+    const numericOptions = {
+        "1": "horarios",
+        "2": "ticket",
+        "3": "crear",
+        "4": "contacto",
+        "5": "urgente"
+    };
+
+    // Base de conocimiento FAQ
+    const faqKnowledge = {
+        horarios: {
+            keywords: ['horario', 'hora', 'atencion', 'atención', 'cuando', 'abren', 'cierran'],
+            response: `⏰ <strong>Horarios de Atención:</strong><br><br>
+                • Lunes a Viernes: 9:00 AM - 6:00 PM<br>
+                • Sábados: 9:00 AM - 2:00 PM<br>
+                • Domingos: Cerrado<br><br>
+                Para urgencias fuera de horario, contáctanos por WhatsApp.`,
+            needsHuman: false
+        },
+        ticket: {
+            keywords: ['ticket', 'seguimiento', 'estado', 'consultar', 'numero', 'número', 'folio'],
+            response: `🎫 <strong>Consulta de Tickets:</strong><br><br>
+                Para consultar el estado de tu ticket:<br>
+                1. Ingresa a tu panel de cliente<br>
+                2. Ve a "Mis Tickets"<br>
+                3. Usa tu número de ticket<br><br>
+                ¿Necesitas ayuda específica con un ticket?`,
+            needsHuman: false
+        },
+        crear: {
+            keywords: ['crear', 'nuevo', 'abrir', 'reportar', 'registrar'],
+            response: `📝 <strong>Crear Nuevo Ticket:</strong><br><br>
+                Para crear un ticket necesitas:<br>
+                1. Descripción del problema<br>
+                2. Capturas (opcional)<br>
+                3. Tu información de contacto<br><br>
+                ¿Quieres ir al formulario de tickets?`,
+            needsHuman: false
+        },
+        contacto: {
+            keywords: ['contacto', 'telefono', 'teléfono', 'email', 'whatsapp', 'llamar', 'correo'],
+            response: `📞 <strong>Información de Contacto:</strong><br><br>
+                • WhatsApp: +52 722 123 4567<br>
+                • Email: soporte@tuempresa.com<br>
+                • Teléfono: (722) 123-4567<br><br>
+                ¿Te gustaría contactarnos ahora?`,
+            needsHuman: true
+        },
+        urgente: {
+            keywords: ['urgente', 'prioridad', 'critico', 'crítico', 'importante', 'rapido', 'rápido'],
+            response: `⚡ <strong>Niveles de Prioridad:</strong><br><br>
+                🔴 Alta: Problemas críticos (2h)<br>
+                🟡 Media: Incidencias importantes (24h)<br>
+                🟢 Baja: Consultas generales (48h)<br><br>
+                ¿Tu caso es urgente?`,
+            needsHuman: true
+        }
+    };
+
+    // Función para encontrar respuesta
+    function findResponse(mensaje) {
+        const msg = mensaje.toLowerCase().trim();
+        
+        if (numericOptions[msg]) {
+            return faqKnowledge[numericOptions[msg]];
+        }
+        
+        for (const data of Object.values(faqKnowledge)) {
+            if (data.keywords.some(kw => msg.includes(kw))) {
+                return data;
+            }
+        }
+        
+        return {
+            response: `🤔 No encontré una respuesta clara.<br><br>
+                Puedes escribir:<br>
+                <strong>1</strong> para horarios<br>
+                <strong>2</strong> para tickets<br>
+                <strong>3</strong> para crear ticket<br>
+                <strong>4</strong> para contacto<br>
+                <strong>5</strong> para urgencias`,
+            needsHuman: true
+        };
+    }
+
+    // Agregar mensaje del usuario
+    function addUserMessage(text) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "flex justify-end gap-2";
+        msgDiv.innerHTML = `
+            <div class="bg-purple-600 text-white p-3 rounded-xl rounded-tr-none shadow-sm max-w-xs">
+                <p class="text-sm">${text}</p>
+                <span class="text-xs text-purple-100 mt-1 block">
+                    ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+            </div>
+            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-sm">👤</span>
+            </div>
+        `;
+        faqMessages.appendChild(msgDiv);
+        scrollToBottom();
+    }
+
+    // Agregar mensaje del bot
+    function addBotMessage(html, needsHuman = false) {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "flex gap-2";
+        msgDiv.innerHTML = `
+            <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-sm">🤖</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl rounded-tl-none shadow-sm max-w-xs">
+                <p class="text-sm text-gray-800">${html}</p>
+                <span class="text-xs text-gray-400 mt-2 block">
+                    ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+            </div>
+        `;
+        faqMessages.appendChild(msgDiv);
+
+        if (needsHuman) {
+            addActionButtons();
+        }
+
+        showMenu();
+        scrollToBottom();
+    }
+
+    // Mostrar menú de opciones
+    function showMenu() {
+        const menuDiv = document.createElement("div");
+        menuDiv.className = "flex gap-2";
+        menuDiv.innerHTML = `
+            <div class="w-8 h-8"></div>
+            <div class="bg-purple-50 p-3 rounded-xl shadow-sm max-w-xs border border-purple-200">
+                <p class="text-xs text-gray-600 mb-2">¿Necesitas algo más?</p>
+                <div class="text-xs text-gray-700 space-y-1">
+                    <div><strong>1</strong> Horarios | <strong>2</strong> Tickets</div>
+                    <div><strong>3</strong> Crear | <strong>4</strong> Contacto</div>
+                </div>
+            </div>
+        `;
+        faqMessages.appendChild(menuDiv);
+    }
+
+    // Agregar botones de acción
+    function addActionButtons() {
+        const btnDiv = document.createElement("div");
+        btnDiv.className = "flex gap-2 justify-center my-3";
+        btnDiv.innerHTML = `
+            <button onclick="contactWhatsApp()" 
+                    class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all shadow-md text-sm">
+                <span>💬</span> WhatsApp
+            </button>
+            <button onclick="contactPhone()" 
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all shadow-md text-sm">
+                <span>📞</span> Llamar
+            </button>
+        `;
+        faqMessages.appendChild(btnDiv);
+        scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        faqMessages.parentElement.scrollTop = faqMessages.parentElement.scrollHeight;
+    }
+
+    function showTyping() {
+        faqTyping.classList.remove("hidden");
+        scrollToBottom();
+    }
+
+    function hideTyping() {
+        faqTyping.classList.add("hidden");
+    }
+
+    faqForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        const mensaje = faqInput.value.trim();
+        if (!mensaje) return;
+
+        addUserMessage(mensaje);
+        faqInput.value = "";
+
+        showTyping();
+
+        setTimeout(() => {
+            hideTyping();
+            const { response, needsHuman } = findResponse(mensaje);
+            addBotMessage(response, needsHuman);
+        }, 1000);
+    });
+
+    // Funciones globales para botones
+    window.contactWhatsApp = function() {
+        const phone = '5217221234567';
+        const message = encodeURIComponent('Hola, necesito ayuda con soporte técnico');
+        window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+    };
+
+    window.contactPhone = function() {
+        window.location.href = 'tel:+527221234567'; 
+    };
+});
+</script>
+{% endblock %}

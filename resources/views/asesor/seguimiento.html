@@ -1,0 +1,50 @@
+{% extends 'layout/layout_asesor.html' %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">📞 Seguimiento del Cliente</h1>
+
+    <!-- Formulario de nuevo seguimiento -->
+    <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-200 mb-6 max-w-2xl mx-auto">
+        <form action="{{ url_for('routes.asesor_seguimiento_guardar', id_solicitud=solicitud._id) }}" method="post" class="space-y-4">
+            <label class="block font-semibold">Medio de contacto:</label>
+            <select name="medio" class="border p-2 rounded w-full">
+                <option value="llamada" {% if request.form.medio == 'llamada' %}selected{% endif %}>Llamada</option>
+                <option value="mensaje" {% if request.form.medio == 'mensaje' %}selected{% endif %}>Mensaje</option>
+                <option value="visita" {% if request.form.medio == 'visita' %}selected{% endif %}>Visita</option>
+            </select>
+
+            <label class="block font-semibold">Comentarios:</label>
+            <textarea name="comentarios" placeholder="Comentarios" class="border p-2 rounded w-full">{{ request.form.comentarios }}</textarea>
+
+            <label class="block font-semibold">Resultado:</label>
+            <input name="resultado" placeholder="Resultado" class="border p-2 rounded w-full" value="{{ request.form.resultado }}"/>
+
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full transition">
+                Guardar seguimiento
+            </button>
+        </form>
+    </div>
+
+    <!-- Historial de contactos -->
+    <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-200 max-w-2xl mx-auto">
+        <h2 class="font-semibold text-lg mb-4">Historial de Contactos</h2>
+
+        {% if contactos %}
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                {% for c in contactos %}
+                    <div class="p-3 border rounded-lg
+                        {% if c.medio == 'llamada' %}bg-blue-50
+                        {% elif c.medio == 'mensaje' %}bg-green-50
+                        {% elif c.medio == 'visita' %}bg-yellow-50
+                        {% else %}bg-gray-50{% endif %}">
+                        <p><strong>Medio:</strong> {{ c.medio | capitalize }} — <strong>Resultado:</strong> {{ c.resultado or 'N/A' }}</p>
+                        <p class="text-gray-500 text-sm">Fecha: {{ c.fecha | default('No registrada') }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500">No hay registros de contacto aún.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
