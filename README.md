@@ -1,238 +1,139 @@
-# 🚀 Pyme – Plataforma de Gestión Financiera Inteligente
+# 🍽️ Callejón 9 – Sistema Integral de Gestión para Restaurantes
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![Flask](https://img.shields.io/badge/Flask-Framework-black)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue)
-![CQRS](https://img.shields.io/badge/Architecture-CQRS-success)
-![Status](https://img.shields.io/badge/Status-Active-success)
-![License](https://img.shields.io/badge/License-MIT-green)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-green.svg)
+![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688.svg)
+![MongoDB](https://img.shields.io/badge/database-MongoDB-47A248.svg)
+![Apache Spark](https://img.shields.io/badge/analytics-Apache%20Spark-E25A1C.svg)
 
----
-
-## 📌 Descripción General
-
-**Pyme** es una plataforma financiera de nivel **enterprise** diseñada para la gestión inteligente de créditos y préstamos dirigidos a **Pymes y clientes particulares**.
-
-Integra:
-- Arquitectura **CQRS**
-- Procesamiento documental automatizado
-- **Motor de Inteligencia Artificial**
-- Análisis de riesgo financiero previo a validación humana
-
-El sistema está pensado para **escalar**, **auditar** y **automatizar** procesos críticos del sector financiero.
+**Callejón 9** es una plataforma modular de alto rendimiento diseñada para centralizar la operación gastronómica. Su arquitectura orientada a servicios permite una gestión eficiente desde la toma de pedidos hasta el análisis de datos masivos mediante Spark.
 
 ---
 
-## 🧱 Arquitectura General (Enterprise)
+## 🏗️ Arquitectura del Sistema
 
-```text
-┌──────────────┐
-│   Frontend   │  (Bulma + JS)
-└──────┬───────┘
-       │ HTTP / Auth
-┌──────▼────────┐
-│    Flask API  │
-│ (Controllers) │
-└──────┬────────┘
-       │
-┌──────▼───────────────┐
-│        CQRS          │
-│  Commands / Queries  │
-└──────┬───────────────┘
-       │
-┌──────▼──────────┐
-│  Services Layer │
-│ Business Logic  │
-└──────┬──────────┘
-       │
-┌──────▼────────────┐
-│   AI Engine       │
-│ OCR + Analysis    │
-└──────┬────────────┘
-       │
-┌──────▼────────┐
-│   MySQL DB     │
-│ SQLAlchemy    │
-└───────────────┘
-```
+El proyecto sigue un flujo de datos estructurado para garantizar que la lógica de negocio esté separada de la analítica pesada.
 
----
+Datos en MongoDB
+        │
+        ▼
+Extracción y Conversión
+        │
+        ▼
+Cargas a Spark DF
+        │
+        ▼
+Limpieza y Formateo de Campos
+        │
+        ▼
+Cálculos y Métricas
+        │
+        ▼
+Reporte final en JSON
 
-## 📋 Características Clave
+## 🌟 Características Principales
 
-### 🔐 Seguridad y Control
-- Autenticación por sesión
-- Roles y permisos
-- Aislamiento de responsabilidades
+### 📋 Gestión de Menú
+* **Control Total:** Registro y edición de platillos con gestión de recetas.
+* **Organización:** Administración por categorías y subcategorías.
+* **Ingredientes:** Vinculación directa con el módulo de inventarios.
 
-### 💳 Gestión de Créditos
-- Solicitudes
-- Estados
-- Evaluación automatizada
-- Validación humana final
+### 📦 Inventarios
+* **Unidades de Medida:** Control preciso de insumos (kg, lts, piezas).
+* **Trazabilidad:** Registro automático de entradas y salidas.
+* **Stock Crítico:** Alertas automáticas cuando los insumos bajan de los mínimos establecidos.
 
-### 🧠 AI Engine
-- OCR automático con **Poppler + Tesseract**
-- Fallback PyMuPDF
-- Clasificación documental
-- Extracción estructurada
-- Normalización de texto
-- Validaciones cruzadas
+### 💳 Ventas y Comandas
+* **Agilidad:** Captura de pedidos optimizada para dispositivos táctiles.
+* **Integración:** Comunicación inmediata con el área de cocina.
+* **Finanzas:** Cálculo automático de totales y gestión de múltiples métodos de pago.
+
+### 🔐 Seguridad y Roles
+* **RBAC (Role-Based Access Control):** Permisos específicos para Administrador, Mesero y Cocina.
+* **Autenticación:** Sistema basado en tokens JWT (JSON Web Tokens).
 
 ---
 
-## 🧠 Documentación Interna – AI Engine
+## 📈 Módulo de Analítica (Spark)
+> **Ubicación:** `app/services/analytics/`
 
-📂 `services/ai_engine/`
+Este módulo transforma los datos crudos de MongoDB en **inteligencia de negocios** mediante el motor de procesamiento distribuido Apache Spark.
 
-### 🔄 Flujo de Procesamiento
 
-```text
-Documento PDF
-     │
-     ▼
-¿PDF tiene texto?
-     │
- ┌───┴────┐
- │        │
-NO       SI
- │        │
- ▼        ▼
-OCR     PyMuPDF
- │        │
- └───┬────┘
-     ▼
-Normalización
-     ▼
-Clasificación
-     ▼
-Extracción
-     ▼
-Validaciones
-     ▼
-Resultado JSON
-```
 
-### 📑 Tipos de Documentos Soportados
-- INE / Identificaciones
-- Estados de Cuenta Bancarios
-- Buró de Crédito
-- Comprobantes:
-  - CFE
-  - Telmex
-  - Agua
-  - Predial
-
-### 🧪 Estrategias Técnicas
-- Limpieza Unicode
-- Regex financieros
-- Fechas dinámicas
-- Detección de proveedor
-- Manejo de PDFs escaneados
+**Métricas Clave Generadas:**
+* 💰 **Volumen de Ventas:** Análisis diario, semanal y mensual.
+* 🎫 **Promedio de Ticket:** Valor promedio de consumo por mesa.
+* 🔥 **Platillos Estrella:** Identificación de los productos más vendidos.
+* 📉 **Picos Operativos:** Detección de horas de mayor carga de trabajo.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-| Capa | Tecnología |
-|-----|------------|
-| Backend | Python 3.11 |
-| Framework | Flask |
-| DB | MySQL |
-| ORM | SQLAlchemy |
-| IA | Tesseract, OpenCV |
-| OCR | Poppler |
-| Infra | Docker |
+| Componente | Tecnología |
+| :--- | :--- |
+| **Lenguaje** | `Python 3.11` |
+| **Backend Framework** | `FastAPI` |
+| **Base de Datos** | `MongoDB` |
+| **Motor de Analítica** | `Apache Spark` |
+| **Frontend** | `React / Next.js` |
+| **Entorno** | `Conda / Docker` |
 
 ---
 
-## 📂 Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```text
-├── config/
-├── controllers/
-├── cqrs/
-│   ├── commands/
-│   └── queryes/
-├── services/
-│   └── ai_engine/
-├── models/
-├── utils/
-├── static/
-├── resources/views/
-├── app.py
-└── routes.py
-```
+├── app/
+│   ├── api/           # Rutas y Controladores de FastAPI
+│   ├── services/      # Lógica de Negocio (Menú, Ventas, Inventarios)
+│   ├── analytics/     # Motor Spark y Procesamiento de Datos
+│   ├── models/        # Esquemas de Datos
+│   └── database/      # Configuración de MongoDB
+├── config/            # Variables de entorno y ajustes
+├── docs/              # Documentación técnica adicional
+├── frontend/          # Interfaz de usuario (React/Next.js)
+├── app.py             # Punto de entrada de la aplicación
+└── requirements.txt   # Dependencias del sistema
 
----
+🚀 Instalación y Despliegue
+Sigue estos pasos para configurar tu entorno local con Conda:
 
-## 🚀 Instalación
+Clonar el repositorio:
 
-```bash
-git clone <repo>
-cd pyme
-conda create -n miniconda311 python=3.11 -y
-conda activate miniconda311
+git clone [https://github.com/Ludwingarcia14/Restaurante-Callejon-9.git]
+cd Restaurante-Callejon-9
+
+Configurar el entorno virtual:
+conda create -n Callejon9 python=3.11 -y
+conda activate Callejon9
+
+Instalar dependencias:
 pip install -r requirements.txt
+
+Configurar variables de entorno:
 cp .env.example .env
+# Edita el archivo .env con tus credenciales de MongoDB
+
+Ejecutar la aplicación:
 python app.py
-```
 
----
+👥 Equipo de Desarrollo
 
-## 🐳 Docker
+🏛️ Dirección y Liderazgo Técnico
+Ludwin Garcia Gaytan
 
-```bash
-docker build -t pyme-app .
-docker run -d -p 5000:5000 --env-file .env pyme-app
-```
+Rol: Arquitectura, Coordinación y Supervisión General.
 
----
+👨‍💻 Contributors
+Duarte Villavicencio Octavio - Developer
 
-## 📜 Licencia
+Mercado Cerrano Valeria - Developer
 
-MIT License
+Ibarra Alba Regina - Developer
 
----
----
+📄 Licencia
+Este proyecto está bajo la licencia MIT. Para más detalles, consulta el archivo LICENSE.
 
-## 👨‍💻 Equipo de Desarrollo
-
-### 🔐 Core Team
-
-**Flores Vargas Edwin**  
-- Rol: **Lead / Maintainer**
-- Cargo: Project Manager  
-- Responsabilidades: Dirección del proyecto, planificación, coordinación general  
-
-**Mora Ortega Jennyfer**  
-- Rol: **Lead / Maintainer**
-- Cargo: Líder de Proyecto & Project Manager  
-- Responsabilidades: Gestión del proyecto, toma de decisiones técnicas y estratégicas  
-
----
-
-### 🤝 Equipo de Desarrollo (Contributors)
-
-**Carlos Hernandez Josselin**  
-- Rol: Contributor  
-- Cargo: Developer  
-
-**Garcia Gaytan Ludwin**  
-- Rol: Contributor  
-- Cargo: Developer  
-
-**Jimenez Olvera Alberto**  
-- Rol: Contributor  
-- Cargo: Developer  
-
----
-
-## 👨‍💻 Autor
-
-**POTENCIAL PYME**  
-Arquitectura, Backend, AI Engine
-
----
-
-> Plataforma diseñada para entornos financieros reales, escalables y auditables.
+Callejón 9 – Optimizando el sabor a través de los datos.
