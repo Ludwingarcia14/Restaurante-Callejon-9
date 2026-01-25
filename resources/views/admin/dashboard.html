@@ -1,0 +1,157 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Panel de Administración{% endblock %}
+{% block page_title %}Dashboard Administrativo{% endblock %}
+{% block page_subtitle %}Gestión y control del restaurante{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
+    <i class="bi bi-house-door text-lg"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.admin_empleados_lista') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-people text-lg"></i>
+    <span>Empleados</span>
+</a>
+
+<a href="{{ url_for('routes.admin_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-graph-up text-lg"></i>
+    <span>Reportes</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-journal-text text-lg"></i>
+    <span>Menú</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-box-seam text-lg"></i>
+    <span>Inventario</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-cash-stack text-lg"></i>
+    <span>Ventas</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-gear text-lg"></i>
+    <span>Configuración</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Tarjetas de Estadísticas -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Usuarios -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                <i class="bi bi-people text-3xl"></i>
+            </div>
+            <span class="text-sm opacity-90">Total</span>
+        </div>
+        <h3 class="text-3xl font-bold mb-1">{{ stats.total_usuarios }}</h3>
+        <p class="text-sm opacity-90">Usuarios Activos</p>
+    </div>
+
+    <!-- Administradores -->
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                <i class="bi bi-shield-check text-3xl"></i>
+            </div>
+            <span class="text-sm opacity-90">Admin</span>
+        </div>
+        <h3 class="text-3xl font-bold mb-1">{{ stats.total_admin }}</h3>
+        <p class="text-sm opacity-90">Administradores</p>
+    </div>
+
+    <!-- Meseros -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                <i class="bi bi-person-badge text-3xl"></i>
+            </div>
+            <span class="text-sm opacity-90">Servicio</span>
+        </div>
+        <h3 class="text-3xl font-bold mb-1">{{ stats.total_meseros }}</h3>
+        <p class="text-sm opacity-90">Meseros</p>
+    </div>
+
+    <!-- Personal de Cocina -->
+    <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
+                <i class="bi bi-person-workspace text-3xl"></i>
+            </div>
+            <span class="text-sm opacity-90">Cocina</span>
+        </div>
+        <h3 class="text-3xl font-bold mb-1">{{ stats.total_cocina }}</h3>
+        <p class="text-sm opacity-90">Personal de Cocina</p>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-lightning-charge text-purple-600"></i>
+        Accesos Rápidos
+    </h2>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="{{ url_for('routes.admin_empleados_crear') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-center group">
+            <i class="bi bi-person-plus text-4xl text-gray-400 group-hover:text-purple-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-purple-700">Nuevo Empleado</p>
+        </a>
+        
+        <a href="#" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center group">
+            <i class="bi bi-file-earmark-plus text-4xl text-gray-400 group-hover:text-blue-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-blue-700">Nuevo Platillo</p>
+        </a>
+        
+        <a href="{{ url_for('routes.admin_reportes') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center group">
+            <i class="bi bi-graph-up-arrow text-4xl text-gray-400 group-hover:text-green-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-green-700">Ver Reportes</p>
+        </a>
+        
+        <a href="#" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition text-center group">
+            <i class="bi bi-gear-fill text-4xl text-gray-400 group-hover:text-orange-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-orange-700">Configuración</p>
+        </a>
+    </div>
+</div>
+
+<!-- Actividad Reciente -->
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-clock-history text-blue-600"></i>
+        Actividad Reciente
+    </h2>
+    
+    <div class="space-y-4">
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-person-plus text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+                <p class="font-medium text-gray-800">Nuevo empleado registrado</p>
+                <p class="text-sm text-gray-600">Octavio Duarte - Mesero</p>
+                <p class="text-xs text-gray-400 mt-1">Hace 2 horas</p>
+            </div>
+        </div>
+        
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-check-circle text-green-600"></i>
+            </div>
+            <div class="flex-1">
+                <p class="font-medium text-gray-800">Actualización completada</p>
+                <p class="text-sm text-gray-600">Menú actualizado con nuevos platillos</p>
+                <p class="text-xs text-gray-400 mt-1">Hace 5 horas</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
