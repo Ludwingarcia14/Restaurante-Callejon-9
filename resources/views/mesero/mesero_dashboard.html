@@ -1,0 +1,123 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Panel de Mesero{% endblock %}
+{% block page_title %}Dashboard de Mesero{% endblock %}
+{% block page_subtitle %}Gestión de mesas y comandas{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
+    <i class="bi bi-house-door text-lg"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-grid-3x3 text-lg"></i>
+    <span>Mis Mesas</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-receipt text-lg"></i>
+    <span>Comandas Activas</span>
+</a>
+
+<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-cash-coin text-lg"></i>
+    <span>Propinas del Día</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Info del Mesero -->
+<div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-xl shadow-lg text-white mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold mb-2">Bienvenido, {{ usuario }}</h2>
+            <p class="opacity-90">Turno: {{ perfil.turno|title if perfil.turno else 'No asignado' }}</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm opacity-90">Número de Empleado</p>
+            <p class="text-2xl font-bold">{{ perfil.numero_empleado if perfil.numero_empleado else 'N/A' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas del Mesero -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-grid-3x3 text-3xl text-blue-500"></i>
+            <span class="text-2xl font-bold text-gray-800">{{ stats.mesas_asignadas|length }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Mesas Asignadas</p>
+        <p class="text-xs text-gray-500 mt-1">{{ stats.mesas_asignadas|join(', ') if stats.mesas_asignadas else 'Sin asignar' }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-receipt text-3xl text-orange-500"></i>
+            <span class="text-2xl font-bold text-gray-800">{{ stats.comandas_activas }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Comandas Activas</p>
+        <p class="text-xs text-gray-500 mt-1">En proceso</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-cash-coin text-3xl text-green-500"></i>
+            <span class="text-2xl font-bold text-gray-800">${{ stats.propinas_dia }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Propinas Hoy</p>
+        <p class="text-xs text-gray-500 mt-1">{{ perfil.propinas.sugerida if perfil.propinas else 10 }}% sugerido</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-graph-up text-3xl text-purple-500"></i>
+            <span class="text-2xl font-bold text-gray-800">${{ stats.ventas_promedio }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Venta Promedio</p>
+        <p class="text-xs text-gray-500 mt-1">Por día</p>
+    </div>
+</div>
+
+<!-- Mesas Asignadas -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-grid-3x3 text-green-600"></i>
+        Mis Mesas
+    </h3>
+    
+    {% if stats.mesas_asignadas %}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for mesa in stats.mesas_asignadas %}
+        <div class="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 hover:shadow-md transition cursor-pointer text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="bi bi-table text-3xl text-green-600"></i>
+            </div>
+            <p class="font-bold text-gray-800 text-lg">Mesa {{ mesa }}</p>
+            <p class="text-sm text-green-600 font-medium mt-1">Disponible</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-gray-500">
+        <i class="bi bi-inbox text-6xl mb-4 block"></i>
+        <p class="text-lg">No tienes mesas asignadas</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Comandas Activas -->
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-receipt text-orange-600"></i>
+        Comandas Activas
+    </h3>
+    
+    <div class="text-center py-12 text-gray-500">
+        <i class="bi bi-cart-check text-6xl mb-4 block"></i>
+        <p class="text-lg">No hay comandas activas</p>
+        <p class="text-sm mt-2">Las comandas aparecerán aquí cuando tomes pedidos</p>
+    </div>
+</div>
+{% endblock %}

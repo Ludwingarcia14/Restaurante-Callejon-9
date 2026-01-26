@@ -1,32 +1,50 @@
 """
-Dashboard Controller - Sistema Restaurante
-Adaptado a la estructura actual de la BD
+Dashboard Controller - Sistema Restaurante Callejón 9
+Adaptado a la estructura actual de roles: 1=Admin, 2=Mesero, 3=Cocina
 """
 from flask import request, session, redirect, url_for, render_template
 from models.empleado_model import Usuario, RolPermisos
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
+SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
 class DashboardController:
 
     @staticmethod
+    def home():
+        """Renderiza login si no hay sesión"""
+        print(SITE_KEY)
+        return render_template("login.html", site_key=SITE_KEY)
+
+    @staticmethod
     def index():
         """Redirige al dashboard según el rol del usuario"""
-        if "usuario_id" not in session:
+        print(SITE_KEY)
+        
+        # Si no hay sesión, redirigir al login
+        if "usuario_rol" not in session:
             return redirect(url_for("routes.login"))
 
-        rol = session.get("usuario_rol")
+        rol = str(session["usuario_rol"])
 
-        # Mapeo de roles a endpoints
+        # Mapeo de roles del restaurante
         rol_endpoints = {
-            "1": "dashboard_admin",
-            "2": "dashboard_mesero",
-            "3": "dashboard_cocina"
+            "1": "dashboard_admin",      # Administración
+            "2": "dashboard_mesero",      # Mesero
+            "3": "dashboard_cocina"       # Cocina
         }
 
-        endpoint = rol_endpoints.get(str(rol))
+        endpoint = rol_endpoints.get(rol)
+        print(f"🔄 Redirigiendo al endpoint: {endpoint} (Rol: {rol})")
         
         if endpoint:
             return redirect(url_for(f"routes.{endpoint}"))
         else:
+            print(f"❌ Rol no reconocido: {rol}")
             return "⚠ Rol no reconocido", 403
 
     # ==========================================
@@ -36,7 +54,7 @@ class DashboardController:
     @staticmethod
     def admin():
         """Dashboard principal de Administración (Rol 1)"""
-        if "usuario_id" not in session or session.get("usuario_rol") != "1":
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
             return redirect(url_for("routes.login"))
         
         from config.db import db
@@ -57,7 +75,7 @@ class DashboardController:
     @staticmethod
     def mesero():
         """Dashboard principal de Mesero (Rol 2)"""
-        if "usuario_id" not in session or session.get("usuario_rol") != "2":
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
             return redirect(url_for("routes.login"))
         
         from config.db import db
@@ -67,11 +85,7 @@ class DashboardController:
         perfil_mesero = session.get("perfil_mesero", {})
         
         # Obtener comandas activas del mesero (simulado por ahora)
-        # comandas_activas = list(db.ventas.find({
-        #     "mesero_id": usuario_id,
-        #     "estado": {"$in": ["abierta", "en_proceso"]}
-        # }))
-        comandas_activas = []  # Por ahora vacío hasta crear la colección de ventas
+        comandas_activas = []
         
         stats = {
             "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
@@ -90,7 +104,7 @@ class DashboardController:
     @staticmethod
     def cocina():
         """Dashboard principal de Cocina (Rol 3)"""
-        if "usuario_id" not in session or session.get("usuario_rol") != "3":
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "3":
             return redirect(url_for("routes.login"))
         
         from config.db import db
@@ -100,13 +114,12 @@ class DashboardController:
         perfil_cocina = session.get("perfil_cocina", {})
         
         # Obtener comandas activas para cocina (simulado)
-        # comandas_pendientes = list(db.ventas.aggregate([...]))
-        comandas_pendientes = []  # Por ahora vacío
+        comandas_pendientes = []
         
         stats = {
             "area": perfil_cocina.get("area", "general"),
             "turno": perfil_cocina.get("turno", ""),
-            "platillos_pendientes": 0,  # Calcular cuando existan ventas
+            "platillos_pendientes": 0,
             "especialidad": perfil_cocina.get("especialidad", [])
         }
         
@@ -124,11 +137,16 @@ class DashboardController:
     @staticmethod
     def reportes():
         """Vista de reportes para administración"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
+            return redirect(url_for("routes.login"))
         return render_template("admin/reportes/index.html")
 
     @staticmethod
     def empleados_lista():
         """Lista de empleados para administración"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
+            return redirect(url_for("routes.login"))
+            
         empleados = Usuario.find_activos()
         
         # Enriquecer con nombres de roles
@@ -140,6 +158,9 @@ class DashboardController:
     @staticmethod
     def empleados_crear():
         """Formulario de creación de empleado"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
+            return redirect(url_for("routes.login"))
+            
         if request.method == "POST":
             # Lógica de creación (delegada a Command Handler)
             pass
@@ -148,6 +169,17 @@ class DashboardController:
     @staticmethod
     def toggle_theme():
         """Cambia el tema visual (light/dark)"""
-        current_theme = session.get('theme', 'light')
-        session['theme'] = 'dark' if current_theme == 'light' else 'light'
-        return redirect(request.referrer or url_for('routes.home'))
+        try:
+            current_theme = session.get('theme', 'light')
+            
+            if current_theme == 'light':
+                session['theme'] = 'dark'
+            else:
+                session['theme'] = 'light'
+                
+        except Exception as e:
+            print(f"Error al cambiar tema: {e}")
+            pass
+
+        # Redirige al usuario de vuelta a la página donde estaba
+        return redirect(request.referrer or url_for('routes.login'))

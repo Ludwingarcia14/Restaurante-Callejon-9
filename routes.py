@@ -12,7 +12,12 @@ routes_bp = Blueprint("routes", __name__)
 # 🔑 AUTENTICACIÓN
 # ============================================
 
-routes_bp.add_url_rule("/", view_func=DashboardController.index, endpoint="home")
+# Ruta raíz - redirige según estado de sesión
+@routes_bp.route("/")
+def home():
+    return DashboardController.index()
+
+# Login
 routes_bp.add_url_rule("/login", view_func=AuthController.login, methods=["GET", "POST"], endpoint="login")
 routes_bp.add_url_rule("/logout", view_func=AuthController.logout, endpoint="logout")
 routes_bp.add_url_rule("/verify-2fa", view_func=AuthController.verify_2fa, methods=["POST"], endpoint="verify_2fa")
@@ -23,35 +28,14 @@ routes_bp.add_url_rule("/verify-2fa", view_func=AuthController.verify_2fa, metho
 # ============================================
 
 # Dashboard Principal
-@routes_bp.route("/dashboard/admin")
-@login_required
-@rol_required(['1'])
-def dashboard_admin():
-    return DashboardController.admin()
-
+routes_bp.add_url_rule("/dashboard/admin", view_func=DashboardController.admin, endpoint="dashboard_admin")
 
 # --- Gestión de Empleados ---
-@routes_bp.route("/admin/empleados")
-@login_required
-@rol_required(['1'])
-def admin_empleados_lista():
-    return DashboardController.empleados_lista()
-
-@routes_bp.route("/admin/empleados/crear", methods=["GET", "POST"])
-@login_required
-@rol_required(['1'])
-@permiso_required('puede_crear')
-def admin_empleados_crear():
-    return DashboardController.empleados_crear()
-
+routes_bp.add_url_rule("/admin/empleados", view_func=DashboardController.empleados_lista, endpoint="admin_empleados_lista")
+routes_bp.add_url_rule("/admin/empleados/crear", view_func=DashboardController.empleados_crear, methods=["GET", "POST"], endpoint="admin_empleados_crear")
 
 # --- Reportes y Analítica ---
-@routes_bp.route("/admin/reportes")
-@login_required
-@rol_required(['1'])
-@permiso_required('puede_ver_reportes')
-def admin_reportes():
-    return DashboardController.reportes()
+routes_bp.add_url_rule("/admin/reportes", view_func=DashboardController.reportes, endpoint="admin_reportes")
 
 
 # ============================================
@@ -59,11 +43,7 @@ def admin_reportes():
 # ============================================
 
 # Dashboard Mesero
-@routes_bp.route("/dashboard/mesero")
-@login_required
-@rol_required(['2'])
-def dashboard_mesero():
-    return DashboardController.mesero()
+routes_bp.add_url_rule("/dashboard/mesero", view_func=DashboardController.mesero, endpoint="dashboard_mesero")
 
 
 # ============================================
@@ -71,18 +51,11 @@ def dashboard_mesero():
 # ============================================
 
 # Dashboard Cocina
-@routes_bp.route("/dashboard/cocina")
-@login_required
-@rol_required(['3'])
-def dashboard_cocina():
-    return DashboardController.cocina()
+routes_bp.add_url_rule("/dashboard/cocina", view_func=DashboardController.cocina, endpoint="dashboard_cocina")
 
 
 # ============================================
 # 🛠️ UTILIDADES
 # ============================================
 
-@routes_bp.route('/toggle/theme')
-@login_required
-def toggle_theme():
-    return DashboardController.toggle_theme()
+routes_bp.add_url_rule('/toggle/theme', view_func=DashboardController.toggle_theme, endpoint='toggle_theme')

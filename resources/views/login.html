@@ -3,14 +3,10 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Iniciar Sesión - Potencial PyME</title>
+	<title>Iniciar Sesión - Callejón 9</title>
 
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-	<!-- Cargar reCAPTCHA v3 -->
-	<script src="https://www.google.com/recaptcha/api.js?render=6LdN3eQrAAAAAMUaNDJkiYIOxX5ObS6be1J94wjm&badge=bottomright"></script>
-
-	<!-- Incluir jQuery para compatibilidad con la estructura del código anterior si fuera necesario, aunque usaremos fetch para el login -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="https://cdn.tailwindcss.com"></script>
 
 	<style>
 		@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
@@ -19,85 +15,83 @@
 		body {
 			margin: 0;
 			padding: 0;
-			height: 100vh;
-			background: url('https://cdn.ipadizate.com/2022/06/7412.WWDC_2022_Dark-1024w-1366h@2xipad.jpeg?width=100000') no-repeat center center fixed;
-			background-size: cover;
+			min-height: 100vh;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 			font-family: 'Inter', sans-serif;
-			color: #1c1c1e;
 			display: flex;
 			justify-content: center;
 			align-items: center;
 			position: relative;
 		}
 
-		.overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.3); z-index: 0; }
-
 		.container {
-			display: flex;
-			background-color: rgba(255, 255, 255, 0.95);
+			background: rgba(255, 255, 255, 0.95);
 			border-radius: 20px;
 			overflow: hidden;
-			box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-			animation: fadeIn 1.2s ease-out;
-			max-width: 900px;
+			box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+			animation: fadeIn 0.6s ease-out;
+			max-width: 450px;
 			width: 100%;
-			min-height: 500px;
-			z-index: 1;
-			position: relative;
+			margin: 20px;
 		}
 
-		.image-side {
-			flex: 1.5;
-			background: url('https://www.potencialpyme.org/assets/img/Mesa%20de%20trabajo%201.png') no-repeat center;
-			background-size: cover;
-			display: none;
-			position: relative;
-			color: #fff;
-			padding: 40px;
-			display: flex;
-			align-items: flex-end;
-			border-top-left-radius: 20px;
-			border-bottom-left-radius: 20px;
-			box-shadow: inset 0 0 0 1000px rgba(0,0,0,0.3);
-			font-weight: 600;
-			font-size: 24px;
-			line-height: 1.4;
-			text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-			user-select: none;
-			animation: slideInLeft 1s ease forwards;
+		@keyframes fadeIn { 
+			from { opacity: 0; transform: scale(0.95) translateY(20px); } 
+			to { opacity: 1; transform: scale(1) translateY(0); } 
 		}
 
-		@keyframes fadeIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-		@keyframes slideInLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+		.login-header {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			padding: 40px 35px;
+			text-align: center;
+			color: white;
+		}
 
 		.login-container {
-			flex: 1;
 			padding: 40px 35px;
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			backdrop-filter: blur(12px);
 		}
 
-		.logo { width: 180px; margin: 0 auto 20px; display: block; }
+		.logo { 
+			width: 120px; 
+			margin: 0 auto 15px; 
+			filter: brightness(0) invert(1);
+		}
 
-		h2 { text-align: center; margin-bottom: 25px; font-weight: 600; font-size: 24px; color: #111; }
+		h2 { 
+			text-align: center; 
+			margin-bottom: 10px; 
+			font-weight: 600; 
+			font-size: 28px; 
+			color: white;
+		}
+
+		.subtitle {
+			text-align: center;
+			color: rgba(255, 255, 255, 0.9);
+			font-size: 14px;
+			margin-bottom: 0;
+		}
 
 		form { display: flex; flex-direction: column; gap: 20px; }
 
-		.input-group { position: relative; display: flex; align-items: center; }
-		.input-group svg { position: absolute; left: 14px; width: 20px; height: 20px; fill: #8e8e93; pointer-events: none; }
+		.input-group { position: relative; }
 
 		input {
 			width: 100%;
-			padding: 14px 16px 14px 44px;
-			border: 1.5px solid #d1d1d6;
+			padding: 14px 16px;
+			border: 2px solid #e5e7eb;
 			border-radius: 12px;
-			background-color: #f9f9f9;
+			background-color: #f9fafb;
 			font-size: 15px;
 			transition: all 0.3s ease;
 		}
-		input:focus { border-color: #007aff; background-color: #ffffff; outline: none; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1); }
+		
+		input:focus { 
+			border-color: #667eea; 
+			background-color: #ffffff; 
+			outline: none; 
+			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
+		}
 
 		button {
 			position: relative;
@@ -105,7 +99,7 @@
 			justify-content: center;
 			align-items: center;
 			padding: 14px 0;
-			background-color: #007aff;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 			color: #fff;
 			font-weight: 600;
 			border: none;
@@ -114,14 +108,16 @@
 			cursor: pointer;
 			transition: all 0.3s ease;
 		}
+		
 		button:disabled {
-			background-color: #a0a0a0;
+			background: #a0a0a0;
 			cursor: not-allowed;
-			box-shadow: none;
 		}
-		button:hover:enabled { background-color: #005fcc; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3); }
-
-		.btn-text { display: inline-block; }
+		
+		button:hover:enabled { 
+			transform: translateY(-2px); 
+			box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); 
+		}
 
 		.spinner {
 			border: 3px solid #f3f3f3;
@@ -133,123 +129,78 @@
 			display: none;
 			animation: spin 0.8s linear infinite;
 		}
-		@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-		.footer-text { margin-top: 20px; text-align: center; font-size: 13px; color: #8e8e93; }
+		
+		@keyframes spin { 
+			0% { transform: rotate(0deg); } 
+			100% { transform: rotate(360deg); } 
+		}
 
 		.alert-error {
-			background-color: #f8d7da;
-			color: #721c24;
-			border: 1px solid #f5c6cb;
+			background-color: #fee2e2;
+			color: #991b1b;
+			border: 1px solid #fecaca;
 			padding: 14px 18px;
 			border-radius: 10px;
 			margin-bottom: 20px;
-			font-size: 15px;
+			font-size: 14px;
 			display: none;
 			align-items: center;
 			gap: 10px;
-			box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-			opacity: 0;
-			transform: translateY(-10px);
-			transition: all 0.5s ease;
 		}
-		.alert-error.show { display: flex; opacity: 1; transform: translateY(0); }
-
-		@media (min-width: 768px) { .image-side { display: flex; } }
-		@media (max-width: 480px) { .login-container { padding: 30px 20px; } }
-		.swal2-container {
-			/* Asegura la máxima prioridad sobre cualquier elemento de la página */
-			z-index: 99999 !important; 
-		}
-		.swal2-popup-custom {
-			border-radius: 15px;
-			font-family: 'Inter', sans-serif;
-			box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+		
+		.alert-error.show { 
+			display: flex; 
 		}
 
-		.footer-text a {
-			position: relative;
-			color: #000000;
-			font-size: 15px;
-			text-decoration: none;
-			font-weight: 500;
+		.role-badge {
+			display: inline-block;
+			padding: 6px 12px;
+			border-radius: 8px;
+			font-size: 12px;
+			font-weight: 600;
+			margin-top: 10px;
 		}
 
-		.footer-text a::after {
-			content: "";
-			position: absolute;
-			left: 0;
-			bottom: -4px;
-			width: 100%;
-			height: 2px;
-			color: #0044ff;
-			background: linear-gradient(90deg, #007aff, #7928ca);
-			transform: scaleX(0);
-			transform-origin: right;
-			transition: transform 0.3s ease;
-		}
-
-		.footer-text a:hover::after {
-			color: #0044ff;
-			transform: scaleX(1);
-			transform-origin: left;
-		}
-
-		/* Estilos para el campo de código 2FA en el modal */
-		.swal2-input-otp {
-			letter-spacing: 15px;
-			text-align: center;
-			font-size: 24px !important;
-			padding: 10px 15px !important;
-			width: 200px !important;
-			margin: 20px auto !important;
-			border: 2px solid #ddd;
-			border-radius: 10px;
-		}
-		.swal2-input-otp:focus {
-			border-color: #007aff;
-			box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
-		}
-
+		.role-admin { background: #dbeafe; color: #1e40af; }
+		.role-mesero { background: #dcfce7; color: #166534; }
+		.role-cocina { background: #fed7aa; color: #9a3412; }
 	</style>
 </head>
 <body>
-	<div class="overlay"></div>
 	<div class="container">
-		<div class="image-side">
-			<div>
-				<p>Soluciones para el Éxito Empresarial</p>
-				<p>Bienvenido a Potencial PYME</p>
-			</div>
-		</div>
-		<div class="login-container">
+		<!-- Header con Logo y Título -->
+		<div class="login-header">
 			<img src="https://tse4.mm.bing.net/th/id/OIP.ZY7EMAqB-T3d6FTXGJKtTwAAAA?cb=iwp2&rs=1&pid=ImgDetMain" alt="Logo" class="logo" />
-			<h2>Iniciar Sesión</h2>
+			<h2>Callejón 9</h2>
+			<p class="subtitle">Sistema de Gestión de Restaurante</p>
+		</div>
 
+		<!-- Formulario de Login -->
+		<div class="login-container">
 			<div id="error-msg" class="alert-error"></div>
 
-			<!-- La acción del formulario se vacía para ser manejada por JavaScript/AJAX -->
-			<form id="loginForm" action="#" method="post" novalidate>
-				<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+			<form id="loginForm" method="post" novalidate>
 				<div class="input-group">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-						<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-					</svg>
-					<input type="email" name="email" placeholder="Correo institucional" required id="emailInput" />
+					<input type="email" name="email" placeholder="Correo electrónico" required id="emailInput" autocomplete="email" />
 				</div>
 				<div class="input-group">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-						<path d="M17 8V7a5 5 0 0 0-10 0v1H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1zm-6-1a3 3 0 0 1 6 0v1H11V7zm6 10H7v-5h10v5z"/>
-					</svg>
-					<input type="password" name="password" placeholder="Contraseña" required id="passwordInput" />
+					<input type="password" name="password" placeholder="Contraseña" required id="passwordInput" autocomplete="current-password" />
 				</div>
 				<button type="submit" id="loginButton">
-					<span class="btn-text">Entrar al portal</span>
+					<span class="btn-text">Iniciar Sesión</span>
 					<span class="spinner"></span>
 				</button>
 			</form>
-			<div class="footer-text"><a style="" href="{{ url_for('routes.login_client') }}">Iniciar sesion en cliente</a></div>
-			<div class="footer-text">Acceso exclusivo - Potencial PyME</div>
+
+			<!-- Info de usuarios de prueba (solo desarrollo) -->
+			<div class="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-600">
+				<p class="font-semibold mb-2">👥 Usuarios de prueba:</p>
+				<div class="space-y-1">
+					<p>• <strong>Admin:</strong> edwinfloresvargas.dev@gmail.com <span class="role-badge role-admin">Administración</span></p>
+					<p>• <strong>Mesero:</strong> octavio@admin.com <span class="role-badge role-mesero">Mesero</span></p>
+					<p>• <strong>Cocina:</strong> regi@admin.com <span class="role-badge role-cocina">Cocina</span></p>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -260,14 +211,8 @@
 		const spinner = button.querySelector(".spinner");
 		const errorMsgDiv = document.getElementById("error-msg");
 
-		// URL para la primera validación de credenciales (que verifica si se requiere 2FA)
-		const LOGIN_CHECK_URL = "{{ url_for('routes.login') }}"; // Debe coincidir con la ruta en Flask
-		// URL para la verificación final del código 2FA
-		const VERIFY_2FA_URL = "{{ url_for('routes.verify_and_enable_2fa') }}"; 
-		// URL de redirección en caso de éxito final
-		const SUCCESS_REDIRECT_URL = "/dashboard"; // Ruta de ejemplo
+		const LOGIN_URL = "{{ url_for('routes.login') }}";
 
-		/** Muestra un mensaje de error temporal en el div principal */
 		function showErrorMessage(message) {
 			errorMsgDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> <div>${message}</div>`;
 			errorMsgDiv.classList.add('show');
@@ -276,7 +221,6 @@
 			}, 5000);
 		}
 
-		/** Controla el estado del botón de envío (cargando/habilitado) */
 		function setFormLoading(isLoading) {
 			if (isLoading) {
 				btnText.textContent = "Verificando...";
@@ -284,194 +228,138 @@
 				button.disabled = true;
 				errorMsgDiv.classList.remove('show');
 			} else {
-				btnText.textContent = "Entrar al portal";
+				btnText.textContent = "Iniciar Sesión";
 				spinner.style.display = "none";
 				button.disabled = false;
 			}
 		}
 
-		/** Muestra el modal de 2FA y maneja la verificación del código */
-		function showTwoFactorModal(method, secret, tipo, dashboardUrl) {
-      console.log("dashboardUrl:", dashboardUrl);
-			const inputPlaceholder = "Ej. 123456";
-			
-			let title = "Verificación de Dos Factores";
-			let text = "";
+		form.addEventListener("submit", async function(e) {
+			e.preventDefault();
+			setFormLoading(true);
 
-			if (method === 'app') {
-				text = "Introduce el código de 6 dígitos de tu aplicación autenticadora (ej. Google Authenticator).";
-			} else if (method === 'email') {
-				text = "Hemos enviado un código de 6 dígitos a tu correo electrónico registrado. Introdúcelo a continuación.";
-			} else {
-				// Caso de métodos múltiples o desconocido
-				text = "Introduce el código de 6 dígitos de la aplicación o el código enviado a tu método registrado.";
+			const email = document.getElementById("emailInput").value;
+			const password = document.getElementById("passwordInput").value;
+
+			if (!email || !password) {
+				showErrorMessage("Por favor completa todos los campos");
+				setFormLoading(false);
+				return;
 			}
-			
-			Swal.fire({
-				title: title,
+
+			const data = {
+				email: email,
+				password: password
+			};
+
+			try {
+				const response = await fetch(LOGIN_URL, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify(data)
+				});
+
+				const result = await response.json();
+				console.log("Respuesta del servidor:", result);
+
+				if (result.status === 'success') {
+					// Verificar si requiere 2FA
+					if (result.user && result.user.requires_2fa === true) {
+						setFormLoading(false);
+						await show2FAModal(result.user.tipo, result.user.secret, result.dashboard);
+					} else {
+						// Login exitoso sin 2FA
+						await Swal.fire({
+							icon: "success",
+							title: "¡Bienvenido!",
+							text: "Accediendo al sistema...",
+							timer: 1500,
+							showConfirmButton: false
+						});
+						window.location.href = result.dashboard;
+					}
+				} else {
+					showErrorMessage(result.message || "Credenciales incorrectas");
+					setFormLoading(false);
+				}
+			} catch (error) {
+				console.error('Error de red:', error);
+				showErrorMessage("Error de conexión. Verifica tu red.");
+				setFormLoading(false);
+			}
+		});
+
+		async function show2FAModal(tipo, secret, dashboardUrl) {
+			const { value: otpCode } = await Swal.fire({
+				title: 'Verificación 2FA',
 				html: `
-					<div style="font-size: 16px; margin-bottom: 20px;">${text}</div>
-					<input 
-						id="otpCodeInput" 
-						type="number" 
-						class="swal2-input swal2-input-otp" 
-						placeholder="${inputPlaceholder}" 
-						maxlength="6"
-						oninput="this.value=this.value.slice(0,this.maxLength)"
-						style="font-family: 'Inter', monospace; text-align: center;"
-					>`,
+					<p class="mb-4">Introduce el código de 6 dígitos de tu aplicación autenticadora</p>
+					<input id="swal-input-otp" class="swal2-input" type="text" maxlength="6" placeholder="123456" style="font-size: 24px; letter-spacing: 10px; text-align: center;">
+				`,
 				icon: 'info',
 				showCancelButton: true,
-				confirmButtonText: 'Verificar Código',
+				confirmButtonText: 'Verificar',
 				cancelButtonText: 'Cancelar',
-				customClass: {
-					popup: 'swal2-popup-custom',
-					confirmButton: 'bg-[#007aff] hover:bg-[#005fcc] text-white font-bold py-2 px-4 rounded-xl shadow-lg',
-					cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl',
-				},
-				didOpen: () => {
-					// Autofocus en el campo de entrada
-					document.getElementById('otpCodeInput').focus();
-				},
-				preConfirm: (login) => {
-					// Validación del código antes de enviar
-					const code = document.getElementById('otpCodeInput').value;
-					if (code.length !== 6 || isNaN(code)) {
-						Swal.showValidationMessage('El código debe ser de 6 dígitos numéricos.');
+				preConfirm: () => {
+					const code = document.getElementById('swal-input-otp').value;
+					if (!code || code.length !== 6) {
+						Swal.showValidationMessage('El código debe tener 6 dígitos');
 						return false;
 					}
 					return code;
 				}
-			}).then((result) => {
-				if (result.isConfirmed) {
-					// Llamada a la función de verificación final de 2FA
-					verifyTwoFactorCode(result.value, secret, tipo, dashboardUrl);
-				}
 			});
-		}
 
-		/** Llama al backend para la verificación final del código 2FA */
-		async function verifyTwoFactorCode(otpCode, secret, tipo, dashboardUrl) {
-      dashboardUrl = dashboardUrl || SUCCESS_REDIRECT_URL;
-      console.log("Verificando código 2FA:", otpCode, "con secreto temporal:", secret);
-			Swal.showLoading();
-
-			try {
-				const response = await fetch(VERIFY_2FA_URL, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ otp_code: otpCode, temp_2fa_secret: secret, temp_2fa_tipo: tipo})
-				});
-
-				const data = await response.json();
-
-				if (response.ok && data.status === 'success') {
-					Swal.fire({
-						icon: "success",
-						title: "Inicio de Sesión Exitoso",
-						text: "Serás redirigido al portal.",
-						timer: 1500,
-						showConfirmButton: false
-					});
-					// Redirigir al usuario al dashboard
-					window.location.href = dashboardUrl; 
-				} else {
-					// Si el código es incorrecto o hay otro error en la verificación
-					const errorMessage = data.message || "Código 2FA inválido. Intenta de nuevo.";
-					Swal.fire({
-						icon: "error",
-						title: "Error de Verificación",
-						text: errorMessage,
-						showCancelButton: true,
-						confirmButtonText: 'Volver a intentar',
-						cancelButtonText: 'Cancelar'
-					}).then((retryResult) => {
-						if (retryResult.isConfirmed) {
-							// Vuelve a mostrar el modal si el usuario quiere reintentar
-							showTwoFactorModal(data.method || 'app'); // Usamos 'app' como fallback
-						} else {
-							setFormLoading(false); // Si cancela, deshabilita el estado de carga del formulario principal
-						}
-					});
-				}
-			} catch (error) {
-				console.error("Error al verificar código 2FA:", error);
-				Swal.fire({
-					icon: "error",
-					title: "Error de Red",
-					text: "No se pudo conectar con el servidor para verificar el código.",
-				});
+			if (otpCode) {
+				await verify2FA(otpCode, secret, dashboardUrl);
+			} else {
 				setFormLoading(false);
 			}
 		}
 
-		// Manejador principal al enviar el formulario
-		form.addEventListener("submit", function(e) {
-			e.preventDefault(); 
-			setFormLoading(true);
-
-			grecaptcha.ready(function() {
-				grecaptcha.execute("6LdN3eQrAAAAAMUaNDJkiYIOxX5ObS6be1J94wjm", { action: "login" }).then(function(token) {
-					
-					const email = document.getElementById("emailInput").value;
-					const password = document.getElementById("passwordInput").value;
-					
-					const data = {
-						email: email,
-						password: password,
-						g_recaptcha_response: token
-					};
-					// *****************************************************************
-					// * PRIMERA LLAMADA AJAX: VALIDAR CREDENCIALES Y CHECK 2FA
-					// *****************************************************************
-					fetch(LOGIN_CHECK_URL, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify(data)
+		async function verify2FA(otpCode, secret, dashboardUrl) {
+			try {
+				const response = await fetch("{{ url_for('routes.verify_2fa') }}", {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ 
+						otp_code: otpCode,
+						temp_2fa_secret: secret 
 					})
-					.then(res => res.json())
-					.then(response => {
-            console.log(response);
-            
-              if (response.status === 'success') {
-                  // 1. ÉXITO: Verificar si se requiere 2FA
-                  if (response.user.requires_2fa === true) {
-                      setFormLoading(false); // Detener el spinner del formulario
-                      showTwoFactorModal(response.user.tipo || 'app', response.user.secret || null, response.user.tipo || null, response.dashboard  || null); // Mostrar modal 2FA
-                  } else {
-                      // 2. ÉXITO: Inicio de sesión completado sin 2FA (Redirigir)
-                      Swal.fire({
-                          icon: "success",
-                          title: "Inicio de Sesión Exitoso",
-                          text: "Serás redirigido al portal.",
-                          timer: 1000,
-                          showConfirmButton: false
-                      });
-                      window.location.href = response.dashboard;
-                  }
-              } else {
-                  // 3. FALLO: Mostrar error del backend
-                  showErrorMessage(response.message || "Credenciales inválidas o error desconocido.");
-                  setFormLoading(false);
-              }
-          })
-					.catch(error => {
-						// 4. FALLO: Error de red
-						console.error('Error de red durante el login:', error);
-						showErrorMessage("No se pudo conectar con el servidor. Intenta más tarde.");
-						setFormLoading(false);
-					});
-
-				}).catch(() => {
-					showErrorMessage("Error de verificación: No se pudo generar el token reCAPTCHA.");
-					setFormLoading(false);
 				});
-			});
-		});
+
+				const data = await response.json();
+
+				if (data.status === 'success') {
+					await Swal.fire({
+						icon: "success",
+						title: "¡Verificación Exitosa!",
+						timer: 1500,
+						showConfirmButton: false
+					});
+					window.location.href = dashboardUrl;
+				} else {
+					await Swal.fire({
+						icon: "error",
+						title: "Código Incorrecto",
+						text: data.message || "El código 2FA no es válido"
+					});
+					setFormLoading(false);
+				}
+			} catch (error) {
+				console.error('Error en 2FA:', error);
+				await Swal.fire({
+					icon: "error",
+					title: "Error",
+					text: "No se pudo verificar el código"
+				});
+				setFormLoading(false);
+			}
+		}
 	</script>
 </body>
 </html>
