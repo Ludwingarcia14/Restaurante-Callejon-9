@@ -1,7 +1,8 @@
 """
 Módulo Principal de la Aplicación Flask - Restaurante Callejón 9
 """
-
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, request, session, redirect, url_for
 from flask_cors import CORS
 from routes import routes_bp

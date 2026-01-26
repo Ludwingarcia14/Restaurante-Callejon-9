@@ -1,16 +1,12 @@
 """
-Controlador de Autenticación - Sistema Restaurante
-Adaptado a la estructura actual de la BD
+Controlador de Autenticación - Sistema Restaurante Callejón 9
+Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from models.empleado_model import Usuario, RolPermisos
-import bcrypt, secrets, logging, os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
-SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
+import bcrypt
+import secrets
+import logging
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,7 +14,7 @@ class AuthController:
     
     @staticmethod
     def login():
-        """Endpoint de login unificado para todos los roles"""
+        """Endpoint de login unificado para todos los roles del restaurante"""
         errors = []
         
         if request.method == "POST":
@@ -26,45 +22,69 @@ class AuthController:
             email = data.get("email", "").strip().lower()
             password = data.get("password", "")
             
-            # 1. Buscar usuario por email
+            # 1. Validaciones básicas
+            if not email or not password:
+                return jsonify({
+                    "status": "error",
+                    "message": "Por favor completa todos los campos"
+                })
+            
+            # 2. Buscar usuario por email
             usuario_doc = Usuario.find_by_email(email)
             
             if not usuario_doc:
-                errors.append("Credenciales incorrectas")
-                return jsonify({"status": "error", "message": errors[0]})
+                return jsonify({
+                    "status": "error",
+                    "message": "Credenciales incorrectas"
+                })
             
-            # 2. Validar que la cuenta esté activa
+            # 3. Validar que el usuario sea del restaurante (roles 1, 2 o 3)
+            rol = usuario_doc.get("usuario_rol")
+            if str(rol) not in ["1", "2", "3"]:
+                return jsonify({
+                    "status": "error",
+                    "message": "No tienes permisos para acceder al sistema"
+                })
+            
+            # 4. Validar que la cuenta esté activa
             if usuario_doc.get("usuario_status") != 1:
-                errors.append("Cuenta inactiva. Contacta al administrador.")
-                return jsonify({"status": "error", "message": errors[0]})
+                return jsonify({
+                    "status": "error",
+                    "message": "Cuenta inactiva. Contacta al administrador."
+                })
             
-            # 3. Validar contraseña
+            # 5. Validar contraseña
             stored_hash = usuario_doc.get("usuario_clave")
             if not stored_hash:
-                errors.append("Usuario sin contraseña configurada")
-                return jsonify({"status": "error", "message": errors[0]})
+                return jsonify({
+                    "status": "error",
+                    "message": "Usuario sin contraseña configurada"
+                })
             
             try:
                 stored_hash_bytes = stored_hash.encode("utf-8") if isinstance(stored_hash, str) else stored_hash
                 password_bytes = password.encode("utf-8")
                 
                 if not bcrypt.checkpw(password_bytes, stored_hash_bytes):
-                    errors.append("Credenciales incorrectas")
-                    return jsonify({"status": "error", "message": errors[0]})
+                    return jsonify({
+                        "status": "error",
+                        "message": "Credenciales incorrectas"
+                    })
             except Exception as e:
                 logging.exception(f"Error al verificar contraseña: {e}")
-                errors.append("Error interno de autenticación")
-                return jsonify({"status": "error", "message": errors[0]})
+                return jsonify({
+                    "status": "error",
+                    "message": "Error interno de autenticación"
+                })
             
-            # 4. Login exitoso - Generar sesión
+            # 6. Login exitoso - Generar sesión
             token_session = secrets.token_urlsafe(32)
             user_id = usuario_doc["_id"]
-            rol = usuario_doc.get("usuario_rol")
             
-            # Actualizar token de sesión
+            # Actualizar token de sesión en BD
             Usuario.update_session_token(user_id, token_session, 1)
             
-            # 5. Poblar sesión de Flask
+            # 7. Poblar sesión de Flask
             session["usuario_id"] = str(user_id)
             session["usuario_nombre"] = usuario_doc.get("usuario_nombre")
             session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos")
@@ -74,7 +94,7 @@ class AuthController:
             session["token_session"] = token_session
             session["theme"] = "light"
             
-            # Datos de 2FA
+            # Datos de 2FA (si aplica)
             session["2fa_enabled"] = usuario_doc.get("2fa_enabled", False)
             session["2fa_tipo"] = usuario_doc.get("2fa_tipo")
             session["2fa_secret"] = usuario_doc.get("2fa_secret")
@@ -92,14 +112,14 @@ class AuthController:
                 perfil_cocina = Usuario.get_perfil_cocina(usuario_doc)
                 session["perfil_cocina"] = perfil_cocina
             
-            # 6. Determinar dashboard según rol
+            # 8. Determinar dashboard según rol
             rol_endpoints = {
-                "1": "dashboard_admin",
-                "2": "dashboard_mesero",
-                "3": "dashboard_cocina"
+                "1": "dashboard_admin",   # Administración
+                "2": "dashboard_mesero",   # Mesero
+                "3": "dashboard_cocina"    # Cocina
             }
             
-            endpoint = rol_endpoints.get(rol)
+            endpoint = rol_endpoints.get(str(rol))
             
             if endpoint:
                 logging.info(f"Login exitoso: {email} | Rol: {RolPermisos.get_nombre_rol(rol)}")
@@ -114,11 +134,13 @@ class AuthController:
                     }
                 })
             else:
-                flash("Rol no reconocido", "error")
-                return jsonify({"status": "error", "message": "Rol no reconocido"})
+                return jsonify({
+                    "status": "error",
+                    "message": "Rol no reconocido"
+                })
         
         # GET request - Mostrar formulario de login
-        return render_template("login.html", site_key=SITE_KEY)
+        return render_template("login.html")
     
     
     @staticmethod
@@ -146,7 +168,10 @@ class AuthController:
             temp_secret = session.get("2fa_secret")
             
             if not temp_secret:
-                return jsonify({"status": "error", "message": "Sesión expirada"}), 400
+                return jsonify({
+                    "status": "error",
+                    "message": "Sesión expirada"
+                }), 400
             
             # Importar el servicio de 2FA
             from services.autentication.service import TwoFactorService
@@ -155,9 +180,15 @@ class AuthController:
                 # 2FA exitoso, ya puede acceder
                 return jsonify({"status": "success"})
             else:
-                return jsonify({"status": "error", "message": "Código inválido"}), 400
+                return jsonify({
+                    "status": "error",
+                    "message": "Código inválido"
+                }), 400
         
-        return jsonify({"status": "error", "message": "Método no permitido"}), 405
+        return jsonify({
+            "status": "error",
+            "message": "Método no permitido"
+        }), 405
 
 
 # ==========================================
