@@ -1,12 +1,12 @@
 """
 Dashboard Controller - Sistema Restaurante Callejón 9
+Versión simplificada sin bcrypt para desarrollo local
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
 from flask import request, session, redirect, url_for, render_template, jsonify
 from models.empleado_model import Usuario, RolPermisos
 from config.db import db
 from bson.objectid import ObjectId
-import bcrypt
 from datetime import datetime
 
 class DashboardController:
@@ -19,17 +19,15 @@ class DashboardController:
     @staticmethod
     def index():
         """Redirige al dashboard según el rol del usuario"""
-        # Si no hay sesión, redirigir al login
         if "usuario_rol" not in session:
             return redirect(url_for("routes.login"))
 
         rol = str(session["usuario_rol"])
 
-        # Mapeo de roles del restaurante
         rol_endpoints = {
-            "1": "dashboard_admin",    # Administración
-            "2": "dashboard_mesero",    # Mesero
-            "3": "dashboard_cocina"     # Cocina
+            "1": "dashboard_admin",
+            "2": "dashboard_mesero",
+            "3": "dashboard_cocina"
         }
 
         endpoint = rol_endpoints.get(rol)
@@ -51,7 +49,6 @@ class DashboardController:
         if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
             return redirect(url_for("routes.login"))
         
-        # Obtener estadísticas generales
         stats = {
             "total_usuarios": db.usuarios.count_documents({"usuario_status": 1}),
             "total_admin": db.usuarios.count_documents({"usuario_rol": "1"}),
@@ -70,12 +67,7 @@ class DashboardController:
         if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
             return redirect(url_for("routes.login"))
         
-        usuario_id = session.get("usuario_id")
-        
-        # Obtener perfil del mesero desde la sesión
         perfil_mesero = session.get("perfil_mesero", {})
-        
-        # Obtener comandas activas del mesero (simulado por ahora)
         comandas_activas = []
         
         stats = {
@@ -98,12 +90,7 @@ class DashboardController:
         if "usuario_rol" not in session or str(session["usuario_rol"]) != "3":
             return redirect(url_for("routes.login"))
         
-        usuario_id = session.get("usuario_id")
-        
-        # Obtener perfil de cocina desde la sesión
         perfil_cocina = session.get("perfil_cocina", {})
-        
-        # Obtener comandas activas para cocina (simulado)
         comandas_pendientes = []
         
         stats = {
@@ -132,7 +119,6 @@ class DashboardController:
             
         empleados = Usuario.find_activos()
         
-        # Enriquecer con nombres de roles
         for emp in empleados:
             emp["rol_nombre"] = RolPermisos.get_nombre_rol(emp.get("usuario_rol"))
         
@@ -148,7 +134,6 @@ class DashboardController:
             try:
                 data = request.get_json()
                 
-                # Validaciones
                 required_fields = ["nombre", "apellidos", "email", "password", "rol"]
                 for field in required_fields:
                     if not data.get(field):
@@ -157,37 +142,28 @@ class DashboardController:
                             "message": f"El campo '{field}' es obligatorio"
                         }), 400
                 
-                # Verificar que el email no exista
                 if Usuario.find_by_email(data["email"]):
                     return jsonify({
                         "success": False,
                         "message": "Ya existe un empleado con este correo"
                     }), 400
                 
-                # Validar que el rol sea válido (1, 2 o 3)
                 if data["rol"] not in ["1", "2", "3"]:
                     return jsonify({
                         "success": False,
                         "message": "Rol no válido"
                     }), 400
                 
-                # Hashear contraseña
-                salt = bcrypt.gensalt(rounds=12)
-                hashed_password = bcrypt.hashpw(
-                    data["password"].encode("utf-8"), 
-                    salt
-                ).decode("utf-8")
-                
-                # Preparar datos del nuevo empleado
+                # Contraseña en texto plano (sin bcrypt)
                 nuevo_empleado = {
                     "usuario_nombre": data["nombre"],
                     "usuario_apellidos": data["apellidos"],
                     "usuario_email": data["email"].lower(),
-                    "usuario_clave": hashed_password,
+                    "usuario_clave": data["password"],  # ⚠️ TEXTO PLANO
                     "usuario_rol": data["rol"],
                     "usuario_telefono": data.get("telefono", ""),
                     "usuario_foto": None,
-                    "usuario_status": 1,  # Activo por defecto
+                    "usuario_status": 1,
                     "usuario_tokensession": None,
                     "2fa_enabled": False,
                     "2fa_tipo": None,
@@ -222,7 +198,6 @@ class DashboardController:
                         "cocina_certificaciones": data.get("certificaciones", [])
                     })
                 
-                # Insertar en BD
                 result = Usuario.create(nuevo_empleado)
                 
                 return jsonify({
@@ -238,12 +213,7 @@ class DashboardController:
                     "message": "Error al crear empleado"
                 }), 500
         
-        # GET - Mostrar formulario
         return render_template("admin/empleados/crear.html")
-
-    # ==========================================
-    # UTILIDADES
-    # ==========================================
 
     @staticmethod
     def reportes():
@@ -257,15 +227,8 @@ class DashboardController:
         """Cambia el tema visual (light/dark)"""
         try:
             current_theme = session.get('theme', 'light')
-            
-            if current_theme == 'light':
-                session['theme'] = 'dark'
-            else:
-                session['theme'] = 'light'
-                
+            session['theme'] = 'dark' if current_theme == 'light' else 'light'
         except Exception as e:
             print(f"Error al cambiar tema: {e}")
-            pass
-
-        # Redirige al usuario de vuelta a la página donde estaba
+        
         return redirect(request.referrer or url_for('routes.login'))

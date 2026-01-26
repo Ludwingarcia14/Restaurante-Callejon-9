@@ -1,10 +1,10 @@
 """
 Controlador de Autenticación - Sistema Restaurante Callejón 9
+Versión simplificada sin 2FA y sin bcrypt para desarrollo local
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from models.empleado_model import Usuario, RolPermisos
-import bcrypt
 import secrets
 import logging
 
@@ -14,13 +14,16 @@ class AuthController:
     
     @staticmethod
     def login():
-        """Endpoint de login unificado para todos los roles del restaurante"""
-        errors = []
+        """Endpoint de login simplificado para desarrollo local"""
         
         if request.method == "POST":
             data = request.get_json()
             email = data.get("email", "").strip().lower()
             password = data.get("password", "")
+            
+            print(f"\n🔐 Intento de login:")
+            print(f"   Email: {email}")
+            print(f"   Password: {'*' * len(password)}")
             
             # 1. Validaciones básicas
             if not email or not password:
@@ -30,7 +33,20 @@ class AuthController:
                 })
             
             # 2. Buscar usuario por email
-            usuario_doc = Usuario.find_by_email(email)
+            try:
+                usuario_doc = Usuario.find_by_email(email)
+                print(f"   Usuario encontrado: {usuario_doc is not None}")
+                
+                if usuario_doc:
+                    print(f"   Rol del usuario: {usuario_doc.get('usuario_rol')}")
+                    print(f"   Status: {usuario_doc.get('usuario_status')}")
+                
+            except Exception as e:
+                print(f"   ❌ Error al buscar usuario: {e}")
+                return jsonify({
+                    "status": "error",
+                    "message": f"Error de base de datos: {str(e)}"
+                })
             
             if not usuario_doc:
                 return jsonify({
@@ -39,66 +55,45 @@ class AuthController:
                 })
             
             # 3. Validar que el usuario sea del restaurante (roles 1, 2 o 3)
-            rol = usuario_doc.get("usuario_rol")
-            if str(rol) not in ["1", "2", "3"]:
+            rol = str(usuario_doc.get("usuario_rol", ""))
+            if rol not in ["1", "2", "3"]:
                 return jsonify({
                     "status": "error",
                     "message": "No tienes permisos para acceder al sistema"
                 })
             
-            # 4. Validar que la cuenta esté activa
-            if usuario_doc.get("usuario_status") != 1:
+            # 4. Validar contraseña (comparación directa sin bcrypt)
+            stored_password = usuario_doc.get("usuario_clave", "")
+            
+            print(f"   Contraseña almacenada: {stored_password}")
+            print(f"   Contraseña ingresada: {password}")
+            print(f"   ¿Coinciden?: {stored_password == password}")
+            
+            if stored_password != password:
                 return jsonify({
                     "status": "error",
-                    "message": "Cuenta inactiva. Contacta al administrador."
+                    "message": "Credenciales incorrectas"
                 })
             
-            # 5. Validar contraseña
-            stored_hash = usuario_doc.get("usuario_clave")
-            if not stored_hash:
-                return jsonify({
-                    "status": "error",
-                    "message": "Usuario sin contraseña configurada"
-                })
-            
-            try:
-                stored_hash_bytes = stored_hash.encode("utf-8") if isinstance(stored_hash, str) else stored_hash
-                password_bytes = password.encode("utf-8")
-                
-                if not bcrypt.checkpw(password_bytes, stored_hash_bytes):
-                    return jsonify({
-                        "status": "error",
-                        "message": "Credenciales incorrectas"
-                    })
-            except Exception as e:
-                logging.exception(f"Error al verificar contraseña: {e}")
-                return jsonify({
-                    "status": "error",
-                    "message": "Error interno de autenticación"
-                })
-            
-            # 6. Login exitoso - Generar sesión
+            # 5. Login exitoso - Generar sesión
             token_session = secrets.token_urlsafe(32)
-            user_id = usuario_doc["_id"]
+            user_id = str(usuario_doc["_id"])
             
             # Actualizar token de sesión en BD
-            Usuario.update_session_token(user_id, token_session, 1)
+            try:
+                Usuario.update_session_token(user_id, token_session, 1)
+            except Exception as e:
+                print(f"   ⚠️ Error al actualizar token: {e}")
             
-            # 7. Poblar sesión de Flask
-            session["usuario_id"] = str(user_id)
-            session["usuario_nombre"] = usuario_doc.get("usuario_nombre")
-            session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos")
-            session["usuario_email"] = usuario_doc.get("usuario_email")
+            # 6. Poblar sesión de Flask
+            session["usuario_id"] = user_id
+            session["usuario_nombre"] = usuario_doc.get("usuario_nombre", "")
+            session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos", "")
+            session["usuario_email"] = usuario_doc.get("usuario_email", "")
             session["usuario_rol"] = rol
             session["usuario_foto"] = usuario_doc.get("usuario_foto", "")
             session["token_session"] = token_session
             session["theme"] = "light"
-            
-            # Datos de 2FA (si aplica)
-            session["2fa_enabled"] = usuario_doc.get("2fa_enabled", False)
-            session["2fa_tipo"] = usuario_doc.get("2fa_tipo")
-            session["2fa_secret"] = usuario_doc.get("2fa_secret")
-            session["2fa_telefono"] = usuario_doc.get("2fa_telefono")
             
             # Permisos del rol
             permisos = RolPermisos.get_permisos(rol)
@@ -112,25 +107,24 @@ class AuthController:
                 perfil_cocina = Usuario.get_perfil_cocina(usuario_doc)
                 session["perfil_cocina"] = perfil_cocina
             
-            # 8. Determinar dashboard según rol
+            # 7. Determinar dashboard según rol
             rol_endpoints = {
                 "1": "dashboard_admin",   # Administración
                 "2": "dashboard_mesero",   # Mesero
                 "3": "dashboard_cocina"    # Cocina
             }
             
-            endpoint = rol_endpoints.get(str(rol))
+            endpoint = rol_endpoints.get(rol)
             
             if endpoint:
-                logging.info(f"Login exitoso: {email} | Rol: {RolPermisos.get_nombre_rol(rol)}")
+                logging.info(f"✅ Login exitoso: {email} | Rol: {RolPermisos.get_nombre_rol(rol)}")
                 
                 return jsonify({
                     "status": "success",
                     "dashboard": url_for(f"routes.{endpoint}"),
                     "user": {
-                        "tipo": usuario_doc.get("2fa_tipo"),
-                        "secret": usuario_doc.get("2fa_secret"),
-                        "requires_2fa": usuario_doc.get("2fa_enabled", False)
+                        "nombre": usuario_doc.get("usuario_nombre"),
+                        "rol": RolPermisos.get_nombre_rol(rol)
                     }
                 })
             else:
@@ -161,34 +155,11 @@ class AuthController:
     
     @staticmethod
     def verify_2fa():
-        """Verifica el código 2FA después del login inicial"""
-        if request.method == "POST":
-            data = request.get_json()
-            otp_code = data.get("otp_code")
-            temp_secret = session.get("2fa_secret")
-            
-            if not temp_secret:
-                return jsonify({
-                    "status": "error",
-                    "message": "Sesión expirada"
-                }), 400
-            
-            # Importar el servicio de 2FA
-            from services.autentication.service import TwoFactorService
-            
-            if TwoFactorService.verify_code(temp_secret, otp_code):
-                # 2FA exitoso, ya puede acceder
-                return jsonify({"status": "success"})
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": "Código inválido"
-                }), 400
-        
+        """Método deshabilitado - 2FA no implementado"""
         return jsonify({
             "status": "error",
-            "message": "Método no permitido"
-        }), 405
+            "message": "2FA no implementado en esta versión"
+        }), 400
 
 
 # ==========================================
