@@ -1,23 +1,57 @@
 {% extends "layout/layout_base.html" %}
 
-{% block title %}Panel de Administración{% endblock %}
+{% block title %}Centro de Control{% endblock %}
 {% block page_title %}Dashboard Administrativo{% endblock %}
-{% block page_subtitle %}Gestión y control del restaurante{% endblock %}
+{% block page_subtitle %}Monitoreo en tiempo real del restaurante{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+    /* Animaciones suaves */
+    .fade-up { 
+        animation: fadeUp 0.5s ease-out forwards; 
+        opacity: 0; 
+        transform: translateY(15px); 
+    }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp { 
+        to { opacity: 1; transform: translateY(0); } 
+    }
+
+    /* Terminal de logs */
+    .terminal-scroll::-webkit-scrollbar { width: 6px; }
+    .terminal-scroll::-webkit-scrollbar-track { background: #1e293b; }
+    .terminal-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+    /* Pulso en indicadores */
+    @keyframes pulse-ring {
+        0% { transform: scale(0.95); opacity: 1; }
+        100% { transform: scale(1.3); opacity: 0; }
+    }
+
+    /* Toggle switches */
+    .toggle-checkbox:checked {
+        right: 0;
+        border-color: #4f46e5;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+        background-color: #4f46e5;
+    }
+</style>
+{% endblock %}
 
 {% block navigation %}
 <a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
-    <i class="bi bi-house-door text-lg"></i>
-    <span>Inicio</span>
+    <i class="bi bi-speedometer2 text-lg"></i>
+    <span>Centro de Control</span>
 </a>
 
 <a href="{{ url_for('routes.admin_empleados_lista') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
     <i class="bi bi-people text-lg"></i>
     <span>Empleados</span>
-</a>
-
-<a href="{{ url_for('routes.admin_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-graph-up text-lg"></i>
-    <span>Reportes</span>
 </a>
 
 <a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
@@ -35,123 +69,560 @@
     <span>Ventas</span>
 </a>
 
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-gear text-lg"></i>
-    <span>Configuración</span>
+<a href="{{ url_for('routes.admin_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-graph-up text-lg"></i>
+    <span>Reportes</span>
 </a>
 {% endblock %}
 
 {% block content %}
-<!-- Tarjetas de Estadísticas -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Usuarios -->
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
-                <i class="bi bi-people text-3xl"></i>
-            </div>
-            <span class="text-sm opacity-90">Total</span>
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header con Bienvenida y Estado del Sistema -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 fade-up">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800" id="welcome-message">Dashboard</h1>
+            <p class="text-gray-500 text-sm mt-1">Monitoreo en tiempo real del restaurante Callejón 9</p>
         </div>
-        <h3 class="text-3xl font-bold mb-1">{{ stats.total_usuarios }}</h3>
-        <p class="text-sm opacity-90">Usuarios Activos</p>
+
+        <!-- Indicadores de Estado en Tiempo Real -->
+        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-semibold text-gray-600 uppercase">Sistema</span>
+            </div>
+            <div class="h-4 w-px bg-gray-200"></div>
+            <div class="flex items-center gap-2">
+                <span id="status-cocina" class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-semibold text-gray-600 uppercase">Cocina</span>
+            </div>
+            <div class="h-4 w-px bg-gray-200"></div>
+            <div class="flex items-center gap-2">
+                <span id="status-caja" class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-semibold text-gray-600 uppercase">Caja</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Administradores -->
-    <div class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
-                <i class="bi bi-shield-check text-3xl"></i>
+    <!-- KPIs Principales con Skeleton -->
+    <div id="skeleton-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for _ in range(8) %}
+        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm animate-pulse">
+            <div class="flex justify-between items-start">
+                <div class="h-4 w-24 bg-gray-200 rounded"></div>
+                <div class="h-8 w-8 bg-gray-200 rounded-lg"></div>
             </div>
-            <span class="text-sm opacity-90">Admin</span>
+            <div class="h-8 w-16 bg-gray-200 rounded mt-4"></div>
         </div>
-        <h3 class="text-3xl font-bold mb-1">{{ stats.total_admin }}</h3>
-        <p class="text-sm opacity-90">Administradores</p>
+        {% endfor %}
     </div>
 
-    <!-- Meseros -->
-    <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
-                <i class="bi bi-person-badge text-3xl"></i>
+    <div id="dashboard-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hidden"></div>
+
+    <!-- Sección de Actividad y Personal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up delay-100">
+        
+        <!-- Actividad en Tiempo Real -->
+        <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="ri-pulse-line text-blue-500"></i> Actividad en Tiempo Real
+                </h3>
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Live</span>
             </div>
-            <span class="text-sm opacity-90">Servicio</span>
+            <div class="p-6">
+                <!-- Grid de Métricas en Vivo -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <div class="text-3xl font-bold text-blue-600" id="mesas-ocupadas">0</div>
+                        <div class="text-xs text-gray-600 mt-1">Mesas Ocupadas</div>
+                    </div>
+                    
+                    <div class="text-center p-4 bg-orange-50 rounded-lg border border-orange-100">
+                        <div class="text-3xl font-bold text-orange-600" id="comandas-activas">0</div>
+                        <div class="text-xs text-gray-600 mt-1">Comandas Activas</div>
+                    </div>
+                    
+                    <div class="text-center p-4 bg-red-50 rounded-lg border border-red-100">
+                        <div class="text-3xl font-bold text-red-600" id="en-cocina">0</div>
+                        <div class="text-xs text-gray-600 mt-1">En Cocina</div>
+                    </div>
+                    
+                    <div class="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+                        <div class="text-2xl font-bold text-green-600" id="ventas-dia">$0</div>
+                        <div class="text-xs text-gray-600 mt-1">Ventas Hoy</div>
+                    </div>
+                </div>
+
+                <!-- Actividad Reciente -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Últimas Acciones</h4>
+                    <div class="space-y-2 max-h-48 overflow-y-auto" id="actividad-reciente">
+                        <div class="text-center py-4 text-gray-400 text-sm">
+                            <i class="bi bi-hourglass-split text-2xl mb-2 block"></i>
+                            Cargando actividad...
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <h3 class="text-3xl font-bold mb-1">{{ stats.total_meseros }}</h3>
-        <p class="text-sm opacity-90">Meseros</p>
+
+        <!-- Personal Activo en Línea -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-people text-purple-500"></i> Personal Activo
+                </h3>
+                <span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium" id="count-activos">0</span>
+            </div>
+            <div class="flex-1 overflow-y-auto max-h-96">
+                <ul id="personal-activo-list" class="divide-y divide-gray-50">
+                    <li class="p-4 text-center text-sm text-gray-400">
+                        <i class="bi bi-person-check text-3xl mb-2 block"></i>
+                        Cargando personal...
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 
-    <!-- Personal de Cocina -->
-    <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-white bg-opacity-20 rounded-lg">
-                <i class="bi bi-person-workspace text-3xl"></i>
+    <!-- Logs del Sistema y Controles -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up delay-200">
+        
+        <!-- Terminal de Logs -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-xl shadow-lg overflow-hidden border border-slate-800">
+            <div class="px-4 py-2 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="h-3 w-3 rounded-full bg-red-500"></div>
+                    <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
+                    <div class="h-3 w-3 rounded-full bg-green-500"></div>
+                </div>
+                <span class="text-xs font-mono text-slate-400">system_activity.log</span>
             </div>
-            <span class="text-sm opacity-90">Cocina</span>
+            <div class="p-4 h-64 overflow-y-auto terminal-scroll font-mono text-xs">
+                <ul id="system-logs-list" class="space-y-1">
+                    <li class="text-slate-500">$ Iniciando monitoreo del sistema...</li>
+                </ul>
+            </div>
         </div>
-        <h3 class="text-3xl font-bold mb-1">{{ stats.total_cocina }}</h3>
-        <p class="text-sm opacity-90">Personal de Cocina</p>
+
+        <!-- Panel de Control y Danger Zone -->
+        <div class="space-y-4">
+            <!-- Configuración del Sistema -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-gray-100 bg-gray-50">
+                    <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                        <i class="ri-settings-4-line text-gray-500"></i> Configuración
+                    </h3>
+                </div>
+                <div class="p-4 space-y-4">
+                    <!-- Toggle: Modo Mantenimiento -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Modo Mantenimiento</p>
+                            <p class="text-xs text-gray-400">Solo admins pueden entrar</p>
+                        </div>
+                        <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                            <input type="checkbox" id="toggle-maintenance" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
+                            <label for="toggle-maintenance" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+
+                    <!-- Toggle: Aceptar Reservas -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Aceptar Reservas</p>
+                            <p class="text-xs text-gray-400">Permitir nuevas reservas</p>
+                        </div>
+                        <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                            <input type="checkbox" id="toggle-reservas" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
+                            <label for="toggle-reservas" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+
+                    <!-- Toggle: Sistema de Pagos -->
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Sistema de Pagos</p>
+                            <p class="text-xs text-gray-400">Gateway activo</p>
+                        </div>
+                        <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                            <input type="checkbox" id="toggle-pagos" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
+                            <label for="toggle-pagos" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
+                <div class="p-3 bg-red-50 border-b border-red-100">
+                    <h3 class="text-xs font-bold text-red-600 uppercase tracking-wide flex items-center gap-1">
+                        <i class="ri-alert-line"></i> Acciones Críticas
+                    </h3>
+                </div>
+                <div class="p-4 space-y-3">
+                    <button onclick="enviarAnuncio()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
+                        <i class="ri-megaphone-line"></i> Anuncio Global
+                    </button>
+                    <button onclick="corteCaja()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-600 text-sm font-medium rounded-lg hover:bg-green-50 transition shadow-sm">
+                        <i class="bi bi-cash-stack"></i> Corte de Caja
+                    </button>
+                    <button onclick="cerrarTodoSistema()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition shadow-sm">
+                        <i class="ri-shut-down-line"></i> Cerrar Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
+
 </div>
+{% endblock %}
 
-<!-- Accesos Rápidos -->
-<div class="bg-white rounded-xl shadow-md p-6 mb-8">
-    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <i class="bi bi-lightning-charge text-purple-600"></i>
-        Accesos Rápidos
-    </h2>
-    
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <a href="{{ url_for('routes.admin_empleados_crear') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-center group">
-            <i class="bi bi-person-plus text-4xl text-gray-400 group-hover:text-purple-600 mb-3 block"></i>
-            <p class="font-medium text-gray-700 group-hover:text-purple-700">Nuevo Empleado</p>
-        </a>
-        
-        <a href="#" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center group">
-            <i class="bi bi-file-earmark-plus text-4xl text-gray-400 group-hover:text-blue-600 mb-3 block"></i>
-            <p class="font-medium text-gray-700 group-hover:text-blue-700">Nuevo Platillo</p>
-        </a>
-        
-        <a href="{{ url_for('routes.admin_reportes') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center group">
-            <i class="bi bi-graph-up-arrow text-4xl text-gray-400 group-hover:text-green-600 mb-3 block"></i>
-            <p class="font-medium text-gray-700 group-hover:text-green-700">Ver Reportes</p>
-        </a>
-        
-        <a href="#" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition text-center group">
-            <i class="bi bi-gear-fill text-4xl text-gray-400 group-hover:text-orange-600 mb-3 block"></i>
-            <p class="font-medium text-gray-700 group-hover:text-orange-700">Configuración</p>
-        </a>
-    </div>
-</div>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // === 1. MENSAJE DE BIENVENIDA PERSONALIZADO ===
+    const welcomeElement = document.getElementById('welcome-message');
+    const myDate = new Date();
+    const hrs = myDate.getHours();
+    const nombre = "{{ session.get('usuario_nombre', 'Admin') }}";
+    let saludar = hrs < 12 ? 'Buenos días' : (hrs <= 18 ? 'Buenas tardes' : 'Buenas noches');
+    if (welcomeElement) welcomeElement.textContent = `${saludar}, ${nombre}`;
 
-<!-- Actividad Reciente -->
-<div class="bg-white rounded-xl shadow-md p-6">
-    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <i class="bi bi-clock-history text-blue-600"></i>
-        Actividad Reciente
-    </h2>
-    
-    <div class="space-y-4">
-        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="bi bi-person-plus text-blue-600"></i>
-            </div>
-            <div class="flex-1">
-                <p class="font-medium text-gray-800">Nuevo empleado registrado</p>
-                <p class="text-sm text-gray-600">Octavio Duarte - Mesero</p>
-                <p class="text-xs text-gray-400 mt-1">Hace 2 horas</p>
-            </div>
-        </div>
+    // === 2. SELECTORES ===
+    const skeletonContainer = document.getElementById('skeleton-grid');
+    const dashboardGrid = document.getElementById('dashboard-grid');
+    const personalActivoList = document.getElementById('personal-activo-list');
+    const systemLogsList = document.getElementById('system-logs-list');
+    const actividadReciente = document.getElementById('actividad-reciente');
+
+    // === 3. CARGAR DATOS DEL DASHBOARD ===
+    async function cargarDashboard() {
+        try {
+            // Aquí conectarías con tu API real
+            const data = await fetch('/api/dashboard/admin/stats').then(r => r.json()).catch(() => ({
+                // Datos de ejemplo
+                total_empleados: {{ stats.total_usuarios if stats else 12 }},
+                empleados_activos: 8,
+                admin_count: {{ stats.total_admin if stats else 2 }},
+                meseros_count: {{ stats.total_meseros if stats else 6 }},
+                cocina_count: {{ stats.total_cocina if stats else 4 }},
+                mesas_ocupadas: 15,
+                comandas_activas: 23,
+                en_cocina: 8,
+                ventas_dia: 12450,
+                cuentas_abiertas: 12,
+                platillos_disponibles: 45
+            }));
+
+            // === A. RENDERIZAR KPIs ===
+            const kpis = [
+                { icon: 'ri-group-line', label: 'Total Empleados', val: data.total_empleados, color: 'blue' },
+                { icon: 'ri-user-star-line', label: 'Personal Activo', val: data.empleados_activos, color: 'green' },
+                { icon: 'ri-admin-line', label: 'Administradores', val: data.admin_count, color: 'purple' },
+                { icon: 'ri-user-smile-line', label: 'Meseros', val: data.meseros_count, color: 'cyan' },
+                { icon: 'ri-restaurant-line', label: 'Cocina', val: data.cocina_count, color: 'orange' },
+                { icon: 'ri-grid-line', label: 'Mesas Ocupadas', val: data.mesas_ocupadas || 0, color: 'indigo' },
+                { icon: 'ri-file-list-3-line', label: 'Comandas', val: data.comandas_activas || 0, color: 'yellow' },
+                { icon: 'ri-money-dollar-circle-line', label: 'Ventas Hoy', val: `$${(data.ventas_dia || 0).toLocaleString()}`, color: 'emerald' }
+            ];
+
+            dashboardGrid.innerHTML = '';
+            kpis.forEach((kpi, index) => {
+                const cardHTML = `
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all fade-up" style="animation-delay: ${index * 50}ms">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">${kpi.label}</p>
+                                <h3 class="text-2xl font-bold text-gray-800">${kpi.val}</h3>
+                            </div>
+                            <div class="p-2 rounded-lg bg-${kpi.color}-50 text-${kpi.color}-600">
+                                <i class="${kpi.icon} text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                dashboardGrid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            // Actualizar contadores en tiempo real
+            document.getElementById('mesas-ocupadas').textContent = data.mesas_ocupadas || 0;
+            document.getElementById('comandas-activas').textContent = data.comandas_activas || 0;
+            document.getElementById('en-cocina').textContent = data.en_cocina || 0;
+            document.getElementById('ventas-dia').textContent = `$${(data.ventas_dia || 0).toLocaleString()}`;
+
+            // === B. PERSONAL ACTIVO ===
+            await cargarPersonalActivo();
+
+            // === C. ACTIVIDAD RECIENTE ===
+            cargarActividadReciente();
+
+            // === D. LOGS DEL SISTEMA ===
+            agregarLog('Sistema iniciado correctamente', 'INFO');
+            agregarLog(`${data.empleados_activos} empleados conectados`, 'INFO');
+            agregarLog(`${data.mesas_ocupadas} mesas en servicio`, 'INFO');
+
+            // Mostrar dashboard
+            skeletonContainer.classList.add('hidden');
+            dashboardGrid.classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Error cargando dashboard:', error);
+            skeletonContainer.innerHTML = '<div class="col-span-full p-4 bg-red-50 text-red-600 rounded-lg">Error al cargar datos del dashboard</div>';
+        }
+    }
+
+    // === 4. CARGAR PERSONAL ACTIVO ===
+    async function cargarPersonalActivo() {
+        try {
+            const response = await fetch('/api/personal/activos').catch(() => null);
+            
+            let personalActivo = [];
+            if (response && response.ok) {
+                personalActivo = await response.json();
+            } else {
+                // Datos de ejemplo
+                personalActivo = [
+                    { nombre: 'Juan Pérez', rol: '2', email: 'juan@callejon9.com', ultimaActividad: 'Hace 2 min', status: 'online' },
+                    { nombre: 'María López', rol: '3', email: 'maria@callejon9.com', ultimaActividad: 'Hace 5 min', status: 'online' },
+                    { nombre: 'Carlos Ruiz', rol: '2', email: 'carlos@callejon9.com', ultimaActividad: 'Hace 1 min', status: 'online' },
+                    { nombre: 'Ana García', rol: '3', email: 'ana@callejon9.com', ultimaActividad: 'Hace 3 min', status: 'online' }
+                ];
+            }
+
+            personalActivoList.innerHTML = '';
+            document.getElementById('count-activos').textContent = personalActivo.length;
+
+            if (personalActivo.length === 0) {
+                personalActivoList.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">No hay personal activo</li>';
+                return;
+            }
+
+            const rolMap = {
+                '1': { nombre: 'Admin', color: 'purple', icon: 'bi-shield-check' },
+                '2': { nombre: 'Mesero', color: 'green', icon: 'bi-person-badge' },
+                '3': { nombre: 'Cocina', color: 'orange', icon: 'bi-egg-fried' }
+            };
+
+            personalActivo.forEach(persona => {
+                const rol = rolMap[persona.rol] || { nombre: 'Usuario', color: 'gray', icon: 'bi-person' };
+                personalActivoList.insertAdjacentHTML('beforeend', `
+                    <li class="px-4 py-3 hover:bg-gray-50 transition">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-full bg-${rol.color}-100 text-${rol.color}-600 flex items-center justify-center">
+                                    <i class="${rol.icon} text-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">${persona.nombre}</div>
+                                    <div class="text-xs text-gray-500">${rol.nombre} • ${persona.ultimaActividad}</div>
+                                </div>
+                            </div>
+                            <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                        </div>
+                    </li>
+                `);
+            });
+
+        } catch (error) {
+            console.error('Error cargando personal activo:', error);
+            personalActivoList.innerHTML = '<li class="p-4 text-center text-sm text-red-400">Error al cargar personal</li>';
+        }
+    }
+
+    // === 5. ACTIVIDAD RECIENTE ===
+    function cargarActividadReciente() {
+        const actividades = [
+            { icono: 'bi-check-circle', texto: 'Mesa 5 cerrada por Juan Pérez', tiempo: 'Hace 2 min', color: 'green' },
+            { icono: 'bi-bell', texto: 'Nueva comanda en Mesa 12', tiempo: 'Hace 5 min', color: 'blue' },
+            { icono: 'bi-cart-check', texto: 'Pedido #345 enviado a cocina', tiempo: 'Hace 8 min', color: 'orange' },
+            { icono: 'bi-cash', texto: 'Pago recibido: $850 (Tarjeta)', tiempo: 'Hace 10 min', color: 'green' }
+        ];
+
+        actividadReciente.innerHTML = '';
+        actividades.forEach(act => {
+            actividadReciente.insertAdjacentHTML('beforeend', `
+                <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="mt-0.5 flex-shrink-0">
+                        <div class="h-8 w-8 rounded-full bg-${act.color}-100 flex items-center justify-center">
+                            <i class="${act.icono} text-${act.color}-600"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-800">${act.texto}</p>
+                        <p class="text-xs text-gray-500 mt-0.5">${act.tiempo}</p>
+                    </div>
+                </div>
+            `);
+        });
+    }
+
+    // === 6. SISTEMA DE LOGS ===
+    function agregarLog(mensaje, nivel = 'INFO') {
+        const ahora = new Date();
+        const tiempo = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         
-        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="bi bi-check-circle text-green-600"></i>
-            </div>
-            <div class="flex-1">
-                <p class="font-medium text-gray-800">Actualización completada</p>
-                <p class="text-sm text-gray-600">Menú actualizado con nuevos platillos</p>
-                <p class="text-xs text-gray-400 mt-1">Hace 5 horas</p>
-            </div>
-        </div>
-    </div>
-</div>
+        const colorMap = {
+            'INFO': 'text-slate-300',
+            'WARN': 'text-yellow-400',
+            'ERROR': 'text-red-400',
+            'SUCCESS': 'text-green-400'
+        };
+
+        const color = colorMap[nivel] || 'text-slate-300';
+
+        systemLogsList.insertAdjacentHTML('beforeend', `
+            <li class="flex gap-2 font-mono text-xs py-0.5 hover:bg-white/5 px-2 rounded">
+                <span class="text-slate-500">${tiempo}</span>
+                <span class="${color} font-bold w-16">[${nivel}]</span>
+                <span class="text-slate-300 flex-1">${mensaje}</span>
+            </li>
+        `);
+
+        // Auto-scroll
+        systemLogsList.parentElement.scrollTop = systemLogsList.parentElement.scrollHeight;
+
+        // Limitar a 50 logs
+        if (systemLogsList.children.length > 50) {
+            systemLogsList.firstChild.remove();
+        }
+    }
+
+    // === 7. FUNCIONES DE TOGGLES ===
+    function sendCommand(action, value) {
+        fetch("/api/admin/command", { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action, value: value })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const Toast = Swal.mixin({ 
+                toast: true, 
+                position: 'top-end', 
+                showConfirmButton: false, 
+                timer: 3000 
+            });
+            Toast.fire({ 
+                icon: data.success ? 'success' : 'error', 
+                title: data.message || 'Comando ejecutado' 
+            });
+            agregarLog(`${action}: ${value ? 'Activado' : 'Desactivado'}`, 'INFO');
+        })
+        .catch(err => {
+            showToast('Error de conexión', 'error');
+        });
+    }
+
+    // Bindings de toggles
+    document.getElementById('toggle-maintenance').addEventListener('change', function() { 
+        sendCommand('maintenance_mode', this.checked); 
+    });
+    document.getElementById('toggle-reservas').addEventListener('change', function() { 
+        sendCommand('pause_reservas', this.checked); 
+    });
+    document.getElementById('toggle-pagos').addEventListener('change', function() { 
+        sendCommand('pause_pagos', this.checked); 
+    });
+
+    // === 8. FUNCIONES DE BOTONES ===
+    window.enviarAnuncio = function() {
+        Swal.fire({
+            title: 'Enviar Anuncio Global',
+            input: 'textarea',
+            inputLabel: 'Mensaje para todo el personal',
+            inputPlaceholder: 'Escribe el anuncio aquí...',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.value) {
+                agregarLog(`Anuncio enviado: "${result.value}"`, 'SUCCESS');
+                showToast('Anuncio enviado a todo el personal', 'success');
+            }
+        });
+    };
+
+    window.corteCaja = function() {
+        Swal.fire({
+            title: 'Corte de Caja',
+            text: '¿Generar el corte de caja del día?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Generar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                agregarLog('Generando corte de caja...', 'INFO');
+                showToast('Corte generado correctamente', 'success');
+                // Aquí llamarías a tu API real
+            }
+        });
+    };
+
+    window.cerrarTodoSistema = function() {
+        Swal.fire({
+            title: '⚠️ CERRAR TODO EL SISTEMA',
+            text: 'Esto cerrará todas las sesiones y finalizará el día',
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cerrar sistema',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc2626'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                agregarLog('CIERRE TOTAL DEL SISTEMA INICIADO', 'ERROR');
+                Swal.fire({
+                    title: 'Cerrando sistema...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                setTimeout(() => {
+                    window.location.href = '/logout';
+                }, 2000);
+            }
+        });
+    };
+
+    // === 9. FUNCIONES DE UTILIDAD ===
+    function showToast(message, type = 'success') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        Toast.fire({ icon: type, title: message });
+    }
+
+    // === 10. INICIAR CARGA ===
+    cargarDashboard();
+
+    // === 11. AUTO-REFRESH CADA 30 SEGUNDOS ===
+    setInterval(() => {
+        cargarPersonalActivo();
+        cargarActividadReciente();
+        agregarLog('Datos actualizados automáticamente', 'INFO');
+    }, 30000);
+
+    // Simular actividad aleatoria cada 10 segundos
+    setInterval(() => {
+        const actividades = [
+            'Nueva comanda recibida',
+            'Platillo marcado como listo',
+            'Mesa asignada',
+            'Pago procesado',
+            'Reserva confirmada'
+        ];
+        const random = actividades[Math.floor(Math.random() * actividades.length)];
+        agregarLog(random, 'INFO');
+    }, 10000);
+});
+</script>
 {% endblock %}

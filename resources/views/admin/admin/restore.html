@@ -1,0 +1,112 @@
+{% extends "layout/layout.html" %}
+
+{% block title %}
+Restauración de Sistema | Panel de Control
+{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+
+<div class="max-w-2xl mx-auto py-12 px-6">
+    <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('routes.dashboard_Sadmin') }}" class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-900 hover:text-white transition-all shadow-sm">
+                <i class="ri-arrow-left-line text-lg"></i>
+            </a>
+            <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase">Restauración de Sistema</h1>
+        </div>
+    </div>
+
+    <div class="text-center mb-10">
+        <div class="w-20 h-20 bg-orange-100 text-orange-600 rounded-[2rem] flex items-center justify-center mx-auto mb-4 shadow-inner">
+            <i class="ri-history-line text-4xl"></i>
+        </div>
+        <h1 class="text-3xl font-black text-slate-800 tracking-tighter">Restaurar Datos</h1>
+        <p class="text-orange-600 text-[10px] font-bold uppercase tracking-[0.3em] mt-2 italic">Advertencia: Sobrescritura de Base de Datos</p>
+        <h2 class="text-3xl font-black text-slate-800 tracking-tighter">Restaurar Datos</h2>
+        <p class="text-orange-600 text-[10px] font-bold uppercase tracking-[0.3em] mt-2 italic animate-pulse">
+            <i class="ri-error-warning-line mr-1"></i> Advertencia: Sobrescritura de Base de Datos
+        </p>
+    </div>
+
+    <div class="bg-white rounded-[3rem] p-10 shadow-2xl border border-slate-100 relative">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-6 p-4 rounded-2xl text-[10px] font-bold flex items-center gap-3 {% if category == 'success' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% else %}bg-red-50 text-red-600 border border-red-100{% endif %}">
+                <i class="{% if category == 'success' %}ri-checkbox-circle-line{% else %}ri-error-warning-line{% endif %} text-lg"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('routes.admin_backup_restore') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+
+            <div class="space-y-3">
+                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">1. Seleccionar del Historial</label>
+                <select name="server_file" class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[11px] font-bold focus:border-orange-500 focus:bg-white outline-none transition-all cursor-pointer">
+                    <option value="">-- Buscar en servidor --</option>
+                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">1. Seleccionar del Historial (Servidor)</label>
+                <select name="server_file" id="server_select" class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[11px] font-bold focus:border-orange-500 focus:bg-white outline-none transition-all cursor-pointer">
+                    <option value="">-- Buscar respaldo en el servidor --</option>
+                    {% for file in files %}
+                    <option value="{{ file }}">{{ file }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="relative py-2 flex items-center">
+                <div class="flex-grow border-t border-slate-100"></div>
+                <span class="flex-shrink mx-4 text-[9px] font-black text-slate-300 uppercase">O subir archivo externo</span>
+                <div class="flex-grow border-t border-slate-100"></div>
+            </div>
+
+            <div class="mt-4">
+                <input type="file" name="backup_file" id="file_input" class="hidden" accept=".json,.sql">
+                <label for="file_input" class="group border-2 border-dashed border-slate-200 p-10 rounded-[2.5rem] text-center bg-slate-50/50 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer block relative overflow-hidden">
+                    <i class="ri-upload-cloud-2-fill text-4xl text-slate-300 group-hover:text-orange-500 transition-transform group-hover:-translate-y-1 block mb-2"></i>
+                    <span class="text-[10px] font-black text-slate-400 group-hover:text-orange-700 uppercase">Subir archivo externo</span>
+                    <span id="name_output" class="text-[9px] font-bold text-orange-600 mt-2 block italic"></span>
+                    <span class="text-[10px] font-black text-slate-400 group-hover:text-orange-700 uppercase">Click para examinar JSON/SQL</span>
+                    <span id="name_output" class="text-[9px] font-bold text-orange-600 mt-2 block italic tracking-tight"></span>
+                </label>
+            </div>
+
+            <button type="submit" onclick="return confirm('¿ESTÁS SEGURO? Se eliminarán los datos actuales.')" 
+                    class="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-slate-900 shadow-xl shadow-orange-100 transition-all active:scale-95">
+                Ejecutar Restauración
+            <button type="submit" onclick="return confirm('¿ESTÁS ABSOLUTAMENTE SEGURO? Los datos actuales serán reemplazados por el respaldo seleccionado.')" 
+                    class="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-slate-900 shadow-xl shadow-orange-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class="ri-refresh-line text-lg"></i>
+                Ejecutar Restauración Total
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('file_input').onchange = function() {
+    const name = this.files[0] ? "LISTO: " + this.files[0].name : "";
+    document.getElementById('name_output').innerText = name;
+};
+    // Script para mostrar el nombre del archivo seleccionado y limpiar el select del servidor
+    document.getElementById('file_input').onchange = function() {
+        if(this.files[0]) {
+            document.getElementById('name_output').innerText = "ARCHIVO CARGADO: " + this.files[0].name;
+            // Si eligen subir un archivo, limpiamos la selección del servidor
+            document.getElementById('server_select').value = "";
+        } else {
+            document.getElementById('name_output').innerText = "";
+        }
+    };
+
+    // Si eligen un archivo del servidor, podríamos limpiar el input de archivo (opcional)
+    document.getElementById('server_select').onchange = function() {
+        if(this.value !== "") {
+            document.getElementById('file_input').value = "";
+            document.getElementById('name_output').innerText = "";
+        }
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Callejón 9{% endblock %}</title>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        .nav-link {
+            @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700;
+        }
+        .nav-link:hover {
+            @apply bg-gray-100;
+        }
+        .nav-link.active {
+            @apply bg-blue-100 text-blue-700 shadow-sm;
+        }
+        
+        /* Estilos para botones */
+        .btn {
+            @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 inline-flex items-center gap-2;
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700;
+        }
+        .btn-success {
+            @apply bg-green-600 text-white hover:bg-green-700;
+        }
+        .btn-secondary {
+            @apply bg-gray-600 text-white hover:bg-gray-700;
+        }
+        .btn-sm {
+            @apply text-sm px-3 py-1.5;
+        }
+        
+        /* Estilos para badges */
+        .badge {
+            @apply px-3 py-1 rounded-full text-xs font-semibold inline-block;
+        }
+        .badge-warning {
+            @apply bg-yellow-100 text-yellow-800;
+        }
+        .badge-success {
+            @apply bg-green-100 text-green-800;
+        }
+        .badge-info {
+            @apply bg-blue-100 text-blue-800;
+        }
+        .badge-error {
+            @apply bg-red-100 text-red-800;
+        }
+        .badge-secondary {
+            @apply bg-gray-100 text-gray-800;
+        }
+        
+        /* Estilos para cards */
+        .card {
+            @apply bg-white rounded-xl shadow-md overflow-hidden;
+        }
+        .card-header {
+            @apply p-4 border-b bg-gray-50;
+        }
+        .card-body {
+            @apply p-6;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r shadow-md flex flex-col fixed h-full z-20">
+            <!-- Logo -->
+            <div class="h-20 flex items-center justify-center border-b">
+                <h2 class="text-2xl font-bold text-gray-800">Callejón 9</h2>
+            </div>
+            
+            <!-- Perfil de Usuario -->
+            <div class="px-6 py-4 border-b">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {{ session.get('usuario_nombre', 'U')[0] }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-gray-800 truncate">{{ session.get('usuario_nombre', 'Usuario') }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ session.get('usuario_email', '') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navegación -->
+            <nav class="flex-1 px-4 py-6 overflow-y-auto">
+                {% block navigation %}{% endblock %}
+            </nav>
+            
+            <!-- Cerrar Sesión -->
+            <div class="p-4 border-t">
+                <a href="{{ url_for('routes.logout') }}" 
+                   class="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Contenido Principal -->
+        <main class="flex-1 ml-64">
+            <!-- Header -->
+            <header class="bg-white border-b h-20 flex items-center px-8 sticky top-0 z-10">
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <p class="text-sm text-gray-600">{% block page_subtitle %}Bienvenido al sistema{% endblock %}</p>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Tema -->
+                    <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                        <i class="bi bi-moon text-xl text-gray-600"></i>
+                    </button>
+                    
+                    <!-- Notificaciones -->
+                    <button class="p-2 rounded-lg hover:bg-gray-100 transition relative">
+                        <i class="bi bi-bell text-xl text-gray-600"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Contenido -->
+            <div class="p-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            window.location.href = "{{ url_for('routes.toggle_theme') }}";
+        }
+        
+        // Funciones de utilidad globales
+        function showLoading(message = 'Cargando...') {
+            Swal.fire({
+                title: message,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+        }
+        
+        function hideLoading() {
+            Swal.close();
+        }
+        
+        function showToast(message, type = 'success') {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            Toast.fire({ icon: type, title: message });
+        }
+        
+        function showSuccess(message) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+        
+        function showError(message) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

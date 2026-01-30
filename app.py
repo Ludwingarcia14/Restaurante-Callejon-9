@@ -15,8 +15,8 @@ os.environ["PYSPARK_PYTHON"] = sys.executable
 os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
 # Inicialización de Flask
-app = Flask(__name__, template_folder="resources/views")
-
+# En app.py
+app = Flask(__name__,template_folder="resources/views",static_folder="static")  # Asegúrate de esto
 # Configuración de CORS
 lista_origenes = [
     "http://127.0.0.1:5500",
@@ -86,11 +86,6 @@ if __name__ == "__main__":
     print(f"   📍 Local:  http://127.0.0.1:5000")
     print(f"   📍 Red:    http://{local_ip}:5000")
     print("=" * 60)
-    print("\n👥 Usuarios de prueba:")
-    print("   Admin:  edwinfloresvargas.dev@gmail.com")
-    print("   Mesero: octavio@admin.com")
-    print("   Cocina: regi@admin.com")
-    print("   Contraseña: (tu contraseña hasheada)")
     print("=" * 60 + "\n")
     
     app.run(

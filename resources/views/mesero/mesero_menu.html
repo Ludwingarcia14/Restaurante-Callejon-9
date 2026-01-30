@@ -1,0 +1,350 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Menú - Mesero{% endblock %}
+{% block page_title %}Menú del Restaurante{% endblock %}
+{% block page_subtitle %}Selecciona platillos para tus pedidos{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.mesero_mesas') }}" class="nav-link">
+    <i class="bi bi-grid-3x3"></i>
+    <span>Mis Mesas</span>
+</a>
+
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt"></i>
+    <span>Comandas</span>
+</a>
+
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link active">
+    <i class="bi bi-journal-text"></i>
+    <span>Menú</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Carrito Flotante -->
+<div id="carrito-flotante" class="fixed right-4 top-24 w-80 bg-white rounded-xl shadow-2xl border-2 border-green-500 z-40 hidden">
+    <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-t-xl">
+        <div class="flex items-center justify-between">
+            <h3 class="font-bold flex items-center gap-2">
+                <i class="bi bi-cart3"></i>
+                Pedido Actual
+            </h3>
+            <button onclick="toggleCarrito()" class="text-white hover:bg-white hover:bg-opacity-20 p-1 rounded">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <p class="text-sm opacity-90">Mesa: <span id="carrito-mesa">-</span></p>
+    </div>
+    
+    <div class="p-4 max-h-96 overflow-y-auto" id="carrito-items">
+        <p class="text-center text-gray-500 py-8">
+            <i class="bi bi-cart-x text-4xl mb-2 block"></i>
+            Carrito vacío
+        </p>
+    </div>
+    
+    <div class="border-t p-4">
+        <div class="flex justify-between mb-3">
+            <span class="font-semibold">Total:</span>
+            <span class="text-xl font-bold text-green-600" id="carrito-total">$0.00</span>
+        </div>
+        <button onclick="enviarPedido()" class="btn btn-success w-full">
+            <i class="bi bi-send"></i>
+            Enviar a Cocina
+        </button>
+    </div>
+</div>
+
+<!-- Botón Flotante del Carrito -->
+<button id="btn-carrito" onclick="toggleCarrito()" 
+        class="fixed right-4 bottom-4 w-16 h-16 bg-green-500 text-white rounded-full shadow-lg hover:bg-green-600 transition z-50 flex items-center justify-center hidden">
+    <i class="bi bi-cart3 text-2xl"></i>
+    <span id="carrito-badge" class="hidden absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full text-xs flex items-center justify-center font-bold">
+        0
+    </span>
+</button>
+
+<!-- Selector de Mesa -->
+<div class="card mb-6">
+    <div class="card-body">
+        <div class="flex items-center gap-4">
+            <label class="font-semibold text-gray-700">Selecciona Mesa:</label>
+            <select id="select-mesa" onchange="seleccionarMesa()" class="px-4 py-2 border rounded-lg">
+                <option value="">-- Elige una mesa --</option>
+                {% for mesa in stats.mesas_asignadas %}
+                <option value="{{ mesa }}">Mesa {{ mesa }}</option>
+                {% endfor %}
+            </select>
+            <div class="ml-auto">
+                <input type="text" id="buscar-platillo" placeholder="Buscar platillo..." 
+                       class="px-4 py-2 border rounded-lg w-64">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categorías -->
+<div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+    <button onclick="filtrarCategoria('')" class="categoria-btn active px-4 py-2 bg-green-500 text-white rounded-lg whitespace-nowrap hover:bg-green-600 transition">
+        Todos
+    </button>
+    <button onclick="filtrarCategoria('entradas')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg whitespace-nowrap hover:bg-gray-300 transition">
+        Entradas
+    </button>
+    <button onclick="filtrarCategoria('principales')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg whitespace-nowrap hover:bg-gray-300 transition">
+        Platos Principales
+    </button>
+    <button onclick="filtrarCategoria('tacos')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg whitespace-nowrap hover:bg-gray-300 transition">
+        Tacos y Quesadillas
+    </button>
+    <button onclick="filtrarCategoria('bebidas')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg whitespace-nowrap hover:bg-gray-300 transition">
+        Bebidas
+    </button>
+    <button onclick="filtrarCategoria('postres')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg whitespace-nowrap hover:bg-gray-300 transition">
+        Postres
+    </button>
+</div>
+
+<!-- Grid de Platillos -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="menu-grid">
+    <!-- Los platillos se cargan dinámicamente -->
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let menuData = [];
+let carrito = [];
+let mesaSeleccionada = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarMenu();
+    document.getElementById('buscar-platillo').addEventListener('input', buscarPlatillo);
+});
+
+function cargarMenu() {
+    // Simular datos del menú
+    menuData = [
+        { id: 1, nombre: 'Tacos al Pastor', categoria: 'tacos', precio: 15, disponible: true, imagen: '', descripcion: '3 tacos con piña y cilantro' },
+        { id: 2, nombre: 'Enchiladas Suizas', categoria: 'principales', precio: 55, disponible: true, imagen: '', descripcion: 'Bañadas en salsa verde con crema' },
+        { id: 3, nombre: 'Quesadilla de Champiñones', categoria: 'tacos', precio: 35, disponible: true, imagen: '', descripcion: 'Con queso Oaxaca' },
+        { id: 4, nombre: 'Guacamole', categoria: 'entradas', precio: 45, disponible: true, imagen: '', descripcion: 'Preparado al momento' },
+        { id: 5, nombre: 'Agua de Horchata', categoria: 'bebidas', precio: 20, disponible: true, imagen: '', descripcion: 'Jarra 1L' },
+        { id: 6, nombre: 'Flan Napolitano', categoria: 'postres', precio: 30, disponible: true, imagen: '', descripcion: 'Casero' },
+        { id: 7, nombre: 'Sopes de Pollo', categoria: 'principales', precio: 50, disponible: false, imagen: '', descripcion: 'Con frijoles y lechuga' }
+    ];
+    
+    renderizarMenu(menuData);
+}
+
+function renderizarMenu(platillos) {
+    const grid = document.getElementById('menu-grid');
+    
+    grid.innerHTML = platillos.map(platillo => `
+        <div class="card ${!platillo.disponible ? 'opacity-60' : ''} hover:shadow-xl transition" data-categoria="${platillo.categoria}">
+            <div class="relative">
+                <div class="w-full h-48 bg-gradient-to-br from-orange-100 to-red-100 rounded-t-xl flex items-center justify-center">
+                    <i class="bi bi-egg-fried text-6xl text-orange-400"></i>
+                </div>
+                ${!platillo.disponible ? `
+                    <div class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                        No Disponible
+                    </div>
+                ` : ''}
+            </div>
+            
+            <div class="card-body">
+                <h3 class="font-bold text-gray-800 mb-2">${platillo.nombre}</h3>
+                <p class="text-sm text-gray-600 mb-3">${platillo.descripcion}</p>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-2xl font-bold text-green-600">$${platillo.precio}</span>
+                    ${platillo.disponible ? `
+                        <button onclick="agregarAlCarrito(${platillo.id})" 
+                                class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i>
+                            Agregar
+                        </button>
+                    ` : `
+                        <span class="text-xs text-red-600 font-semibold">Agotado</span>
+                    `}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function seleccionarMesa() {
+    const select = document.getElementById('select-mesa');
+    mesaSeleccionada = select.value;
+    
+    if (mesaSeleccionada) {
+        document.getElementById('carrito-mesa').textContent = mesaSeleccionada;
+        document.getElementById('btn-carrito').classList.remove('hidden');
+        showToast(`Mesa ${mesaSeleccionada} seleccionada`, 'success');
+    }
+}
+
+function agregarAlCarrito(platilloId) {
+    if (!mesaSeleccionada) {
+        showError('Primero selecciona una mesa');
+        return;
+    }
+    
+    const platillo = menuData.find(p => p.id === platilloId);
+    if (!platillo || !platillo.disponible) return;
+    
+    const itemExistente = carrito.find(item => item.id === platilloId);
+    
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({
+            ...platillo,
+            cantidad: 1,
+            notas: ''
+        });
+    }
+    
+    actualizarCarrito();
+    showToast(`${platillo.nombre} agregado`, 'success');
+}
+
+function actualizarCarrito() {
+    const itemsContainer = document.getElementById('carrito-items');
+    const totalElement = document.getElementById('carrito-total');
+    const badge = document.getElementById('carrito-badge');
+    
+    if (carrito.length === 0) {
+        itemsContainer.innerHTML = `
+            <p class="text-center text-gray-500 py-8">
+                <i class="bi bi-cart-x text-4xl mb-2 block"></i>
+                Carrito vacío
+            </p>
+        `;
+        badge.classList.add('hidden');
+    } else {
+        itemsContainer.innerHTML = carrito.map((item, index) => `
+            <div class="border-b pb-3 mb-3">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-800">${item.nombre}</p>
+                        <p class="text-sm text-gray-600">$${item.precio} c/u</p>
+                    </div>
+                    <button onclick="eliminarDelCarrito(${index})" class="text-red-500 hover:text-red-700">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="cambiarCantidad(${index}, -1)" class="w-8 h-8 bg-gray-200 rounded-full hover:bg-gray-300">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                    <span class="w-12 text-center font-bold">${item.cantidad}</span>
+                    <button onclick="cambiarCantidad(${index}, 1)" class="w-8 h-8 bg-green-500 text-white rounded-full hover:bg-green-600">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                    <span class="ml-auto font-bold text-green-600">$${(item.precio * item.cantidad).toFixed(2)}</span>
+                </div>
+                
+                <input type="text" placeholder="Notas especiales..." 
+                       value="${item.notas}"
+                       onchange="agregarNotas(${index}, this.value)"
+                       class="w-full mt-2 px-3 py-1 text-sm border rounded">
+            </div>
+        `).join('');
+        
+        badge.classList.remove('hidden');
+        badge.textContent = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+    }
+    
+    const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    totalElement.textContent = `$${total.toFixed(2)}`;
+}
+
+function cambiarCantidad(index, delta) {
+    carrito[index].cantidad += delta;
+    if (carrito[index].cantidad <= 0) {
+        carrito.splice(index, 1);
+    }
+    actualizarCarrito();
+}
+
+function eliminarDelCarrito(index) {
+    carrito.splice(index, 1);
+    actualizarCarrito();
+}
+
+function agregarNotas(index, notas) {
+    carrito[index].notas = notas;
+}
+
+function toggleCarrito() {
+    const carritoEl = document.getElementById('carrito-flotante');
+    carritoEl.classList.toggle('hidden');
+}
+
+async function enviarPedido() {
+    if (!mesaSeleccionada || carrito.length === 0) {
+        showError('El carrito está vacío');
+        return;
+    }
+    
+    const result = await Swal.fire({
+        title: '¿Enviar pedido a cocina?',
+        html: `
+            <p>Mesa: <strong>${mesaSeleccionada}</strong></p>
+            <p>Total: <strong>$${carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0).toFixed(2)}</strong></p>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, enviar',
+        cancelButtonText: 'Cancelar'
+    });
+    
+    if (result.isConfirmed) {
+        showLoading('Enviando pedido...');
+        
+        // Aquí conectarías con tu API
+        setTimeout(() => {
+            hideLoading();
+            showSuccess('¡Pedido enviado a cocina!');
+            carrito = [];
+            actualizarCarrito();
+            toggleCarrito();
+        }, 1500);
+    }
+}
+
+function filtrarCategoria(categoria) {
+    // Actualizar botones activos
+    document.querySelectorAll('.categoria-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-green-500', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    event.target.classList.add('active', 'bg-green-500', 'text-white');
+    event.target.classList.remove('bg-gray-200', 'text-gray-700');
+    
+    // Filtrar platillos
+    const platillos = categoria ? menuData.filter(p => p.categoria === categoria) : menuData;
+    renderizarMenu(platillos);
+}
+
+function buscarPlatillo() {
+    const termino = document.getElementById('buscar-platillo').value.toLowerCase();
+    const platillos = menuData.filter(p => 
+        p.nombre.toLowerCase().includes(termino) || 
+        p.descripcion.toLowerCase().includes(termino)
+    );
+    renderizarMenu(platillos);
+}
+</script>
+{% endblock %}

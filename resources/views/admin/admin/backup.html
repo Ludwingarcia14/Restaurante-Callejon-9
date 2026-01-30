@@ -1,0 +1,238 @@
+{% extends "layout/layout.html" %}
+
+{% block title %}Respaldos | Panel de Control{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+        </div>
+        <div>
+            <h3 class="text-white font-black text-xs uppercase tracking-widest mb-1">Generando Respaldo</h3>
+            <p id="overlayText" class="text-blue-400 text-[10px] font-bold">Procesando tablas: 0%</p>
+            <p id="overlayText" class="text-blue-400 text-[10px] font-bold">PROCESANDO: 0%</p>
+        </div>
+        <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+            <div id="overlayBar" class="bg-blue-500 h-full transition-all duration-300" style="width: 0%"></div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+    
+    <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('routes.dashboard_Sadmin') }}" class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm group">
+                <i class="ri-arrow-left-line text-lg"></i>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="ri-save-3-line text-blue-600"></i> Centro de Respaldos
+            </h2>
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">Módulo de Seguridad</h2>
+            <p class="text-slate-500 text-sm">Gestiona la integridad de tus datos en MongoDB</p>
+        </div>
+        <a href="{{ url_for('routes.dashboard_Sadmin') }}" class="flex items-center gap-2 px-4 py-2 bg-white text-slate-600 rounded-xl hover:bg-slate-900 hover:text-white transition-all font-bold border border-slate-200 shadow-sm text-xs uppercase tracking-widest">
+            <i class="ri-arrow-left-line"></i> Regresar al Panel
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-1">
+            <form id="backupForm" action="{{ url_for('routes.admin_backup_create') }}" method="POST" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Nombre del Respaldo</label>
+                    <input type="text" name="backup_name" placeholder="Ej: seguridad_enero" required class="w-full p-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Desde la Fecha</label>
+                    <input type="date" name="date_start" class="w-full p-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seleccionar Tablas</label>
+                        <button type="button" onclick="toggleAll(this)" class="text-[9px] font-bold text-blue-600 uppercase hover:underline">Todas</button>
+        
+        <div class="space-y-6">
+            <div class="adm-card bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-[10px] uppercase tracking-widest">
+                    <i class="ri-database-2-fill text-blue-500"></i> 1. Generar Respaldo
+                </h3>
+                
+                <form id="backupForm" action="{{ url_for('routes.admin_backup_create') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Nombre del Respaldo</label>
+                        <input type="text" name="backup_name" placeholder="Ej: seguridad_enero" required class="w-full p-3 bg-slate-50 border-2 border-transparent rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    <div class="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-xl">
+                        {% for col in collections %}
+                        <label class="flex items-center gap-2 p-1 hover:bg-blue-50 rounded cursor-pointer text-xs font-bold text-slate-600">
+                            <input type="checkbox" name="collections" value="{{ col }}" class="rounded text-blue-600 table-check" checked> {{ col|capitalize }}
+                        </label>
+                        {% endfor %}
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tablas</label>
+                            <button type="button" onclick="toggleAll(this)" class="text-[9px] font-bold text-blue-600 uppercase hover:underline">Todas</button>
+                        </div>
+                        <div class="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-100">
+                            {% for col in collections %}
+                            <label class="flex items-center gap-2 p-1 hover:bg-white rounded cursor-pointer text-xs font-bold text-slate-600 transition">
+                                <input type="checkbox" name="collections" value="{{ col }}" checked class="rounded border-slate-300 text-blue-600 table-check">
+                                {{ col|capitalize }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Formato</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for fmt in ['json', 'excel', 'pdf', 'sql'] %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="format" value="{{ fmt }}" class="peer hidden" {% if fmt == 'json' %}checked{% endif %}>
+                            <div class="p-2 border-2 border-slate-100 rounded-lg text-center text-[10px] font-black peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 uppercase transition-all">{{ fmt }}</div>
+                        </label>
+                        {% endfor %}
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Formato</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            {% for fmt in ['json', 'excel', 'pdf', 'sql'] %}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="format" value="{{ fmt }}" class="peer hidden" {% if fmt == 'json' %}checked{% endif %}>
+                                <div class="p-2 border-2 border-slate-100 rounded-lg text-center text-[10px] font-black peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 uppercase transition-all">{{ fmt }}</div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-blue-50 active:scale-95">Generar Respaldo</button>
+            </form>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 shadow-lg shadow-blue-50 transition-all active:scale-95">
+                        Iniciar Extracción
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 flex flex-col gap-4">
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-full">
+
+                <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Historial</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-700 text-sm">Archivos en Servidor</span>
+                        <span class="text-[9px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">static/backup/</span>
+                    </div>
+                    <button onclick="toggleManage()" id="manageToggleBtn" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-blue-600 uppercase shadow-sm hover:bg-blue-600 hover:text-white transition-all">
+                        <i class="ri-lock-unlock-line mr-1"></i> Gestión
+                    </button>
+@@ -97,28 +108,41 @@
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase border-b">
+                                <tr>
+                                    <th class="p-4">Archivo</th>
+                                    <th class="p-4 text-center">Acciones</th>
+                                    <th class="p-4">Nombre del Backup</th>
+                                    <th class="p-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="filesBody">
+                            <tbody class="divide-y divide-slate-100">
+                                {% for file in files %}
+                                <tr class="hover:bg-blue-50/30 transition-colors file-row">
+                                    <td class="p-4 font-mono text-[11px] text-slate-500 file-name">{{ file }}</td>
+                                    <td class="p-4">
+                                        <div class="flex justify-center gap-2">
+                                            <a href="/static/backup/{{ file }}" download class="w-10 h-10 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"><i class="ri-download-2-line text-lg"></i></a>
+                                            <a href="{{ url_for('routes.admin_backup_delete', filename=file) }}" onclick="return confirm('¿Eliminar?')" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"><i class="ri-delete-bin-line text-lg"></i></a>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500 file-name">
+                                        <i class="ri-file-code-line text-lg mr-2 text-slate-300"></i>{{ file }}
+                                    </td>
+                                    <td class="p-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <a href="/static/backup/{{ file }}" download class="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                                <i class="ri-download-2-line text-lg"></i>
+                                            </a>
+                                            <a href="{{ url_for('routes.admin_backup_delete', filename=file) }}" onclick="return confirm('¿Eliminar del servidor?')" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                                                <i class="ri-delete-bin-line text-lg"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="2" class="p-20 text-center">
+                                        <i class="ri-inbox-line text-4xl text-slate-200 block mb-2"></i>
+                                        <p class="text-slate-400 italic text-xs">No se han encontrado archivos de respaldo.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-4 border-t bg-slate-50/50 flex justify-between items-center mt-auto">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Archivos: {{ total_files }}</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Archivos: {{ total_files }}</span>
+                        <div class="flex gap-1">
+                            <a href="{{ url_for('routes.admin_backup_view', page=page-1) }}" class="p-1 border rounded {% if page <= 1 %}opacity-50 pointer-events-none{% endif %}"><i class="ri-arrow-left-s-line"></i></a>
+                            {% for p in range(1, total_pages + 1) %}
+@@ -131,14 +155,15 @@
+
+                <div id="lockPlaceholder" class="p-20 flex flex-col items-center justify-center text-slate-300">
+                    <i class="ri-shield-keyhole-line text-6xl mb-4"></i>
+                    <p class="text-xs font-black uppercase tracking-[0.2em]">Acceso Restringido</p>
+                    <p class="text-xs font-black uppercase tracking-[0.2em]">Acceso Restringido a Gestión</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle de sección de gestión
+function toggleManage() {
+    const section = document.getElementById('manageSection');
+    const placeholder = document.getElementById('lockPlaceholder');
+}
+
+// Filtros de búsqueda
+function applyFilters() {
+    const nameVal = document.getElementById('filterName').value.toLowerCase();
+    const dateVal = document.getElementById('filterDate').value.replace(/-/g, "");
+}
+
+// Selección masiva de tablas
+function toggleAll(btn) {
+    const checks = document.querySelectorAll('.table-check');
+    const allChecked = Array.from(checks).every(c => c.checked);
+    checks.forEach(c => c.checked = !allChecked);
+    btn.innerText = allChecked ? "Todas" : "Ninguna";
+}
+
+// Pantalla de carga al generar respaldo
+document.getElementById('backupForm').onsubmit = function(e) {
+    const overlay = document.getElementById('loadingOverlay');
+    const bar = document.getElementById('overlayBar');
+    const text = document.getElementById('overlayText');
+
+    if (!overlay.classList.contains('hidden')) return true;
+
+    e.preventDefault();
+    overlay.classList.remove('hidden');
+
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if(progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            setTimeout(() => { document.getElementById('backupForm').submit(); }, 400);
+        }
+        bar.style.width = progress + '%';
+        text.innerText = "PROCESANDO: " + Math.round(progress) + "%";
+    }, 250);
+};
+</script>

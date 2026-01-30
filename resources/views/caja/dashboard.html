@@ -1,0 +1,475 @@
+{% extends "layout_base.html" %}
+
+{% block title %}Panel de Caja{% endblock %}
+{% block page_title %}Dashboard de Caja{% endblock %}
+{% block page_subtitle %}Gestión de pagos y cierre de cuentas{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_caja') }}" class="nav-link active">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.caja_cuentas_abiertas') }}" class="nav-link">
+    <i class="bi bi-receipt"></i>
+    <span>Cuentas Abiertas</span>
+</a>
+
+<a href="{{ url_for('routes.caja_cerrar_cuenta') }}" class="nav-link">
+    <i class="bi bi-cash-coin"></i>
+    <span>Cerrar Cuenta</span>
+</a>
+
+<a href="{{ url_for('routes.caja_corte_dia') }}" class="nav-link">
+    <i class="bi bi-calculator"></i>
+    <span>Corte del Día</span>
+</a>
+
+<a href="{{ url_for('routes.caja_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history"></i>
+    <span>Historial</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Info de Caja -->
+<div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-xl shadow-lg text-white mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold mb-2">Bienvenido, {{ session.get('usuario_nombre') }}</h2>
+            <p class="opacity-90">Turno: Matutino | Caja #1</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm opacity-90">Apertura</p>
+            <p class="text-2xl font-bold">08:00 AM</p>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Total del Día -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-cash-stack text-3xl text-green-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="total-dia">$0.00</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Total del Día</p>
+        <p class="text-xs text-green-600 mt-1">↑ Ventas actuales</p>
+    </div>
+
+    <!-- Cuentas Abiertas -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-receipt text-3xl text-orange-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="cuentas-abiertas">0</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Cuentas Abiertas</p>
+        <p class="text-xs text-gray-500 mt-1">Pendientes de pago</p>
+    </div>
+
+    <!-- Efectivo en Caja -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-wallet2 text-3xl text-blue-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="efectivo-caja">$0.00</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Efectivo en Caja</p>
+        <p class="text-xs text-gray-500 mt-1">Pagos en efectivo</p>
+    </div>
+
+    <!-- Tarjeta -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-credit-card text-3xl text-purple-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="tarjeta-total">$0.00</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Pagos con Tarjeta</p>
+        <p class="text-xs text-gray-500 mt-1">Electrónicos</p>
+    </div>
+</div>
+
+<!-- Cuentas Pendientes de Pago -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Lista de Cuentas -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="bi bi-receipt-cutoff text-orange-600"></i>
+                Cuentas Abiertas
+            </h3>
+            <button onclick="actualizarCuentas()" class="btn btn-sm btn-primary">
+                <i class="bi bi-arrow-clockwise"></i>
+                Actualizar
+            </button>
+        </div>
+        
+        <div class="space-y-3 max-h-96 overflow-y-auto" id="cuentas-container">
+            <!-- Las cuentas se cargan dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Resumen de Métodos de Pago -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <i class="bi bi-pie-chart-fill text-purple-600"></i>
+            Métodos de Pago Hoy
+        </h3>
+        
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="bi bi-cash text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">Efectivo</p>
+                        <p class="text-sm text-gray-600"><span id="count-efectivo">0</span> transacciones</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-green-600" id="total-efectivo">$0.00</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                        <i class="bi bi-credit-card text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">Tarjeta</p>
+                        <p class="text-sm text-gray-600"><span id="count-tarjeta">0</span> transacciones</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-purple-600" id="total-tarjeta-detalle">$0.00</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                        <i class="bi bi-qr-code text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">Transferencia</p>
+                        <p class="text-sm text-gray-600"><span id="count-transferencia">0</span> transacciones</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-blue-600" id="total-transferencia">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-gray-700">Total General:</span>
+                <span class="text-3xl font-bold text-green-600" id="total-general">$0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="bg-white rounded-xl shadow-md p-6">
+    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-lightning-charge text-yellow-600"></i>
+        Acciones Rápidas
+    </h3>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button onclick="abrirModalCerrarCuenta()" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition">
+            <i class="bi bi-cash-coin text-4xl text-gray-400 mb-3 block"></i>
+            <p class="font-medium text-gray-700">Cerrar Cuenta</p>
+        </button>
+        
+        <button onclick="verCorteDia()" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition">
+            <i class="bi bi-calculator text-4xl text-gray-400 mb-3 block"></i>
+            <p class="font-medium text-gray-700">Corte del Día</p>
+        </button>
+        
+        <button onclick="imprimirReporte()" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition">
+            <i class="bi bi-printer text-4xl text-gray-400 mb-3 block"></i>
+            <p class="font-medium text-gray-700">Imprimir Reporte</p>
+        </button>
+        
+        <button onclick="verHistorial()" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition">
+            <i class="bi bi-clock-history text-4xl text-gray-400 mb-3 block"></i>
+            <p class="font-medium text-gray-700">Ver Historial</p>
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cuentasAbiertas = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarDatosCaja();
+    
+    // Actualizar cada 30 segundos
+    setInterval(cargarDatosCaja, 30000);
+});
+
+function cargarDatosCaja() {
+    // Simular datos (conectar con API)
+    cuentasAbiertas = [
+        {
+            id: 1001,
+            mesa: 5,
+            comensales: 4,
+            mesero: 'Juan Pérez',
+            subtotal: 450.00,
+            propina: 45.00,
+            total: 495.00,
+            hora_apertura: '14:30',
+            items: [
+                { cantidad: 3, platillo: 'Tacos al Pastor', precio: 45 },
+                { cantidad: 2, platillo: 'Quesadilla', precio: 35 },
+                { cantidad: 4, platillo: 'Agua de Horchata', precio: 20 }
+            ]
+        },
+        {
+            id: 1002,
+            mesa: 8,
+            comensales: 2,
+            mesero: 'María López',
+            subtotal: 220.00,
+            propina: 22.00,
+            total: 242.00,
+            hora_apertura: '15:00',
+            items: [
+                { cantidad: 2, platillo: 'Enchiladas Suizas', precio: 55 },
+                { cantidad: 2, platillo: 'Refresco', precio: 25 }
+            ]
+        }
+    ];
+    
+    renderizarCuentas();
+    actualizarEstadisticas();
+}
+
+function renderizarCuentas() {
+    const container = document.getElementById('cuentas-container');
+    document.getElementById('cuentas-abiertas').textContent = cuentasAbiertas.length;
+    
+    if (cuentasAbiertas.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <i class="bi bi-check-circle text-5xl mb-3 block opacity-30"></i>
+                <p>No hay cuentas abiertas</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = cuentasAbiertas.map(cuenta => `
+        <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer" onclick="verDetalleCuenta(${cuenta.id})">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-lg font-bold text-orange-600">${cuenta.mesa}</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800">Mesa ${cuenta.mesa}</p>
+                        <p class="text-sm text-gray-600">${cuenta.comensales} comensales | ${cuenta.mesero}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-500">${cuenta.hora_apertura}</p>
+                    <p class="text-2xl font-bold text-green-600">$${cuenta.total.toFixed(2)}</p>
+                </div>
+            </div>
+            
+            <button onclick="event.stopPropagation(); cerrarCuenta(${cuenta.id})" 
+                    class="btn btn-success btn-sm w-full">
+                <i class="bi bi-cash-coin"></i>
+                Cobrar
+            </button>
+        </div>
+    `).join('');
+}
+
+function actualizarEstadisticas() {
+    // Datos de ejemplo
+    const stats = {
+        totalDia: 2500.00,
+        efectivo: 1200.00,
+        tarjeta: 900.00,
+        transferencia: 400.00,
+        countEfectivo: 15,
+        countTarjeta: 8,
+        countTransferencia: 3
+    };
+    
+    document.getElementById('total-dia').textContent = '$' + stats.totalDia.toFixed(2);
+    document.getElementById('efectivo-caja').textContent = '$' + stats.efectivo.toFixed(2);
+    document.getElementById('tarjeta-total').textContent = '$' + stats.tarjeta.toFixed(2);
+    
+    document.getElementById('total-efectivo').textContent = '$' + stats.efectivo.toFixed(2);
+    document.getElementById('total-tarjeta-detalle').textContent = '$' + stats.tarjeta.toFixed(2);
+    document.getElementById('total-transferencia').textContent = '$' + stats.transferencia.toFixed(2);
+    document.getElementById('total-general').textContent = '$' + stats.totalDia.toFixed(2);
+    
+    document.getElementById('count-efectivo').textContent = stats.countEfectivo;
+    document.getElementById('count-tarjeta').textContent = stats.countTarjeta;
+    document.getElementById('count-transferencia').textContent = stats.countTransferencia;
+}
+
+async function cerrarCuenta(cuentaId) {
+    const cuenta = cuentasAbiertas.find(c => c.id === cuentaId);
+    if (!cuenta) return;
+    
+    const { value: formValues } = await Swal.fire({
+        title: `Cerrar Cuenta - Mesa ${cuenta.mesa}`,
+        html: `
+            <div class="text-left space-y-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between mb-2">
+                        <span>Subtotal:</span>
+                        <span class="font-bold">$${cuenta.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Propina (10%):</span>
+                        <span class="font-bold">$${cuenta.propina.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold border-t pt-2">
+                        <span>Total:</span>
+                        <span class="text-green-600">$${cuenta.total.toFixed(2)}</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Método de Pago</label>
+                    <select id="metodo-pago" class="swal2-input w-full">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
+                
+                <div id="efectivo-section">
+                    <label class="block text-sm font-medium mb-2">Monto Recibido</label>
+                    <input type="number" id="monto-recibido" class="swal2-input" value="${cuenta.total}" step="0.01">
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar Pago',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            const metodo = document.getElementById('metodo-pago').value;
+            const montoRecibido = parseFloat(document.getElementById('monto-recibido').value);
+            
+            if (metodo === 'efectivo' && montoRecibido < cuenta.total) {
+                Swal.showValidationMessage('El monto recibido es insuficiente');
+                return false;
+            }
+            
+            return { metodo, montoRecibido };
+        }
+    });
+    
+    if (formValues) {
+        const cambio = formValues.montoRecibido - cuenta.total;
+        
+        showLoading('Procesando pago...');
+        
+        setTimeout(() => {
+            hideLoading();
+            
+            if (cambio > 0) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Pago Exitoso!',
+                    html: `
+                        <p class="text-lg mb-2">Cambio: <strong class="text-2xl text-green-600">$${cambio.toFixed(2)}</strong></p>
+                        <p class="text-sm text-gray-600">Mesa ${cuenta.mesa} cerrada</p>
+                    `
+                });
+            } else {
+                showSuccess(`¡Cuenta cerrada! Mesa ${cuenta.mesa}`);
+            }
+            
+            // Remover cuenta de la lista
+            cuentasAbiertas = cuentasAbiertas.filter(c => c.id !== cuentaId);
+            renderizarCuentas();
+            actualizarEstadisticas();
+        }, 1500);
+    }
+}
+
+function verDetalleCuenta(cuentaId) {
+    const cuenta = cuentasAbiertas.find(c => c.id === cuentaId);
+    if (!cuenta) return;
+    
+    Swal.fire({
+        title: `Cuenta Mesa ${cuenta.mesa}`,
+        html: `
+            <div class="text-left">
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">Mesero: ${cuenta.mesero}</p>
+                    <p class="text-sm text-gray-600">Comensales: ${cuenta.comensales}</p>
+                    <p class="text-sm text-gray-600">Apertura: ${cuenta.hora_apertura}</p>
+                </div>
+                
+                <div class="border-t pt-4 space-y-2">
+                    ${cuenta.items.map(item => `
+                        <div class="flex justify-between text-sm">
+                            <span>${item.cantidad}x ${item.platillo}</span>
+                            <span>$${(item.cantidad * item.precio).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="border-t mt-4 pt-4">
+                    <div class="flex justify-between mb-2">
+                        <span>Subtotal:</span>
+                        <span class="font-bold">$${cuenta.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Propina (10%):</span>
+                        <span class="font-bold">$${cuenta.propina.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold">
+                        <span>Total:</span>
+                        <span class="text-green-600">$${cuenta.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `,
+        confirmButtonText: 'Cerrar'
+    });
+}
+
+function abrirModalCerrarCuenta() {
+    window.location.href = "{{ url_for('routes.caja_cerrar_cuenta') }}";
+}
+
+function verCorteDia() {
+    window.location.href = "{{ url_for('routes.caja_corte_dia') }}";
+}
+
+function imprimirReporte() {
+    showToast('Generando reporte...', 'info');
+}
+
+function verHistorial() {
+    window.location.href = "{{ url_for('routes.caja_historial') }}";
+}
+
+function actualizarCuentas() {
+    showLoading('Actualizando...');
+    setTimeout(() => {
+        cargarDatosCaja();
+        hideLoading();
+        showToast('Datos actualizados', 'success');
+    }, 1000);
+}
+</script>
+{% endblock %}

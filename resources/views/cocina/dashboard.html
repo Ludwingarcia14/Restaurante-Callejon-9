@@ -1,0 +1,500 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Panel de Cocina{% endblock %}
+{% block page_title %}Dashboard de Cocina{% endblock %}
+{% block page_subtitle %}Gestión de pedidos y preparación{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link active">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_pedidos') }}" class="nav-link">
+    <i class="bi bi-list-task"></i>
+    <span>Pedidos Pendientes</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_en_proceso') }}" class="nav-link">
+    <i class="bi bi-hourglass-split"></i>
+    <span>En Preparación</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_listos') }}" class="nav-link">
+    <i class="bi bi-check-circle"></i>
+    <span>Listos</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
+    <i class="bi bi-box-seam"></i>
+    <span>Inventario</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===================================
+     HEADER CON INFO DE COCINA
+     =================================== -->
+<div class="bg-gradient-to-r from-orange-500 to-red-600 p-6 rounded-xl shadow-lg text-white mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold mb-2">¡Bienvenido, {{ session.usuario_nombre }}! 🔥</h2>
+            <div class="flex items-center gap-4 text-sm opacity-90">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-egg-fried"></i>
+                    <span>Área: {{ perfil.area|title if perfil.area else 'General' }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-clock"></i>
+                    <span>Turno: {{ perfil.turno|title if perfil.turno else 'N/A' }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-person-badge"></i>
+                    <span>{{ perfil.puesto|title if perfil.puesto else 'Cocinero' }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="text-right">
+            <div class="text-4xl font-bold" id="pedidos-pendientes-count">0</div>
+            <div class="text-sm opacity-90">Pedidos Pendientes</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================================
+     ESTADÍSTICAS DE COCINA
+     =================================== -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    
+    <!-- Pedidos Nuevos -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500 hover:shadow-lg transition">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-bell-fill text-4xl text-red-500 animate-pulse"></i>
+            <span class="text-3xl font-bold text-gray-800" id="stat-nuevos">0</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Pedidos Nuevos</p>
+        <p class="text-xs text-red-600 mt-1">
+            <i class="bi bi-exclamation-circle"></i> Requieren atención
+        </p>
+    </div>
+
+    <!-- En Preparación -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500 hover:shadow-lg transition">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-fire text-4xl text-orange-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="stat-preparacion">0</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">En Preparación</p>
+        <p class="text-xs text-orange-600 mt-1">
+            <i class="bi bi-clock"></i> En proceso
+        </p>
+    </div>
+
+    <!-- Listos -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-check-circle-fill text-4xl text-green-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="stat-listos">0</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Listos</p>
+        <p class="text-xs text-green-600 mt-1">
+            <i class="bi bi-bell"></i> Para servir
+        </p>
+    </div>
+
+    <!-- Completados Hoy -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-lg transition">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-graph-up text-4xl text-purple-500"></i>
+            <span class="text-3xl font-bold text-gray-800" id="stat-completados">0</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Completados Hoy</p>
+        <p class="text-xs text-purple-600 mt-1">
+            <i class="bi bi-trophy"></i> Tiempo promedio: 15 min
+        </p>
+    </div>
+    
+</div>
+
+<!-- ===================================
+     ESPECIALIDADES Y ÁREA
+     =================================== -->
+{% if perfil.especialidad %}
+<div class="card mb-6">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="bi bi-star-fill text-yellow-500"></i>
+            Mis Especialidades
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="flex flex-wrap gap-2">
+            {% for esp in perfil.especialidad %}
+            <span class="px-4 py-2 bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 rounded-full font-semibold text-sm shadow-sm">
+                <i class="bi bi-award"></i> {{ esp|title }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ===================================
+     TABLERO DE PEDIDOS (KANBAN)
+     =================================== -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    
+    <!-- COLUMNA: PENDIENTES -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-bell-fill text-xl"></i>
+                <h3 class="font-bold">Pendientes</h3>
+            </div>
+            <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-bold" id="count-pendientes">0</span>
+        </div>
+        <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto" id="columna-pendientes">
+            <!-- Los pedidos se cargan aquí dinámicamente -->
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-inbox text-5xl mb-3 block"></i>
+                <p class="text-sm">Sin pedidos pendientes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA: EN PREPARACIÓN -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-fire text-xl"></i>
+                <h3 class="font-bold">En Preparación</h3>
+            </div>
+            <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-bold" id="count-preparacion">0</span>
+        </div>
+        <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto" id="columna-preparacion">
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-hourglass-split text-5xl mb-3 block"></i>
+                <p class="text-sm">Sin pedidos en preparación</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA: LISTOS -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-check-circle-fill text-xl"></i>
+                <h3 class="font-bold">Listos</h3>
+            </div>
+            <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-bold" id="count-listos">0</span>
+        </div>
+        <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto" id="columna-listos">
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-check-circle text-5xl mb-3 block"></i>
+                <p class="text-sm">Sin pedidos listos</p>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- ===================================
+     ACCIONES RÁPIDAS
+     =================================== -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    
+    <button onclick="marcarNoDisponible()" class="p-4 bg-white border-2 border-yellow-200 text-yellow-700 rounded-xl hover:bg-yellow-50 hover:border-yellow-400 transition flex items-center justify-between group">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i class="bi bi-slash-circle text-2xl"></i>
+            </div>
+            <span class="font-semibold">Marcar Platillo No Disponible</span>
+        </div>
+        <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
+    </button>
+
+    <button onclick="verInventario()" class="p-4 bg-white border-2 border-blue-200 text-blue-700 rounded-xl hover:bg-blue-50 hover:border-blue-400 transition flex items-center justify-between group">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="bi bi-box-seam text-2xl"></i>
+            </div>
+            <span class="font-semibold">Consultar Inventario</span>
+        </div>
+        <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
+    </button>
+
+    <button onclick="actualizarPedidos()" class="p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition flex items-center justify-between group">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="bi bi-arrow-clockwise text-2xl"></i>
+            </div>
+            <span class="font-semibold">Actualizar Pedidos</span>
+        </div>
+        <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
+    </button>
+    
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ===================================
+// VARIABLES GLOBALES
+// ===================================
+let pedidosData = {
+    pendientes: [],
+    preparacion: [],
+    listos: []
+};
+
+// ===================================
+// INICIALIZACIÓN
+// ===================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard Cocina inicializado');
+    cargarPedidos();
+    
+    // Actualizar cada 15 segundos
+    setInterval(() => {
+        cargarPedidos();
+    }, 15000);
+    
+    // Simular algunos pedidos para demostración
+    setTimeout(() => {
+        agregarPedidoDemo();
+    }, 2000);
+});
+
+// ===================================
+// CARGA Y GESTIÓN DE PEDIDOS
+// ===================================
+async function cargarPedidos() {
+    // Aquí conectarías con tu API
+    console.log('Cargando pedidos...');
+    actualizarContadores();
+}
+
+function actualizarContadores() {
+    document.getElementById('stat-nuevos').textContent = pedidosData.pendientes.length;
+    document.getElementById('stat-preparacion').textContent = pedidosData.preparacion.length;
+    document.getElementById('stat-listos').textContent = pedidosData.listos.length;
+    
+    document.getElementById('count-pendientes').textContent = pedidosData.pendientes.length;
+    document.getElementById('count-preparacion').textContent = pedidosData.preparacion.length;
+    document.getElementById('count-listos').textContent = pedidosData.listos.length;
+    
+    document.getElementById('pedidos-pendientes-count').textContent = pedidosData.pendientes.length;
+}
+
+function renderizarPedidos() {
+    // Renderizar pendientes
+    const colPendientes = document.getElementById('columna-pendientes');
+    if (pedidosData.pendientes.length === 0) {
+        colPendientes.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-inbox text-5xl mb-3 block"></i>
+                <p class="text-sm">Sin pedidos pendientes</p>
+            </div>
+        `;
+    } else {
+        colPendientes.innerHTML = pedidosData.pendientes.map(pedido => crearTarjetaPedido(pedido, 'pendiente')).join('');
+    }
+    
+    // Renderizar en preparación
+    const colPreparacion = document.getElementById('columna-preparacion');
+    if (pedidosData.preparacion.length === 0) {
+        colPreparacion.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-hourglass-split text-5xl mb-3 block"></i>
+                <p class="text-sm">Sin pedidos en preparación</p>
+            </div>
+        `;
+    } else {
+        colPreparacion.innerHTML = pedidosData.preparacion.map(pedido => crearTarjetaPedido(pedido, 'preparacion')).join('');
+    }
+    
+    // Renderizar listos
+    const colListos = document.getElementById('columna-listos');
+    if (pedidosData.listos.length === 0) {
+        colListos.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-check-circle text-5xl mb-3 block"></i>
+                <p class="text-sm">Sin pedidos listos</p>
+            </div>
+        `;
+    } else {
+        colListos.innerHTML = pedidosData.listos.map(pedido => crearTarjetaPedido(pedido, 'listo')).join('');
+    }
+    
+    actualizarContadores();
+}
+
+function crearTarjetaPedido(pedido, estado) {
+    const colorClass = estado === 'pendiente' ? 'border-red-500' : 
+                      estado === 'preparacion' ? 'border-orange-500' : 'border-green-500';
+    
+    const iconoEstado = estado === 'pendiente' ? 'bi-bell-fill' : 
+                       estado === 'preparacion' ? 'bi-fire' : 'bi-check-circle-fill';
+    
+    const tiempoTranscurrido = calcularTiempoTranscurrido(pedido.hora);
+    
+    return `
+        <div class="border-l-4 ${colorClass} bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="bi ${iconoEstado} text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800">Mesa ${pedido.mesa}</p>
+                        <p class="text-xs text-gray-500">${pedido.hora}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">
+                    ${tiempoTranscurrido}
+                </span>
+            </div>
+            
+            <div class="space-y-2 mb-3">
+                ${pedido.platillos.map(p => `
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-700">
+                            <span class="font-bold text-orange-600">${p.cantidad}x</span>
+                            ${p.nombre}
+                        </span>
+                    </div>
+                    ${p.notas ? `<p class="text-xs text-gray-500 italic ml-4">📝 ${p.notas}</p>` : ''}
+                `).join('')}
+            </div>
+            
+            ${estado === 'pendiente' ? `
+                <button onclick="iniciarPreparacion(${pedido.id})" class="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-sm">
+                    <i class="bi bi-play-fill"></i> Iniciar Preparación
+                </button>
+            ` : ''}
+            
+            ${estado === 'preparacion' ? `
+                <button onclick="marcarListo(${pedido.id})" class="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold text-sm">
+                    <i class="bi bi-check-circle"></i> Marcar Listo
+                </button>
+            ` : ''}
+            
+            ${estado === 'listo' ? `
+                <button onclick="entregarPedido(${pedido.id})" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold text-sm">
+                    <i class="bi bi-send"></i> Entregado
+                </button>
+            ` : ''}
+        </div>
+    `;
+}
+
+// ===================================
+// CAMBIO DE ESTADO DE PEDIDOS
+// ===================================
+function iniciarPreparacion(pedidoId) {
+    const pedido = pedidosData.pendientes.find(p => p.id === pedidoId);
+    if (pedido) {
+        pedidosData.pendientes = pedidosData.pendientes.filter(p => p.id !== pedidoId);
+        pedidosData.preparacion.push(pedido);
+        renderizarPedidos();
+        showToast('Pedido en preparación', 'success');
+    }
+}
+
+function marcarListo(pedidoId) {
+    const pedido = pedidosData.preparacion.find(p => p.id === pedidoId);
+    if (pedido) {
+        pedidosData.preparacion = pedidosData.preparacion.filter(p => p.id !== pedidoId);
+        pedidosData.listos.push(pedido);
+        renderizarPedidos();
+        showToast('¡Pedido listo!', 'success');
+        
+        // Notificar al mesero (aquí conectarías con tu sistema de notificaciones)
+        console.log(`Notificar mesero: Pedido ${pedidoId} listo - Mesa ${pedido.mesa}`);
+    }
+}
+
+function entregarPedido(pedidoId) {
+    const pedido = pedidosData.listos.find(p => p.id === pedidoId);
+    if (pedido) {
+        pedidosData.listos = pedidosData.listos.filter(p => p.id !== pedidoId);
+        renderizarPedidos();
+        showToast('Pedido entregado', 'success');
+        
+        // Incrementar contador de completados
+        const completados = parseInt(document.getElementById('stat-completados').textContent);
+        document.getElementById('stat-completados').textContent = completados + 1;
+    }
+}
+
+// ===================================
+// ACCIONES RÁPIDAS
+// ===================================
+async function marcarNoDisponible() {
+    const { value: platillo } = await Swal.fire({
+        title: 'Marcar como no disponible',
+        input: 'text',
+        inputLabel: '¿Qué platillo no está disponible?',
+        inputPlaceholder: 'Nombre del platillo',
+        showCancelButton: true,
+        confirmButtonText: 'Marcar',
+        cancelButtonText: 'Cancelar'
+    });
+    
+    if (platillo) {
+        showSuccess(`"${platillo}" marcado como no disponible`);
+    }
+}
+
+function verInventario() {
+    window.location.href = "{{ url_for('routes.cocina_inventario') }}";
+}
+
+function actualizarPedidos() {
+    showLoading('Actualizando pedidos...');
+    setTimeout(() => {
+        hideLoading();
+        cargarPedidos();
+        showToast('Pedidos actualizados', 'success');
+    }, 1000);
+}
+
+// ===================================
+// UTILIDADES
+// ===================================
+function calcularTiempoTranscurrido(hora) {
+    // Simulación simple
+    const ahora = new Date();
+    const horaFormato = new Date(`2026-01-29 ${hora}`);
+    const diff = Math.floor((ahora - horaFormato) / 60000); // minutos
+    
+    if (diff < 0) return 'Ahora';
+    if (diff < 5) return `${diff} min`;
+    if (diff < 15) return `${diff} min ⚠️`;
+    return `${diff} min 🔴`;
+}
+
+// ===================================
+// DEMO: AGREGAR PEDIDO
+// ===================================
+function agregarPedidoDemo() {
+    const pedidoDemo = {
+        id: Date.now(),
+        mesa: Math.floor(Math.random() * 10) + 1,
+        hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        platillos: [
+            { cantidad: 2, nombre: 'Tacos al Pastor', notas: 'Sin cilantro' },
+            { cantidad: 1, nombre: 'Quesadilla de Champiñones', notas: '' }
+        ]
+    };
+    
+    pedidosData.pendientes.push(pedidoDemo);
+    renderizarPedidos();
+    
+    // Reproducir sonido de notificación (opcional)
+    showToast('¡Nuevo pedido recibido!', 'info');
+}
+</script>
+{% endblock %}
