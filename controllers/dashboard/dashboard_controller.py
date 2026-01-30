@@ -154,12 +154,12 @@ class DashboardController:
                         "message": "Rol no válido"
                     }), 400
                 
-                # Contraseña en texto plano (sin bcrypt)
+                # Contraseña en texto plano
                 nuevo_empleado = {
                     "usuario_nombre": data["nombre"],
                     "usuario_apellidos": data["apellidos"],
                     "usuario_email": data["email"].lower(),
-                    "usuario_clave": data["password"],  # ⚠️ TEXTO PLANO
+                    "usuario_clave": data["password"],
                     "usuario_rol": data["rol"],
                     "usuario_telefono": data.get("telefono", ""),
                     "usuario_foto": None,
@@ -220,15 +220,15 @@ class DashboardController:
         """Vista de reportes para administración"""
         if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
             return redirect(url_for("routes.login"))
-        return render_template("admin/reportes/index.html")
+        return render_template("support/reportes/index.html")
 
-    @staticmethod
-    def toggle_theme():
-        """Cambia el tema visual (light/dark)"""
-        try:
-            current_theme = session.get('theme', 'light')
-            session['theme'] = 'dark' if current_theme == 'light' else 'light'
-        except Exception as e:
-            print(f"Error al cambiar tema: {e}")
-        
-        return redirect(request.referrer or url_for('routes.login'))
+@staticmethod
+def toggle_theme():
+    """Cambia el tema visual (light/dark)"""
+    try:
+        current_theme = session.get('theme', 'light')
+        session['theme'] = 'dark' if current_theme == 'light' else 'light'
+    except Exception as e:
+        print(f"Error al cambiar tema: {e}")
+    
+    return redirect(request.referrer or url_for('routes.login'))
