@@ -9,7 +9,7 @@ from routes import routes_bp
 import os
 import sys
 from flask_session import Session
-
+from datetime import datetime
 # Configuración de entorno para PySpark
 os.environ["PYSPARK_PYTHON"] = sys.executable
 os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
@@ -63,7 +63,9 @@ app.config["SESSION_COOKIE_NAME"] = "callejon9_session"
 
 # Inicializar extensión de sesiones
 Session(app)
-
+@app.context_processor
+def inject_now():
+    return {"now": datetime.now}
 # Manejador de errores 404
 @app.errorhandler(404)
 def page_not_found(e):

@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, session, redirect, url_for
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
+from controllers.inventario.inventarioController import InventarioController
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -199,7 +200,93 @@ def cocina_inventario():
     # Placeholder: implementar vista de inventario
     return render_template("cocina/dashboard.html")
 
+"""
+Rutas del Módulo de Inventario
+Agregar estas rutas al archivo routes.py principal
+"""
 
+# ============================================
+# 📦 PANEL DE INVENTARIO (Rol 4)
+# ============================================
+
+
+# Dashboard
+@routes_bp.route("/inventario/dashboard")
+@login_required
+@rol_required(['1', '4'])  # Admin e Inventario
+def dashboard_inventario():
+    return InventarioController.dashboard()
+
+# --- Gestión de Insumos ---
+@routes_bp.route("/inventario/insumos")
+@login_required
+@rol_required(['1', '4'])
+def inventario_insumos():
+    return InventarioController.lista_insumos()
+
+@routes_bp.route("/inventario/insumos/crear", methods=["GET", "POST"])
+@login_required
+@rol_required(['1', '4'])
+def inventario_crear_insumo():
+    return InventarioController.crear_insumo()
+
+# --- Movimientos ---
+@routes_bp.route("/inventario/movimientos/entrada", methods=["GET", "POST"])
+@login_required
+@rol_required(['1', '4'])
+def inventario_registrar_entrada():
+    return InventarioController.registrar_entrada()
+
+@routes_bp.route("/inventario/movimientos/salida", methods=["GET", "POST"])
+@login_required
+@rol_required(['1', '4'])
+def inventario_registrar_salida():
+    return InventarioController.registrar_salida()
+
+@routes_bp.route("/inventario/movimientos/merma", methods=["GET", "POST"])
+@login_required
+@rol_required(['1', '4'])
+def inventario_registrar_merma():
+    return InventarioController.registrar_merma()
+
+@routes_bp.route("/inventario/movimientos/historial")
+@login_required
+@rol_required(['1', '4'])
+def inventario_historial():
+    return InventarioController.historial_movimientos()
+
+# --- Alertas ---
+@routes_bp.route("/inventario/alertas")
+@login_required
+@rol_required(['1', '4'])
+def inventario_alertas():
+    return InventarioController.alertas_stock()
+
+@routes_bp.route("/api/inventario/alertas/resolver", methods=["POST"])
+@login_required
+@rol_required(['1', '4'])
+def inventario_resolver_alerta():
+    return InventarioController.resolver_alerta()
+
+# --- Proveedores ---
+@routes_bp.route("/inventario/proveedores")
+@login_required
+@rol_required(['1', '4'])
+def inventario_proveedores():
+    return InventarioController.lista_proveedores()
+
+@routes_bp.route("/inventario/proveedores/crear", methods=["GET", "POST"])
+@login_required
+@rol_required(['1', '4'])
+def inventario_crear_proveedor():
+    return InventarioController.crear_proveedor()
+
+# --- Reportes ---
+@routes_bp.route("/inventario/reportes")
+@login_required
+@rol_required(['1', '4'])
+def inventario_reportes():
+    return InventarioController.reportes()
 # ============================================
 #  UTILIDADES
 # ============================================

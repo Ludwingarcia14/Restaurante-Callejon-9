@@ -180,8 +180,23 @@ class RolPermisos:
             "puede_ver_reportes": False,
             "puede_modificar_menu": False,
             "ver_comandas_activas": True
+        },
+    
+        "4": {  # Inventario/Almacén
+            "nombre": "Encargado de Inventario",
+            "modulos": ["dashboard", "inventario", "proveedores", "reportes_inventario"],
+            "puede_crear": True,
+            "puede_editar": True,
+            "puede_eliminar": False,
+            "puede_ver_reportes": True,
+            "registra_entradas": True,
+            "registra_salidas": True,
+            "registra_ajustes": True,
+            "gestiona_proveedores": True,
+            "ver_costos": True,
+            "recibe_alertas_stock": True
         }
-    }
+}
     
     @classmethod
     def get_permisos(cls, rol):

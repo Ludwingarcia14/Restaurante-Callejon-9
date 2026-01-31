@@ -4,6 +4,7 @@ Versión simplificada sin bcrypt para desarrollo local
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
 from flask import request, session, redirect, url_for, render_template, jsonify
+from controllers.inventario.inventarioController import InventarioController
 from models.empleado_model import Usuario, RolPermisos
 from config.db import db
 from bson.objectid import ObjectId
@@ -54,6 +55,7 @@ class DashboardController:
             "total_admin": db.usuarios.count_documents({"usuario_rol": "1"}),
             "total_meseros": db.usuarios.count_documents({"usuario_rol": "2"}),
             "total_cocina": db.usuarios.count_documents({"usuario_rol": "3"}),
+            "total_inventario": db.usuarios.count_documents({"usuario_rol": "4"})
         }
         
         return render_template("admin/dashboard.html", 
@@ -106,7 +108,13 @@ class DashboardController:
                              perfil=perfil_cocina,
                              comandas=comandas_pendientes,
                              stats=stats)
-
+    @staticmethod
+    def inventario():
+        """Dashboard principal de Inventario (Rol 4)"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) != "4":
+            return redirect(url_for("routes.login"))
+    
+        return InventarioController.dashboard()
     # ==========================================
     # GESTIÓN DE EMPLEADOS (SOLO ADMIN)
     # ==========================================

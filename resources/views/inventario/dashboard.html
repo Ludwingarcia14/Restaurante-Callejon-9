@@ -1,0 +1,224 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Panel de Inventario{% endblock %}
+{% block page_title %}Dashboard de Inventario{% endblock %}
+{% block page_subtitle %}Gestión y control de almacén{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_inventario') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
+    <i class="bi bi-house-door text-lg"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.inventario_insumos') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-box-seam text-lg"></i>
+    <span>Insumos</span>
+</a>
+
+<a href="{{ url_for('routes.inventario_proveedores') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-arrow-left-right text-lg"></i>
+    <span>Movimientos</span>
+</a>
+
+<a href="{{ url_for('routes.inventario_alertas') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-exclamation-triangle text-lg"></i>
+    <span>Alertas</span>
+    {% if stats.alertas_activas > 0 %}
+    <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+        {{ stats.alertas_activas }}
+    </span>
+    {% endif %}
+</a>
+
+<a href="{{ url_for('routes.inventario_proveedores') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-truck text-lg"></i>
+    <span>Proveedores</span>
+</a>
+
+<a href="{{ url_for('routes.inventario_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+    <i class="bi bi-graph-up text-lg"></i>
+    <span>Reportes</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Bienvenida -->
+<div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-xl shadow-lg text-white mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold mb-2">Bienvenido, {{ usuario }}</h2>
+            <p class="opacity-90">Encargado de Inventario y Almacén</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm opacity-90">Fecha</p>
+            <p class="text-2xl font-bold">{{ now().strftime('%d/%m/%Y') }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Insumos -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-box-seam text-3xl text-blue-500"></i>
+            <span class="text-2xl font-bold text-gray-800">{{ stats.total_insumos }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Total Insumos</p>
+        <p class="text-xs text-gray-500 mt-1">Registrados en sistema</p>
+    </div>
+
+    <!-- Stock Crítico -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-exclamation-triangle text-3xl text-red-500"></i>
+            <span class="text-2xl font-bold text-gray-800">{{ stats.stock_critico }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Stock Crítico</p>
+        <p class="text-xs text-gray-500 mt-1">Requieren reabastecimiento</p>
+    </div>
+
+    <!-- Valor Inventario -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-cash-stack text-3xl text-green-500"></i>
+            <span class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(stats.valor_inventario) }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Valor Total</p>
+        <p class="text-xs text-gray-500 mt-1">Inventario actual</p>
+    </div>
+
+    <!-- Movimientos Hoy -->
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+        <div class="flex items-center justify-between mb-2">
+            <i class="bi bi-arrow-left-right text-3xl text-purple-500"></i>
+            <span class="text-2xl font-bold text-gray-800">{{ stats.movimientos_hoy }}</span>
+        </div>
+        <p class="text-sm text-gray-600 font-medium">Movimientos Hoy</p>
+        <p class="text-xs text-gray-500 mt-1">Entradas y salidas</p>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-lightning-charge text-purple-600"></i>
+        Acciones Rápidas
+    </h3>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="{{ url_for('routes.inventario_registrar_entrada') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center group">
+            <i class="bi bi-box-arrow-in-down text-4xl text-gray-400 group-hover:text-green-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-green-700">Registrar Entrada</p>
+        </a>
+        
+        <a href="{{ url_for('routes.inventario_registrar_salida') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-500 hover:bg-red-50 transition text-center group">
+            <i class="bi bi-box-arrow-up text-4xl text-gray-400 group-hover:text-red-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-red-700">Registrar Salida</p>
+        </a>
+        
+        <a href="{{ url_for('routes.inventario_registrar_merma') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition text-center group">
+            <i class="bi bi-trash text-4xl text-gray-400 group-hover:text-orange-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-orange-700">Registrar Merma</p>
+        </a>
+        
+        <a href="{{ url_for('routes.inventario_crear_insumo') }}" class="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center group">
+            <i class="bi bi-plus-circle text-4xl text-gray-400 group-hover:text-blue-600 mb-3 block"></i>
+            <p class="font-medium text-gray-700 group-hover:text-blue-700">Nuevo Insumo</p>
+        </a>
+    </div>
+</div>
+
+<!-- Alertas Críticas -->
+{% if alertas %}
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-exclamation-triangle text-red-600"></i>
+            Alertas de Stock Crítico
+        </h3>
+        <a href="{{ url_for('routes.inventario_alertas') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Ver todas →
+        </a>
+    </div>
+    
+    <div class="space-y-3">
+        {% for alerta in alertas %}
+        <div class="flex items-center justify-between p-4 {% if alerta.nivel_criticidad == 'alta' %}bg-red-50 border-l-4 border-red-500{% elif alerta.nivel_criticidad == 'media' %}bg-yellow-50 border-l-4 border-yellow-500{% else %}bg-blue-50 border-l-4 border-blue-500{% endif %} rounded-lg">
+            <div class="flex-1">
+                <p class="font-bold text-gray-800">{{ alerta.insumo_nombre }}</p>
+                <p class="text-sm text-gray-600">
+                    Stock actual: <strong>{{ alerta.stock_actual }}</strong> | 
+                    Mínimo: <strong>{{ alerta.stock_minimo }}</strong> | 
+                    Faltante: <strong>{{ alerta.diferencia }}</strong>
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ url_for('routes.inventario_registrar_entrada', insumo_id=alerta.insumo_id) }}" 
+                   class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                    Reabastecer
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Movimientos Recientes -->
+<div class="bg-white rounded-xl shadow-md p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-clock-history text-blue-600"></i>
+            Movimientos Recientes
+        </h3>
+        <a href="{{ url_for('routes.inventario_historial') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Ver historial completo →
+        </a>
+    </div>
+    
+    {% if movimientos_recientes %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 border-b-2 border-gray-200">
+                <tr>
+                    <th class="py-3 px-4 font-semibold text-gray-700">Tipo</th>
+                    <th class="py-3 px-4 font-semibold text-gray-700">Insumo</th>
+                    <th class="py-3 px-4 font-semibold text-gray-700">Cantidad</th>
+                    <th class="py-3 px-4 font-semibold text-gray-700">Stock</th>
+                    <th class="py-3 px-4 font-semibold text-gray-700">Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in movimientos_recientes %}
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="py-3 px-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
+                            {% if mov.tipo == 'entrada' %}bg-green-100 text-green-800
+                            {% elif mov.tipo == 'salida' %}bg-red-100 text-red-800
+                            {% elif mov.tipo == 'merma' %}bg-orange-100 text-orange-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ mov.tipo|title }}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 font-medium">{{ mov.insumo_nombre }}</td>
+                    <td class="py-3 px-4">{{ mov.cantidad }} {{ mov.unidad_medida }}</td>
+                    <td class="py-3 px-4">
+                        <span class="text-gray-500">{{ mov.stock_anterior }}</span>
+                        <i class="bi bi-arrow-right mx-1"></i>
+                        <span class="font-bold">{{ mov.stock_nuevo }}</span>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600">{{ mov.fecha.strftime('%H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-gray-500">
+        <i class="bi bi-inbox text-6xl mb-4 block"></i>
+        <p class="text-lg">No hay movimientos registrados hoy</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

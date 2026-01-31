@@ -54,9 +54,9 @@ class AuthController:
                     "message": "Credenciales incorrectas"
                 })
             
-            # 3. Validar que el usuario sea del restaurante (roles 1, 2 o 3)
+            # 3. Validar que el usuario sea del restaurante (roles 1, 2, 3 o 4)
             rol = str(usuario_doc.get("usuario_rol", ""))
-            if rol not in ["1", "2", "3"]:
+            if rol not in ["1", "2", "3", "4"]:
                 return jsonify({
                     "status": "error",
                     "message": "No tienes permisos para acceder al sistema"
@@ -111,7 +111,8 @@ class AuthController:
             rol_endpoints = {
                 "1": "dashboard_admin",   # Administración
                 "2": "dashboard_mesero",   # Mesero
-                "3": "dashboard_cocina"    # Cocina
+                "3": "dashboard_cocina",  # Cocina
+                "4": "dashboard_inventario" # Inventario
             }
             
             endpoint = rol_endpoints.get(rol)
