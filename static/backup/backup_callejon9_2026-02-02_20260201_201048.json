@@ -1,0 +1,11 @@
+{
+  "usuarios": [],
+  "clientes": [],
+  "mesas": [],
+  "comandas": [],
+  "ventas": [],
+  "platillos": [],
+  "inventario": [],
+  "proveedores": [],
+  "actividad_reciente": []
+}

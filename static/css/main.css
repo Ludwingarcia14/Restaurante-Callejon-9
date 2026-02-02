@@ -594,3 +594,505 @@ a:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gray-500);
 }
+/**
+ * Estilos personalizados para Callejón 9
+ * Paleta de colores: F2A339, F2CA99, F2913D, DE823D, 0D0D0D
+ */
+
+:root {
+    --color-primary: #F2913D;
+    --color-secondary: #DE823D;
+    --color-accent: #F2A339;
+    --color-light: #F2CA99;
+    --color-dark: #0D0D0D;
+    --color-white: #FFFFFF;
+    --color-gray-100: #F5F5F5;
+    --color-gray-200: #E0E0E0;
+    --color-gray-300: #BDBDBD;
+}
+
+/* Sidebar */
+.sidebar {
+    background: linear-gradient(180deg, var(--color-dark) 0%, #1a1a1a 100%);
+    border-right: 2px solid var(--color-primary);
+}
+
+.sidebar-header {
+    border-bottom: 1px solid rgba(242, 145, 61, 0.2);
+}
+
+.sidebar-title {
+    color: var(--color-primary);
+}
+
+.sidebar-user {
+    background: rgba(242, 145, 61, 0.1);
+    border-bottom: 1px solid rgba(242, 145, 61, 0.2);
+}
+
+/* Nav links */
+.nav-link {
+    color: var(--color-light);
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background: rgba(242, 145, 61, 0.1);
+    color: var(--color-accent);
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: var(--color-white);
+    box-shadow: 0 4px 6px rgba(242, 145, 61, 0.3);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: var(--color-white);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    box-shadow: 0 6px 12px rgba(242, 145, 61, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: var(--color-dark);
+    color: var(--color-light);
+    border: 2px solid var(--color-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.btn-error {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+/* Cards */
+.card {
+    border: 1px solid var(--color-gray-200);
+    border-radius: 12px;
+    background: var(--color-white);
+    box-shadow: 0 2px 4px rgba(13, 13, 13, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 16px rgba(242, 145, 61, 0.2);
+    border-color: var(--color-accent);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--color-light) 0%, #FFF 100%);
+    border-bottom: 2px solid var(--color-primary);
+}
+
+/* Badges */
+.badge {
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #F2A339 0%, #F2913D 100%);
+    color: var(--color-white);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: var(--color-white);
+}
+
+.badge-error {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: var(--color-white);
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: var(--color-white);
+}
+
+/* Stats cards con bordes de colores */
+.stat-card-primary {
+    border-left: 4px solid var(--color-primary);
+}
+
+.stat-card-secondary {
+    border-left: 4px solid var(--color-secondary);
+}
+
+.stat-card-accent {
+    border-left: 4px solid var(--color-accent);
+}
+
+.stat-card-success {
+    border-left: 4px solid #48bb78;
+}
+
+/* Page header gradient */
+.page-header {
+    background: linear-gradient(90deg, var(--color-white) 0%, var(--color-gray-100) 100%);
+    border-bottom: 3px solid var(--color-primary);
+}
+
+/* Animaciones personalizadas */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loader con colores del sistema */
+.loader {
+    border: 4px solid var(--color-light);
+    border-top: 4px solid var(--color-primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tablas mejoradas */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+table thead {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: var(--color-white);
+}
+
+table tbody tr:hover {
+    background: rgba(242, 165, 57, 0.05);
+}
+
+table tbody tr:nth-child(even) {
+    background: var(--color-gray-100);
+}
+
+/* Forms */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(242, 145, 61, 0.1);
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+}
+/**
+ * Estilos personalizados para Callejón 9
+ * Paleta de colores: F2A339, F2CA99, F2913D, DE823D, 0D0D0D
+ */
+
+:root {
+    --color-primary: #F2913D;
+    --color-secondary: #DE823D;
+    --color-accent: #F2A339;
+    --color-light: #F2CA99;
+    --color-dark: #0D0D0D;
+    --color-white: #FFFFFF;
+    --color-gray-100: #F5F5F5;
+    --color-gray-200: #E0E0E0;
+    --color-gray-300: #BDBDBD;
+}
+
+/* Sidebar */
+.sidebar {
+    background: linear-gradient(180deg, var(--color-dark) 0%, #1a1a1a 100%);
+    border-right: 2px solid var(--color-primary);
+}
+
+.sidebar-header {
+    border-bottom: 1px solid rgba(242, 145, 61, 0.2);
+}
+
+.sidebar-title {
+    color: var(--color-primary);
+}
+
+.sidebar-user {
+    background: rgba(242, 145, 61, 0.1);
+    border-bottom: 1px solid rgba(242, 145, 61, 0.2);
+}
+
+/* Nav links */
+.nav-link {
+    color: var(--color-light);
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background: rgba(242, 145, 61, 0.1);
+    color: var(--color-accent);
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: var(--color-white);
+    box-shadow: 0 4px 6px rgba(242, 145, 61, 0.3);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: var(--color-white);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    box-shadow: 0 6px 12px rgba(242, 145, 61, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: var(--color-dark);
+    color: var(--color-light);
+    border: 2px solid var(--color-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.btn-error {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+/* Cards */
+.card {
+    border: 1px solid var(--color-gray-200);
+    border-radius: 12px;
+    background: var(--color-white);
+    box-shadow: 0 2px 4px rgba(13, 13, 13, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 16px rgba(242, 145, 61, 0.2);
+    border-color: var(--color-accent);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--color-light) 0%, #FFF 100%);
+    border-bottom: 2px solid var(--color-primary);
+}
+
+/* Badges */
+.badge {
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #F2A339 0%, #F2913D 100%);
+    color: var(--color-white);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: var(--color-white);
+}
+
+.badge-error {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: var(--color-white);
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: var(--color-white);
+}
+
+/* Stats cards con bordes de colores */
+.stat-card-primary {
+    border-left: 4px solid var(--color-primary);
+}
+
+.stat-card-secondary {
+    border-left: 4px solid var(--color-secondary);
+}
+
+.stat-card-accent {
+    border-left: 4px solid var(--color-accent);
+}
+
+.stat-card-success {
+    border-left: 4px solid #48bb78;
+}
+
+/* Page header gradient */
+.page-header {
+    background: linear-gradient(90deg, var(--color-white) 0%, var(--color-gray-100) 100%);
+    border-bottom: 3px solid var(--color-primary);
+}
+
+/* Animaciones personalizadas */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loader con colores del sistema */
+.loader {
+    border: 4px solid var(--color-light);
+    border-top: 4px solid var(--color-primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tablas mejoradas */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+table thead {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    color: var(--color-white);
+}
+
+table tbody tr:hover {
+    background: rgba(242, 165, 57, 0.05);
+}
+
+table tbody tr:nth-child(even) {
+    background: var(--color-gray-100);
+}
+
+/* Forms */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(242, 145, 61, 0.1);
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+}

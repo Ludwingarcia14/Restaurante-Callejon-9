@@ -7,7 +7,7 @@ from controllers.auth.AuthController import AuthController, login_required, rol_
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
 from controllers.inventario.inventarioController import InventarioController
-
+from controllers.dashboard.dashboardApiController import DashboardAPIController
 routes_bp = Blueprint("routes", __name__)
 
 # ============================================
@@ -56,6 +56,23 @@ def admin_empleados_crear():
 def admin_reportes():
     return DashboardController.reportes()
 
+@routes_bp.route("/api/dashboard/admin/stats")
+@login_required
+@rol_required(['1'])
+def api_dashboard_stats():
+    return DashboardAPIController.get_stats()
+
+@routes_bp.route("/api/dashboard/admin/actividad")
+@login_required
+@rol_required(['1'])
+def api_dashboard_actividad():
+    return DashboardAPIController.get_actividad_reciente()
+
+@routes_bp.route("/api/dashboard/admin/personal")
+@login_required
+@rol_required(['1'])
+def api_dashboard_personal():
+    return DashboardAPIController.get_personal_activo()
 
 # ============================================
 # 🍽️ PANEL DE MESERO (Rol 2)

@@ -90,6 +90,10 @@
                         <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
                             <i class="bi bi-egg-fried"></i> Cocina
                         </span>
+                    {% elif session.usuario_rol == '4' %}
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                            <i class="bi bi-box-seam"></i> Inventario
+                        </span>
                     {% endif %}
                 </div>
             </div>
@@ -99,6 +103,29 @@
                 {% block navigation %}
                 <!-- Las rutas específicas se insertan aquí desde las plantillas hijas -->
                 {% endblock %}
+                
+                <!-- 🆕 MENÚ DE ADMINISTRACIÓN (Solo para Rol 1) -->
+                {% if session.usuario_rol == '1' %}
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Administración
+                    </p>
+                    
+                    <a href="{{ url_for('routes.admin_backup_view') }}" 
+                       class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition
+                              {% if request.endpoint == 'routes.admin_backup_view' %}bg-blue-100 text-blue-700{% endif %}">
+                        <i class="bi bi-shield-lock text-lg"></i>
+                        <span>Respaldos y Seguridad</span>
+                    </a>
+                    
+                    <a href="{{ url_for('routes.admin_empleados_lista') }}" 
+                       class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition
+                              {% if request.endpoint == 'routes.admin_empleados_lista' %}bg-blue-100 text-blue-700{% endif %}">
+                        <i class="bi bi-people text-lg"></i>
+                        <span>Gestión de Empleados</span>
+                    </a>
+                </div>
+                {% endif %}
             </nav>
             
             <!-- Footer del Sidebar -->
