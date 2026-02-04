@@ -153,7 +153,7 @@ def mesero_propinas():
         return redirect(url_for("routes.login"))
 
     return render_template(
-        "mesero/propinas.html",
+        "mesero/mesero_propinas.html",
         perfil=perfil_mesero
     )
 
@@ -168,7 +168,7 @@ def mesero_historial():
         return redirect(url_for("routes.login"))
 
     return render_template(
-        "mesero/historial.html",
+        "mesero/mesero_historial.html",
         perfil=perfil_mesero
     )
 
@@ -184,9 +184,10 @@ def api_mesero_mesas_estado():
 
         mesas_asignadas = perfil_mesero.get("mesas_asignadas", [])
 
-        estado_mesas = Mesa.get_estado_mesas_mesero(
-            lista_numeros=mesas_asignadas
-        )
+        estado_mesas = Mesa.get_estado_mesas_mesero()
+        for mesa in estado_mesas:
+                mesa["estado"] = mesa.get("estado", "").lower().strip()
+        
 
         return jsonify({
             "success": True,
@@ -232,7 +233,6 @@ def api_mesero_estadisticas_dia():
             "success": True,
             "estadisticas": {
                 "venta_dia": float(rendimiento.get("ventas_promedio_dia", 0)),
-                "num_ordenes": 0,  # Cambiado de 'ordenes' a 'num_ordenes' para el JS
                 "propinas": float(propinas.get("acumulada_dia", 0))
             }
         })

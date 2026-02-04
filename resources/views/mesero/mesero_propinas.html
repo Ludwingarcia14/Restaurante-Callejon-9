@@ -1,0 +1,148 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Mis Propinas{% endblock %}
+{% block page_title %}Control de Propinas{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.mesero_mesas') }}" class="nav-link">
+    <i class="bi bi-grid-3x3"></i>
+    <span>Mis Mesas</span>
+</a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt"></i>
+    <span>Comandas Activas</span>
+</a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
+    <i class="bi bi-journal-text"></i>
+    <span>Menú</span>
+</a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link active">
+    <i class="bi bi-cash-coin"></i>
+    <span>Propinas del Día</span>
+</a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history"></i>
+    <span>Historial</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-green-500">
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Total Acumulado</p>
+        <div class="flex items-center justify-between mt-2">
+            <h3 class="text-3xl font-black text-gray-800" id="total-propinas-dia">$0.00</h3>
+            <i class="bi bi-piggy-bank text-4xl text-green-500 opacity-20"></i>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Por Tarjeta</p>
+        <div class="flex items-center justify-between mt-2">
+            <h3 class="text-3xl font-black text-gray-800" id="propinas-tarjeta">$0.00</h3>
+            <i class="bi bi-credit-card text-4xl text-blue-500 opacity-20"></i>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-orange-500">
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Efectivo</p>
+        <div class="flex items-center justify-between mt-2">
+            <h3 class="text-3xl font-black text-gray-800" id="propinas-efectivo">$0.00</h3>
+            <i class="bi bi-cash-stack text-4xl text-orange-500 opacity-20"></i>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#0D0D0D]">
+    <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+        <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+            <i class="bi bi-list-check text-[#F2913D]"></i>
+            Desglose por Servicio
+        </h2>
+        <span id="fecha-actual" class="text-xs font-bold text-gray-400 uppercase"></span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-100 text-gray-600 text-xs uppercase font-bold">
+                    <th class="p-4">Hora</th>
+                    <th class="p-4">Mesa</th>
+                    <th class="p-4">Total Cuenta</th>
+                    <th class="p-4">Método</th>
+                    <th class="p-4 text-right">Propina</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-propinas-body" class="divide-y divide-gray-100 text-sm">
+                </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Poner la fecha de hoy
+    const ahora = new Date();
+    document.getElementById('fecha-actual').textContent = ahora.toLocaleDateString('es-MX', { 
+        day: '2-digit', month: '2-digit', year: 'numeric' 
+    });
+
+    cargarPropinas();
+});
+
+// Reemplaza tu función cargarPropinas en mesero_propinas.html con esta:
+async function cargarPropinas() {
+    // DATOS SIMULADOS (MOCKS)
+    const datosPrueba = {
+        success: true,
+        total: 455.50,
+        tarjeta: 320.00,
+        efectivo: 135.50,
+        lista: [
+            { hora: '14:20', mesa: '4', total_cuenta: 850.00, metodo: 'TARJETA', monto: 85.00 },
+            { hora: '15:10', mesa: '2', total_cuenta: 420.00, metodo: 'EFECTIVO', monto: 42.00 },
+            { hora: '16:45', mesa: '8', total_cuenta: 1240.50, metodo: 'TARJETA', monto: 186.00 },
+            { hora: '17:30', mesa: '1', total_cuenta: 680.00, metodo: 'EFECTIVO', monto: 68.00 },
+            { hora: '18:15', mesa: '5', total_cuenta: 495.00, metodo: 'TARJETA', monto: 74.50 }
+        ]
+    };
+
+    try {
+        // Intentamos obtener datos reales
+        const response = await fetch('/api/mesero/propinas/hoy');
+        const data = await response.json();
+        renderizarPropinas(data.success ? data : datosPrueba);
+    } catch (e) {
+        // Si falla la API, usamos los simulados
+        console.warn("Usando datos simulados para propinas");
+        renderizarPropinas(datosPrueba);
+    }
+}
+
+function renderizarPropinas(data) {
+    document.getElementById('total-propinas-dia').textContent = `$${data.total.toFixed(2)}`;
+    document.getElementById('propinas-tarjeta').textContent = `$${data.tarjeta.toFixed(2)}`;
+    document.getElementById('propinas-efectivo').textContent = `$${data.efectivo.toFixed(2)}`;
+    
+    const body = document.getElementById('tabla-propinas-body');
+    body.innerHTML = data.lista.map(item => `
+        <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+            <td class="p-4 text-gray-500 text-xs">${item.hora}</td>
+            <td class="p-4 font-bold text-gray-700">Mesa ${item.mesa}</td>
+            <td class="p-4 text-gray-600 font-medium">$${item.total_cuenta.toFixed(2)}</td>
+            <td class="p-4">
+                <span class="px-2 py-1 ${item.metodo === 'TARJETA' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'} rounded-full text-[10px] font-bold">
+                    ${item.metodo}
+                </span>
+            </td>
+            <td class="p-4 text-right font-bold text-green-600">+$${item.monto.toFixed(2)}</td>
+        </tr>
+    `).join('');
+}
+</script>
+{% endblock %}

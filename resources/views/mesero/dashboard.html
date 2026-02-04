@@ -128,19 +128,26 @@
             </div>
             <div class="card-body p-6">
                 {% if stats.mesas_asignadas %}
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="mesas-grid">
-                    {% for mesa in stats.mesas_asignadas %}
-                    <div class="mesa-card border-2 border-gray-100 rounded-xl p-4 hover:border-[#F2A339] hover:bg-[#F2CA99] hover:bg-opacity-10 transition cursor-pointer text-center group"
-                         data-mesa="{{ mesa }}"
-                         onclick="verMesa('{{ mesa }}')">
-                        <div class="w-12 h-12 bg-gray-100 group-hover:bg-[#F2A339] group-hover:text-white rounded-full flex items-center justify-center mx-auto mb-3 transition">
-                            <i class="bi bi-table text-xl"></i>
-                        </div>
-                        <p class="font-bold text-[#0D0D0D]">Mesa {{ mesa }}</p>
-                        <p class="mesa-comensales text-[10px] uppercase tracking-tighter text-gray-400 mt-1 font-bold">- comensales</p>
-                    </div>
-                    {% endfor %}
-                </div>
+                <div id="mesas-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    {% for mesa in stats.mesas_asignadas %}
+    <div class="mesa-card border-2 border-gray-200 rounded-xl p-4 transition cursor-pointer text-center group"
+         data-mesa="{{ mesa }}"
+         onclick="verMesa('{{ mesa }}')">
+        
+        <div class="icon-container w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 transition">
+            <i class="bi bi-table text-xl"></i>
+        </div>
+        
+        <p class="font-bold text-[#0D0D0D]">Mesa {{ mesa }}</p>
+        
+        <span class="mesa-status px-2 py-1 text-[10px] rounded-full hidden"></span>
+        
+        <p class="mesa-comensales text-[10px] uppercase tracking-tighter text-gray-400 mt-1 font-bold">
+            Cargando...
+        </p>
+    </div>
+    {% endfor %}
+</div>
                 {% else %}
                 <div class="text-center py-12 text-gray-400">
                     <i class="bi bi-inbox text-5xl mb-3 opacity-20"></i>
@@ -180,13 +187,15 @@
                 </button>
 
                 <button onclick="verComandas()" 
-                        class="w-full p-4 bg-white border-2 border-gray-800 text-gray-800 rounded-lg hover:bg-gray-800 hover:text-white transition flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <i class="bi bi-receipt text-xl"></i>
-                        <span class="font-bold">MIS COMANDAS</span>
-                    </div>
-                    <span class="bg-[#F2913D] text-white px-2 py-0.5 rounded text-xs font-bold">{{ stats.comandas_activas }}</span>
-                </button>
+                    class="w-full p-4 bg-white border-2 border-gray-800 text-gray-800 rounded-lg hover:bg-gray-800 hover:text-white transition flex items-center justify-between group">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-receipt text-xl"></i>
+                    <span class="font-bold">MIS COMANDAS</span>
+                </div>
+                <span id="badge-comandas" class="bg-[#F2913D] text-white px-2 py-0.5 rounded text-xs font-bold">
+                    {{ stats.comandas_activas }}
+                </span>
+            </button>
 
             </div>
         </div>
@@ -282,15 +291,16 @@ async function cargarEstadisticasDia() {
     try {
         const response = await fetch(`${API_BASE}/estadisticas/dia`);
         const data = await response.json();
-        
+
         if (data.success && data.estadisticas) {
             const stats = data.estadisticas;
-            // Usamos || 0 para que si el dato no existe, ponga un cero y no rompa el .toFixed
-            const venta = stats.venta_dia || 0;
-            const propinas = stats.propinas || 0;
-            
+
+            const venta = stats.venta_dia ?? 0;
+            const propinas = stats.propinas_dia ?? 0;
+            const ordenes = stats.num_ordenes ?? 0;
+
             document.getElementById('venta-dia').textContent = `$${Number(venta).toFixed(2)}`;
-            document.getElementById('num-ordenes').textContent = stats.num_ordenes || 0;
+            document.getElementById('num-ordenes').textContent = ordenes;
             document.getElementById('stat-propinas').textContent = `$${Number(propinas).toFixed(2)}`;
         }
     } catch (error) {
@@ -307,9 +317,14 @@ async function actualizarComandas() {
             comandasActivas = data.comandas;
             renderizarComandas();
             
-            // Actualizar badges
-            document.getElementById('stat-comandas').textContent = data.total;
-            document.getElementById('badge-comandas').textContent = data.total;
+            // Actualizar número en el card superior (Comandas Activas: 2)
+            const statComandas = document.getElementById('stat-comandas');
+            if (statComandas) statComandas.textContent = data.total;
+            
+            // Actualizar badge en el botón lateral
+            const badgeComandas = document.getElementById('badge-comandas');
+            if (badgeComandas) badgeComandas.textContent = data.total;
+            
         } else {
             console.error('Error al cargar comandas:', data.error);
         }
@@ -330,27 +345,42 @@ function actualizarVisualizacionMesas() {
         const mesaInfo = mesasData[numeroMesa];
         
         if (mesaInfo) {
-    const statusSpan = card.querySelector('.mesa-status');
-    const comensalesP = card.querySelector('.mesa-comensales');
-    const iconContainer = card.querySelector('.w-16'); // El círculo del icono
+            const statusSpan = card.querySelector('.mesa-status');
+            const comensalesP = card.querySelector('.mesa-comensales');
+            const iconContainer = card.querySelector('.icon-container');
+            const icon = iconContainer.querySelector('i');
 
-    if (mesaInfo.estado === 'ocupada') {
-        statusSpan.className = 'mesa-status px-2 py-1 text-xs rounded-full bg-red-100 text-red-700';
-        statusSpan.textContent = 'Ocupada';
-        comensalesP.textContent = `${mesaInfo.comensales} comensales`;
-        
-        // Cambio de color al borde y al icono para que sea obvio
-        card.classList.replace('border-gray-200', 'border-red-500');
-        iconContainer.classList.replace('bg-green-100', 'bg-red-100');
-        iconContainer.querySelector('i').classList.replace('text-green-600', 'text-red-600');
-        ocupadas++;
-    } else {
-        // Estado Disponible (Resetear a verde)
-        statusSpan.className = 'mesa-status px-2 py-1 text-xs rounded-full bg-green-100 text-green-700';
-        statusSpan.textContent = 'Disponible';
-        comensalesP.textContent = 'Mesa Libre';
-        card.className = 'mesa-card border-2 border-gray-200 rounded-xl p-6 hover:border-green-500 hover:shadow-md transition cursor-pointer text-center';
-    }
+            if (mesaInfo.estado === 'ocupada') {
+                // Mesa Ocupada
+                statusSpan.className = 'mesa-status px-2 py-1 text-xs rounded-full bg-red-100 text-red-700';
+                statusSpan.textContent = 'Ocupada';
+                comensalesP.textContent = `${mesaInfo.comensales} comensales`;
+                
+                card.classList.remove('border-gray-200');
+                card.classList.add('border-red-500');
+                
+                iconContainer.classList.remove('bg-green-100');
+                iconContainer.classList.add('bg-red-100');
+                
+                icon.classList.remove('text-green-600', 'text-gray-600');
+                icon.classList.add('text-red-600');
+                
+                ocupadas++;
+            } else {
+                // Mesa Disponible
+                statusSpan.className = 'mesa-status px-2 py-1 text-xs rounded-full bg-green-100 text-green-700';
+                statusSpan.textContent = 'Disponible';
+                comensalesP.textContent = 'Mesa Libre';
+                
+                card.classList.remove('border-red-500');
+                card.classList.add('border-gray-200');
+                
+                iconContainer.classList.remove('bg-red-100');
+                iconContainer.classList.add('bg-green-100');
+                
+                icon.classList.remove('text-red-600', 'text-gray-600');
+                icon.classList.add('text-green-600');
+            }
         }
     });
     
