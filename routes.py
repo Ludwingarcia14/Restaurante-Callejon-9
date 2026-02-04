@@ -8,7 +8,14 @@ from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
 from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
+from flask import jsonify, request
+from models.mesa_model import Mesa
 routes_bp = Blueprint("routes", __name__)
+def api_auth_error(message="No autorizado", code=401):
+    return jsonify({
+        "success": False,
+        "error": message
+    }), code
 
 # ============================================
 #  AUTENTICACIÓN
@@ -73,7 +80,6 @@ def api_dashboard_actividad():
 @rol_required(['1'])
 def api_dashboard_personal():
     return DashboardAPIController.get_personal_activo()
-
 # ============================================
 # 🍽️ PANEL DE MESERO (Rol 2)
 # ============================================
@@ -82,84 +88,166 @@ def api_dashboard_personal():
 @login_required
 @rol_required(['2'])
 def dashboard_mesero():
-    """Dashboard principal del mesero"""
     return DashboardController.mesero()
-
 @routes_bp.route("/mesero/mesas")
 @login_required
 @rol_required(['2'])
 def mesero_mesas():
-    """Vista de mesas asignadas"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    perfil_mesero = session.get("perfil_mesero", {})
+
     stats = {
         "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
         "comandas_activas": 0,
         "propinas_dia": perfil_mesero.get("propinas", {}).get("acumulada_dia", 0)
     }
-    
-    return render_template("mesero/dashboard.html",
-                         perfil=perfil_mesero,
-                         stats=stats)
+
+    return render_template(
+        "mesero/dashboard.html",
+        perfil=perfil_mesero,
+        stats=stats
+    )
+
 
 @routes_bp.route("/mesero/comandas")
 @login_required
 @rol_required(['2'])
 def mesero_comandas():
-    """Vista de comandas activas"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    perfil_mesero = session.get("perfil_mesero", {})
-    stats = {
-        "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
-    }
-    
-    return render_template("mesero/comandas.html",
-                         perfil=perfil_mesero,
-                         stats=stats)
+
+    return render_template(
+        "mesero/comandas.html",
+        perfil=perfil_mesero,
+        stats={"mesas_asignadas": perfil_mesero.get("mesas_asignadas", [])}
+    )
+
 
 @routes_bp.route("/mesero/menu")
 @login_required
 @rol_required(['2'])
 def mesero_menu():
-    """Vista del menú para tomar pedidos"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    perfil_mesero = session.get("perfil_mesero", {})
-    stats = {
-        "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
-    }
-    
-    return render_template("mesero/menu.html",
-                         perfil=perfil_mesero,
-                         stats=stats)
+
+    return render_template(
+        "mesero/mesero_menu.html",
+        perfil=perfil_mesero,
+        stats={"mesas_asignadas": perfil_mesero.get("mesas_asignadas", [])}
+    )
+
 
 @routes_bp.route("/mesero/propinas")
 @login_required
 @rol_required(['2'])
 def mesero_propinas():
-    """Vista de propinas del día"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    # Placeholder: implementar lógica de propinas
-    return render_template("mesero/dashboard.html")
+
+    return render_template(
+        "mesero/propinas.html",
+        perfil=perfil_mesero
+    )
+
 
 @routes_bp.route("/mesero/historial")
 @login_required
 @rol_required(['2'])
 def mesero_historial():
-    """Vista de historial de comandas"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
-        return redirect(url_for("routes.login"))
-    
-    # Placeholder: implementar lógica de historial
-    return render_template("mesero/comandas.html")
+    perfil_mesero = session.get("perfil_mesero")
 
+    if not perfil_mesero:
+        return redirect(url_for("routes.login"))
+
+    return render_template(
+        "mesero/historial.html",
+        perfil=perfil_mesero
+    )
+
+@routes_bp.route("/api/mesero/mesas/estado", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_mesas_estado():
+    try:
+        perfil_mesero = session.get("perfil_mesero")
+
+        if not perfil_mesero:
+            return api_auth_error("Sesión inválida", 401)
+
+        mesas_asignadas = perfil_mesero.get("mesas_asignadas", [])
+
+        estado_mesas = Mesa.get_estado_mesas_mesero(
+            lista_numeros=mesas_asignadas
+        )
+
+        return jsonify({
+            "success": True,
+            "mesas": estado_mesas
+        })
+
+    except Exception as e:
+        print("❌ api_mesero_mesas_estado:", e)
+        return jsonify({
+            "success": False,
+            "error": "Error interno del servidor"
+        }), 500
+
+@routes_bp.route("/api/mesero/mesa/<numero>", methods=["GET"]) # Quitamos el int:
+@login_required
+@rol_required(['2'])
+def api_mesero_mesa_detalle(numero):
+    try:
+        # Convertimos a int para buscar en Mongo
+        num_int = int(numero) 
+        mesa = Mesa.find_by_numero(num_int)
+        
+        if not mesa:
+            return jsonify({"success": False, "error": "No encontrada"}), 404
+            
+        return jsonify({"success": True, "mesa": Mesa.to_dict(mesa)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@routes_bp.route("/api/mesero/estadisticas/dia", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_estadisticas_dia():
+    try:
+        perfil_mesero = session.get("perfil_mesero")
+        if not perfil_mesero:
+            return jsonify({"success": False, "error": "Sesión inválida"}), 401
+
+        propinas = perfil_mesero.get("propinas", {})
+        rendimiento = perfil_mesero.get("rendimiento", {})
+
+        return jsonify({
+            "success": True,
+            "estadisticas": {
+                "venta_dia": float(rendimiento.get("ventas_promedio_dia", 0)),
+                "num_ordenes": 0,  # Cambiado de 'ordenes' a 'num_ordenes' para el JS
+                "propinas": float(propinas.get("acumulada_dia", 0))
+            }
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@routes_bp.route("/api/mesero/comandas/activas", methods=["GET"]) # Agregamos /activas
+@login_required
+@rol_required(['2'])
+def api_mesero_comandas_activas(): # Cambiamos nombre para claridad
+    return jsonify({
+        "success": True,
+        "comandas": [],
+        "total": 0
+    })
 # ============================================
 # 👨‍🍳 PANEL DE COCINA (Rol 3)
 # ============================================
