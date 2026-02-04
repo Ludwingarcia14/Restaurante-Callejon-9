@@ -1,221 +1,237 @@
 """
 Controlador de Autenticación - Sistema Restaurante Callejón 9
 Versión simplificada sin 2FA y sin bcrypt para desarrollo local
-Roles: 1=Admin, 2=Mesero, 3=Cocina
+Roles:
+1 = Admin
+2 = Mesero
+3 = Cocina
+4 = Inventario
 """
-from flask import render_template, request, redirect, url_for, session, flash, jsonify
+
+from flask import (
+    render_template, request, redirect,
+    url_for, session, flash, jsonify
+)
 from models.empleado_model import Usuario, RolPermisos
+from functools import wraps
 import secrets
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
+
 class AuthController:
-    
+
+    # =====================================================
+    # LOGIN
+    # =====================================================
     @staticmethod
     def login():
-        """Endpoint de login simplificado para desarrollo local"""
-        
+        """Endpoint de login (JSON + HTML seguro para APIs)"""
+
+        # -------------------------------
+        # POST → autenticación
+        # -------------------------------
         if request.method == "POST":
-            data = request.get_json()
+
+            try:
+                data = request.get_json(force=True)
+            except Exception:
+                return jsonify({
+                    "status": "error",
+                    "message": "Formato de datos inválido"
+                }), 400
+
             email = data.get("email", "").strip().lower()
             password = data.get("password", "")
-            
-            print(f"\n🔐 Intento de login:")
-            print(f"   Email: {email}")
-            print(f"   Password: {'*' * len(password)}")
-            
-            # 1. Validaciones básicas
+
+            logging.info(f"🔐 Intento de login: {email}")
+
+            # Validaciones básicas
             if not email or not password:
                 return jsonify({
                     "status": "error",
                     "message": "Por favor completa todos los campos"
-                })
-            
-            # 2. Buscar usuario por email
+                }), 400
+
+            # Buscar usuario
             try:
                 usuario_doc = Usuario.find_by_email(email)
-                print(f"   Usuario encontrado: {usuario_doc is not None}")
-                
-                if usuario_doc:
-                    print(f"   Rol del usuario: {usuario_doc.get('usuario_rol')}")
-                    print(f"   Status: {usuario_doc.get('usuario_status')}")
-                
             except Exception as e:
-                print(f"   ❌ Error al buscar usuario: {e}")
+                logging.error(f"❌ Error BD login: {e}")
                 return jsonify({
                     "status": "error",
-                    "message": f"Error de base de datos: {str(e)}"
-                })
-            
+                    "message": "Error interno del servidor"
+                }), 500
+
             if not usuario_doc:
                 return jsonify({
                     "status": "error",
                     "message": "Credenciales incorrectas"
-                })
-            
-            # 3. Validar que el usuario sea del restaurante (roles 1, 2, 3 o 4)
+                }), 401
+
             rol = str(usuario_doc.get("usuario_rol", ""))
+
             if rol not in ["1", "2", "3", "4"]:
                 return jsonify({
                     "status": "error",
-                    "message": "No tienes permisos para acceder al sistema"
-                })
-            
-            # 4. Validar contraseña (comparación directa sin bcrypt)
-            stored_password = usuario_doc.get("usuario_clave", "")
-            
-            print(f"   Contraseña almacenada: {stored_password}")
-            print(f"   Contraseña ingresada: {password}")
-            print(f"   ¿Coinciden?: {stored_password == password}")
-            
-            if stored_password != password:
+                    "message": "Rol no autorizado"
+                }), 403
+
+            # Validar contraseña (DEV)
+            if usuario_doc.get("usuario_clave") != password:
                 return jsonify({
                     "status": "error",
                     "message": "Credenciales incorrectas"
-                })
-            
-            # 5. Login exitoso - Generar sesión
+                }), 401
+
+            # -------------------------------
+            # Crear sesión
+            # -------------------------------
             token_session = secrets.token_urlsafe(32)
             user_id = str(usuario_doc["_id"])
-            
-            # Actualizar token de sesión en BD
+
             try:
                 Usuario.update_session_token(user_id, token_session, 1)
             except Exception as e:
-                print(f"   ⚠️ Error al actualizar token: {e}")
-            
-            # 6. Poblar sesión de Flask
-            session["usuario_id"] = user_id
-            session["usuario_nombre"] = usuario_doc.get("usuario_nombre", "")
-            session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos", "")
-            session["usuario_email"] = usuario_doc.get("usuario_email", "")
-            session["usuario_rol"] = rol
-            session["usuario_foto"] = usuario_doc.get("usuario_foto", "")
-            session["token_session"] = token_session
-            session["theme"] = "light"
-            
-            # Permisos del rol
-            permisos = RolPermisos.get_permisos(rol)
-            session["permisos"] = permisos
-            
-            # Perfil específico según rol
+                logging.warning(f"⚠️ Token no actualizado: {e}")
+
+            session.clear()
+            session.update({
+                "usuario_id": user_id,
+                "usuario_nombre": usuario_doc.get("usuario_nombre", ""),
+                "usuario_apellidos": usuario_doc.get("usuario_apellidos", ""),
+                "usuario_email": usuario_doc.get("usuario_email", ""),
+                "usuario_rol": rol,
+                "usuario_foto": usuario_doc.get("usuario_foto", ""),
+                "token_session": token_session,
+                "theme": "light",
+                "permisos": RolPermisos.get_permisos(rol)
+            })
+
+            # -------------------------------
+            # Perfiles por rol
+            # -------------------------------
             if rol == "2":  # Mesero
-                perfil_mesero = Usuario.get_perfil_mesero(usuario_doc)
+                perfil_mesero = Usuario.get_perfil_mesero(usuario_doc) or {}
+
+                mesas = perfil_mesero.get("mesas_asignadas", [])
+                if isinstance(mesas, list):
+                    perfil_mesero["mesas_asignadas"] = [
+                        int(m) for m in mesas if str(m).isdigit()
+                    ]
+                else:
+                    perfil_mesero["mesas_asignadas"] = []
+
                 session["perfil_mesero"] = perfil_mesero
+
             elif rol == "3":  # Cocina
-                perfil_cocina = Usuario.get_perfil_cocina(usuario_doc)
-                session["perfil_cocina"] = perfil_cocina
-            
-            # 7. Determinar dashboard según rol
+                session["perfil_cocina"] = Usuario.get_perfil_cocina(usuario_doc) or {}
+
+            # -------------------------------
+            # Redirección por rol
+            # -------------------------------
             rol_endpoints = {
-                "1": "dashboard_admin",   # Administración
-                "2": "dashboard_mesero",   # Mesero
-                "3": "dashboard_cocina",  # Cocina
-                "4": "dashboard_inventario" # Inventario
+                "1": "dashboard_admin",
+                "2": "dashboard_mesero",
+                "3": "dashboard_cocina",
+                "4": "dashboard_inventario"
             }
-            
+
             endpoint = rol_endpoints.get(rol)
-            
-            if endpoint:
-                logging.info(f"✅ Login exitoso: {email} | Rol: {RolPermisos.get_nombre_rol(rol)}")
-                
-                return jsonify({
-                    "status": "success",
-                    "dashboard": url_for(f"routes.{endpoint}"),
-                    "user": {
-                        "nombre": usuario_doc.get("usuario_nombre"),
-                        "rol": RolPermisos.get_nombre_rol(rol)
-                    }
-                })
-            else:
-                return jsonify({
-                    "status": "error",
-                    "message": "Rol no reconocido"
-                })
-        
-        # GET request - Mostrar formulario de login
+
+            logging.info(f"✅ Login exitoso: {email} | Rol {rol}")
+
+            return jsonify({
+                "status": "success",
+                "dashboard": url_for(f"routes.{endpoint}"),
+                "user": {
+                    "nombre": usuario_doc.get("usuario_nombre"),
+                    "rol": RolPermisos.get_nombre_rol(rol)
+                }
+            })
+
+        # -------------------------------
+        # GET → vista login
+        # -------------------------------
         return render_template("login.html")
-    
-    
+
+    # =====================================================
+    # LOGOUT
+    # =====================================================
     @staticmethod
     def logout():
-        """Cierra sesión del usuario"""
         usuario_id = session.get("usuario_id")
-        
+
         if usuario_id:
             try:
-                # Actualizar status a inactivo y limpiar token
                 Usuario.update_session_token(usuario_id, None, 0)
             except Exception as e:
-                logging.error(f"Error al actualizar estado en logout: {e}")
-        
+                logging.error(f"Error logout: {e}")
+
         session.clear()
         return redirect(url_for("routes.login"))
-    
-    
+
+    # =====================================================
+    # 2FA (DESHABILITADO)
+    # =====================================================
     @staticmethod
     def verify_2fa():
-        """Método deshabilitado - 2FA no implementado"""
         return jsonify({
             "status": "error",
-            "message": "2FA no implementado en esta versión"
+            "message": "2FA no implementado"
         }), 400
 
 
-# ==========================================
-# DECORADORES PARA PROTEGER RUTAS
-# ==========================================
-
-from functools import wraps
+# =====================================================
+# DECORADORES DE SEGURIDAD
+# =====================================================
 
 def login_required(f):
-    """Decorador para requerir autenticación"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated(*args, **kwargs):
         if "usuario_id" not in session:
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "No autenticado"}), 401
             return redirect(url_for("routes.login"))
         return f(*args, **kwargs)
-    return decorated_function
+    return decorated
 
 
 def rol_required(roles_permitidos):
-    """
-    Decorador para requerir roles específicos
-    Uso: @rol_required(['1', '2'])  # Admin y Mesero
-    """
     def decorator(f):
         @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if "usuario_id" not in session:
-                return redirect(url_for("routes.login"))
-            
+        def decorated(*args, **kwargs):
             rol_actual = session.get("usuario_rol")
-            if str(rol_actual) not in [str(r) for r in roles_permitidos]:
-                flash("No tienes permisos para acceder a esta página", "error")
+
+            if not rol_actual:
+                if request.path.startswith("/api/"):
+                    return jsonify({"error": "No autenticado"}), 401
                 return redirect(url_for("routes.login"))
-            
+
+            if str(rol_actual) not in map(str, roles_permitidos):
+                if request.path.startswith("/api/"):
+                    return jsonify({"error": "No autorizado"}), 403
+                flash("No tienes permisos para acceder", "error")
+                return redirect(url_for("routes.login"))
+
             return f(*args, **kwargs)
-        return decorated_function
+        return decorated
     return decorator
 
 
 def permiso_required(permiso):
-    """
-    Decorador para verificar un permiso específico
-    Uso: @permiso_required('puede_editar')
-    """
     def decorator(f):
         @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if "usuario_id" not in session:
-                return redirect(url_for("routes.login"))
-            
+        def decorated(*args, **kwargs):
             rol_actual = session.get("usuario_rol")
-            if not RolPermisos.tiene_permiso(rol_actual, permiso):
-                flash("No tienes permisos para realizar esta acción", "error")
+
+            if not rol_actual or not RolPermisos.tiene_permiso(rol_actual, permiso):
+                if request.path.startswith("/api/"):
+                    return jsonify({"error": "Permiso denegado"}), 403
+                flash("No tienes permisos", "error")
                 return redirect(url_for("routes.login"))
-            
+
             return f(*args, **kwargs)
-        return decorated_function
+        return decorated
     return decorator
