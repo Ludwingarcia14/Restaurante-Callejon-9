@@ -8,7 +8,7 @@
     <title>{% block title %}Callejón 9{% endblock %} - Sistema de Restaurante</title>
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ url_for('static', filename='img/logo.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/callejon9') }}" type="image/x-icon">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,10 +55,10 @@
             
             <!-- Header del Sidebar -->
             <div class="sidebar-header">
-                <img src="https://tse4.mm.bing.net/th/id/OIP.ZY7EMAqB-T3d6FTXGJKtTwAAAA?cb=iwp2&rs=1&pid=ImgDetMain" 
+                <img src="/static/img/callejon9.jpeg" 
                      alt="Callejón 9" 
                      class="sidebar-logo">
-                <h2 class="sidebar-title">Callejón 9</h2>
+                <h2 class="sidebar-title">Callejón 19</h2>
                 <p class="sidebar-subtitle">Sistema de Restaurante</p>
             </div>
             
@@ -104,7 +104,7 @@
                 <!-- Las rutas específicas se insertan aquí desde las plantillas hijas -->
                 {% endblock %}
                 
-                <!-- 🆕 MENÚ DE ADMINISTRACIÓN (Solo para Rol 1) -->
+                <!--  MENÚ DE ADMINISTRACIÓN (Solo para Rol 1) -->
                 {% if session.usuario_rol == '1' %}
                 <div class="mt-4 pt-4 border-t border-gray-200">
                     <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
