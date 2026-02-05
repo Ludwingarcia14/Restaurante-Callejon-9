@@ -1,0 +1,297 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Crear Empleado{% endblock %}
+{% block page_title %}Crear Nuevo Empleado{% endblock %}
+{% block page_subtitle %}Registro de personal del restaurante{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="card">
+        <div class="card-header bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+            <h3 class="text-xl font-bold flex items-center gap-2">
+                <i class="bi bi-person-plus-fill"></i>
+                Formulario de Registro
+            </h3>
+        </div>
+        
+        <div class="card-body">
+            <form id="formCrearEmpleado">
+                <!-- Información Personal -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="bi bi-person-circle"></i>
+                        Información Personal
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Nombre *
+                            </label>
+                            <input type="text" 
+                                   name="nombre" 
+                                   id="nombre"
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Apellidos *
+                            </label>
+                            <input type="text" 
+                                   name="apellidos" 
+                                   id="apellidos"
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Correo Electrónico *
+                            </label>
+                            <input type="email" 
+                                   name="email" 
+                                   id="email"
+                                   required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Teléfono
+                            </label>
+                            <input type="tel" 
+                                   name="telefono" 
+                                   id="telefono"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rol y Acceso -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="bi bi-shield-check"></i>
+                        Rol y Acceso al Sistema
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Rol en el Sistema *
+                            </label>
+                            <select name="rol" 
+                                    id="rol" 
+                                    required
+                                    onchange="mostrarCamposRol()"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                <option value="">-- Selecciona un rol --</option>
+                                <option value="1">👑 Administrador</option>
+                                <option value="2">🍽️ Mesero</option>
+                                <option value="3">👨‍🍳 Cocina</option>
+                                <option value="4">📦 Inventario</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Contraseña *
+                            </label>
+                            <input type="password" 
+                                   name="password" 
+                                   id="password"
+                                   required
+                                   minlength="6"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                            <p class="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos Específicos por Rol -->
+                <div id="camposRolEspecificos"></div>
+
+                <!-- Botones -->
+                <div class="flex gap-4 justify-end pt-6 border-t">
+                    <a href="{{ url_for('routes.admin_empleados_lista') }}" 
+                       class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-medium flex items-center gap-2">
+                        <i class="bi bi-save"></i>
+                        Crear Empleado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function mostrarCamposRol() {
+    const rol = document.getElementById('rol').value;
+    const container = document.getElementById('camposRolEspecificos');
+    
+    let html = '';
+    
+    if (rol === '2') { // Mesero
+        html = `
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-800 mb-4">Configuración de Mesero</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Empleado
+                        </label>
+                        <input type="text" name="numero_empleado" id="numero_empleado"
+                               class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Turno
+                        </label>
+                        <select name="turno" id="turno" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="mañana">Mañana</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noche">Noche</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Permisos Especiales
+                        </label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="puede_cerrar_cuenta" id="puede_cerrar_cuenta">
+                                <span class="text-sm">Puede cerrar cuentas</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="puede_aplicar_descuento" id="puede_aplicar_descuento">
+                                <span class="text-sm">Puede aplicar descuentos</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (rol === '3') { // Cocina
+        html = `
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-800 mb-4">Configuración de Cocina</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Empleado
+                        </label>
+                        <input type="text" name="numero_empleado" id="numero_empleado"
+                               class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Puesto
+                        </label>
+                        <input type="text" name="puesto" id="puesto" placeholder="Ej: Chef, Ayudante"
+                               class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Área
+                        </label>
+                        <select name="area" id="area" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="general">General</option>
+                            <option value="parrilla">Parrilla</option>
+                            <option value="ensaladas">Ensaladas</option>
+                            <option value="postres">Postres</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Turno
+                        </label>
+                        <select name="turno" id="turno" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="mañana">Mañana</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noche">Noche</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (rol === '4') { // Inventario
+        html = `
+            <div class="mb-6">
+                <h4 class="text-lg font-bold text-gray-800 mb-4">Configuración de Inventario</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Empleado
+                        </label>
+                        <input type="text" name="numero_empleado" id="numero_empleado"
+                               class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Turno
+                        </label>
+                        <select name="turno" id="turno" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="mañana">Mañana</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noche">Noche</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+document.getElementById('formCrearEmpleado').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Convertir checkboxes a booleanos
+    data.puede_cerrar_cuenta = formData.has('puede_cerrar_cuenta');
+    data.puede_aplicar_descuento = formData.has('puede_aplicar_descuento');
+    
+    try {
+        const response = await fetch('{{ url_for("routes.admin_empleados_crear") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: '¡Empleado Creado!',
+                text: result.message,
+                timer: 2000
+            });
+            window.location.href = '{{ url_for("routes.admin_empleados_lista") }}';
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.message
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error de conexión al servidor'
+        });
+    }
+});
+</script>
+{% endblock %}

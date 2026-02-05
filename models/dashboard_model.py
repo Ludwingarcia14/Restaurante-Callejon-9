@@ -7,7 +7,7 @@ class DashboardModel:
     platillos = db.platillos
     pedidos = db.pedidos
     mesas = db.mesas
-    usuarios = db.usuarios  # Administradores / empleados
+    usuarios = db.usuarios
 
     # ============================
     # MÉTRICAS
