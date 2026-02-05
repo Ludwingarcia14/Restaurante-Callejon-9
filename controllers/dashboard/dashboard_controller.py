@@ -1,5 +1,6 @@
 """
 Dashboard Controller - Sistema Restaurante Callejón 9
+CORRECCIÓN: Agregado soporte para rol de inventario (4) en validación
 """
 from flask import request, session, redirect, url_for, render_template, jsonify
 from controllers.inventario.inventarioController import InventarioController
@@ -155,7 +156,8 @@ class DashboardController:
                         "message": "Ya existe un empleado con este correo"
                     }), 400
                 
-                if data["rol"] not in ["1", "2", "3"]:
+                # ✅ CORRECCIÓN: Agregado rol "4" (inventario) a la validación
+                if data["rol"] not in ["1", "2", "3", "4"]:
                     return jsonify({
                         "success": False,
                         "message": "Rol no válido"
@@ -237,134 +239,134 @@ class DashboardController:
             return redirect(url_for("routes.login"))
         return render_template("support/reportes/index.html")
 
-@staticmethod
-def toggle_theme():
-    """Cambia el tema visual (light/dark)"""
-    try:
-        current_theme = session.get('theme', 'light')
-        session['theme'] = 'dark' if current_theme == 'light' else 'light'
-    except Exception as e:
-        print(f"Error al cambiar tema: {e}")
-    
-    return redirect(request.referrer or url_for('routes.login'))
+    @staticmethod
+    def toggle_theme():
+        """Cambia el tema visual (light/dark)"""
+        try:
+            current_theme = session.get('theme', 'light')
+            session['theme'] = 'dark' if current_theme == 'light' else 'light'
+        except Exception as e:
+            print(f"Error al cambiar tema: {e}")
+        
+        return redirect(request.referrer or url_for('routes.login'))
 
-@staticmethod
-def get_dashboard_stats():
-    """Obtiene estadísticas reales del sistema para el dashboard"""
-    from flask import jsonify
-    from config.db import db
-    from datetime import datetime, timedelta
-    
-    try:
-        # Total de empleados
-        total_empleados = db.usuarios.count_documents({
-            "usuario_rol": {"$in": ["1", "2", "3", "4"]}
-        })
-        
-        # Personal activo (status = 1)
-        empleados_activos = db.usuarios.count_documents({
-            "usuario_rol": {"$in": ["1", "2", "3", "4"]},
-            "usuario_status": 1
-        })
-        
-        # Por rol específico
-        admin_count = db.usuarios.count_documents({"usuario_rol": "1"})
-        meseros_count = db.usuarios.count_documents({"usuario_rol": "2"})
-        cocina_count = db.usuarios.count_documents({"usuario_rol": "3"})
-        inventario_count = db.usuarios.count_documents({"usuario_rol": "4"})
-        
-        # Mesas ocupadas
-        mesas_ocupadas = 0
-        try:
-            if "mesas" in db.list_collection_names():
-                mesas_ocupadas = db.mesas.count_documents({"estado": "ocupada"})
-        except:
-            pass
-        
-        # Comandas activas
-        comandas_activas = 0
-        try:
-            if "comandas" in db.list_collection_names():
-                comandas_activas = db.comandas.count_documents({
-                    "estado": {"$in": ["nueva", "enviada", "preparacion"]}
-                })
-        except:
-            pass
-        
-        # Pedidos en cocina
-        en_cocina = 0
-        try:
-            if "comandas" in db.list_collection_names():
-                en_cocina = db.comandas.count_documents({
-                    "estado": {"$in": ["enviada", "preparacion"]}
-                })
-        except:
-            pass
-        
-        # Ventas del día
-        hoy_inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        ventas_dia = 0
+    @staticmethod
+    def get_dashboard_stats():
+        """Obtiene estadísticas reales del sistema para el dashboard"""
+        from flask import jsonify
+        from config.db import db
+        from datetime import datetime, timedelta
         
         try:
-            if "ventas" in db.list_collection_names():
-                pipeline = [
-                    {"$match": {
-                        "fecha": {"$gte": hoy_inicio},
-                        "estado": {"$ne": "cancelada"}
-                    }},
-                    {"$group": {
-                        "_id": None,
-                        "total": {"$sum": "$total"}
-                    }}
-                ]
-                resultado = list(db.ventas.aggregate(pipeline))
-                if resultado:
-                    ventas_dia = resultado[0].get("total", 0)
-        except:
-            pass
-        
-        # Cuentas abiertas
-        cuentas_abiertas = 0
-        try:
-            if "cuentas" in db.list_collection_names():
-                cuentas_abiertas = db.cuentas.count_documents({
-                    "estado": {"$in": ["abierta", "activa"]}
-                })
-        except:
-            pass
-        
-        # Platillos disponibles
-        platillos_disponibles = 0
-        try:
-            if "menu" in db.list_collection_names():
-                platillos_disponibles = db.menu.count_documents({
-                    "disponible": True
-                })
-        except:
-            pass
-        
-        return jsonify({
-            "success": True,
-            "data": {
-                "total_empleados": total_empleados,
-                "empleados_activos": empleados_activos,
-                "admin_count": admin_count,
-                "meseros_count": meseros_count,
-                "cocina_count": cocina_count,
-                "inventario_count": inventario_count,
-                "mesas_ocupadas": mesas_ocupadas,
-                "comandas_activas": comandas_activas,
-                "en_cocina": en_cocina,
-                "ventas_dia": float(ventas_dia),
-                "cuentas_abiertas": cuentas_abiertas,
-                "platillos_disponibles": platillos_disponibles,
-                "timestamp": datetime.now().isoformat()
-            }
-        })
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+            # Total de empleados
+            total_empleados = db.usuarios.count_documents({
+                "usuario_rol": {"$in": ["1", "2", "3", "4"]}
+            })
+            
+            # Personal activo (status = 1)
+            empleados_activos = db.usuarios.count_documents({
+                "usuario_rol": {"$in": ["1", "2", "3", "4"]},
+                "usuario_status": 1
+            })
+            
+            # Por rol específico
+            admin_count = db.usuarios.count_documents({"usuario_rol": "1"})
+            meseros_count = db.usuarios.count_documents({"usuario_rol": "2"})
+            cocina_count = db.usuarios.count_documents({"usuario_rol": "3"})
+            inventario_count = db.usuarios.count_documents({"usuario_rol": "4"})
+            
+            # Mesas ocupadas
+            mesas_ocupadas = 0
+            try:
+                if "mesas" in db.list_collection_names():
+                    mesas_ocupadas = db.mesas.count_documents({"estado": "ocupada"})
+            except:
+                pass
+            
+            # Comandas activas
+            comandas_activas = 0
+            try:
+                if "comandas" in db.list_collection_names():
+                    comandas_activas = db.comandas.count_documents({
+                        "estado": {"$in": ["nueva", "enviada", "preparacion"]}
+                    })
+            except:
+                pass
+            
+            # Pedidos en cocina
+            en_cocina = 0
+            try:
+                if "comandas" in db.list_collection_names():
+                    en_cocina = db.comandas.count_documents({
+                        "estado": {"$in": ["enviada", "preparacion"]}
+                    })
+            except:
+                pass
+            
+            # Ventas del día
+            hoy_inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            ventas_dia = 0
+            
+            try:
+                if "ventas" in db.list_collection_names():
+                    pipeline = [
+                        {"$match": {
+                            "fecha": {"$gte": hoy_inicio},
+                            "estado": {"$ne": "cancelada"}
+                        }},
+                        {"$group": {
+                            "_id": None,
+                            "total": {"$sum": "$total"}
+                        }}
+                    ]
+                    resultado = list(db.ventas.aggregate(pipeline))
+                    if resultado:
+                        ventas_dia = resultado[0].get("total", 0)
+            except:
+                pass
+            
+            # Cuentas abiertas
+            cuentas_abiertas = 0
+            try:
+                if "cuentas" in db.list_collection_names():
+                    cuentas_abiertas = db.cuentas.count_documents({
+                        "estado": {"$in": ["abierta", "activa"]}
+                    })
+            except:
+                pass
+            
+            # Platillos disponibles
+            platillos_disponibles = 0
+            try:
+                if "menu" in db.list_collection_names():
+                    platillos_disponibles = db.menu.count_documents({
+                        "disponible": True
+                    })
+            except:
+                pass
+            
+            return jsonify({
+                "success": True,
+                "data": {
+                    "total_empleados": total_empleados,
+                    "empleados_activos": empleados_activos,
+                    "admin_count": admin_count,
+                    "meseros_count": meseros_count,
+                    "cocina_count": cocina_count,
+                    "inventario_count": inventario_count,
+                    "mesas_ocupadas": mesas_ocupadas,
+                    "comandas_activas": comandas_activas,
+                    "en_cocina": en_cocina,
+                    "ventas_dia": float(ventas_dia),
+                    "cuentas_abiertas": cuentas_abiertas,
+                    "platillos_disponibles": platillos_disponibles,
+                    "timestamp": datetime.now().isoformat()
+                }
+            })
+            
+        except Exception as e:
+            print(f"Error: {e}")
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500

@@ -5,14 +5,34 @@
 {% block page_subtitle %}Protege la información crítica de tu restaurante{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+
 <style>
-        .backup-hero {
-        background: linear-gradient(135deg, #F2913D 0%, #DE823D 100%);
-        border-radius: 1.25rem;
-        padding: 2.5rem;
+    :root {
+        --color-primary: #F2913D;      
+        --color-primary-dark: #DE823D; 
+        --color-secondary: #F2CA99;
+        --color-accent: #F2A399;       
+        --color-dark: #0D0D0D;
+    }
+    
+    * {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+    }
+    
+    /* Hero Section con Diseño Moderno */
+    .backup-hero {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border-radius: 24px;
+        padding: 3.5rem;
         color: white;
-        box-shadow: 0 20px 40px rgba(242, 145, 61, 0.3);
-        margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(242, 145, 61, 0.25);
+        margin-bottom: 3rem;
         position: relative;
         overflow: hidden;
     }
@@ -20,97 +40,153 @@
     .backup-hero::before {
         content: '';
         position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 300px;
-        height: 300px;
-        background: rgba(255, 255, 255, 0.1);
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
         border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
     }
     
     .backup-hero::after {
         content: '';
         position: absolute;
-        bottom: -30%;
-        left: -5%;
-        width: 200px;
-        height: 200px;
-        background: rgba(255, 255, 255, 0.05);
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
         border-radius: 50%;
+        animation: float 10s ease-in-out infinite reverse;
     }
     
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, -30px) scale(1.05); }
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-stat {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .hero-stat-number {
+        font-size: 3.5rem;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Cards Modernos */
     .backup-card {
         background: white;
-        border-radius: 1.25rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
-        border: 2px solid transparent;
+        border: 1px solid rgba(242, 202, 153, 0.3);
     }
     
     .backup-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-        border-color: #F2CA99;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        border-color: var(--color-primary);
     }
     
     .backup-card-header {
-        padding: 1.75rem;
-        border-bottom: 2px solid #F2CA99;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: linear-gradient(135deg, rgba(242, 202, 153, 0.1) 0%, rgba(242, 163, 153, 0.1) 100%);
+        padding: 2rem;
+        border-bottom: 2px solid var(--color-secondary);
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.08) 0%, rgba(242, 163, 153, 0.08) 100%);
     }
     
     .backup-card-body {
-        padding: 1.75rem;
+        padding: 2rem;
     }
     
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+    
+    .card-title i {
+        color: var(--color-primary);
+        font-size: 1.75rem;
+    }
+    
+    /* Formularios Elegantes */
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.75rem;
     }
     
     .form-label {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: 700;
-        color: #0D0D0D;
-        margin-bottom: 0.625rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--color-dark);
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-label i {
+        color: var(--color-primary);
+        font-size: 1.125rem;
     }
     
     .form-input,
     .form-select {
         width: 100%;
-        padding: 0.875rem 1.125rem;
+        padding: 1rem 1.25rem;
         border: 2px solid #e5e5e5;
-        border-radius: 0.75rem;
-        font-size: 0.9375rem;
-        transition: all 0.2s ease;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
         background: white;
-        color: #0D0D0D;
+        color: var(--color-dark);
+        font-weight: 500;
     }
     
     .form-input:focus,
     .form-select:focus {
         outline: none;
-        border-color: #F2913D;
+        border-color: var(--color-primary);
         box-shadow: 0 0 0 4px rgba(242, 145, 61, 0.1);
+        background: #fffcf9;
     }
     
     .form-hint {
         font-size: 0.75rem;
         color: #737373;
-        margin-top: 0.375rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
     }
     
+    /* Radio Buttons Modernos */
     .radio-group {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
+        gap: 1rem;
     }
     
     .radio-option {
@@ -123,99 +199,119 @@
     }
     
     .radio-option label {
-        display: block;
-        padding: 1.125rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
         border: 2px solid #e5e5e5;
-        border-radius: 0.875rem;
-        text-align: center;
+        border-radius: 16px;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         background: white;
         font-weight: 600;
         font-size: 0.875rem;
+        text-align: center;
+        gap: 0.75rem;
     }
     
     .radio-option input[type="radio"]:checked + label {
-        border-color: #F2913D;
+        border-color: var(--color-primary);
         background: linear-gradient(135deg, rgba(242, 145, 61, 0.1) 0%, rgba(222, 130, 61, 0.1) 100%);
-        color: #DE823D;
+        color: var(--color-primary-dark);
+        box-shadow: 0 4px 12px rgba(242, 145, 61, 0.2);
     }
     
     .radio-option label i {
-        display: block;
-        font-size: 1.75rem;
-        margin-bottom: 0.5rem;
+        font-size: 2rem;
+        transition: transform 0.3s ease;
     }
     
+    .radio-option input[type="radio"]:checked + label i {
+        transform: scale(1.1);
+    }
+    
+    /* Checkbox List con Scroll */
     .checkbox-list {
-        max-height: 280px;
+        max-height: 320px;
         overflow-y: auto;
         border: 2px solid #e5e5e5;
-        border-radius: 0.875rem;
-        padding: 0.75rem;
+        border-radius: 16px;
+        padding: 1rem;
         background: #fafafa;
     }
     
     .checkbox-list::-webkit-scrollbar {
-        width: 8px;
+        width: 10px;
     }
     
     .checkbox-list::-webkit-scrollbar-track {
         background: #f5f5f5;
-        border-radius: 4px;
+        border-radius: 8px;
     }
     
     .checkbox-list::-webkit-scrollbar-thumb {
-        background: #F2CA99;
-        border-radius: 4px;
+        background: var(--color-secondary);
+        border-radius: 8px;
     }
     
     .checkbox-list::-webkit-scrollbar-thumb:hover {
-        background: #F2A399;
+        background: var(--color-primary);
     }
     
     .checkbox-item {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.875rem;
-        margin-bottom: 0.5rem;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 0.625rem;
         background: white;
-        border-radius: 0.625rem;
+        border-radius: 12px;
         cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
     }
     
     .checkbox-item:hover {
-        background: #F2CA99;
-        border-color: #F2913D;
+        background: var(--color-secondary);
+        border-color: var(--color-primary);
         transform: translateX(8px);
     }
     
     .checkbox-item input[type="checkbox"] {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: 1.375rem;
+        height: 1.375rem;
         cursor: pointer;
-        accent-color: #F2913D;
+        accent-color: var(--color-primary);
     }
     
+    .checkbox-item label {
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        flex: 1;
+    }
+    
+    /* Botones Premium */
     .btn-submit {
         width: 100%;
-        padding: 1.125rem;
-        background: linear-gradient(135deg, #F2913D 0%, #DE823D 100%);
+        padding: 1.25rem;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
         color: white;
         border: none;
-        border-radius: 0.875rem;
+        border-radius: 14px;
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 1.0625rem;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.75rem;
         box-shadow: 0 8px 24px rgba(242, 145, 61, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .btn-submit:hover {
@@ -228,13 +324,34 @@
     }
     
     .btn-submit i {
-        font-size: 1.25rem;
+        font-size: 1.375rem;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-danger:hover {
+        box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4);
+    }
+    
+    /* Toggle Switch Moderno */
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.12) 0%, rgba(242, 163, 153, 0.12) 100%);
+        border-radius: 16px;
+        margin-bottom: 1.75rem;
+        border: 2px solid rgba(242, 145, 61, 0.15);
     }
     
     .toggle-switch {
         position: relative;
-        width: 60px;
-        height: 32px;
+        width: 64px;
+        height: 36px;
     }
     
     .toggle-switch input {
@@ -258,24 +375,25 @@
     .toggle-slider:before {
         position: absolute;
         content: "";
-        height: 24px;
-        width: 24px;
+        height: 28px;
+        width: 28px;
         left: 4px;
         bottom: 4px;
         background-color: white;
         transition: 0.3s;
         border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
     
     input:checked + .toggle-slider {
-        background: linear-gradient(135deg, #F2913D 0%, #DE823D 100%);
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     }
     
     input:checked + .toggle-slider:before {
         transform: translateX(28px);
     }
     
+    /* Tabla de Archivos */
     .file-table {
         width: 100%;
         border-collapse: separate;
@@ -283,36 +401,43 @@
     }
     
     .file-table thead th {
-        background: linear-gradient(135deg, rgba(242, 202, 153, 0.2) 0%, rgba(242, 163, 153, 0.2) 100%);
-        padding: 1.125rem 1.5rem;
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.15) 0%, rgba(242, 163, 153, 0.15) 100%);
+        padding: 1.25rem 1.75rem;
         text-align: left;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 0.8125rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #0D0D0D;
-        border-bottom: 3px solid #F2913D;
+        letter-spacing: 1px;
+        color: var(--color-dark);
+        border-bottom: 3px solid var(--color-primary);
+    }
+    
+    .file-table thead th:first-child {
+        border-top-left-radius: 16px;
+    }
+    
+    .file-table thead th:last-child {
+        border-top-right-radius: 16px;
     }
     
     .file-table tbody tr {
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .file-table tbody tr:hover {
-        background: #F2CA99;
-        transform: scale(1.01);
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.1) 0%, rgba(242, 163, 153, 0.1) 100%);
     }
     
     .file-table tbody td {
-        padding: 1.25rem 1.5rem;
+        padding: 1.5rem 1.75rem;
         border-bottom: 1px solid #f5f5f5;
     }
     
     .file-icon {
-        width: 48px;
-        height: 48px;
-        background: linear-gradient(135deg, #F2A399 0%, #F2913D 100%);
-        border-radius: 0.75rem;
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -320,21 +445,30 @@
     }
     
     .file-icon i {
-        font-size: 1.5rem;
+        font-size: 1.625rem;
         color: white;
     }
     
+    .file-name {
+        font-weight: 700;
+        color: var(--color-dark);
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Action Buttons */
     .action-btn {
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 2.75rem;
+        height: 2.75rem;
         border: none;
-        border-radius: 0.625rem;
+        border-radius: 12px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 1.125rem;
+        transition: all 0.3s ease;
+        font-size: 1.25rem;
     }
     
     .action-btn-download {
@@ -345,7 +479,7 @@
     .action-btn-download:hover {
         background: #10b981;
         color: white;
-        transform: scale(1.1);
+        transform: scale(1.15) rotate(-10deg);
     }
     
     .action-btn-restore {
@@ -356,7 +490,7 @@
     .action-btn-restore:hover {
         background: #3b82f6;
         color: white;
-        transform: scale(1.1);
+        transform: scale(1.15) rotate(10deg);
     }
     
     .action-btn-delete {
@@ -367,130 +501,177 @@
     .action-btn-delete:hover {
         background: #ef4444;
         color: white;
-        transform: scale(1.1);
+        transform: scale(1.15);
     }
     
+    /* Badges */
+    .file-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 0.875rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .file-badge-auto {
+        background: rgba(168, 85, 247, 0.12);
+        color: #7c3aed;
+    }
+    
+    .file-badge-manual {
+        background: rgba(16, 185, 129, 0.12);
+        color: #059669;
+    }
+    
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: 18px;
+        padding: 2rem;
+        border: 2px solid var(--color-secondary);
+        transition: all 0.4s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+        border-color: var(--color-primary);
+    }
+    
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #737373;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 5rem 2rem;
     }
     
     .empty-state i {
-        font-size: 5rem;
+        font-size: 6rem;
         color: #d4d4d4;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
         display: block;
     }
     
     .empty-state h3 {
-        font-size: 1.5rem;
-        font-weight: 700;
+        font-size: 1.75rem;
+        font-weight: 800;
         color: #404040;
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
     }
     
     .empty-state p {
         color: #737373;
-        font-size: 0.9375rem;
+        font-size: 1rem;
+        font-weight: 500;
     }
     
+    /* Pagination */
     .pagination {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, rgba(242, 202, 153, 0.1) 0%, rgba(242, 163, 153, 0.1) 100%);
-        border-top: 2px solid #F2CA99;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.08) 0%, rgba(242, 163, 153, 0.08) 100%);
+        border-top: 2px solid var(--color-secondary);
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
     }
     
     .pagination-info {
-        font-size: 0.875rem;
-        color: #525252;
-        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--color-dark);
+        font-weight: 700;
     }
     
     .pagination-buttons {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.625rem;
     }
     
     .pagination-btn {
-        padding: 0.625rem 1rem;
+        padding: 0.75rem 1.125rem;
         border: 2px solid #e5e5e5;
         background: white;
-        border-radius: 0.625rem;
-        font-size: 0.875rem;
-        font-weight: 600;
+        border-radius: 10px;
+        font-size: 0.9375rem;
+        font-weight: 700;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         text-decoration: none;
-        color: #404040;
+        color: var(--color-dark);
     }
     
     .pagination-btn:hover {
-        border-color: #F2913D;
+        border-color: var(--color-primary);
         background: rgba(242, 145, 61, 0.1);
-        color: #DE823D;
+        color: var(--color-primary-dark);
+        transform: translateY(-2px);
     }
     
     .pagination-btn.active {
-        background: linear-gradient(135deg, #F2913D 0%, #DE823D 100%);
-        border-color: #F2913D;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border-color: var(--color-primary);
         color: white;
     }
     
-    .stat-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        border: 2px solid #F2CA99;
-        transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        border-color: #F2913D;
-    }
-    
-    .stat-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-        font-size: 1.75rem;
-    }
-    
+    /* Progress Modal */
     .progress-modal {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.75);
         z-index: 9999;
         display: flex;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
     }
     
     .progress-content {
         background: white;
-        border-radius: 1.5rem;
-        padding: 3rem;
-        max-width: 480px;
+        border-radius: 24px;
+        padding: 3.5rem;
+        max-width: 520px;
         width: 90%;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
     }
     
     .progress-icon {
-        font-size: 4rem;
-        color: #F2913D;
+        font-size: 5rem;
+        color: var(--color-primary);
         animation: spin 1s linear infinite;
         display: block;
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
     
     @keyframes spin {
@@ -498,99 +679,59 @@
         to { transform: rotate(360deg); }
     }
     
+    .progress-title {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--color-dark);
+        text-align: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .progress-text {
+        text-align: center;
+        color: #737373;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
     .progress-bar-container {
         width: 100%;
-        height: 8px;
+        height: 10px;
         background: #f5f5f5;
         border-radius: 9999px;
         overflow: hidden;
-        margin-top: 1.5rem;
+        margin-top: 2rem;
     }
     
     .progress-bar-fill {
         height: 100%;
-        background: linear-gradient(90deg, #F2913D 0%, #DE823D 100%);
+        background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
         transition: width 0.3s ease;
         border-radius: 9999px;
     }
-    
-    .file-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .file-badge-auto {
-        background: rgba(168, 85, 247, 0.1);
-        color: #7c3aed;
-    }
-    
-    .file-badge-manual {
-        background: rgba(16, 185, 129, 0.1);
-        color: #059669;
-    }
 </style>
 {% endblock %}
-
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
-    <i class="bi bi-speedometer2 text-lg"></i>
-    <span>Centro de Control</span>
-</a>
-
-<a href="{{ url_for('routes.admin_empleados_lista') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-people text-lg"></i>
-    <span>Empleados</span>
-</a>
-
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-journal-text text-lg"></i>
-    <span>Menú</span>
-</a>
-
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-box-seam text-lg"></i>
-    <span>Inventario</span>
-</a>
-
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-cash-stack text-lg"></i>
-    <span>Ventas</span>
-</a>
-
-<a href="{{ url_for('routes.admin_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-graph-up text-lg"></i>
-    <span>Reportes</span>
-</a>
-{% endblock %}
-
 
 {% block content %}
 
 <!-- Hero Section -->
 <div class="backup-hero">
-    <div style="position: relative; z-index: 1;">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
-            <div>
-                <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+    <div class="hero-content">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem;">
+            <div style="flex: 1; min-width: 300px;">
+                <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
                     <i class="ri-database-2-line"></i>
                     Sistema de Respaldos
                 </h2>
-                <p style="opacity: 0.95; font-size: 1.0625rem; line-height: 1.6;">
+                <p style="opacity: 0.95; font-size: 1.125rem; line-height: 1.7; font-weight: 500;">
                     Protege la información crítica de tu restaurante con respaldos automáticos<br>
                     y restauración instantánea de datos.
                 </p>
             </div>
-            <div style="text-align: center;">
-                <div style="font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 0.5rem;">
-                    {{ total_files }}
-                </div>
-                <div style="font-size: 0.9375rem; font-weight: 600; opacity: 0.9;">
-                    Respaldos guardados
+            <div class="hero-stat">
+                <div class="hero-stat-number">{{ total_files }}</div>
+                <div style="font-size: 1rem; font-weight: 700; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px;">
+                    Respaldos Guardados
                 </div>
             </div>
         </div>
@@ -598,23 +739,22 @@
 </div>
 
 <!-- Grid Principal -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
     
     <!-- TARJETA 1: Crear Respaldo -->
     <div class="backup-card">
         <div class="backup-card-header">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0D0D0D; display: flex; align-items: center; gap: 0.625rem;">
-                <i class="ri-save-3-line" style="color: #F2913D;"></i>
+            <h3 class="card-title">
+                <i class="ri-save-3-line"></i>
                 Crear Nuevo Respaldo
             </h3>
         </div>
         <div class="backup-card-body">
             <form id="backupForm" action="{{ url_for('routes.admin_backup_create') }}" method="POST">
                 
-                <!-- Nombre del Respaldo -->
                 <div class="form-group">
                     <label class="form-label">
-                        <i class="ri-file-text-line" style="color: #F2913D;"></i>
+                        <i class="ri-file-text-line"></i>
                         Nombre del Respaldo
                     </label>
                     <input type="text" 
@@ -626,10 +766,9 @@
                     <p class="form-hint">Se agregará fecha automáticamente</p>
                 </div>
 
-                <!-- Rango de Tiempo -->
                 <div class="form-group">
                     <label class="form-label">
-                        <i class="ri-calendar-line" style="color: #F2913D;"></i>
+                        <i class="ri-calendar-line"></i>
                         Rango de Tiempo
                     </label>
                     <select name="time_range" class="form-select">
@@ -640,10 +779,9 @@
                     </select>
                 </div>
 
-                <!-- Formato -->
                 <div class="form-group">
                     <label class="form-label">
-                        <i class="ri-file-zip-line" style="color: #F2913D;"></i>
+                        <i class="ri-file-zip-line"></i>
                         Formato de Exportación
                     </label>
                     <div class="radio-group">
@@ -664,33 +802,32 @@
                     </div>
                 </div>
 
-                <!-- Seleccionar Colecciones -->
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.625rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                         <label class="form-label" style="margin: 0;">
-                            <i class="ri-database-line" style="color: #F2913D;"></i>
+                            <i class="ri-database-line"></i>
                             Colecciones
                         </label>
-                        <button type="button" onclick="toggleAll()" style="background: none; border: none; color: #F2913D; font-weight: 700; font-size: 0.8125rem; cursor: pointer;">
+                        <button type="button" onclick="toggleAll()" style="background: none; border: none; color: var(--color-primary); font-weight: 700; font-size: 0.8125rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
                             <span id="toggleText">Todas</span>
                         </button>
                     </div>
                     <div class="checkbox-list">
                         {% for col in collections %}
-                        <label class="checkbox-item">
+                        <div class="checkbox-item">
                             <input type="checkbox" 
                                    name="collections" 
                                    value="{{ col }}" 
+                                   id="col_{{ loop.index }}"
                                    class="collection-check" 
                                    checked>
-                            <span style="font-size: 0.9375rem; font-weight: 600; color: #0D0D0D;">{{ col|capitalize }}</span>
-                        </label>
+                            <label for="col_{{ loop.index }}">{{ col|capitalize }}</label>
+                        </div>
                         {% endfor %}
                     </div>
                 </div>
 
-                <!-- Botón Generar -->
-                <button type="submit" id="btnGenerar" class="btn-submit">
+                <button type="submit" class="btn-submit">
                     <i class="ri-download-cloud-line"></i>
                     <span>Generar Respaldo</span>
                 </button>
@@ -701,61 +838,59 @@
     <!-- TARJETA 2: Respaldos Automáticos -->
     <div class="backup-card">
         <div class="backup-card-header">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0D0D0D; display: flex; align-items: center; gap: 0.625rem;">
-                <i class="ri-time-line" style="color: #F2913D;"></i>
+            <h3 class="card-title">
+                <i class="ri-time-line"></i>
                 Respaldos Automáticos
             </h3>
         </div>
         <div class="backup-card-body">
             
-            <!-- Toggle Activar -->
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; background: linear-gradient(135deg, rgba(242, 202, 153, 0.15) 0%, rgba(242, 163, 153, 0.15) 100%); border-radius: 0.875rem; margin-bottom: 1.5rem;">
+            <div class="toggle-container">
                 <div>
-                    <p style="font-weight: 700; color: #0D0D0D; font-size: 0.9375rem; margin-bottom: 0.25rem;">Estado</p>
-                    <p style="font-size: 0.8125rem; color: #737373;">Activar respaldos automáticos</p>
+                    <p style="font-weight: 700; color: var(--color-dark); font-size: 1rem; margin-bottom: 0.375rem;">Estado del Sistema</p>
+                    <p style="font-size: 0.8125rem; color: #737373; font-weight: 500;">Activar respaldos programados</p>
                 </div>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="autoBackupToggle">
+                    <input type="checkbox" id="autoBackupToggle" 
+                           {% if auto_backup_config.enabled %}checked{% endif %}>
                     <span class="toggle-slider"></span>
                 </label>
             </div>
 
-            <!-- Frecuencia -->
             <div class="form-group">
                 <label class="form-label">
-                    <i class="ri-repeat-line" style="color: #F2913D;"></i>
+                    <i class="ri-repeat-line"></i>
                     Frecuencia
                 </label>
                 <select id="autoFrequency" class="form-select">
-                    <option value="daily">Diario</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="monthly">Mensual</option>
+                    <option value="daily" {% if auto_backup_config.frequency == 'daily' %}selected{% endif %}>Diario</option>
+                    <option value="weekly" {% if auto_backup_config.frequency == 'weekly' %}selected{% endif %}>Semanal</option>
+                    <option value="monthly" {% if auto_backup_config.frequency == 'monthly' %}selected{% endif %}>Mensual</option>
                 </select>
             </div>
 
-            <!-- Hora -->
             <div class="form-group">
                 <label class="form-label">
-                    <i class="ri-time-line" style="color: #F2913D;"></i>
-                    Hora
+                    <i class="ri-time-line"></i>
+                    Hora de Ejecución
                 </label>
                 <input type="time" 
                        id="autoTime" 
-                       value="02:00"
+                       value="{{ auto_backup_config.hour or '02:00' }}"
                        class="form-input">
             </div>
 
-            <!-- Retención -->
             <div class="form-group">
                 <label class="form-label">
-                    <i class="ri-history-line" style="color: #F2913D;"></i>
-                    Días de retención
+                    <i class="ri-history-line"></i>
+                    Días de Retención
                 </label>
                 <input type="number" 
                        id="autoRetention" 
-                       value="30" 
+                       value="{{ auto_backup_config.retention_days or 30 }}" 
                        min="1"
                        class="form-input">
+                <p class="form-hint">Los respaldos antiguos se eliminarán automáticamente</p>
             </div>
 
             <button onclick="guardarConfiguracion()" class="btn-submit">
@@ -765,51 +900,39 @@
         </div>
     </div>
 
-    <!-- TARJETA 3: Estadísticas Rápidas -->
+    <!-- TARJETA 3: Estadísticas -->
     <div class="backup-card">
         <div class="backup-card-header">
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0D0D0D; display: flex; align-items: center; gap: 0.625rem;">
-                <i class="ri-bar-chart-box-line" style="color: #F2913D;"></i>
+            <h3 class="card-title">
+                <i class="ri-bar-chart-box-line"></i>
                 Estadísticas
             </h3>
         </div>
         <div class="backup-card-body">
-            <div style="display: grid; gap: 1.25rem;">
+            <div style="display: grid; gap: 1.5rem;">
                 
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #F2913D 0%, #DE823D 100%); color: white;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: white;">
                         <i class="ri-database-2-line"></i>
                     </div>
-                    <div style="font-size: 2rem; font-weight: 800; color: #0D0D0D; margin-bottom: 0.25rem;">
-                        {{ total_files }}
-                    </div>
-                    <div style="font-size: 0.875rem; color: #737373; font-weight: 600;">
-                        Total de respaldos
-                    </div>
+                    <div class="stat-number">{{ total_files }}</div>
+                    <div class="stat-label">Total de Respaldos</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #F2A399 0%, #F2913D 100%); color: white;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%); color: white;">
                         <i class="ri-calendar-check-line"></i>
                     </div>
-                    <div style="font-size: 2rem; font-weight: 800; color: #0D0D0D; margin-bottom: 0.25rem;">
-                        Hoy
-                    </div>
-                    <div style="font-size: 0.875rem; color: #737373; font-weight: 600;">
-                        Último respaldo
-                    </div>
+                    <div class="stat-number">Hoy</div>
+                    <div class="stat-label">Último Respaldo</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #F2CA99 0%, #F2A399 100%); color: white;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%); color: white;">
                         <i class="ri-shield-check-line"></i>
                     </div>
-                    <div style="font-size: 2rem; font-weight: 800; color: #0D0D0D; margin-bottom: 0.25rem;">
-                        100%
-                    </div>
-                    <div style="font-size: 0.875rem; color: #737373; font-weight: 600;">
-                        Integridad de datos
-                    </div>
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Integridad de Datos</div>
                 </div>
 
             </div>
@@ -820,37 +943,33 @@
 <!-- Historial de Respaldos -->
 <div class="backup-card">
     <div class="backup-card-header">
-        <h3 style="font-size: 1.5rem; font-weight: 800; color: #0D0D0D; display: flex; align-items: center; gap: 0.75rem;">
-            <i class="ri-history-line" style="color: #F2913D;"></i>
-            Historial de Respaldos
-        </h3>
-        <span class="file-badge" style="background: rgba(242, 145, 61, 0.15); color: #DE823D; padding: 0.5rem 1rem; font-size: 0.875rem;">
-            {{ total_files }} archivos
-        </span>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <h3 class="card-title">
+                <i class="ri-history-line"></i>
+                Historial de Respaldos
+            </h3>
+            <span class="file-badge" style="background: rgba(242, 145, 61, 0.15); color: var(--color-primary-dark); padding: 0.625rem 1.25rem; font-size: 0.875rem;">
+                <i class="ri-file-list-line"></i>
+                {{ total_files }} archivos
+            </span>
+        </div>
     </div>
     <div style="padding: 0;">
         {% if files %}
-        <!-- Tabla de Archivos -->
         <div style="overflow-x: auto;">
             <table class="file-table">
                 <thead>
                     <tr>
-                        <th style="border-top-left-radius: 0;">
-                            <i class="ri-file-line"></i> Archivo
-                        </th>
-                        <th>
-                            <i class="ri-calendar-line"></i> Fecha
-                        </th>
-                        <th style="text-align: center; border-top-right-radius: 0;">
-                            <i class="ri-tools-line"></i> Acciones
-                        </th>
+                        <th><i class="ri-file-line"></i> Archivo</th>
+                        <th><i class="ri-calendar-line"></i> Fecha</th>
+                        <th style="text-align: center;"><i class="ri-tools-line"></i> Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for file in files %}
                     <tr>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 1.25rem;">
                                 <div class="file-icon">
                                     {% if file.endswith('.zip') %}
                                     <i class="ri-file-zip-line"></i>
@@ -859,9 +978,7 @@
                                     {% endif %}
                                 </div>
                                 <div>
-                                    <p style="font-weight: 700; color: #0D0D0D; font-size: 0.9375rem; margin-bottom: 0.375rem;">
-                                        {{ file }}
-                                    </p>
+                                    <p class="file-name">{{ file }}</p>
                                     {% if file.startswith('auto_backup_') %}
                                     <span class="file-badge file-badge-auto">
                                         <i class="ri-time-line"></i> Automático
@@ -874,8 +991,8 @@
                                 </div>
                             </div>
                         </td>
-                        <td style="font-size: 0.875rem; color: #525252; font-weight: 600;">
-                            <i class="ri-calendar-event-line" style="color: #F2913D;"></i>
+                        <td style="font-size: 0.9375rem; color: #525252; font-weight: 600;">
+                            <i class="ri-calendar-event-line" style="color: var(--color-primary); margin-right: 0.5rem;"></i>
                             {% set parts = file.split('_') %}
                             {% if parts|length > 2 %}
                                 {{ parts[-2] }} {{ parts[-1].split('.')[0] }}
@@ -884,8 +1001,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.625rem;">
-                                <!-- Descargar -->
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
                                 <a href="/static/backup/{{ file }}" 
                                    download
                                    class="action-btn action-btn-download"
@@ -893,14 +1009,12 @@
                                     <i class="ri-download-2-line"></i>
                                 </a>
                                 
-                                <!-- Restaurar -->
                                 <button onclick="confirmarRestaurar('{{ file }}')" 
                                         class="action-btn action-btn-restore"
                                         title="Restaurar">
                                     <i class="ri-refresh-line"></i>
                                 </button>
                                 
-                                <!-- Eliminar -->
                                 <button onclick="confirmarEliminar('{{ file }}')" 
                                         class="action-btn action-btn-delete"
                                         title="Eliminar">
@@ -914,7 +1028,6 @@
             </table>
         </div>
 
-        <!-- Paginación -->
         {% if total_pages > 1 %}
         <div class="pagination">
             <span class="pagination-info">
@@ -944,7 +1057,6 @@
         {% endif %}
 
         {% else %}
-        <!-- Sin Archivos -->
         <div class="empty-state">
             <i class="ri-inbox-line"></i>
             <h3>No hay respaldos guardados</h3>
@@ -956,8 +1068,8 @@
 
 <!-- Restauración Manual -->
 <div class="backup-card" style="margin-top: 2rem;">
-    <div class="backup-card-header" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); border-bottom-color: rgba(239, 68, 68, 0.2);">
-        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0D0D0D; display: flex; align-items: center; gap: 0.625rem;">
+    <div class="backup-card-header" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.08) 100%); border-bottom-color: rgba(239, 68, 68, 0.2);">
+        <h3 class="card-title">
             <i class="ri-upload-cloud-line" style="color: #ef4444;"></i>
             Restaurar desde Archivo Externo
         </h3>
@@ -971,14 +1083,13 @@
                 </label>
                 <input type="file" 
                        name="backup_file" 
-                       accept=".json,.zip,.sql"
+                       accept=".json,.zip"
                        class="form-input"
-                       style="padding: 1rem;">
+                       style="padding: 1.125rem;">
             </div>
             <button type="submit" 
-                    onclick="return confirm('⚠️ ¿ESTÁS SEGURO? Esto reemplazará todos los datos actuales.')"
-                    class="btn-submit"
-                    style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);">
+                    onclick="return confirm('⚠️ ¿ESTÁS SEGURO? Esto reemplazará todos los datos actuales con el contenido del respaldo seleccionado. Esta acción NO se puede deshacer.')"
+                    class="btn-submit btn-danger">
                 <i class="ri-refresh-line"></i>
                 <span>Restaurar Base de Datos</span>
             </button>
@@ -990,12 +1101,8 @@
 <div id="progressModal" class="progress-modal" style="display: none;">
     <div class="progress-content">
         <i class="ri-loader-4-line progress-icon"></i>
-        <h3 id="progressTitle" style="font-size: 1.5rem; font-weight: 800; color: #0D0D0D; text-align: center; margin-bottom: 0.5rem;">
-            Procesando...
-        </h3>
-        <p id="progressText" style="text-align: center; color: #737373; font-size: 0.9375rem; margin-bottom: 0;">
-            Por favor espera
-        </p>
+        <h3 id="progressTitle" class="progress-title">Procesando...</h3>
+        <p id="progressText" class="progress-text">Por favor espera</p>
         <div class="progress-bar-container">
             <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
         </div>
@@ -1041,7 +1148,7 @@ document.getElementById('backupForm').addEventListener('submit', function(e) {
 function confirmarEliminar(filename) {
     Swal.fire({
         title: '¿Eliminar respaldo?',
-        html: `<p style="color: #737373;">Se eliminará: <strong>${filename}</strong></p>`,
+        html: `<p style="color: #737373; font-size: 1rem;">Se eliminará: <strong>${filename}</strong></p>`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
@@ -1060,14 +1167,14 @@ function confirmarRestaurar(filename) {
     Swal.fire({
         title: '⚠️ ADVERTENCIA CRÍTICA',
         html: `
-            <div style="text-align: left; padding: 1rem;">
-                <p style="color: #0D0D0D; margin-bottom: 1rem;">Esta acción:</p>
-                <ul style="list-style: disc; list-style-position: inside; color: #737373; margin-bottom: 1rem;">
-                    <li>Eliminará TODOS los datos actuales</li>
-                    <li>Los reemplazará con: <strong>${filename}</strong></li>
-                    <li>NO se puede deshacer</li>
+            <div style="text-align: left; padding: 1.5rem;">
+                <p style="color: var(--color-dark); margin-bottom: 1.25rem; font-size: 1rem; font-weight: 600;">Esta acción:</p>
+                <ul style="list-style: disc; list-style-position: inside; color: #737373; margin-bottom: 1.25rem; line-height: 1.8;">
+                    <li>Eliminará <strong>TODOS</strong> los datos actuales</li>
+                    <li>Los reemplazará con: <strong style="color: var(--color-primary);">${filename}</strong></li>
+                    <li><strong>NO</strong> se puede deshacer</li>
                 </ul>
-                <p style="color: #dc2626; font-weight: 700;">¿Estás absolutamente seguro?</p>
+                <p style="color: #dc2626; font-weight: 700; font-size: 1.0625rem;">¿Estás absolutamente seguro?</p>
             </div>
         `,
         icon: 'error',
@@ -1108,7 +1215,7 @@ async function guardarConfiguracion() {
     const retention = document.getElementById('autoRetention').value;
     
     try {
-        const response = await fetch('/admin/backup/configure', {
+        const response = await fetch('{{ url_for("routes.admin_backup_configure") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1116,7 +1223,7 @@ async function guardarConfiguracion() {
             body: JSON.stringify({
                 enabled: enabled,
                 frequency: frequency,
-                time: time,
+                hour: time,
                 retention_days: parseInt(retention)
             })
         });
@@ -1169,6 +1276,6 @@ function simulateProgress() {
 }
 
 // Auto-generar nombre con fecha
-document.getElementById('backupName').value = 'backup_callejon9_' + new Date().toISOString().split('T')[0];
+document.getElementById('backupName').value = 'backup_callejon9_' + new Date().toISOString().split('T')[0].replace(/-/g, '');
 </script>
 {% endblock %}
