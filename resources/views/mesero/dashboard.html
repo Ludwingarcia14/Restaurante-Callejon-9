@@ -615,7 +615,8 @@ function cerrarModalMesa() {
     document.getElementById('modalMesa').classList.add('hidden');
 }
 
-async function abrirModalMenu(numMesa) {
+async function abrirModalMenu(numMesa, idCuenta) {
+    cuentaActivaId = idCuenta; // Guardar para usar al confirmar pedido
     const modal = document.getElementById('modalMenu');
     const labelMesa = document.getElementById('menu-mesa-num');
     const grid = document.getElementById('lista-productos-grid');
@@ -729,9 +730,10 @@ async function abrirCuenta(numeroMesa) {
         inputAttributes: { min: 1, max: 20, step: 1 },
         showCancelButton: true,
         confirmButtonText: 'Abrir y Tomar Pedido',
-        cancelButtonText: 'Solo Abrir'
+        cancelButtonText: 'Solo Abrir',
+        confirmButtonColor: '#F2913D',
     });
-    
+
     if (numComensales) {
         try {
             showLoading('Iniciando comanda...');
@@ -743,29 +745,43 @@ async function abrirCuenta(numeroMesa) {
                     num_comensales: parseInt(numComensales)
                 })
             });
-            
+
             const data = await response.json();
             hideLoading();
-            
-            if (data.success) {
-                cuentaActivaId = data.cuenta_id;
-                
-                // Actualizar visualización de mesas inmediatamente
-                await cargarEstadoMesas();
-                cerrarModalMesa();
 
-                // Preguntar si quiere tomar pedido ahora
-                abrirModalMenu(numeroMesa); 
+            if (data.success) {
+                // 1. Guardar el ID globalmente
+                cuentaActivaId = data.cuenta_id; 
+
+                // 2. Notificar al usuario
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: 'Cuenta abierta correctamente',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // 3. Cerrar modales previos y refrescar Dashboard
+                cerrarModalMesa();
+                await cargarEstadoMesas();   // Actualiza colores de cuadritos
+                actualizarComandas();        // ¡Aquí es donde aparece en la lista inferior!
+                cargarEstadisticasDia();     // Actualiza contadores superiores
+
+                // 4. Abrir el menú pasando el ID de la cuenta recién creada
+                // Pasamos tanto el número de mesa como el ID de la cuenta
+                abrirModalMenu(numeroMesa, data.cuenta_id);
+
             } else {
                 showError(data.error);
             }
         } catch (error) {
             hideLoading();
             showError('Error de conexión al abrir cuenta');
+            console.error(error);
         }
     }
 }
-
 function mostrarSeleccionMesa() {
     // Filtrar mesas disponibles
     const mesasDisponibles = Object.values(mesasData).filter(m => m.estado === 'disponible');

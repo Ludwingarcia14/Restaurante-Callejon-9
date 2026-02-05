@@ -297,15 +297,39 @@ def api_mesero_estadisticas_dia():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-@routes_bp.route("/api/mesero/comandas/activas", methods=["GET"]) # Agregamos /activas
+@routes_bp.route("/api/mesero/comandas/activas", methods=["GET"])
 @login_required
 @rol_required(['2'])
-def api_mesero_comandas_activas(): # Cambiamos nombre para claridad
-    return jsonify({
-        "success": True,
-        "comandas": [],
-        "total": 0
-    })
+def api_mesero_comandas_activas():
+    try:
+        from config.db import db
+        # 1. Buscamos comandas cuyo estado sea 'abierta' (o que no estén 'pagada')
+        # Filtramos por mesero_id para que cada mesero vea solo lo suyo (opcional)
+        mesero_id = session.get("user_id")
+        
+        query = {
+            "estado": {"$ne": "pagada"},  # Trae todo lo que no esté pagado
+            "mesero_id": mesero_id        # Solo las del mesero actual
+        }
+        
+        cursor = db.comandas.find(query).sort("fecha_apertura", -1) # Las más nuevas primero
+        comandas = list(cursor)
+
+        # 2. Convertimos los ObjectId a String para que JSON no de error
+        for comanda in comandas:
+            comanda["_id"] = str(comanda["_id"])
+            # Aseguramos que el total sea float para el frontend
+            comanda["total"] = float(comanda.get("total", 0))
+
+        return jsonify({
+            "success": True,
+            "comandas": comandas,
+            "total": len(comandas)
+        })
+    except Exception as e:
+        print(f"❌ Error en api_mesero_comandas_activas: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 @routes_bp.route("/api/mesero/cuenta/abrir", methods=["POST"])
 @login_required
 @rol_required(['2'])
