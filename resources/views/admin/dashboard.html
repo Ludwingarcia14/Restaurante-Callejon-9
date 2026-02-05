@@ -21,6 +21,11 @@
         to { opacity: 1; transform: translateY(0); } 
     }
 
+    /* Modal backdrop */
+    .modal-backdrop {
+        backdrop-filter: blur(4px);
+    }
+
     /* Terminal de logs */
     .terminal-scroll::-webkit-scrollbar { width: 6px; }
     .terminal-scroll::-webkit-scrollbar-track { background: #1e293b; }
@@ -39,6 +44,20 @@
     }
     .toggle-checkbox:checked + .toggle-label {
         background-color: #4f46e5;
+    }
+
+    /* Tabla en modals */
+    .modal-table {
+        font-size: 0.875rem;
+    }
+    .modal-table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        padding: 0.75rem;
+    }
+    .modal-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
     }
 </style>
 {% endblock %}
@@ -280,62 +299,113 @@
     </div>
 
 </div>
+
+<!-- ============================== -->
+<!-- MODALS DE GESTIÓN -->
+<!-- ============================== -->
+
+<!-- Modal Universal -->
+<div id="modalUniversal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-black bg-opacity-50" onclick="cerrarModal()"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <!-- Header del Modal -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i id="modal-icon" class="bi bi-people-fill"></i>
+                        <span id="modal-title">Gestión</span>
+                    </h3>
+                    <button onclick="cerrarModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenido del Modal -->
+            <div class="bg-white px-6 py-4 max-h-[70vh] overflow-y-auto">
+                <div id="modal-content">
+                    <!-- Contenido dinámico -->
+                </div>
+            </div>
+            
+            <!-- Footer del Modal -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                    Cerrar
+                </button>
+                <button id="modal-action-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium hidden">
+                    Acción
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// ============================== 
+// VARIABLES GLOBALES
+// ==============================
+let empleadosData = [];
+let personalActivoData = [];
+
 document.addEventListener('DOMContentLoaded', function() {
-    // === 1. MENSAJE DE BIENVENIDA PERSONALIZADO ===
+    
+    // ============================== 
+    // 1. MENSAJE DE BIENVENIDA
+    // ==============================
     const welcomeElement = document.getElementById('welcome-message');
     const myDate = new Date();
     const hrs = myDate.getHours();
     const nombre = "{{ session.get('usuario_nombre', 'Admin') }}";
     let saludar = hrs < 12 ? 'Buenos días' : (hrs <= 18 ? 'Buenas tardes' : 'Buenas noches');
-    if (welcomeElement) welcomeElement.textContent = `${saludar}, ${nombre}`;
+    if (welcomeElement) {
+        welcomeElement.textContent = `${saludar}, ${nombre}`;
+    }
 
-    // === 2. SELECTORES ===
+    // ============================== 
+    // 2. SELECTORES
+    // ==============================
     const skeletonContainer = document.getElementById('skeleton-grid');
     const dashboardGrid = document.getElementById('dashboard-grid');
     const personalActivoList = document.getElementById('personal-activo-list');
     const systemLogsList = document.getElementById('system-logs-list');
     const actividadReciente = document.getElementById('actividad-reciente');
 
-    // === 3. CARGAR DATOS DEL DASHBOARD ===
+    // ============================== 
+    // 3. CARGAR DATOS DEL DASHBOARD
+    // ==============================
     async function cargarDashboard() {
         try {
-            // Aquí conectarías con tu API real
-            const data = await fetch('/api/dashboard/admin/stats').then(r => r.json()).catch(() => ({
-                // Datos de ejemplo
-                total_empleados: {{ stats.total_usuarios if stats else 12 }},
-                empleados_activos: 8,
-                admin_count: {{ stats.total_admin if stats else 2 }},
-                meseros_count: {{ stats.total_meseros if stats else 6 }},
-                cocina_count: {{ stats.total_cocina if stats else 4 }},
-                mesas_ocupadas: 15,
-                comandas_activas: 23,
-                en_cocina: 8,
-                ventas_dia: 12450,
-                cuentas_abiertas: 12,
-                platillos_disponibles: 45
-            }));
+            const response = await fetch('/api/dashboard/admin/stats');
+            const data = await response.json();
 
-            // === A. RENDERIZAR KPIs ===
+            // Renderizar KPIs
             const kpis = [
-                { icon: 'ri-group-line', label: 'Total Empleados', val: data.total_empleados, color: 'blue' },
-                { icon: 'ri-user-star-line', label: 'Personal Activo', val: data.empleados_activos, color: 'green' },
-                { icon: 'ri-admin-line', label: 'Administradores', val: data.admin_count, color: 'purple' },
-                { icon: 'ri-user-smile-line', label: 'Meseros', val: data.meseros_count, color: 'cyan' },
-                { icon: 'ri-restaurant-line', label: 'Cocina', val: data.cocina_count, color: 'orange' },
-                { icon: 'ri-grid-line', label: 'Mesas Ocupadas', val: data.mesas_ocupadas || 0, color: 'indigo' },
-                { icon: 'ri-file-list-3-line', label: 'Comandas', val: data.comandas_activas || 0, color: 'yellow' },
-                { icon: 'ri-money-dollar-circle-line', label: 'Ventas Hoy', val: `$${(data.ventas_dia || 0).toLocaleString()}`, color: 'emerald' }
+                { icon: 'ri-group-line', label: 'Total Empleados', val: data.total_empleados || 0, color: 'blue', clickable: true },
+                { icon: 'ri-user-star-line', label: 'Personal Activo', val: data.empleados_activos || 0, color: 'green', clickable: true },
+                { icon: 'ri-admin-line', label: 'Administradores', val: data.total_admin || 0, color: 'purple', clickable: true },
+                { icon: 'ri-user-smile-line', label: 'Meseros', val: data.total_meseros || 0, color: 'cyan', clickable: true },
+                { icon: 'ri-restaurant-line', label: 'Cocina', val: data.total_cocina || 0, color: 'orange', clickable: true },
+                { icon: 'ri-box-seam', label: 'Inventario', val: data.total_inventario || 0, color: 'indigo', clickable: true },
+                { icon: 'ri-file-list-3-line', label: 'Comandas', val: data.comandas_activas || 0, color: 'yellow', clickable: false },
+                { icon: 'ri-money-dollar-circle-line', label: 'Ventas Hoy', val: `$${(data.ventas_dia || 0).toLocaleString()}`, color: 'emerald', clickable: false }
             ];
 
             dashboardGrid.innerHTML = '';
             kpis.forEach((kpi, index) => {
+                const clickHandler = kpi.clickable ? `onclick="abrirModal('${kpi.label}')"` : '';
+                const cursorClass = kpi.clickable ? 'cursor-pointer hover:scale-105' : '';
+                
                 const cardHTML = `
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all fade-up" style="animation-delay: ${index * 50}ms">
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all fade-up ${cursorClass}" 
+                         style="animation-delay: ${index * 50}ms" 
+                         ${clickHandler}>
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">${kpi.label}</p>
@@ -345,6 +415,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="${kpi.icon} text-xl"></i>
                             </div>
                         </div>
+                        ${kpi.clickable ? `
+                            <div class="mt-3 pt-3 border-t border-gray-100">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-500">Ver detalles</span>
+                                    <i class="bi bi-arrow-right text-${kpi.color}-600"></i>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
                 dashboardGrid.insertAdjacentHTML('beforeend', cardHTML);
@@ -356,16 +434,14 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('en-cocina').textContent = data.en_cocina || 0;
             document.getElementById('ventas-dia').textContent = `$${(data.ventas_dia || 0).toLocaleString()}`;
 
-            // === B. PERSONAL ACTIVO ===
+            // Cargar datos adicionales
+            await cargarEmpleados();
             await cargarPersonalActivo();
+            await cargarActividadReciente();
 
-            // === C. ACTIVIDAD RECIENTE ===
-            cargarActividadReciente();
-
-            // === D. LOGS DEL SISTEMA ===
+            // Logs del sistema
             agregarLog('Sistema iniciado correctamente', 'INFO');
             agregarLog(`${data.empleados_activos} empleados conectados`, 'INFO');
-            agregarLog(`${data.mesas_ocupadas} mesas en servicio`, 'INFO');
 
             // Mostrar dashboard
             skeletonContainer.classList.add('hidden');
@@ -377,28 +453,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // === 4. CARGAR PERSONAL ACTIVO ===
+    // ============================== 
+    // 4. CARGAR EMPLEADOS
+    // ==============================
+    async function cargarEmpleados() {
+        try {
+            const response = await fetch('/api/empleados/todos');
+            const result = await response.json();
+            
+            if (result.success) {
+                empleadosData = result.data;
+                console.log('Empleados cargados:', empleadosData.length);
+            }
+        } catch (error) {
+            console.error('Error cargando empleados:', error);
+            empleadosData = [];
+        }
+    }
+
+    // ============================== 
+    // 5. CARGAR PERSONAL ACTIVO
+    // ==============================
     async function cargarPersonalActivo() {
         try {
-            const response = await fetch('/api/personal/activos').catch(() => null);
+            const response = await fetch('/api/dashboard/admin/personal');
             
-            let personalActivo = [];
-            if (response && response.ok) {
-                personalActivo = await response.json();
+            if (response.ok) {
+                personalActivoData = await response.json();
             } else {
-                // Datos de ejemplo
-                personalActivo = [
-                    { nombre: 'Juan Pérez', rol: '2', email: 'juan@callejon9.com', ultimaActividad: 'Hace 2 min', status: 'online' },
-                    { nombre: 'María López', rol: '3', email: 'maria@callejon9.com', ultimaActividad: 'Hace 5 min', status: 'online' },
-                    { nombre: 'Carlos Ruiz', rol: '2', email: 'carlos@callejon9.com', ultimaActividad: 'Hace 1 min', status: 'online' },
-                    { nombre: 'Ana García', rol: '3', email: 'ana@callejon9.com', ultimaActividad: 'Hace 3 min', status: 'online' }
-                ];
+                personalActivoData = [];
             }
 
             personalActivoList.innerHTML = '';
-            document.getElementById('count-activos').textContent = personalActivo.length;
+            document.getElementById('count-activos').textContent = personalActivoData.length;
 
-            if (personalActivo.length === 0) {
+            if (personalActivoData.length === 0) {
                 personalActivoList.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">No hay personal activo</li>';
                 return;
             }
@@ -406,10 +495,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const rolMap = {
                 '1': { nombre: 'Admin', color: 'purple', icon: 'bi-shield-check' },
                 '2': { nombre: 'Mesero', color: 'green', icon: 'bi-person-badge' },
-                '3': { nombre: 'Cocina', color: 'orange', icon: 'bi-egg-fried' }
+                '3': { nombre: 'Cocina', color: 'orange', icon: 'bi-egg-fried' },
+                '4': { nombre: 'Inventario', color: 'blue', icon: 'bi-box-seam' }
             };
 
-            personalActivo.forEach(persona => {
+            personalActivoData.forEach(persona => {
                 const rol = rolMap[persona.rol] || { nombre: 'Usuario', color: 'gray', icon: 'bi-person' };
                 personalActivoList.insertAdjacentHTML('beforeend', `
                     <li class="px-4 py-3 hover:bg-gray-50 transition">
@@ -435,37 +525,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // === 5. ACTIVIDAD RECIENTE ===
-    function cargarActividadReciente() {
-        const actividades = [
-            { icono: 'bi-check-circle', texto: 'Mesa 5 cerrada por Juan Pérez', tiempo: 'Hace 2 min', color: 'green' },
-            { icono: 'bi-bell', texto: 'Nueva comanda en Mesa 12', tiempo: 'Hace 5 min', color: 'blue' },
-            { icono: 'bi-cart-check', texto: 'Pedido #345 enviado a cocina', tiempo: 'Hace 8 min', color: 'orange' },
-            { icono: 'bi-cash', texto: 'Pago recibido: $850 (Tarjeta)', tiempo: 'Hace 10 min', color: 'green' }
-        ];
+    // ============================== 
+    // 6. CARGAR ACTIVIDAD RECIENTE
+    // ==============================
+    async function cargarActividadReciente() {
+        try {
+            const response = await fetch('/api/dashboard/admin/actividad');
+            let actividades = [];
+            
+            if (response.ok) {
+                actividades = await response.json();
+            }
 
-        actividadReciente.innerHTML = '';
-        actividades.forEach(act => {
-            actividadReciente.insertAdjacentHTML('beforeend', `
-                <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                    <div class="mt-0.5 flex-shrink-0">
-                        <div class="h-8 w-8 rounded-full bg-${act.color}-100 flex items-center justify-center">
-                            <i class="${act.icono} text-${act.color}-600"></i>
+            if (actividades.length === 0) {
+                actividades = [
+                    { icono: 'bi-check-circle', texto: 'Mesa 5 cerrada', tiempo: 'Hace 2 min', color: 'green' },
+                    { icono: 'bi-bell', texto: 'Nueva comanda', tiempo: 'Hace 5 min', color: 'blue' },
+                    { icono: 'bi-cart-check', texto: 'Pedido enviado a cocina', tiempo: 'Hace 8 min', color: 'orange' }
+                ];
+            }
+
+            actividadReciente.innerHTML = '';
+            actividades.forEach(act => {
+                actividadReciente.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="mt-0.5 flex-shrink-0">
+                            <div class="h-8 w-8 rounded-full bg-${act.color}-100 flex items-center justify-center">
+                                <i class="${act.icono} text-${act.color}-600"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-800">${act.texto}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${act.tiempo}</p>
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm text-gray-800">${act.texto}</p>
-                        <p class="text-xs text-gray-500 mt-0.5">${act.tiempo}</p>
-                    </div>
-                </div>
-            `);
-        });
+                `);
+            });
+        } catch (error) {
+            console.error('Error cargando actividad:', error);
+        }
     }
 
-    // === 6. SISTEMA DE LOGS ===
+    // ============================== 
+    // 7. SISTEMA DE LOGS
+    // ==============================
     function agregarLog(mensaje, nivel = 'INFO') {
         const ahora = new Date();
-        const tiempo = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const tiempo = ahora.toLocaleTimeString('es-MX', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
         
         const colorMap = {
             'INFO': 'text-slate-300',
@@ -484,66 +594,41 @@ document.addEventListener('DOMContentLoaded', function() {
             </li>
         `);
 
-        // Auto-scroll
         systemLogsList.parentElement.scrollTop = systemLogsList.parentElement.scrollHeight;
 
-        // Limitar a 50 logs
         if (systemLogsList.children.length > 50) {
             systemLogsList.firstChild.remove();
         }
     }
 
-    // === 7. FUNCIONES DE TOGGLES ===
-    function sendCommand(action, value) {
-        fetch("/api/admin/command", { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: action, value: value })
-        })
-        .then(res => res.json())
-        .then(data => {
-            const Toast = Swal.mixin({ 
-                toast: true, 
-                position: 'top-end', 
-                showConfirmButton: false, 
-                timer: 3000 
-            });
-            Toast.fire({ 
-                icon: data.success ? 'success' : 'error', 
-                title: data.message || 'Comando ejecutado' 
-            });
-            agregarLog(`${action}: ${value ? 'Activado' : 'Desactivado'}`, 'INFO');
-        })
-        .catch(err => {
-            showToast('Error de conexión', 'error');
-        });
-    }
-
-    // Bindings de toggles
-    document.getElementById('toggle-maintenance').addEventListener('change', function() { 
-        sendCommand('maintenance_mode', this.checked); 
-    });
-    document.getElementById('toggle-reservas').addEventListener('change', function() { 
-        sendCommand('pause_reservas', this.checked); 
-    });
-    document.getElementById('toggle-pagos').addEventListener('change', function() { 
-        sendCommand('pause_pagos', this.checked); 
+    // ============================== 
+    // 8. TOGGLES
+    // ==============================
+    document.getElementById('toggle-maintenance').addEventListener('change', function() {
+        agregarLog(`Modo mantenimiento: ${this.checked ? 'Activado' : 'Desactivado'}`, 'INFO');
     });
 
-    // === 8. FUNCIONES DE BOTONES ===
+    document.getElementById('toggle-reservas').addEventListener('change', function() {
+        agregarLog(`Reservas: ${this.checked ? 'Activadas' : 'Desactivadas'}`, 'INFO');
+    });
+
+    document.getElementById('toggle-pagos').addEventListener('change', function() {
+        agregarLog(`Sistema de pagos: ${this.checked ? 'Activado' : 'Desactivado'}`, 'INFO');
+    });
+
+    // ============================== 
+    // 9. FUNCIONES DE BOTONES
+    // ==============================
     window.enviarAnuncio = function() {
         Swal.fire({
-            title: 'Enviar Anuncio Global',
+            title: 'Enviar Anuncio',
             input: 'textarea',
-            inputLabel: 'Mensaje para todo el personal',
-            inputPlaceholder: 'Escribe el anuncio aquí...',
+            inputPlaceholder: 'Mensaje...',
             showCancelButton: true,
-            confirmButtonText: 'Enviar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: 'Enviar'
         }).then((result) => {
             if (result.value) {
                 agregarLog(`Anuncio enviado: "${result.value}"`, 'SUCCESS');
-                showToast('Anuncio enviado a todo el personal', 'success');
             }
         });
     };
@@ -551,37 +636,26 @@ document.addEventListener('DOMContentLoaded', function() {
     window.corteCaja = function() {
         Swal.fire({
             title: 'Corte de Caja',
-            text: '¿Generar el corte de caja del día?',
+            text: '¿Generar corte del día?',
             icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Generar',
-            cancelButtonText: 'Cancelar'
+            showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
                 agregarLog('Generando corte de caja...', 'INFO');
-                showToast('Corte generado correctamente', 'success');
-                // Aquí llamarías a tu API real
             }
         });
     };
 
     window.cerrarTodoSistema = function() {
         Swal.fire({
-            title: '⚠️ CERRAR TODO EL SISTEMA',
-            text: 'Esto cerrará todas las sesiones y finalizará el día',
+            title: 'CERRAR SISTEMA',
+            text: 'Esto cerrará todas las sesiones',
             icon: 'error',
             showCancelButton: true,
-            confirmButtonText: 'Sí, cerrar sistema',
-            cancelButtonText: 'Cancelar',
             confirmButtonColor: '#dc2626'
         }).then((result) => {
             if (result.isConfirmed) {
                 agregarLog('CIERRE TOTAL DEL SISTEMA INICIADO', 'ERROR');
-                Swal.fire({
-                    title: 'Cerrando sistema...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
                 setTimeout(() => {
                     window.location.href = '/logout';
                 }, 2000);
@@ -589,40 +663,256 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // === 9. FUNCIONES DE UTILIDAD ===
-    function showToast(message, type = 'success') {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        Toast.fire({ icon: type, title: message });
-    }
-
-    // === 10. INICIAR CARGA ===
+    // ============================== 
+    // 10. INICIAR CARGA
+    // ==============================
     cargarDashboard();
 
-    // === 11. AUTO-REFRESH CADA 30 SEGUNDOS ===
+    // ============================== 
+    // 11. AUTO-REFRESH (30 segundos)
+    // ==============================
     setInterval(() => {
         cargarPersonalActivo();
         cargarActividadReciente();
         agregarLog('Datos actualizados automáticamente', 'INFO');
     }, 30000);
-
-    // Simular actividad aleatoria cada 10 segundos
-    setInterval(() => {
-        const actividades = [
-            'Nueva comanda recibida',
-            'Platillo marcado como listo',
-            'Mesa asignada',
-            'Pago procesado',
-            'Reserva confirmada'
-        ];
-        const random = actividades[Math.floor(Math.random() * actividades.length)];
-        agregarLog(random, 'INFO');
-    }, 10000);
 });
+
+// ============================== 
+// SISTEMA DE MODALS
+// ==============================
+
+async function abrirModal(tipo) {
+    const modal = document.getElementById('modalUniversal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalIcon = document.getElementById('modal-icon');
+    const modalContent = document.getElementById('modal-content');
+    const modalActionBtn = document.getElementById('modal-action-btn');
+
+    const configs = {
+        'Total Empleados': {
+            title: 'Todos los Empleados',
+            icon: 'bi-people-fill',
+            content: await generarContenidoEmpleados('todos')
+        },
+        'Personal Activo': {
+            title: 'Personal Conectado',
+            icon: 'bi-person-check-fill',
+            content: await generarContenidoPersonalActivo()
+        },
+        'Administradores': {
+            title: 'Administradores',
+            icon: 'bi-shield-check',
+            content: await generarContenidoEmpleados('1')
+        },
+        'Meseros': {
+            title: 'Meseros',
+            icon: 'bi-person-badge',
+            content: await generarContenidoEmpleados('2')
+        },
+        'Cocina': {
+            title: 'Personal de Cocina',
+            icon: 'bi-egg-fried',
+            content: await generarContenidoEmpleados('3')
+        },
+        'Inventario': {
+            title: 'Personal de Inventario',
+            icon: 'bi-box-seam',
+            content: await generarContenidoEmpleados('4')
+        }
+    };
+
+    const config = configs[tipo];
+    if (!config) return;
+
+    modalTitle.textContent = config.title;
+    modalIcon.className = config.icon;
+    modalContent.innerHTML = config.content;
+    
+    modalActionBtn.classList.remove('hidden');
+    modalActionBtn.textContent = 'Agregar Nuevo';
+    modalActionBtn.onclick = () => window.location.href = "{{ url_for('routes.admin_empleados_crear') }}";
+
+    modal.classList.remove('hidden');
+}
+
+function cerrarModal() {
+    document.getElementById('modalUniversal').classList.add('hidden');
+}
+
+// ============================== 
+// GENERAR CONTENIDO - EMPLEADOS
+// ==============================
+
+async function generarContenidoEmpleados(filtro) {
+    let empleadosFiltrados = empleadosData;
+    
+    if (filtro !== 'todos') {
+        empleadosFiltrados = empleadosData.filter(emp => emp.rol === filtro);
+    }
+
+    if (empleadosFiltrados.length === 0) {
+        return `<div class="p-4 bg-yellow-50 text-yellow-600 rounded-lg">No hay empleados registrados.</div>`;
+    }
+
+    const rolMap = { '1': 'Admin', '2': 'Mesero', '3': 'Cocina', '4': 'Inventario' };
+
+    return `
+        <div class="space-y-2">
+            ${empleadosFiltrados.map(emp => `
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                            ${emp.nombre.charAt(0)}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-900">${emp.nombre}</p>
+                            <p class="text-sm text-gray-600">${emp.email}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-1 text-xs rounded-full ${
+                            emp.rol === '1' ? 'bg-purple-100 text-purple-700' :
+                            emp.rol === '2' ? 'bg-green-100 text-green-700' :
+                            emp.rol === '3' ? 'bg-orange-100 text-orange-700' :
+                            'bg-blue-100 text-blue-700'
+                        }">
+                            ${rolMap[emp.rol]}
+                        </span>
+                        ${emp.status === 1 
+                            ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Activo</span>'
+                            : '<span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Inactivo</span>'
+                        }
+                        <button onclick="verDetalleEmpleado('${emp.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button onclick="eliminarEmpleado('${emp.id}', '${emp.nombre}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        <div class="mt-4 text-sm text-gray-600">
+            Total: <strong>${empleadosFiltrados.length}</strong> empleados
+        </div>
+    `;
+}
+
+// ============================== 
+// GENERAR CONTENIDO - PERSONAL ACTIVO
+// ==============================
+
+async function generarContenidoPersonalActivo() {
+    if (personalActivoData.length === 0) {
+        return `<div class="p-4 text-center text-gray-500">No hay personal conectado</div>`;
+    }
+
+    return `
+        <div class="space-y-3">
+            ${personalActivoData.map(persona => {
+                const rolMap = {
+                    '1': { nombre: 'Admin', color: 'purple', icon: 'bi-shield-check' },
+                    '2': { nombre: 'Mesero', color: 'green', icon: 'bi-person-badge' },
+                    '3': { nombre: 'Cocina', color: 'orange', icon: 'bi-egg-fried' },
+                    '4': { nombre: 'Inventario', color: 'blue', icon: 'bi-box-seam' }
+                };
+                const rol = rolMap[persona.rol] || { nombre: 'Usuario', color: 'gray', icon: 'bi-person' };
+                
+                return `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="h-12 w-12 rounded-full bg-${rol.color}-100 text-${rol.color}-600 flex items-center justify-center">
+                                <i class="${rol.icon} text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">${persona.nombre}</p>
+                                <p class="text-sm text-gray-600">${rol.nombre} • ${persona.email}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="bi bi-clock"></i> ${persona.ultimaActividad}
+                                </p>
+                            </div>
+                        </div>
+                        <span class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                            <span class="h-2 w-2 rounded-full bg-green-600 animate-pulse"></span>
+                            Online
+                        </span>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+// ============================== 
+// VER DETALLE EMPLEADO
+// ==============================
+
+async function verDetalleEmpleado(id) {
+    try {
+        const response = await fetch(`/api/empleados/${id}/detalle`);
+        const result = await response.json();
+        
+        if (!result.success) {
+            Swal.fire('Error', 'No se pudo cargar el empleado', 'error');
+            return;
+        }
+
+        const emp = result.empleado;
+        
+        Swal.fire({
+            title: emp.usuario_nombre + ' ' + emp.usuario_apellidos,
+            html: `
+                <div class="text-left space-y-2">
+                    <p><strong>Email:</strong> ${emp.usuario_email}</p>
+                    <p><strong>Teléfono:</strong> ${emp.usuario_telefono || 'No registrado'}</p>
+                    <p><strong>Rol:</strong> ${emp.rol_nombre}</p>
+                    <p><strong>Estado:</strong> ${emp.usuario_status === 1 ? 'Activo' : 'Inactivo'}</p>
+                </div>
+            `,
+            confirmButtonText: 'Cerrar'
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire('Error', 'No se pudo cargar el detalle', 'error');
+    }
+}
+
+// ============================== 
+// ELIMINAR EMPLEADO
+// ==============================
+
+async function eliminarEmpleado(id, nombre) {
+    const result = await Swal.fire({
+        title: '¿Eliminar empleado?',
+        text: `Se eliminará a: ${nombre}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/api/empleados/${id}/eliminar`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Swal.fire('Eliminado', 'Empleado eliminado correctamente', 'success');
+            cerrarModal();
+            window.location.reload();
+        } else {
+            Swal.fire('Error', data.error || 'No se pudo eliminar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Error de conexión', 'error');
+    }
+}
 </script>
 {% endblock %}
