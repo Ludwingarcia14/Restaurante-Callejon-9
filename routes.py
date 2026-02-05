@@ -178,29 +178,28 @@ def mesero_historial():
 def api_mesero_mesas_estado():
     try:
         perfil_mesero = session.get("perfil_mesero")
-
         if not perfil_mesero:
-            return api_auth_error("Sesión inválida", 401)
+            return jsonify({"success": False, "error": "Sesión inválida"}), 401
 
+        # Obtener los números de mesa asignados al mesero desde su sesión
         mesas_asignadas = perfil_mesero.get("mesas_asignadas", [])
 
-        estado_mesas = Mesa.get_estado_mesas_mesero()
-        for mesa in estado_mesas:
-                mesa["estado"] = mesa.get("estado", "").lower().strip()
+        # Pasar la lista al modelo para que devuelva información real
+        estado_mesas = Mesa.get_estado_mesas_mesero(lista_numeros=mesas_asignadas)
         
+        # Opcional: Asegurar que el estado sea minúscula para el JS
+        for numero in estado_mesas:
+            estado_mesas[numero]["estado"] = str(estado_mesas[numero].get("estado", "")).lower().strip()
 
         return jsonify({
             "success": True,
-            "mesas": estado_mesas
+            "mesas": estado_mesas # Ahora esto contiene datos reales
         })
 
     except Exception as e:
         print("❌ api_mesero_mesas_estado:", e)
-        return jsonify({
-            "success": False,
-            "error": "Error interno del servidor"
-        }), 500
-
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 @routes_bp.route("/api/mesero/mesa/<numero>", methods=["GET"]) # Quitamos el int:
 @login_required
 @rol_required(['2'])

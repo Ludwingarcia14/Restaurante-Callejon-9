@@ -4,95 +4,44 @@ from bson.objectid import ObjectId
 
 
 class Mesa:
-
-    # =====================================================
-    # ACCESO SEGURO A LA COLECCIÓN
-    # =====================================================
     @staticmethod
     def _collection():
         if db is None:
             raise RuntimeError("❌ La base de datos Mongo no está inicializada")
         return db["mesas"]
 
-    # =====================================================
-    # FILTRO BASE (activa = true O no existe)
-    # =====================================================
     @staticmethod
     def _filtro_activa():
         return {
             "$or": [
                 {"activa": True},
-                {"activa": {"$exists": False}}
+                {"activa": {"$exists": False}},
             ]
         }
 
     # =====================================================
-    # CONSULTAS BÁSICAS
+    # CONSULTAS BÁSICAS (Ajustadas para tipos mixtos)
     # =====================================================
     @classmethod
     def find_all(cls):
         return list(cls._collection().find(cls._filtro_activa()))
 
     @classmethod
-    def find_by_numero(cls, numero):
-    # 1. Intentamos normalizar el valor de búsqueda
+    def find_by_numeros(cls, numeros_list):
+        """
+        Busca todas las mesas cuyos números estén en la lista proporcionada.
+        """
         try:
-            num_busqueda = int(numero)
-        except (ValueError, TypeError):
-            num_busqueda = numero
-
-    # 2. Buscamos con el operador $or y respetando si la mesa está activa
-        return cls._collection().find_one({
-        "$and": [
-            {
-                "$or": [
-                    {"numero": num_busqueda},
-                    {"numero": str(numero)}
-                ]
-            },
-            cls._filtro_activa() # Importante para no traer mesas eliminadas
-        ]
-    })
-    @classmethod
-    def find_by_id(cls, mesa_id):
-        if isinstance(mesa_id, str):
-            mesa_id = ObjectId(mesa_id)
-        return cls._collection().find_one({"_id": mesa_id})
-
-    @classmethod
-    def find_by_seccion(cls, seccion):
-        return list(cls._collection().find({
-            "seccion": seccion,
-            **cls._filtro_activa()
-        }))
-
-    @classmethod
-    def find_by_tipo(cls, tipo):
-        return list(cls._collection().find({
-            "tipo": tipo,
-            **cls._filtro_activa()
-        }))
+            # 'numeros_list' debe ser una lista de enteros, ej: [1, 2, 3, 4, 5]
+            # Si tus números en la DB son strings, quita el int()
+            query = {"numero": {"$in": [int(n) for n in numeros_list]}}
+            return list(db.mesas.find(query))
+        except Exception as e:
+            print(f"❌ Error en find_by_numeros: {e}")
+            return []
 
     # =====================================================
-    # CONSULTAS PARA MESEROS
-    # =====================================================
-    @classmethod
-    def find_by_mesero(cls, mesero_id):
-        return list(cls._collection().find({
-            "mesero_id": mesero_id,
-            **cls._filtro_activa()
-        }))
-
-    @classmethod
-    def find_by_numeros(cls, lista_numeros):
-        numeros = [str(n) for n in lista_numeros]
-        return list(cls._collection().find({
-            "numero": {"$in": numeros},
-            **cls._filtro_activa()
-        }))
-
-    # =====================================================
-    # ESTADO DE MESAS PARA DASHBOARD MESERO
+    # ESTADO DE MESAS PARA DASHBOARD
     # =====================================================
     @classmethod
     def get_estado_mesas_mesero(cls, mesero_id=None, lista_numeros=None):
@@ -104,48 +53,49 @@ class Mesa:
             return {}
 
         estado_mesas = {}
-
         for mesa in mesas:
-            numero = mesa.get("numero")
+            # Usamos el numero como llave (siempre string para el JSON)
+            numero = str(mesa.get("numero"))
 
             estado_mesas[numero] = {
-                "numero": numero,
+                "id": str(mesa.get("_id")),
+                "numero": mesa.get("numero"),
                 "estado": mesa.get("estado", "disponible"),
                 "capacidad": mesa.get("capacidad", 0),
                 "seccion": mesa.get("seccion", ""),
-                "tipo": mesa.get("tipo", "interior"),
-                "cuenta_activa_id": mesa.get("cuenta_activa_id"),
-                "comensales": 0,
-                "total": 0.0
+                "cuenta_activa_id": (
+                    str(mesa.get("cuenta_activa_id"))
+                    if mesa.get("cuenta_activa_id")
+                    else None
+                ),
+                "comensales": mesa.get("comensales", 0),
+                "total": float(mesa.get("total", 0.0)),
             }
-
-            if mesa.get("estado") == "reservada":
-                estado_mesas[numero].update({
-                    "reserva_nombre": mesa.get("reserva_nombre"),
-                    "reserva_hora": mesa.get("reserva_hora"),
-                    "reserva_telefono": mesa.get("reserva_telefono")
-                })
 
         return estado_mesas
 
     # =====================================================
-    # ACTUALIZACIÓN DE ESTADO
+    # ACTUALIZACIÓN
     # =====================================================
     @classmethod
     def update_estado(cls, numero, nuevo_estado, cuenta_id=None):
+        mesa_doc = cls.find_by_numero(numero)
+        if not mesa_doc:
+            return None
+
         update = {
             "estado": nuevo_estado,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
-        if cuenta_id is not None:
-            update["cuenta_activa_id"] = cuenta_id
-        elif nuevo_estado == "disponible":
+        if cuenta_id:
+            update["cuenta_activa_id"] = str(cuenta_id)
+        elif nuevo_estado in ("disponible", "limpieza"):
             update["cuenta_activa_id"] = None
 
         return cls._collection().update_one(
-            {"numero": str(numero)},
-            {"$set": update}
+            {"_id": mesa_doc["_id"]},
+            {"$set": update},
         )
 
     @classmethod
@@ -156,22 +106,26 @@ class Mesa:
     def liberar_mesa(cls, numero):
         return cls._collection().update_one(
             {"numero": str(numero)},
-            {"$set": {
-                "estado": "limpieza",
-                "cuenta_activa_id": None,
-                "updated_at": datetime.utcnow()
-            }}
+            {
+                "$set": {
+                    "estado": "limpieza",
+                    "cuenta_activa_id": None,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
         )
 
     @classmethod
     def marcar_disponible(cls, numero):
         return cls._collection().update_one(
             {"numero": str(numero)},
-            {"$set": {
-                "estado": "disponible",
-                "cuenta_activa_id": None,
-                "updated_at": datetime.utcnow()
-            }}
+            {
+                "$set": {
+                    "estado": "disponible",
+                    "cuenta_activa_id": None,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
         )
 
     # =====================================================
@@ -181,10 +135,12 @@ class Mesa:
     def asignar_mesero(cls, numero, mesero_id):
         return cls._collection().update_one(
             {"numero": str(numero)},
-            {"$set": {
-                "mesero_id": mesero_id,
-                "updated_at": datetime.utcnow()
-            }}
+            {
+                "$set": {
+                    "mesero_id": mesero_id,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
         )
 
     @classmethod
@@ -193,8 +149,8 @@ class Mesa:
             {"numero": str(numero)},
             {
                 "$unset": {"mesero_id": ""},
-                "$set": {"updated_at": datetime.utcnow()}
-            }
+                "$set": {"updated_at": datetime.utcnow()},
+            },
         )
 
     # =====================================================
@@ -204,13 +160,15 @@ class Mesa:
     def crear_reserva(cls, numero, nombre, telefono, hora):
         return cls._collection().update_one(
             {"numero": str(numero)},
-            {"$set": {
-                "estado": "reservada",
-                "reserva_nombre": nombre,
-                "reserva_telefono": telefono,
-                "reserva_hora": hora,
-                "updated_at": datetime.utcnow()
-            }}
+            {
+                "$set": {
+                    "estado": "reservada",
+                    "reserva_nombre": nombre,
+                    "reserva_telefono": telefono,
+                    "reserva_hora": hora,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
         )
 
     @classmethod
@@ -220,14 +178,14 @@ class Mesa:
             {
                 "$set": {
                     "estado": "disponible",
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.utcnow(),
                 },
                 "$unset": {
                     "reserva_nombre": "",
                     "reserva_telefono": "",
-                    "reserva_hora": ""
-                }
-            }
+                    "reserva_hora": "",
+                },
+            },
         )
 
     # =====================================================
@@ -248,18 +206,20 @@ class Mesa:
             "activa": mesa_doc.get("activa", True),
             "cuenta_activa_id": mesa_doc.get("cuenta_activa_id"),
             "created_at": mesa_doc.get("created_at"),
-            "updated_at": mesa_doc.get("updated_at")
+            "updated_at": mesa_doc.get("updated_at"),
         }
 
         if "mesero_id" in mesa_doc:
             data["mesero_id"] = mesa_doc["mesero_id"]
 
         if mesa_doc.get("estado") == "reservada":
-            data.update({
-                "reserva_nombre": mesa_doc.get("reserva_nombre"),
-                "reserva_hora": mesa_doc.get("reserva_hora"),
-                "reserva_telefono": mesa_doc.get("reserva_telefono")
-            })
+            data.update(
+                {
+                    "reserva_nombre": mesa_doc.get("reserva_nombre"),
+                    "reserva_hora": mesa_doc.get("reserva_hora"),
+                    "reserva_telefono": mesa_doc.get("reserva_telefono"),
+                }
+            )
 
         return data
 
@@ -270,7 +230,7 @@ class Mesa:
     def get_estadisticas(cls):
         pipeline = [
             {"$match": cls._filtro_activa()},
-            {"$group": {"_id": "$estado", "count": {"$sum": 1}}}
+            {"$group": {"_id": "$estado", "count": {"$sum": 1}}},
         ]
 
         resultado = list(cls._collection().aggregate(pipeline))
@@ -280,7 +240,7 @@ class Mesa:
             "disponibles": 0,
             "ocupadas": 0,
             "reservadas": 0,
-            "limpieza": 0
+            "limpieza": 0,
         }
 
         for r in resultado:
