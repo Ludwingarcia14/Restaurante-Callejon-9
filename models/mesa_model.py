@@ -27,19 +27,53 @@ class Mesa:
         return list(cls._collection().find(cls._filtro_activa()))
 
     @classmethod
+    def find_by_numero(cls, numero):
+        """
+        Busca una sola mesa por su número. 
+        Soporta que el número llegue como string o entero.
+        """
+        try:
+            # Buscamos intentando ambos tipos de datos para evitar errores de coincidencia
+            query = {"numero": {"$in": [int(numero), str(numero)]}}
+            return cls._collection().find_one(query)
+        except Exception as e:
+            print(f"❌ Error en find_by_numero: {e}")
+            return None
+
+    @classmethod
+    def find_by_mesero(cls, mesero_id):
+        """
+        Busca todas las mesas asignadas a un mesero específico.
+        """
+        try:
+            return list(cls._collection().find({"mesero_id": str(mesero_id)}))
+        except Exception as e:
+            print(f"❌ Error en find_by_mesero: {e}")
+            return []
+    @classmethod
     def find_by_numeros(cls, numeros_list):
         """
         Busca todas las mesas cuyos números estén en la lista proporcionada.
         """
         try:
-            # 'numeros_list' debe ser una lista de enteros, ej: [1, 2, 3, 4, 5]
-            # Si tus números en la DB son strings, quita el int()
-            query = {"numero": {"$in": [int(n) for n in numeros_list]}}
-            return list(db.mesas.find(query))
+            if not numeros_list:
+                return []
+            
+            # Creamos una lista que contenga los números como int y como str 
+            # para asegurar que encuentre la mesa sin importar el tipo en la DB
+            busqueda = []
+            for n in numeros_list:
+                try:
+                    busqueda.append(int(n))
+                    busqueda.append(str(n))
+                except:
+                    busqueda.append(str(n))
+
+            query = {"numero": {"$in": busqueda}}
+            return list(cls._collection().find(query))
         except Exception as e:
             print(f"❌ Error en find_by_numeros: {e}")
             return []
-
     # =====================================================
     # ESTADO DE MESAS PARA DASHBOARD
     # =====================================================
@@ -54,24 +88,15 @@ class Mesa:
 
         estado_mesas = {}
         for mesa in mesas:
-            # Usamos el numero como llave (siempre string para el JSON)
-            numero = str(mesa.get("numero"))
-
-            estado_mesas[numero] = {
+            # FORZAR LLAVE COMO STRING
+            n_mesa = str(mesa.get("numero"))
+            estado_mesas[n_mesa] = {
                 "id": str(mesa.get("_id")),
                 "numero": mesa.get("numero"),
-                "estado": mesa.get("estado", "disponible"),
-                "capacidad": mesa.get("capacidad", 0),
-                "seccion": mesa.get("seccion", ""),
-                "cuenta_activa_id": (
-                    str(mesa.get("cuenta_activa_id"))
-                    if mesa.get("cuenta_activa_id")
-                    else None
-                ),
+                "estado": str(mesa.get("estado", "disponible")).lower(), # Forzar minúsculas
                 "comensales": mesa.get("comensales", 0),
-                "total": float(mesa.get("total", 0.0)),
+                "total": float(mesa.get("total", 0.0))
             }
-
         return estado_mesas
 
     # =====================================================

@@ -3,6 +3,7 @@ Módulo de Rutas - Sistema de Restaurante Callejón 9
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
 from flask import Blueprint, render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, jsonify
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController

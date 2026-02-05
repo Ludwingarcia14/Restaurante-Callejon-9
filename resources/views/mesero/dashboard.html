@@ -342,62 +342,64 @@ function actualizarVisualizacionMesas() {
     
     mesasCards.forEach(card => {
         const numeroMesa = card.dataset.mesa;
-        const mesaInfo = mesasData[numeroMesa]; // Buscamos en el objeto que trae la API
+        
+        // --- LA CLAVE DEL CAMBIO AQUÍ ---
+        // Intentamos buscar la mesa como string y como número para asegurar la coincidencia
+        const mesaInfo = mesasData[numeroMesa] || mesasData[parseInt(numeroMesa)]; 
         
         const statusSpan = card.querySelector('.mesa-status');
         const comensalesP = card.querySelector('.mesa-comensales');
         const iconContainer = card.querySelector('.icon-container');
         const icon = iconContainer.querySelector('i');
 
-        // Reset de clases básicas para evitar conflictos
-        card.classList.remove('border-red-500', 'border-gray-200', 'bg-red-50');
-        iconContainer.classList.remove('bg-green-100', 'bg-red-100', 'bg-gray-100');
-        icon.classList.remove('text-red-600', 'text-green-600', 'text-gray-600');
+        // Reset de clases básicas
+        card.classList.remove('border-red-500', 'border-gray-200', 'bg-red-50', 'border-blue-400');
+        iconContainer.classList.remove('bg-green-100', 'bg-red-100', 'bg-gray-100', 'bg-blue-100');
+        icon.classList.remove('text-red-600', 'text-green-600', 'text-gray-600', 'text-blue-600');
 
         if (mesaInfo) {
-            if (mesaInfo.estado === 'ocupada') {
-                // --- ESTADO OCUPADA ---
+            // Normalizamos el estado a minúsculas para comparar siempre igual
+            const estado = (mesaInfo.estado || "").toLowerCase().trim();
+
+            if (estado === 'ocupada') {
                 ocupadas++;
                 statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700';
                 statusSpan.textContent = 'OCUPADA';
-                
-                // Mostrar comensales si existen en el objeto
-                const num = mesaInfo.comensales || 0;
-                comensalesP.textContent = `${num} PERSONAS`;
-                comensalesP.classList.replace('text-gray-400', 'text-red-500');
-
+                comensalesP.textContent = `${mesaInfo.comensales || 0} PERSONAS`;
+                comensalesP.classList.remove('text-gray-400');
+                comensalesP.classList.add('text-red-500');
                 card.classList.add('border-red-500', 'bg-red-50');
                 iconContainer.classList.add('bg-red-100');
                 icon.classList.add('text-red-600');
 
-            } else if (mesaInfo.estado === 'reservada') {
-                // --- ESTADO RESERVADA ---
+            } else if (estado === 'reservada') {
                 statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700';
                 statusSpan.textContent = 'RESERVADA';
                 comensalesP.textContent = mesaInfo.reserva_hora || 'RESERVA';
-                
                 card.classList.add('border-blue-400');
                 iconContainer.classList.add('bg-blue-100');
                 icon.classList.add('text-blue-600');
+
             } else {
-                // --- ESTADO DISPONIBLE ---
+                // TRATAR COMO DISPONIBLE/LIBRE
                 statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700';
                 statusSpan.textContent = 'LIBRE';
                 comensalesP.textContent = 'SIN CLIENTES';
-                comensalesP.classList.replace('text-red-500', 'text-gray-400');
-
+                comensalesP.classList.remove('text-red-500');
+                comensalesP.classList.add('text-gray-400');
                 card.classList.add('border-gray-200');
                 iconContainer.classList.add('bg-green-100');
                 icon.classList.add('text-green-600');
             }
         } else {
-            // Si no hay info de la mesa
+            // Si sigue saliendo SIN DATOS, imprimimos en consola para rastrear por qué
+            console.error(`Error: No hay data para la mesa ${numeroMesa}`, mesasData);
             statusSpan.textContent = 'N/A';
             comensalesP.textContent = 'SIN DATOS';
         }
     });
     
-    // Actualizar contadores del Dashboard
+    // Actualizar contadores
     const totalMesas = mesasCards.length;
     const mesasOcupadasElement = document.getElementById('mesas-ocupadas');
     const mesasLibresElement = document.getElementById('mesas-libres');
@@ -405,7 +407,6 @@ function actualizarVisualizacionMesas() {
     if (mesasOcupadasElement) mesasOcupadasElement.textContent = ocupadas;
     if (mesasLibresElement) mesasLibresElement.textContent = totalMesas - ocupadas;
 }
-
 // ===================================
 // RENDERIZADO DE COMANDAS
 // ===================================
