@@ -1,9 +1,10 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from bson import json_util
 from config.db import db
+from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 import zipfile
 import threading
 import schedule
@@ -149,9 +150,28 @@ class BackupController:
             
             flash(f"✅ Respaldo '{filename}' generado con éxito. Total de colecciones: {len(selected_collections)}", "success")
             
+            # ✨ NOTIFICAR BACKUP CREADO
+            try:
+                NotificacionSistemaController.notificar_backup_creado(
+                    usuario_id=session.get("usuario_id"),
+                    nombre_archivo=filename
+                )
+            except Exception as notif_error:
+                print(f"⚠️ Error al notificar backup: {notif_error}")
+            
         except Exception as e:
             print(f"❌ Error al generar respaldo: {str(e)}")
             flash(f"❌ Error al generar respaldo: {str(e)}", "error")
+            
+            # ✨ NOTIFICAR ERROR
+            try:
+                NotificacionSistemaController.notificar_error(
+                    usuario_id=session.get("usuario_id"),
+                    tipo_error="BACKUP_ERROR",
+                    descripcion=str(e)
+                )
+            except Exception as notif_error:
+                print(f"⚠️ Error al notificar error: {notif_error}")
 
         return redirect(url_for('routes.admin_backup_view'))
 

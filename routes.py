@@ -8,6 +8,7 @@ from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
 from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
+from controllers.notificaciones.notificacion_controller import NotificacionController
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -57,6 +58,59 @@ def api_dashboard_personal():
 def api_empleados_todos():
     """API endpoint para obtener todos los empleados"""
     return DashboardAPIController.get_todos_empleados()
+
+# ============================================
+#  API NOTIFICACIONES
+# ============================================
+
+# Obtener datos del usuario para Socket.IO
+@routes_bp.route('/api/me', methods=['GET'])
+@login_required
+def api_me():
+    """Endpoint para obtener datos del usuario autenticado y token de socket"""
+    return NotificacionController.get_datos_socket()
+
+# Obtener todas las notificaciones
+@routes_bp.route('/api/notificaciones', methods=['GET'])
+@login_required
+def api_notificaciones():
+    """Obtiene todas las notificaciones del usuario"""
+    return NotificacionController.get_notificaciones()
+
+# Obtener solo notificaciones no leídas
+@routes_bp.route('/api/notificaciones/no-leidas', methods=['GET'])
+@login_required
+def api_notificaciones_no_leidas():
+    """Obtiene notificaciones no leídas"""
+    return NotificacionController.get_notificaciones_no_leidas()
+
+# Contador de notificaciones no leídas
+@routes_bp.route('/api/notificaciones/contador', methods=['GET'])
+@login_required
+def api_notificaciones_contador():
+    """Obtiene el número de notificaciones no leídas"""
+    return NotificacionController.get_contador()
+
+# Marcar una notificación como leída
+@routes_bp.route('/api/notificaciones/<id_notificacion>/leida', methods=['PUT'])
+@login_required
+def api_notificacion_leida(id_notificacion):
+    """Marca una notificación específica como leída"""
+    return NotificacionController.marcar_leida(id_notificacion)
+
+# Marcar todas como leídas
+@routes_bp.route('/api/notificaciones/marcar-todas-leidas', methods=['POST'])
+@login_required
+def api_marcar_todas_leidas():
+    """Marca todas las notificaciones del usuario como leídas"""
+    return NotificacionController.marcar_todas_leidas()
+
+# Eliminar notificación
+@routes_bp.route('/api/notificaciones/<id_notificacion>', methods=['DELETE'])
+@login_required
+def api_eliminar_notificacion(id_notificacion):
+    """Elimina una notificación específica"""
+    return NotificacionController.eliminar_notificacion(id_notificacion)
 
 # ============================================
 #  PANEL DE ADMINISTRACIÓN (Rol 1)

@@ -1,47 +1,125 @@
-import requests
-import json
+"""
+Servicio de Notificaciones - Restaurante Callejón 9
+Versión simplificada con modo local para desarrollo
+"""
+
+import os
+import logging
+from datetime import datetime
+
+# Configuración
+USE_LOCAL = os.getenv("USE_LOCAL_SOCKET", "true").lower() == "true"
+NODE_NOTIFICATIONS_URL = os.getenv("NODE_NOTIFICATIONS_URL", "http://localhost:8000")
+
+logging.basicConfig(level=logging.INFO)
+
 
 def notificar_usuario(user_id, evento, mensaje, datos_extra=None):
-    #NODE_URL = "http://localhost:3000/api/notificar"
-    NODE_URL = "https://pyme-notificaciones.onrender.com/api/notificar"
-
-
-    if datos_extra is None: 
-        datos_extra = {}
-
-    # CORRECCIÓN 2: Quitar "room". El target es solo el ID convertido a string.
-    payload = {
-        "target": str(user_id), 
-        "evento": evento,
-        "data": {"mensaje": mensaje, **datos_extra}
-    }
-
+    """
+    Envía una notificación push en tiempo real
+    
+    Modos:
+    - LOCAL: Solo registra en logs (desarrollo)
+    - REMOTE: Envía a servidor externo (producción)
+    
+    Args:
+        user_id: ID del usuario destinatario
+        evento: Tipo de evento (LOGIN, LOGOUT, ERROR, etc.)
+        mensaje: Mensaje descriptivo
+        datos_extra: Datos adicionales opcionales
+        
+    Returns:
+        dict: Resultado de la operación
+    """
+    
+    # MODO LOCAL (Desarrollo)
+    if USE_LOCAL:
+        logging.info(f"[NOTIF LOCAL] 📬 {evento} para user {user_id}: {mensaje}")
+        
+        # Simular éxito
+        return {
+            "success": True, 
+            "mode": "local",
+            "mensaje": "Notificación registrada localmente"
+        }
+    
+    # MODO REMOTO (Producción con servidor Socket.IO)
     try:
-        response = requests.post(NODE_URL, json=payload, timeout=5)
-
+        import requests
+        
+        payload = {
+            "user_id": str(user_id),
+            "evento": evento,
+            "mensaje": mensaje,
+            "datos_extra": datos_extra or {},
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Timeout de 30 segundos (suficiente para despertar servidor en Render)
+        response = requests.post(
+            f"{NODE_NOTIFICATIONS_URL}/api/notify",
+            json=payload,
+            timeout=30
+        )
+        
         if response.status_code == 200:
-            resp_json = response.json()
-            # Verificamos si Node dijo "Enviado" o "Usuario no conectado"
-            if resp_json.get("status") == "Enviado":
-                print(f"✅Notificación push enviada al usuario {user_id}")
-                return True
-            else:
-                print(f"⚠️Node recibió la petición pero el usuario {user_id} no estaba conectado.")
-                return False
+            logging.info(f"✅ Notificación enviada: {evento} -> user {user_id}")
+            return {
+                "success": True, 
+                "mode": "remote",
+                "mensaje": "Notificación enviada al servidor"
+            }
         else:
-            print(f"❌Node respondió error {response.status_code}: {response.text}")
-            return False
+            logging.warning(f"⚠️ Error al enviar notificación: {response.status_code}")
+            return {
+                "success": False, 
+                "error": response.text,
+                "mode": "remote_error"
+            }
+            
+    except Exception as e:
+        logging.error(f"❌ Error de conexión: {e}")
+        
+        # Fallback: registrar en logs
+        logging.info(f"[FALLBACK] {evento} para user {user_id}: {mensaje}")
+        
+        return {
+            "success": False, 
+            "error": str(e), 
+            "mode": "fallback"
+        }
 
-    except requests.exceptions.RequestException as e:
-        print(f"❌Error de conexión con servidor de notificaciones: {e}")
-        return False
 
-def notificar_financiera(email_destino, datos_cliente, financiera_nombre):
-    if not email_destino or email_destino == "null":
-        print(f"⚠️Sin email para {financiera_nombre}")
-        return
-
-    asunto = f"Nuevo Prospecto Calificado para {financiera_nombre}"
-    # Aquí iría tu lógica real de envío de correo (SendGrid, Nodemailer, SMTP, etc.)
-    print(f"📧[EMAIL SIMULADO] Para: {email_destino} | Asunto: {asunto}")
-    return True
+def enviar_notificacion_masiva(user_ids, evento, mensaje, datos_extra=None):
+    """
+    Envía una notificación a múltiples usuarios
+    
+    Args:
+        user_ids: Lista de IDs de usuarios
+        evento: Tipo de evento
+        mensaje: Mensaje
+        datos_extra: Datos adicionales
+        
+    Returns:
+        dict: Resumen de envíos
+    """
+    resultados = {
+        "exitosos": 0,
+        "fallidos": 0,
+        "total": len(user_ids)
+    }
+    
+    for user_id in user_ids:
+        resultado = notificar_usuario(user_id, evento, mensaje, datos_extra)
+        
+        if resultado.get("success"):
+            resultados["exitosos"] += 1
+        else:
+            resultados["fallidos"] += 1
+    
+    logging.info(
+        f"[MASIVO] {resultados['exitosos']}/{resultados['total']} "
+        f"notificaciones enviadas para evento {evento}"
+    )
+    
+    return resultados
