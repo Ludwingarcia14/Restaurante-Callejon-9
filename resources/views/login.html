@@ -9,118 +9,195 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 
 	<style>
-		@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-		* { box-sizing: border-box; }
+		@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+		
+		:root {
+			--color-primary: #F2913D;      
+			--color-primary-dark: #DE823D; 
+			--color-secondary: #F2CA99;
+			--color-accent: #F2A399;       
+			--color-dark: #0D0D0D;
+		}
 
-		body {
+		* { 
+			box-sizing: border-box; 
 			margin: 0;
 			padding: 0;
+		}
+
+		body {
 			min-height: 100vh;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			font-family: 'Inter', sans-serif;
+			font-family: 'Poppins', sans-serif;
 			display: flex;
-			justify-content: center;
+			overflow: hidden;
+		}
+
+		.login-wrapper {
+			display: flex;
+			width: 100%;
+			height: 100vh;
+		}
+
+		/* Lado izquierdo - Formulario */
+		.login-side {
+			flex: 1;
+			display: flex;
 			align-items: center;
+			justify-content: center;
+			background: #ffffff;
+			padding: 40px;
 			position: relative;
 		}
 
-		.container {
-			background: rgba(255, 255, 255, 0.95);
-			border-radius: 20px;
-			overflow: hidden;
-			box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-			animation: fadeIn 0.6s ease-out;
-			max-width: 450px;
-			width: 100%;
-			margin: 20px;
-		}
-
-		@keyframes fadeIn { 
-			from { opacity: 0; transform: scale(0.95) translateY(20px); } 
-			to { opacity: 1; transform: scale(1) translateY(0); } 
-		}
-
-		.login-header {
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			padding: 40px 35px;
-			text-align: center;
-			color: white;
-		}
-
 		.login-container {
-			padding: 40px 35px;
+			width: 100%;
+			max-width: 450px;
+			animation: fadeInLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 		}
 
-		.logo { 
-			width: 120px; 
-			margin: 0 auto 15px; 
-			filter: brightness(0) invert(1);
+		@keyframes fadeInLeft {
+			from {
+				opacity: 0;
+				transform: translateX(-30px);
+			}
+			to {
+				opacity: 1;
+				transform: translateX(0);
+			}
 		}
 
-		h2 { 
-			text-align: center; 
-			margin-bottom: 10px; 
-			font-weight: 600; 
-			font-size: 28px; 
-			color: white;
+		.logo-section {
+			text-align: center;
+			margin-bottom: 40px;
+		}
+
+		.logo-img {
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			object-fit: cover;
+			margin-bottom: 20px;
+			box-shadow: 0 4px 12px rgba(242, 145, 61, 0.2);
+		}
+
+		h1 {
+			font-size: 32px;
+			font-weight: 700;
+			color: var(--color-dark);
+			margin-bottom: 8px;
+			letter-spacing: -0.5px;
 		}
 
 		.subtitle {
-			text-align: center;
-			color: rgba(255, 255, 255, 0.9);
-			font-size: 14px;
-			margin-bottom: 0;
-		}
-
-		form { display: flex; flex-direction: column; gap: 20px; }
-
-		.input-group { position: relative; }
-
-		input {
-			width: 100%;
-			padding: 14px 16px;
-			border: 2px solid #e5e7eb;
-			border-radius: 12px;
-			background-color: #f9fafb;
+			color: #6b7280;
 			font-size: 15px;
-			transition: all 0.3s ease;
+			font-weight: 400;
 		}
-		
-		input:focus { 
-			border-color: #667eea; 
-			background-color: #ffffff; 
-			outline: none; 
-			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
+
+		form {
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+			margin-top: 40px;
 		}
+
+		.input-group {
+			position: relative;
+		}
+
+.input-label {
+	display: block;
+	font-size: 15px;
+	font-weight: 600;
+	color: #374151;
+	margin-bottom: 10px;
+	letter-spacing: .3px;
+}
+
+
+		.input-wrapper {
+			position: relative;
+		}
+
+.input-icon {
+	left: 22px;
+	width: 22px;
+	height: 22px;
+	color: #9ca3af;
+}
+
+
+input {
+	width: 100%;
+	padding: 20px 20px 20px 64px;
+	border: 2px solid #e5e7eb;
+	border-radius: 18px;
+	background: #fff;
+	font-size: 16px;
+	font-family: 'Poppins', sans-serif;
+	color: var(--color-dark);
+	transition: .25s ease;
+	box-shadow: 0 4px 12px rgba(0,0,0,.05);
+}
+
+
+
+		input::placeholder {
+			color: #9ca3af;
+		}
+
+input:focus {
+	border-color: var(--color-primary);
+	outline: none;
+	box-shadow: 0 0 0 4px rgba(242,145,61,.15);
+}
+
+
+
+		input:focus ~ .input-label,
+		.input-group:focus-within .input-icon {
+	left: 20px;
+	width: 22px;
+	height: 22px;
+}
+
 
 		button {
 			position: relative;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			padding: 14px 0;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			padding: 15px 0;
+			background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
 			color: #fff;
 			font-weight: 600;
 			border: none;
-			border-radius: 12px;
-			font-size: 16px;
+			border-radius: 20px;
+			font-size: 17px;
 			cursor: pointer;
-			transition: all 0.3s ease;
+			height: 54px;
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+			box-shadow: 0 4px 12px rgba(242, 145, 61, 0.3);
+			font-family: 'Poppins', sans-serif;
 		}
-		
+
 		button:disabled {
-			background: #a0a0a0;
+			background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
 			cursor: not-allowed;
+			box-shadow: none;
 		}
-		
-		button:hover:enabled { 
-			transform: translateY(-2px); 
-			box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); 
+
+		button:hover:enabled {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 20px rgba(242, 145, 61, 0.4);
+		}
+
+		button:active:enabled {
+			transform: translateY(0);
 		}
 
 		.spinner {
-			border: 3px solid #f3f3f3;
+			border: 3px solid rgba(255, 255, 255, 0.3);
 			border-top: 3px solid #fff;
 			border-radius: 50%;
 			width: 18px;
@@ -129,68 +206,242 @@
 			display: none;
 			animation: spin 0.8s linear infinite;
 		}
-		
-		@keyframes spin { 
-			0% { transform: rotate(0deg); } 
-			100% { transform: rotate(360deg); } 
+
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
 		}
 
 		.alert-error {
-			background-color: #fee2e2;
+			background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
 			color: #991b1b;
-			border: 1px solid #fecaca;
-			padding: 14px 18px;
-			border-radius: 10px;
-			margin-bottom: 20px;
+			border-left: 4px solid #dc2626;
+			padding: 14px 16px;
+			border-radius: 12px;
+			margin-bottom: 24px;
 			font-size: 14px;
 			display: none;
+			align-items: flex-start;
+			gap: 12px;
+			box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
+			animation: slideDown 0.3s ease-out;
+		}
+
+		@keyframes slideDown {
+			from {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.alert-error.show {
+			display: flex;
+		}
+
+		.alert-error svg {
+			flex-shrink: 0;
+			margin-top: 1px;
+		}
+
+		.image-side {
+			flex: 1;
+			background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+			position: relative;
+			overflow: hidden;
+			display: flex;
 			align-items: center;
-			gap: 10px;
-		}
-		
-		.alert-error.show { 
-			display: flex; 
+			justify-content: center;
 		}
 
-		.role-badge {
-			display: inline-block;
-			padding: 6px 12px;
-			border-radius: 8px;
-			font-size: 12px;
-			font-weight: 600;
-			margin-top: 10px;
+		.image-side::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-image: url('/static/img/callejon9.jpeg');
+			background-size: cover;
+			background-position: center;
+			opacity: 0.6;
+			animation: zoomIn 20s ease-in-out infinite alternate;
 		}
 
-		.role-admin { background: #dbeafe; color: #1e40af; }
-		.role-mesero { background: #dcfce7; color: #166534; }
-		.role-cocina { background: #fed7aa; color: #9a3412; }
+		@keyframes zoomIn {
+			0% {
+				transform: scale(1);
+			}
+			100% {
+				transform: scale(1.1);
+			}
+		}
+
+		.image-overlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0,0,0,.25);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 60px;
+			text-align: center;
+			color: white;
+		}
+
+		.decorative-icon {
+			width: 120px;
+			height: 120px;
+			background: rgba(255, 255, 255, 0.15);
+			backdrop-filter: blur(10px);
+			border-radius: 30px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 30px;
+			animation: float 3s ease-in-out infinite;
+		}
+
+		@keyframes float {
+			0%, 100% {
+				transform: translateY(0);
+			}
+			50% {
+				transform: translateY(-15px);
+			}
+		}
+
+		.decorative-icon svg {
+			width: 60px;
+			height: 60px;
+			color: white;
+		}
+
+		.welcome-text {
+			font-size: 40px;
+			font-weight: 700;
+			margin-bottom: 16px;
+			letter-spacing: -1px;
+		}
+
+		.welcome-description {
+			font-size: 18px;
+			font-weight: 300;
+			opacity: 0.95;
+			line-height: 1.6;
+			max-width: 400px;
+		}
+
+		/* Responsive */
+		@media (max-width: 768px) {
+			.login-wrapper {
+				flex-direction: column;
+			}
+
+			.image-side {
+				display: none;
+			}
+
+			.login-side {
+				padding: 30px 20px;
+			}
+
+			.login-container {
+				max-width: 100%;
+			}
+
+			h1 {
+				font-size: 28px;
+			}
+		}
+
+		.swal2-popup {
+			border-radius: 20px;
+			font-family: 'Poppins', sans-serif;
+		}
+
+		.swal2-confirm {
+			background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%) !important;
+			border-radius: 10px !important;
+			padding: 12px 30px !important;
+			font-weight: 600 !important;
+		}
+
+		.swal2-cancel {
+			border-radius: 10px !important;
+		}
 	</style>
 </head>
 <body>
-	<div class="container">
-		<!-- Header con Logo y Título -->
-		<div class="login-header">
-			<img src="/static/img/callejon9.jpeg" alt="Logo" class="logo" />
-			<h2>Callejón 9</h2>
-			<p class="subtitle">Sistema de Gestión de Restaurante</p>
+	<div class="login-wrapper">
+		<!-- Lado izquierdo - Formulario -->
+		<div class="login-side">
+			<div class="login-container">
+				<div class="logo-section">
+					<img src="/static/img/callejon9.jpeg" alt="Logo Callejón 9" class="logo-img" />
+					<h1>Callejón 19</h1>
+					<p class="subtitle">Sistema de Gestión de Restaurante</p>
+				</div>
+
+				<div id="error-msg" class="alert-error"></div>
+
+				<form id="loginForm" method="post" novalidate>
+					<div class="input-group">
+						<label class="input-label" for="emailInput">Correo electrónico</label>
+						<div class="input-wrapper">
+							<svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+								<polyline points="22,6 12,13 2,6"></polyline>
+							</svg>
+							<input 
+								type="email" 
+								name="email" 
+								placeholder="tu@email.com" 
+								required 
+								id="emailInput" 
+								autocomplete="email" 
+							/>
+						</div>
+					</div>
+					
+					<div class="input-group">
+						<label class="input-label" for="passwordInput">Contraseña</label>
+						<div class="input-wrapper">
+							<svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+								<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+							</svg>
+							<input 
+								type="password" 
+								name="password" 
+								placeholder="••••••••" 
+								required 
+								id="passwordInput" 
+								autocomplete="current-password" 
+							/>
+						</div>
+					</div>
+					
+					<button type="submit" id="loginButton">
+						<span class="btn-text">Iniciar Sesión</span>
+						<span class="spinner"></span>
+					</button>
+				</form>
+			</div>
 		</div>
 
-		<!-- Formulario de Login -->
-		<div class="login-container">
-			<div id="error-msg" class="alert-error"></div>
-
-			<form id="loginForm" method="post" novalidate>
-				<div class="input-group">
-					<input type="email" name="email" placeholder="Correo electrónico" required id="emailInput" autocomplete="email" />
+		<div class="image-side">
+			<div class="image-overlay">
 				</div>
-				<div class="input-group">
-					<input type="password" name="password" placeholder="Contraseña" required id="passwordInput" autocomplete="current-password" />
-				</div>
-				<button type="submit" id="loginButton">
-					<span class="btn-text">Iniciar Sesión</span>
-					<span class="spinner"></span>
-				</button>
-			</form>
+			</div>
+		</div>
 	</div>
 
 	<script>
@@ -203,7 +454,12 @@
 		const LOGIN_URL = "{{ url_for('routes.login') }}";
 
 		function showErrorMessage(message) {
-			errorMsgDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> <div>${message}</div>`;
+			errorMsgDiv.innerHTML = `
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+				</svg> 
+				<div>${message}</div>
+			`;
 			errorMsgDiv.classList.add('show');
 			setTimeout(() => {
 				errorMsgDiv.classList.remove('show');
@@ -255,12 +511,10 @@
 				console.log("Respuesta del servidor:", result);
 
 				if (result.status === 'success') {
-					// Verificar si requiere 2FA
 					if (result.user && result.user.requires_2fa === true) {
 						setFormLoading(false);
 						await show2FAModal(result.user.tipo, result.user.secret, result.dashboard);
 					} else {
-						// Login exitoso sin 2FA
 						await Swal.fire({
 							icon: "success",
 							title: "¡Bienvenido!",
@@ -285,13 +539,17 @@
 			const { value: otpCode } = await Swal.fire({
 				title: 'Verificación 2FA',
 				html: `
-					<p class="mb-4">Introduce el código de 6 dígitos de tu aplicación autenticadora</p>
-					<input id="swal-input-otp" class="swal2-input" type="text" maxlength="6" placeholder="123456" style="font-size: 24px; letter-spacing: 10px; text-align: center;">
+					<p class="mb-4" style="color: #6b7280; font-size: 14px;">Introduce el código de 6 dígitos de tu aplicación autenticadora</p>
+					<input id="swal-input-otp" class="swal2-input" type="text" maxlength="6" placeholder="123456" style="font-size: 24px; letter-spacing: 10px; text-align: center; border: 2px solid #e5e7eb; border-radius: 12px;">
 				`,
 				icon: 'info',
 				showCancelButton: true,
 				confirmButtonText: 'Verificar',
 				cancelButtonText: 'Cancelar',
+				customClass: {
+					confirmButton: 'swal2-confirm',
+					cancelButton: 'swal2-cancel'
+				},
 				preConfirm: () => {
 					const code = document.getElementById('swal-input-otp').value;
 					if (!code || code.length !== 6) {
