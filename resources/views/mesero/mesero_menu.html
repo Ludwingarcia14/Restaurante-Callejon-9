@@ -307,6 +307,25 @@ async function enviarPedido() {
         }, 1500);
     }
 }
+async function enviarPedidoACocina() {
+    if (carrito.length === 0) return Swal.fire("Error", "El carrito está vacío", "error");
+
+    try {
+        const res = await fetch(`/api/mesero/comanda/${cuentaActivaId}/items`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ items: carrito })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire("¡Éxito!", "El pedido ha sido enviado a cocina", "success")
+                .then(() => window.location.href = "/dashboard/mesero");
+        }
+    } catch (error) {
+        Swal.fire("Error", "No se pudo conectar con el servidor", "error");
+    }
+}
 </script>
 
 <style>

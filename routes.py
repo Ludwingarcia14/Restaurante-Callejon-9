@@ -11,6 +11,9 @@ from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
 from flask import jsonify, request
 from models.mesa_model import Mesa
+from models.comanda_model import Comanda
+from models.producto_model import Producto
+from config.db import db
 routes_bp = Blueprint("routes", __name__)
 def api_auth_error(message="No autorizado", code=401):
     return jsonify({
@@ -111,7 +114,25 @@ def mesero_mesas():
         stats=stats
     )
 
-
+@routes_bp.route("/api/menu", methods=["GET"])
+@login_required
+@rol_required(['1', '2']) # Agregamos '1' para que tú como admin puedas probarlo
+def api_get_menu():
+    try:
+        # Llamamos al modelo que consulta MongoDB
+        productos = Producto.obtener_todo() 
+        
+        # LOG DE DEPURACIÓN: Esto saldrá en tu terminal de Python
+        print(f"DEBUG: Enviando {len(productos)} productos al modal.")
+        
+        return jsonify({
+            "success": True, 
+            "menu": productos
+        })
+    except Exception as e:
+        print(f"❌ Error en api_get_menu: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 @routes_bp.route("/mesero/comandas")
 @login_required
 @rol_required(['2'])
@@ -201,20 +222,57 @@ def api_mesero_mesas_estado():
         print("❌ api_mesero_mesas_estado:", e)
         return jsonify({"success": False, "error": str(e)}), 500
     
-@routes_bp.route("/api/mesero/mesa/<numero>", methods=["GET"]) # Quitamos el int:
+@routes_bp.route("/api/mesero/mesa/<numero>", methods=["GET"])
 @login_required
-@rol_required(['2'])
 def api_mesero_mesa_detalle(numero):
     try:
-        # Convertimos a int para buscar en Mongo
-        num_int = int(numero) 
-        mesa = Mesa.find_by_numero(num_int)
+        from bson.objectid import ObjectId
+        # 1. Buscar la mesa
+        mesa_doc = db.mesas.find_one({"numero": int(numero)})
+        if not mesa_doc:
+            return jsonify({"success": False, "error": "Mesa no encontrada"}), 404
         
-        if not mesa:
-            return jsonify({"success": False, "error": "No encontrada"}), 404
+        raw_id = mesa_doc.get("cuenta_activa_id")
+        print(f"DEBUG: Mesa {numero} tiene cuenta_activa_id: {raw_id} (Tipo: {type(raw_id)})")
+
+        mesa_data = {
+            "numero": mesa_doc["numero"],
+            "estado": mesa_doc.get("estado", "libre"),
+            "comensales": mesa_doc.get("comensales", 0),
+            "cuenta_activa_id": str(raw_id) if raw_id else None
+        }
+
+        comanda_data = None
+        # 2. Intentar buscar la comanda con diferentes métodos de ID
+        if mesa_data["estado"] == "ocupada" and raw_id:
+            # Intentamos buscarlo tal cual viene (sea ObjectId o String)
+            comanda = db.comandas.find_one({"_id": raw_id})
             
-        return jsonify({"success": True, "mesa": Mesa.to_dict(mesa)})
+            # Si no lo encuentra, intentamos forzar la conversión a ObjectId
+            if not comanda and isinstance(raw_id, str):
+                try:
+                    comanda = db.comandas.find_one({"_id": ObjectId(raw_id)})
+                except:
+                    pass
+
+            if comanda:
+                print(f"DEBUG: ¡Comanda encontrada! Folio: {comanda.get('folio')}")
+                comanda_data = {
+                    "folio": comanda.get("folio", "N/A"),
+                    "total": float(comanda.get("total", 0)),
+                    "items": comanda.get("items", []),
+                    "num_comensales": comanda.get("num_comensales", mesa_data["comensales"])
+                }
+            else:
+                print(f"❌ DEBUG: No se encontró la comanda en la colección 'comandas' para el ID {raw_id}")
+
+        return jsonify({
+            "success": True, 
+            "mesa": mesa_data,
+            "comanda": comanda_data
+        })
     except Exception as e:
+        print(f"❌ Error detalle mesa: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @routes_bp.route("/api/mesero/estadisticas/dia", methods=["GET"])
@@ -248,6 +306,108 @@ def api_mesero_comandas_activas(): # Cambiamos nombre para claridad
         "comandas": [],
         "total": 0
     })
+@routes_bp.route("/api/mesero/cuenta/abrir", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_abrir_cuenta():
+    try:
+        data = request.json
+        numero_mesa = data.get('numero_mesa')
+        num_comensales = data.get('num_comensales')
+        mesero_id = session.get("user_id")
+
+        if not numero_mesa or not num_comensales:
+            return jsonify({"success": False, "error": "Datos incompletos"}), 400
+
+        # 1. Crear la comanda y obtener el ID (ya viene como string desde el modelo)
+        from models.comanda_model import Comanda
+        cuenta_id_str = Comanda.crear_comanda(numero_mesa, num_comensales, mesero_id)
+        
+        # 2. Convertir a ObjectId solo para la operación de guardado en la DB
+        from bson.objectid import ObjectId
+        from config.db import db
+
+        db.mesas.update_one(
+            {"numero": int(numero_mesa)},
+            {"$set": {
+                "estado": "ocupada",
+                "cuenta_activa_id": ObjectId(cuenta_id_str), # Se guarda como objeto en Mongo
+                "comensales": int(num_comensales)
+            }}
+        )
+
+        # 3. Devolver el ID como STRING para que JSON no explote
+        return jsonify({
+            "success": True, 
+            "cuenta_id": str(cuenta_id_str), # <--- Forzamos string aquí
+            "message": "Cuenta abierta correctamente"
+        })
+    except Exception as e:
+        print(f"❌ Error api_abrir_cuenta: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@routes_bp.route("/api/mesero/comanda/<cuenta_id>/items", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_guardar_items_comanda(cuenta_id):
+    try:
+        items = request.json.get('items', [])
+        if not items:
+            return jsonify({"success": False, "error": "Pedido vacío"}), 400
+
+        Comanda.agregar_items(cuenta_id, items)
+        return jsonify({"success": True, "message": "Pedido enviado a cocina"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@routes_bp.route("/mesero/comanda/<cuenta_id>/agregar")
+@login_required
+@rol_required(['2'])
+def vista_agregar_items(cuenta_id):
+    perfil_mesero = session.get("perfil_mesero")
+    return render_template(
+        "mesero/mesero_menu.html", # Reutilizas tu plantilla de menú
+        perfil=perfil_mesero,
+        cuenta_id=cuenta_id # Pasas el ID para que el JS sepa a dónde guardar
+    )
+    from config.db import db
+from datetime import datetime
+from bson.objectid import ObjectId
+
+class Comanda:
+    @staticmethod
+    def _collection():
+        return db["comandas"]
+
+    @classmethod
+    def crear_comanda(cls, numero_mesa, num_comensales, mesero_id):
+        nueva_comanda = {
+            "mesa_numero": int(numero_mesa),
+            "num_comensales": int(num_comensales),
+            "mesero_id": str(mesero_id),
+            "estado": "nueva", # nueva, enviada, lista, pagada
+            "items": [],
+            "total": 0.0,
+            "fecha_apertura": datetime.utcnow(),
+            "folio": f"COM-{datetime.now().strftime('%y%m%d%H%M%S')}"
+        }
+        res = cls._collection().insert_one(nueva_comanda)
+        return str(res.inserted_id)
+
+    @classmethod
+    def agregar_items(cls, cuenta_id, lista_items):
+        total = sum(item['precio'] * item['cantidad'] for item in lista_items)
+        cls._collection().update_one(
+            {"_id": ObjectId(cuenta_id)},
+            {
+                "$set": {
+                    "items": lista_items,
+                    "total": total,
+                    "estado": "enviada"
+                }
+            }
+        )
+        return True
 # ============================================
 # 👨‍🍳 PANEL DE COCINA (Rol 3)
 # ============================================

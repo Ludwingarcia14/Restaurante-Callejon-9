@@ -237,7 +237,62 @@
             </div>
     </div>
 </div>
-
+<div id="modalMenu" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[95vh] md:h-[85vh] flex flex-col overflow-hidden">
+        
+        <div class="p-5 border-b flex justify-between items-center bg-orange-50">
+            <div>
+                <h3 class="text-2xl font-black text-orange-800">Mesa #<span id="menu-mesa-num">--</span></h3>
+                <p class="text-sm text-orange-600/70 font-medium">Selecciona los productos para la comanda</p>
+            </div>
+            <button onclick="cerrarModalMenu()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-400 hover:text-red-500 shadow-sm transition-all text-2xl">&times;</button>
+        </div>
+        
+        <div class="flex flex-1 overflow-hidden flex-col md:flex-row">
+            
+            <div class="flex-1 p-4 overflow-y-auto bg-gray-50/50">
+                <div class="mb-4 flex gap-2 overflow-x-auto pb-2">
+                    <button class="px-4 py-2 bg-orange-500 text-white rounded-full text-xs font-bold whitespace-nowrap">Todos</button>
+                    <button class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">Platillos</button>
+                    <button class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">Bebidas</button>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="lista-productos-grid">
+                    <div class="animate-pulse flex flex-col items-center p-4 bg-white rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full mb-2"></div>
+                        <div class="h-4 bg-gray-200 w-full rounded"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner">
+                <div class="p-4 border-b bg-gray-50/50 flex items-center gap-2">
+                    <i class="bi bi-cart3 text-orange-600"></i>
+                    <h4 class="font-bold text-gray-700 uppercase tracking-wider text-sm">Resumen de Pedido</h4>
+                </div>
+                
+                <div id="carrito-items" class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div class="text-center text-gray-400 py-10">
+                        <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
+                        <p class="text-xs">Selecciona un producto <br> de la izquierda</p>
+                    </div>
+                </div>
+                
+                <div class="p-5 border-t bg-gray-50">
+                    <div class="flex justify-between items-end mb-4">
+                        <span class="text-gray-500 text-sm font-medium">TOTAL A PAGAR</span>
+                        <span id="carrito-total" class="text-3xl font-black text-green-600">$0.00</span>
+                    </div>
+                    
+                    <button onclick="confirmarPedidoCocina()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i class="bi bi-send-check-fill"></i>
+                        ENVIAR A COCINA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -493,11 +548,12 @@ async function verMesa(numeroMesa) {
         }
         
         const mesa = data.mesa;
+        const comanda = data.comanda; // Info real que viene del backend
         const modal = document.getElementById('modalMesa');
         const content = document.getElementById('modal-mesa-content');
         document.getElementById('modal-mesa-numero').textContent = numeroMesa;
         
-        if (mesa.estado === 'disponible') {
+        if (mesa.estado === 'libre' || mesa.estado === 'disponible') {
             content.innerHTML = `
                 <div class="text-center py-8">
                     <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -506,26 +562,46 @@ async function verMesa(numeroMesa) {
                     <h4 class="text-xl font-bold text-gray-800 mb-2">Mesa Disponible</h4>
                     <p class="text-sm text-gray-500 mb-6">Capacidad: ${mesa.capacidad || 4} personas</p>
                     <div class="grid grid-cols-2 gap-4">
-                        <button onclick="abrirCuenta('${numeroMesa}')" class="btn btn-primary">Abrir Cuenta</button>
-                        <button onclick="cerrarModalMesa()" class="btn btn-secondary">Cancelar</button>
+                        <button onclick="abrirCuenta('${numeroMesa}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Abrir Cuenta</button>
+                        <button onclick="cerrarModalMesa()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold">Cancelar</button>
                     </div>
                 </div>`;
         } else {
-            // --- AQUÍ ESTABA EL ERROR: USAMOS VALORES POR DEFECTO ---
-            const total = mesa.total_cuenta ? Number(mesa.total_cuenta).toFixed(2) : "0.00";
-            const comensales = mesa.comensales || 0;
-            const folio = (mesa.cuenta && mesa.cuenta.folio) ? mesa.cuenta.folio : 'Sin folio';
+            // USAMOS LA INFO DE LA COMANDA QUE TRAE EL BACKEND
+            const total = comanda ? Number(comanda.total).toFixed(2) : "0.00";
+            const folio = comanda ? comanda.folio : 'Generando...';
+            const personas = comanda ? comanda.num_comensales : mesa.comensales;
 
             content.innerHTML = `
                 <div class="space-y-4">
-                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                        <p class="font-semibold text-blue-900">Mesa Ocupada - ${comensales} personas</p>
-                        <p class="text-sm text-blue-700">Folio: ${folio}</p>
-                        <p class="text-lg font-bold text-blue-800">Total: $${total}</p>
+                    <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">
+                        <p class="font-black text-orange-900 text-lg uppercase">Mesa Ocupada</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <div>
+                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Folio</p>
+                                <p class="text-gray-800 font-mono">${folio}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Comensales</p>
+                                <p class="text-gray-800">${personas} personas</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-orange-200">
+                            <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Total Acumulado</p>
+                            <p class="text-4xl font-black text-gray-900">$${total}</p>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="agregarItemsComanda(${mesa.cuenta_activa_id})" class="btn btn-primary">Agregar Pedido</button>
-                        <button onclick="verDetalleComanda(${mesa.cuenta_activa_id})" class="btn btn-secondary">Ver Cuenta</button>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}')" 
+                                class="w-full bg-[#F2913D] hover:bg-[#F2A339] text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="bi bi-plus-circle-fill text-xl"></i>
+                            AGREGAR PRODUCTOS AL PEDIDO
+                        </button>
+                        <button onclick="cerrarModalMesa()" 
+                                class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
+                            Cerrar Detalle
+                        </button>
                     </div>
                 </div>`;
         }
@@ -539,39 +615,129 @@ function cerrarModalMesa() {
     document.getElementById('modalMesa').classList.add('hidden');
 }
 
+async function abrirModalMenu(numMesa) {
+    const modal = document.getElementById('modalMenu');
+    const labelMesa = document.getElementById('menu-mesa-num');
+    const grid = document.getElementById('lista-productos-grid');
+    
+    if (!modal || !grid) return console.error("No se encontró el modal de menú en el HTML");
+
+    labelMesa.textContent = numMesa;
+    modal.classList.remove('hidden');
+    carrito = []; // Resetear carrito al abrir
+    renderizarCarrito();
+
+    try {
+        const res = await fetch('/api/menu'); // Ajusta a tu ruta de productos
+        const data = await res.json();
+        
+        grid.innerHTML = '';
+        // Asumiendo que data.menu es un array de productos
+        data.menu.forEach(p => {
+            grid.innerHTML += `
+                <div onclick="agregarAlCarrito('${p._id}', '${p.nombre}', ${p.precio})" 
+                     class="p-4 border rounded-xl hover:bg-orange-50 cursor-pointer transition flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-800">${p.nombre}</p>
+                        <p class="text-sm text-orange-600 font-bold">$${p.precio.toFixed(2)}</p>
+                    </div>
+                    <i class="bi bi-plus-circle-fill text-orange-400 text-xl"></i>
+                </div>`;
+        });
+    } catch (e) {
+        grid.innerHTML = '<p class="text-red-500">Error al cargar productos</p>';
+    }
+}
+
+function agregarAlCarrito(id, nombre, precio) {
+    const itemExistente = carrito.find(i => i.id === id);
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({ id, nombre, precio, cantidad: 1 });
+    }
+    renderizarCarrito();
+}
+
+function renderizarCarrito() {
+    const container = document.getElementById('carrito-items');
+    const totalElement = document.getElementById('carrito-total');
+    let total = 0;
+    
+    container.innerHTML = '';
+    carrito.forEach((item, index) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+        container.innerHTML += `
+            <div class="flex justify-between items-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                <div class="flex-1">
+                    <p class="font-bold text-xs">${item.nombre}</p>
+                    <p class="text-[10px] text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidad}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="modificarCantidad(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">-</button>
+                    <span class="text-xs font-bold">${item.cantidad}</span>
+                    <button onclick="modificarCantidad(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">+</button>
+                </div>
+            </div>`;
+    });
+    totalElement.textContent = `$${total.toFixed(2)}`;
+}
+
+function modificarCantidad(index, cambio) {
+    carrito[index].cantidad += cambio;
+    if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
+    renderizarCarrito();
+}
+
+async function confirmarPedidoCocina() {
+    if (carrito.length === 0) return Swal.fire("Carrito vacío", "Agrega al menos un producto", "warning");
+
+    showLoading("Enviando a cocina...");
+    try {
+        const res = await fetch(`${API_BASE}/comanda/${cuentaActivaId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: carrito })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            showSuccess("¡Pedido enviado correctamente!");
+            cerrarModalMenu();
+            actualizarComandas(); // Refrescar lista inferior
+        } else {
+            showError(data.error);
+        }
+    } catch (e) {
+        showError("Error al enviar pedido");
+    }
+}
+
+function cerrarModalMenu() {
+    document.getElementById('modalMenu').classList.add('hidden');
+    cuentaActivaId = null;
+}
 // ===================================
 // GESTIÓN DE CUENTAS
 // ===================================
 async function abrirCuenta(numeroMesa) {
     const { value: numComensales } = await Swal.fire({
-        title: `Abrir cuenta - Mesa ${numeroMesa}`,
+        title: `Mesa ${numeroMesa}`,
         input: 'number',
         inputLabel: '¿Cuántos comensales?',
-        inputPlaceholder: 'Número de personas',
-        inputAttributes: {
-            min: 1,
-            max: 20,
-            step: 1
-        },
+        inputAttributes: { min: 1, max: 20, step: 1 },
         showCancelButton: true,
-        confirmButtonText: 'Continuar',
-        cancelButtonText: 'Cancelar',
-        inputValidator: (value) => {
-            if (!value || value < 1) {
-                return '¡Debes ingresar al menos 1 comensal!';
-            }
-        }
+        confirmButtonText: 'Abrir y Tomar Pedido',
+        cancelButtonText: 'Solo Abrir'
     });
     
     if (numComensales) {
         try {
-            showLoading('Abriendo cuenta...');
-            
+            showLoading('Iniciando comanda...');
             const response = await fetch(`${API_BASE}/cuenta/abrir`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     numero_mesa: numeroMesa,
                     num_comensales: parseInt(numComensales)
@@ -582,20 +748,20 @@ async function abrirCuenta(numeroMesa) {
             hideLoading();
             
             if (data.success) {
-                showSuccess(data.message);
-                cerrarModalMesa();
+                cuentaActivaId = data.cuenta_id;
                 
-                // Actualizar datos
+                // Actualizar visualización de mesas inmediatamente
                 await cargarEstadoMesas();
-                await actualizarComandas();
+                cerrarModalMesa();
+
+                // Preguntar si quiere tomar pedido ahora
+                abrirModalMenu(numeroMesa); 
             } else {
                 showError(data.error);
             }
-            
         } catch (error) {
             hideLoading();
-            console.error('Error al abrir cuenta:', error);
-            showError('Error al abrir la cuenta');
+            showError('Error de conexión al abrir cuenta');
         }
     }
 }
@@ -649,10 +815,62 @@ function verDetalleComanda(cuentaId) {
     // Redirigir a la vista de detalle de comanda
     window.location.href = `/mesero/comanda/${cuentaId}`;
 }
+function verDetalleMesa(numero) {
+    fetch(`/api/mesero/mesa/${numero}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const mesa = data.mesa;
+                const comanda = data.comanda;
+                const infoDiv = document.getElementById('detalle-mesa-info');
 
+                document.getElementById('detalle-mesa-num').textContent = mesa.numero;
+                
+                if(mesa.estado === 'ocupada' && comanda) {
+                    // Generar lista de items si existen
+                    let itemsHtml = '';
+                    if (comanda.items && comanda.items.length > 0) {
+                        itemsHtml = `
+                            <div class="mt-4 border-t pt-2">
+                                <p class="text-xs font-bold text-gray-400 uppercase">Consumo actual:</p>
+                                <ul class="divide-y divide-gray-100 max-h-40 overflow-y-auto">
+                                    ${comanda.items.map(item => `
+                                        <li class="py-1 flex justify-between text-sm">
+                                            <span>${item.cantidad}x ${item.nombre}</span>
+                                            <span class="font-medium">$${(item.precio * item.cantidad).toFixed(2)}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>`;
+                    }
+
+                    infoDiv.innerHTML = `
+                        <p class="text-orange-600 font-bold">Mesa Ocupada - ${comanda.num_comensales} personas</p>
+                        <p class="text-xs text-gray-500">Folio: <span class="font-mono">${comanda.folio}</span></p>
+                        <p class="text-2xl font-black text-gray-800">$${comanda.total.toFixed(2)}</p>
+                        ${itemsHtml}
+                    `;
+                    
+                    document.getElementById('btn-abrir-cuenta').classList.add('hidden');
+                    document.getElementById('btn-agregar-pedido').classList.remove('hidden');
+                    
+                    // IMPORTANTE: Guardar el ID de la cuenta en el botón para saber a cuál agregar
+                    document.getElementById('btn-agregar-pedido').onclick = () => abrirModalMenu(comanda.folio, mesa.numero, data.mesa.cuenta_activa_id);
+
+                } else {
+                    infoDiv.innerHTML = `<p class="text-green-600 font-bold text-lg py-4">Mesa Disponible</p>`;
+                    document.getElementById('btn-abrir-cuenta').classList.remove('hidden');
+                    document.getElementById('btn-agregar-pedido').classList.add('hidden');
+                }
+                
+                document.getElementById('modalDetalleMesa').classList.remove('hidden');
+            }
+        });
+}
 function agregarItemsComanda(cuentaId) {
-    // Redirigir al menú para agregar items
-    window.location.href = `/mesero/comanda/${cuentaId}/agregar`;
+    cuentaActivaId = cuentaId;
+    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+    abrirModalMenu(comanda ? comanda.mesa_numero : "??");
 }
 
 function solicitarCuentaMesa(numeroMesa, cuentaId) {
