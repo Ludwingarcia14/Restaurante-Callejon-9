@@ -2,12 +2,15 @@
 Módulo de Rutas - Sistema de Restaurante Callejón 9
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
 from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
+from controllers.cocina.pedidos_controller import PedidosController
+from controllers.cocina.platillos_no_disponibles_controller import PlatillosNoDisponiblesController
+
 routes_bp = Blueprint("routes", __name__)
 
 # ============================================
@@ -193,7 +196,7 @@ def cocina_en_proceso():
         return redirect(url_for("routes.login"))
     
     # Placeholder: implementar vista
-    return render_template("cocina/dashboard.html")
+    return render_template("cocina/en_proceso.html")
 
 @routes_bp.route("/cocina/listos")
 @login_required
@@ -204,7 +207,7 @@ def cocina_listos():
         return redirect(url_for("routes.login"))
     
     # Placeholder: implementar vista
-    return render_template("cocina/dashboard.html")
+    return render_template("cocina/listos.html")
 
 @routes_bp.route("/cocina/inventario")
 @login_required
@@ -217,15 +220,9 @@ def cocina_inventario():
     # Placeholder: implementar vista de inventario
     return render_template("cocina/dashboard.html")
 
-"""
-Rutas del Módulo de Inventario
-Agregar estas rutas al archivo routes.py principal
-"""
-
 # ============================================
 # 📦 PANEL DE INVENTARIO (Rol 4)
 # ============================================
-
 
 # Dashboard
 @routes_bp.route("/inventario/dashboard")
@@ -304,6 +301,113 @@ def inventario_crear_proveedor():
 @rol_required(['1', '4'])
 def inventario_reportes():
     return InventarioController.reportes()
+
+# ============================================
+# 👨‍🍳 API DE COCINA (Endpoints JSON)
+# ============================================
+
+# --- Pedidos API ---
+@routes_bp.route("/api/cocina/pedidos", methods=['GET'])
+@login_required
+@rol_required(['3'])
+def api_obtener_pedidos():
+    """Obtiene todos los pedidos pendientes"""
+    pedidos = PedidosController.obtener_todos_pedidos()
+    return jsonify({'success': True, 'pedidos': pedidos})
+
+@routes_bp.route("/api/cocina/pedidos/preparacion", methods=['GET'])
+@login_required
+@rol_required(['3'])
+def api_obtener_pedidos_preparacion():
+    """Obtiene todos los pedidos en preparación"""
+    pedidos = PedidosController.obtener_pedidos_preparacion()
+    return jsonify({'success': True, 'pedidos': pedidos})
+
+@routes_bp.route("/api/cocina/pedidos/listos", methods=['GET'])
+@login_required
+@rol_required(['3'])
+def api_obtener_pedidos_listos():
+    """Obtiene todos los pedidos listos"""
+    pedidos = PedidosController.obtener_pedidos_listos()
+    return jsonify({'success': True, 'pedidos': pedidos})
+
+@routes_bp.route("/api/cocina/pedidos/<int:pedido_id>", methods=['GET'])
+@login_required
+@rol_required(['3'])
+def api_obtener_detalle_pedido(pedido_id):
+    """Obtiene los detalles de un pedido específico"""
+    detalle = PedidosController.obtener_detalle_pedido(pedido_id)
+    if not detalle:
+        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
+    return jsonify({'success': True, 'pedido': detalle})
+
+@routes_bp.route("/api/cocina/pedidos", methods=['POST'])
+@login_required
+@rol_required(['3'])
+def api_crear_pedido():
+    """Crea un nuevo pedido"""
+    data = request.get_json()
+    resultado = PedidosController.crear_pedido(data)
+    status_code = 201 if resultado['success'] else 400
+    return jsonify(resultado), status_code
+
+@routes_bp.route("/api/cocina/pedidos/<int:pedido_id>/iniciar-preparacion", methods=['PUT'])
+@login_required
+@rol_required(['3'])
+def api_iniciar_preparacion(pedido_id):
+    """Inicia la preparación de un pedido"""
+    resultado = PedidosController.iniciar_preparacion(pedido_id)
+    status_code = 200 if resultado['success'] else 400
+    return jsonify(resultado), status_code
+
+@routes_bp.route("/api/cocina/pedidos/<int:pedido_id>/marcar-listo", methods=['PUT'])
+@login_required
+@rol_required(['3'])
+def api_marcar_pedido_listo(pedido_id):
+    """Marca un pedido como listo para entregar"""
+    resultado = PedidosController.marcar_pedido_listo(pedido_id)
+    status_code = 200 if resultado['success'] else 400
+    return jsonify(resultado), status_code
+
+@routes_bp.route("/api/cocina/detalles/<int:detalle_id>/estado", methods=['PUT'])
+@login_required
+@rol_required(['3'])
+def api_actualizar_estado_platillo(detalle_id):
+    """Actualiza el estado de un platillo"""
+    data = request.get_json()
+    nuevo_estado = data.get('estado')  # no_iniciado, preparando, listo
+    resultado = PedidosController.actualizar_estado_platillo(detalle_id, nuevo_estado)
+    status_code = 200 if resultado['success'] else 400
+    return jsonify(resultado), status_code
+
+# --- Platillos No Disponibles API ---
+@routes_bp.route("/api/cocina/platillos-no-disponibles", methods=['GET'])
+@login_required
+@rol_required(['3'])
+def api_obtener_platillos_no_disponibles():
+    """Obtiene lista de platillos no disponibles"""
+    no_disponibles = PlatillosNoDisponiblesController.obtener_no_disponibles()
+    return jsonify({'success': True, 'platillos': no_disponibles})
+
+@routes_bp.route("/api/cocina/platillos-no-disponibles", methods=['POST'])
+@login_required
+@rol_required(['3'])
+def api_marcar_platillo_no_disponible():
+    """Marca un platillo como no disponible"""
+    data = request.get_json()
+    resultado = PlatillosNoDisponiblesController.marcar_no_disponible(data)
+    status_code = 201 if resultado['success'] else 400
+    return jsonify(resultado), status_code
+
+@routes_bp.route("/api/cocina/platillos/<int:platillo_id>/reactivar", methods=['PUT'])
+@login_required
+@rol_required(['3'])
+def api_reactivar_platillo(platillo_id):
+    """Reactiva un platillo no disponible"""
+    resultado = PlatillosNoDisponiblesController.reactivar_platillo(platillo_id)
+    status_code = 200 if resultado['success'] else 400
+    return jsonify(resultado), status_code
+
 # ============================================
 #  UTILIDADES
 # ============================================
@@ -314,8 +418,10 @@ def toggle_theme():
     from controllers.dashboard.dashboard_controller import toggle_theme as toggle_theme_func
     return toggle_theme_func()
 
-# ------------------------------------------------------------
-# Módulo de Seguridad y Backup
+# ============================================
+#  SEGURIDAD Y BACKUP
+# ============================================
+
 # Gestión Principal de Respaldos (Listar y Panel)
 routes_bp.add_url_rule("/admin/backup", view_func=BackupController.index, endpoint="admin_backup_view")
 

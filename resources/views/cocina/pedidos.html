@@ -1,8 +1,8 @@
 {% extends "layout/layout_base.html" %}
 
-{% block title %}Pedidos Pendientes - Cocina{% endblock %}
+{% block title %}Pedidos Pendientes{% endblock %}
 {% block page_title %}Pedidos Pendientes{% endblock %}
-{% block page_subtitle %}Pedidos esperando preparación{% endblock %}
+{% block page_subtitle %}Gestión de pedidos para preparar{% endblock %}
 
 {% block navigation %}
 <a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link">
@@ -24,352 +24,170 @@
     <i class="bi bi-check-circle"></i>
     <span>Listos</span>
 </a>
+
+<a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
+    <i class="bi bi-box-seam"></i>
+    <span>Inventario</span>
+</a>
 {% endblock %}
 
 {% block content %}
 
-<!-- Header con Alertas -->
-<div class="bg-gradient-to-r from-red-500 to-orange-600 text-white p-6 rounded-xl shadow-lg mb-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-2xl font-bold mb-2">Pedidos Pendientes</h2>
-            <p class="opacity-90">Ordena los tickets por prioridad y comienza a preparar</p>
-        </div>
-        <div class="text-right">
-            <div class="text-5xl font-bold" id="count-pendientes">0</div>
-            <div class="text-sm opacity-90">Pedidos esperando</div>
-        </div>
+<!-- HEADER CON CONTROLES -->
+<div class="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white mb-6 flex items-center justify-between">
+    <div>
+        <h2 class="text-2xl font-bold">Pedidos Pendientes 🔴</h2>
+        <p class="text-sm opacity-90 mt-1">Pedidos que esperan ser preparados</p>
+    </div>
+    <div class="text-right">
+        <div class="text-5xl font-bold" id="total-pendientes">0</div>
+        <p class="text-sm opacity-90">Total</p>
     </div>
 </div>
 
-<!-- Filtros y Ordenamiento -->
-<div class="card mb-6">
-    <div class="card-body">
-        <div class="flex items-center gap-4">
-            <select id="ordenar" onchange="ordenarPedidos()" class="px-4 py-2 border rounded-lg">
-                <option value="tiempo">Más Antiguos Primero</option>
-                <option value="mesa">Por Número de Mesa</option>
-                <option value="cantidad">Por Cantidad de Platillos</option>
-            </select>
-            
-            <div class="flex-1"></div>
-            
-            <button onclick="actualizarPedidos()" class="btn btn-primary">
-                <i class="bi bi-arrow-clockwise"></i>
-                Actualizar
-            </button>
-            
-            <button onclick="activarAudioAlertas()" id="btn-audio" class="btn btn-secondary">
-                <i class="bi bi-volume-up"></i>
-                Activar Sonido
-            </button>
-        </div>
+<!-- CONTROLES Y FILTROS -->
+<div class="bg-white p-4 rounded-xl shadow-md mb-6 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-2">
+        <button onclick="actualizarPedidos()" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center gap-2">
+            <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+        <button onclick="abrirModalNoDisponibles()" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center gap-2">
+            <i class="bi bi-slash-circle"></i> Ver No Disponibles
+        </button>
+    </div>
+    
+    <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="sonido-toggle" class="w-4 h-4" checked>
+            <span class="text-sm font-semibold text-gray-700">
+                <i class="bi bi-speaker"></i> Sonido
+            </span>
+        </label>
     </div>
 </div>
 
-<!-- Lista de Pedidos Pendientes -->
-<div class="space-y-4" id="pedidos-container">
-    <!-- Los pedidos se cargan dinámicamente -->
+<!-- LAYOUT: GRID + LISTADO LATERAL -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    
+    <!-- COLUMNA PRINCIPAL: PEDIDOS EN RECTÁNGULOS COMPACTOS -->
+    <div class="lg:col-span-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contenedor-pedidos">
+            <div class="col-span-2 text-center py-16 text-gray-400">
+                <i class="bi bi-inbox text-6xl mb-3 block"></i>
+                <p class="text-lg font-semibold">Sin pedidos pendientes</p>
+                <p class="text-sm mt-1">Los nuevos pedidos aparecerán aquí</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- COLUMNA LATERAL: LISTADO RÁPIDO -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-md p-4 sticky top-20 max-h-[600px] overflow-y-auto">
+            <h3 class="font-bold text-lg mb-4 text-gray-800 pb-3 border-b-2 border-orange-300">
+                <i class="bi bi-list-check"></i> Orden Rápida
+            </h3>
+            <div id="listado-rapido" class="space-y-2">
+                <p class="text-sm text-gray-500 text-center py-6">Cargando...</p>
+            </div>
+        </div>
+    </div>
+    
 </div>
 
-<!-- Modal: Detalle del Pedido -->
-<div id="modalPedido" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-red-600 text-white p-6">
-            <div class="flex items-center justify-between">
+<!-- MODAL: VER DETALLES DE PEDIDO -->
+<div id="modal-detalles" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 sticky top-0 z-10 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold" id="modal-numero-pedido">Pedido #001</h2>
+                <p class="text-sm opacity-90 mt-1">Mesa <span id="modal-numero-mesa">1</span></p>
+            </div>
+            <button onclick="cerrarModalDetalles()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="p-6">
+            
+            <!-- Info General -->
+            <div class="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
                 <div>
-                    <h3 class="text-2xl font-bold">Pedido #<span id="modal-pedido-id"></span></h3>
-                    <p class="text-sm opacity-90">Mesa <span id="modal-pedido-mesa"></span></p>
+                    <p class="text-xs text-gray-600 font-semibold">HORA ENTRADA</p>
+                    <p class="text-lg font-bold text-gray-800" id="modal-hora-entrada">--:--</p>
                 </div>
-                <button onclick="cerrarModalPedido()" class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
-                    <i class="bi bi-x-lg text-2xl"></i>
-                </button>
+                <div>
+                    <p class="text-xs text-gray-600 font-semibold">ESPERANDO</p>
+                    <p class="text-lg font-bold text-red-600" id="modal-minutos-esperando">0 min</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-600 font-semibold">REGISTRADO POR</p>
+                    <p class="text-lg font-bold text-gray-800" id="modal-usuario">Usuario</p>
+                </div>
+            </div>
+            
+            <!-- Platillos -->
+            <div class="mb-6">
+                <h3 class="font-bold text-lg mb-4 text-gray-800 pb-2 border-b-2 border-orange-300">
+                    <i class="bi bi-egg-fried"></i> Platillos Solicitados
+                </h3>
+                <div id="modal-platillos" class="space-y-3">
+                    <!-- Los platillos se cargan aquí -->
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="bg-gray-50 p-6 border-t-2 border-gray-200 sticky bottom-0 flex gap-3">
+            <button onclick="cerrarModalDetalles()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                <i class="bi bi-x-circle"></i> Cerrar
+            </button>
+            <button onclick="iniciarPreparacionDesdeModal()" class="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition font-semibold">
+                <i class="bi bi-play-fill"></i> Iniciar Preparación
+            </button>
+        </div>
+        
+    </div>
+</div>
+
+<!-- MODAL: PLATILLOS NO DISPONIBLES -->
+<div id="modal-no-disponibles" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6 flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Platillos No Disponibles</h2>
+            <button onclick="cerrarModalNoDisponibles()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="p-6 max-h-[400px] overflow-y-auto">
+            <div id="lista-no-disponibles" class="space-y-3">
+                <p class="text-center text-gray-500 py-6">Cargando...</p>
             </div>
         </div>
         
-        <div class="p-6" id="modal-pedido-content">
-            <!-- Contenido dinámico -->
+        <!-- Modal Footer -->
+        <div class="bg-gray-50 p-6 border-t-2 border-gray-200">
+            <button onclick="cerrarModalNoDisponibles()" class="w-full px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-semibold">
+                <i class="bi bi-check-circle"></i> Cerrar
+            </button>
         </div>
+        
     </div>
 </div>
 
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cocina/pedidos.css') }}">
+{% endblock %}
+
 {% block extra_js %}
-<script>
-let pedidosPendientes = [];
-let audioActivado = false;
-
-document.addEventListener('DOMContentLoaded', function() {
-    cargarPedidos();
-    
-    // Actualizar cada 10 segundos
-    setInterval(() => {
-        cargarPedidos();
-    }, 10000);
-});
-
-function cargarPedidos() {
-    // Simular datos (conectar con API)
-    pedidosPendientes = [
-        {
-            id: 2001,
-            mesa: 5,
-            hora: new Date(Date.now() - 120000).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-            timestamp: Date.now() - 120000,
-            mesero: 'Juan Pérez',
-            platillos: [
-                { id: 1, nombre: 'Tacos al Pastor', cantidad: 3, notas: 'Sin cebolla, extra salsa' },
-                { id: 2, nombre: 'Quesadilla Grande', cantidad: 2, notas: 'Bien tostada' }
-            ]
-        },
-        {
-            id: 2002,
-            mesa: 8,
-            hora: new Date(Date.now() - 300000).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-            timestamp: Date.now() - 300000,
-            mesero: 'María López',
-            platillos: [
-                { id: 3, nombre: 'Enchiladas Suizas', cantidad: 1, notas: '' },
-                { id: 4, nombre: 'Guacamole', cantidad: 1, notas: 'Picante' }
-            ]
-        }
-    ];
-    
-    renderizarPedidos();
-}
-
-function renderizarPedidos() {
-    const container = document.getElementById('pedidos-container');
-    document.getElementById('count-pendientes').textContent = pedidosPendientes.length;
-    
-    if (pedidosPendientes.length === 0) {
-        container.innerHTML = `
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <i class="bi bi-check-circle text-6xl text-green-500 mb-4 block"></i>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">¡Todo al día!</h3>
-                    <p class="text-gray-600">No hay pedidos pendientes</p>
-                </div>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = pedidosPendientes.map(pedido => {
-        const tiempoTranscurrido = calcularTiempoTranscurrido(pedido.timestamp);
-        const esUrgente = tiempoTranscurrido > 15;
-        
-        return `
-            <div class="card hover:shadow-xl transition ${esUrgente ? 'border-2 border-red-500' : ''}">
-                <div class="card-body">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex items-start gap-4">
-                            <div class="w-16 h-16 ${esUrgente ? 'bg-red-100' : 'bg-orange-100'} rounded-xl flex items-center justify-center flex-shrink-0">
-                                <i class="bi ${esUrgente ? 'bi-exclamation-triangle-fill text-red-600' : 'bi-bell-fill text-orange-600'} text-3xl"></i>
-                            </div>
-                            
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <h3 class="text-xl font-bold text-gray-800">Pedido #${pedido.id}</h3>
-                                    ${esUrgente ? '<span class="badge badge-error animate-pulse">¡Urgente!</span>' : ''}
-                                </div>
-                                
-                                <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                                    <div class="flex items-center gap-2">
-                                        <i class="bi bi-table"></i>
-                                        <span><strong>Mesa ${pedido.mesa}</strong></span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <i class="bi bi-clock"></i>
-                                        <span>${pedido.hora}</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <i class="bi bi-hourglass"></i>
-                                        <span class="${esUrgente ? 'text-red-600 font-bold' : ''}">${tiempoTranscurrido} min</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <i class="bi bi-person"></i>
-                                        <span>${pedido.mesero}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <p class="text-sm font-semibold text-gray-700 mb-2">Platillos:</p>
-                                    ${pedido.platillos.map(p => `
-                                        <div class="flex items-start gap-2 mb-2">
-                                            <span class="font-bold text-orange-600 min-w-[30px]">${p.cantidad}x</span>
-                                            <div class="flex-1">
-                                                <p class="font-medium text-gray-800">${p.nombre}</p>
-                                                ${p.notas ? `<p class="text-sm text-gray-600 italic">📝 ${p.notas}</p>` : ''}
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col gap-2 ml-4">
-                            <button onclick="verDetallePedido(${pedido.id})" 
-                                    class="btn btn-secondary btn-sm whitespace-nowrap">
-                                <i class="bi bi-eye"></i>
-                                Ver Detalle
-                            </button>
-                            <button onclick="iniciarPreparacion(${pedido.id})" 
-                                    class="btn btn-success whitespace-nowrap">
-                                <i class="bi bi-play-fill"></i>
-                                Iniciar Preparación
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function calcularTiempoTranscurrido(timestamp) {
-    const ahora = Date.now();
-    const diff = Math.floor((ahora - timestamp) / 60000); // minutos
-    return diff;
-}
-
-function verDetallePedido(pedidoId) {
-    const pedido = pedidosPendientes.find(p => p.id === pedidoId);
-    if (!pedido) return;
-    
-    document.getElementById('modal-pedido-id').textContent = pedido.id;
-    document.getElementById('modal-pedido-mesa').textContent = pedido.mesa;
-    
-    const content = document.getElementById('modal-pedido-content');
-    content.innerHTML = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-1">Mesa</p>
-                    <p class="text-2xl font-bold">${pedido.mesa}</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-1">Hora de pedido</p>
-                    <p class="text-2xl font-bold">${pedido.hora}</p>
-                </div>
-            </div>
-            
-            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
-                <p class="text-sm text-orange-700">
-                    <i class="bi bi-clock"></i>
-                    Tiempo transcurrido: <strong>${calcularTiempoTranscurrido(pedido.timestamp)} minutos</strong>
-                </p>
-            </div>
-            
-            <div>
-                <h4 class="font-bold text-gray-800 mb-3">Platillos a Preparar:</h4>
-                <div class="space-y-3">
-                    ${pedido.platillos.map(p => `
-                        <div class="border rounded-lg p-4 bg-white">
-                            <div class="flex items-start gap-3">
-                                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span class="text-xl font-bold text-orange-600">${p.cantidad}</span>
-                                </div>
-                                <div class="flex-1">
-                                    <h5 class="font-bold text-gray-800 mb-1">${p.nombre}</h5>
-                                    ${p.notas ? `
-                                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-2 rounded mt-2">
-                                            <p class="text-sm text-gray-700">
-                                                <i class="bi bi-sticky"></i>
-                                                <strong>Notas:</strong> ${p.notas}
-                                            </p>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <button onclick="iniciarPreparacion(${pedido.id}); cerrarModalPedido();" 
-                    class="btn btn-success w-full">
-                <i class="bi bi-play-fill"></i>
-                Iniciar Preparación de Este Pedido
-            </button>
-        </div>
-    `;
-    
-    document.getElementById('modalPedido').classList.remove('hidden');
-}
-
-function cerrarModalPedido() {
-    document.getElementById('modalPedido').classList.add('hidden');
-}
-
-async function iniciarPreparacion(pedidoId) {
-    const pedido = pedidosPendientes.find(p => p.id === pedidoId);
-    if (!pedido) return;
-    
-    const result = await Swal.fire({
-        title: '¿Iniciar preparación?',
-        html: `Pedido #${pedidoId} - Mesa ${pedido.mesa}`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, iniciar',
-        cancelButtonText: 'Cancelar'
-    });
-    
-    if (result.isConfirmed) {
-        showLoading('Moviendo a preparación...');
-        
-        // Aquí conectarías con tu API
-        setTimeout(() => {
-            pedidosPendientes = pedidosPendientes.filter(p => p.id !== pedidoId);
-            renderizarPedidos();
-            hideLoading();
-            showSuccess('¡Pedido en preparación!');
-        }, 1000);
-    }
-}
-
-function ordenarPedidos() {
-    const criterio = document.getElementById('ordenar').value;
-    
-    switch(criterio) {
-        case 'tiempo':
-            pedidosPendientes.sort((a, b) => a.timestamp - b.timestamp);
-            break;
-        case 'mesa':
-            pedidosPendientes.sort((a, b) => a.mesa - b.mesa);
-            break;
-        case 'cantidad':
-            pedidosPendientes.sort((a, b) => b.platillos.length - a.platillos.length);
-            break;
-    }
-    
-    renderizarPedidos();
-}
-
-function actualizarPedidos() {
-    showLoading('Actualizando pedidos...');
-    setTimeout(() => {
-        cargarPedidos();
-        hideLoading();
-        showToast('Pedidos actualizados', 'success');
-    }, 1000);
-}
-
-function activarAudioAlertas() {
-    audioActivado = !audioActivado;
-    const btn = document.getElementById('btn-audio');
-    
-    if (audioActivado) {
-        btn.innerHTML = '<i class="bi bi-volume-up-fill"></i> Audio Activado';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-secondary');
-        showToast('Alertas de audio activadas', 'success');
-    } else {
-        btn.innerHTML = '<i class="bi bi-volume-up"></i> Activar Sonido';
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-secondary');
-    }
-}
-</script>
+<script src="{{ url_for('static', filename='js/cocina/pedidos.js') }}"></script>
 {% endblock %}

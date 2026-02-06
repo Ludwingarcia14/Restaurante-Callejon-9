@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cocina - Callejón 9{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos personalizados -->
+    <style>
+        :root {
+            --primary-orange: #F2A339;
+            --light-orange: #F2CA99;
+            --medium-orange: #F2913D;
+            --dark-orange: #DE823D;
+            --dark-text: #0D0D0D;
+            --status-green: #28a745;
+            --status-red: #dc3545;
+            --status-yellow: #ffc107;
+            --status-blue: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: var(--dark-text);
+            overflow-x: hidden;
+        }
+        
+        /* ===== LAYOUT PRINCIPAL ===== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* ===== SIDEBAR - MENÚ LATERAL IZQUIERDO ===== */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--dark-orange) 0%, var(--primary-orange) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .restaurant-logo {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            color: white;
+        }
+        
+        .restaurant-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        /* Información del usuario */
+        .user-info {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-avatar {
+            width: 70px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 30px;
+            border: 3px solid white;
+        }
+        
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .user-details {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 3px;
+        }
+        
+        /* Menú de navegación */
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 25px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+            padding-left: 30px;
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-left-color: white;
+            font-weight: 600;
+        }
+        
+        .nav-icon {
+            width: 24px;
+            margin-right: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .badge-notification {
+            margin-left: auto;
+            background-color: var(--status-red);
+            color: white;
+            border-radius: 10px;
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 25px;
+            text-align: center;
+        }
+        
+        /* Configuraciones y logout */
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer-item {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .footer-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* ===== CONTENIDO PRINCIPAL ===== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        
+        /* Header del contenido */
+        .content-header {
+            background-color: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        /* Contenedor de la página */
+        .page-container {
+            padding: 30px;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .sidebar .nav-text,
+            .sidebar .restaurant-subtitle,
+            .sidebar .user-name,
+            .sidebar .user-details,
+            .sidebar .badge-notification,
+            .sidebar-footer span:not(.nav-icon) {
+                display: none;
+            }
+            
+            .sidebar .restaurant-logo {
+                font-size: 18px;
+            }
+            
+            .sidebar .nav-icon {
+                margin-right: 0;
+                font-size: 20px;
+            }
+            
+            .sidebar .nav-item {
+                justify-content: center;
+                padding: 15px;
+            }
+            
+            .sidebar .user-avatar {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+            
+            .sidebar:hover {
+                width: 280px;
+            }
+            
+            .sidebar:hover .nav-text,
+            .sidebar:hover .restaurant-subtitle,
+            .sidebar:hover .user-name,
+            .sidebar:hover .user-details,
+            .sidebar:hover .badge-notification,
+            .sidebar:hover .sidebar-footer span:not(.nav-icon) {
+                display: inline;
+            }
+            
+            .sidebar:hover .restaurant-logo {
+                font-size: 28px;
+            }
+            
+            .sidebar:hover .nav-icon {
+                margin-right: 15px;
+                font-size: 18px;
+            }
+            
+            .sidebar:hover .nav-item {
+                justify-content: flex-start;
+                padding: 14px 25px;
+            }
+            
+            .sidebar:hover .user-avatar {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar.active {
+                width: 280px;
+            }
+            
+            .sidebar-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                background-color: var(--primary-orange);
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 15px;
+                font-size: 18px;
+            }
+        }
+        
+        /* ===== ESTILOS ESPECÍFICOS PARA CONTENIDO ===== */
+        .card-kitchen {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-kitchen:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-header-kitchen {
+            background-color: var(--primary-orange);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        .order-card {
+            border-left: 5px solid var(--primary-orange);
+        }
+        
+        .order-card.in-progress {
+            border-left-color: var(--status-blue);
+        }
+        
+        .order-card.ready {
+            border-left-color: var(--status-green);
+        }
+        
+        .order-card.delayed {
+            border-left-color: var(--status-red);
+        }
+        
+        .dish-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dish-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-preparing {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-ready {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-served {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .btn-kitchen {
+            background-color: var(--primary-orange);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-kitchen:hover {
+            background-color: var(--dark-orange);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-kitchen-secondary {
+            background-color: var(--light-orange);
+            color: var(--dark-text);
+        }
+        
+        .time-badge {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .table-kitchen {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .table-kitchen thead {
+            background-color: var(--light-orange);
+        }
+        
+        .table-kitchen th {
+            border: none;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .table-kitchen td {
+            border-color: #f1f1f1;
+            vertical-align: middle;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Botón para mostrar/ocultar sidebar en móviles -->
+    <button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <div class="app-container">
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Encabezado -->
+            <div class="sidebar-header">
+                <div class="restaurant-logo">CALLEJÓN 9</div>
+                <div class="restaurant-subtitle">Sistema de Cocina</div>
+            </div>
+            
+            <!-- Información del usuario -->
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-chef"></i>
+                </div>
+                <div class="user-name">Regina</div>
+                <div class="user-details">Área: Parrilla</div>
+                <div class="user-details">Turno: Matutino</div>
+                <div class="user-details">Rol: Cocinero</div>
+            </div>
+            
+            <!-- Menú de navegación -->
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('cocina.dashboard') }}" class="nav-item {% if request.endpoint == 'cocina.dashboard' %}active{% endif %}">
+                    <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                
+                <a href="{{ url_for('cocina.pedidos_pendientes') }}" class="nav-item {% if request.endpoint == 'cocina.pedidos_pendientes' %}active{% endif %}">
+                    <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
+                    <span class="nav-text">Pedidos Pendientes</span>
+                    <span class="badge-notification" id="pending-orders-badge">3</span>
+                </a>
+                
+                <a href="{{ url_for('cocina.en_preparacion') }}" class="nav-item {% if request.endpoint == 'cocina.en_preparacion' %}active{% endif %}">
+                    <span class="nav-icon"><i class="fas fa-utensils"></i></span>
+                    <span class="nav-text">En Preparación</span>
+                    <span class="badge-notification" id="preparing-orders-badge">5</span>
+                </a>
+                
+                <a href="{{ url_for('cocina.listos') }}" class="nav-item {% if request.endpoint == 'cocina.listos' %}active{% endif %}">
+                    <span class="nav-icon"><i class="fas fa-check-circle"></i></span>
+                    <span class="nav-text">Listos para Servir</span>
+                    <span class="badge-notification" id="ready-orders-badge">2</span>
+                </a>
+                
+                <a href="{{ url_for('cocina.recetas') }}" class="nav-item {% if request.endpoint == 'cocina.recetas' %}active{% endif %}">
+                    <span class="nav-icon"><i class="fas fa-book-open"></i></span>
+                    <span class="nav-text">Recetas</span>
+                </a>
+                
+                <a href="{{ url_for('cocina.inventario') }}" class="nav-item {% if request.endpoint == 'cocina.inventario' %}active{% endif %}">
+                    <span class="nav-icon"><i class="fas fa-boxes"></i></span>
+                    <span class="nav-text">Inventario</span>
+                </a>
+            </nav>
+            
+            <!-- Configuración y salida -->
+            <div class="sidebar-footer">
+                <a href="#" class="footer-item" id="toggleSound">
+                    <span class="nav-icon"><i class="fas fa-bell"></i></span>
+                    <span>Activar Sonido</span>
+                </a>
+                
+                <a href="#" class="footer-item" id="toggleTheme">
+                    <span class="nav-icon"><i class="fas fa-moon"></i></span>
+                    <span>Cambiar Tema</span>
+                </a>
+                
+                <a href="{{ url_for('auth.logout') }}" class="footer-item">
+                    <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- ===== CONTENIDO PRINCIPAL ===== -->
+        <main class="main-content">
+            <!-- Header del contenido -->
+            <div class="content-header">
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <p class="page-subtitle">{% block page_subtitle %}Sistema de gestión de cocina{% endblock %}</p>
+            </div>
+            
+            <!-- Contenedor de la página -->
+            <div class="page-container">
+                {% block content %}
+                <!-- El contenido específico de cada página irá aquí -->
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bootstrap JS y dependencias -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Scripts personalizados -->
+    <script>
+        // Toggle sidebar en móviles
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+        
+        // Activar/desactivar sonido
+        document.getElementById('toggleSound').addEventListener('click', function(e) {
+            e.preventDefault();
+            const icon = this.querySelector('.nav-icon i');
+            const text = this.querySelector('span:not(.nav-icon)');
+            
+            if (icon.classList.contains('fa-bell')) {
+                icon.classList.remove('fa-bell');
+                icon.classList.add('fa-bell-slash');
+                text.textContent = 'Sonido Desactivado';
+                // Aquí iría la lógica para desactivar sonidos
+            } else {
+                icon.classList.remove('fa-bell-slash');
+                icon.classList.add('fa-bell');
+                text.textContent = 'Activar Sonido';
+                // Aquí iría la lógica para activar sonidos
+            }
+        });
+        
+        // Cambiar tema claro/oscuro
+        document.getElementById('toggleTheme').addEventListener('click', function(e) {
+            e.preventDefault();
+            const body = document.body;
+            const icon = this.querySelector('.nav-icon i');
+            const text = this.querySelector('span:not(.nav-icon)');
+            
+            if (body.classList.contains('light-theme') || !body.classList.contains('dark-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                text.textContent = 'Tema Claro';
+                // Aquí podrías guardar la preferencia en localStorage
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                text.textContent = 'Tema Oscuro';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        // Cerrar sidebar al hacer clic fuera en móviles
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            
+            if (window.innerWidth <= 576 && 
+                sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                e.target !== toggleBtn && 
+                !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+        
+        // Cargar tema guardado
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.getElementById('toggleTheme');
+            
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.querySelector('.nav-icon i').classList.remove('fa-moon');
+                themeToggle.querySelector('.nav-icon i').classList.add('fa-sun');
+                themeToggle.querySelector('span:not(.nav-icon)').textContent = 'Tema Claro';
+            }
+            
+            // Simular actualización de contadores (esto vendría del backend)
+            updateOrderCounters();
+        });
+        
+        // Función para actualizar contadores de pedidos
+        function updateOrderCounters() {
+            // Aquí harías una petición AJAX al backend
+            // Por ahora simulamos con valores estáticos
+            const counters = {
+                pending: 3,
+                preparing: 5,
+                ready: 2
+            };
+            
+            document.getElementById('pending-orders-badge').textContent = counters.pending;
+            document.getElementById('preparing-orders-badge').textContent = counters.preparing;
+            document.getElementById('ready-orders-badge').textContent = counters.ready;
+        }
+        
+        // Actualizar contadores cada 30 segundos
+        setInterval(updateOrderCounters, 30000);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

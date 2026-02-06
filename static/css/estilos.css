@@ -388,6 +388,393 @@ html {
     background-color: rgba(0, 0, 0, 0.07);
 }
 
+/* =====================================================
+   ESTILOS ESPECÍFICOS PARA COCINA
+   ===================================================== */
+
+/* Modal para detalles de pedido */
+.modal-detalles {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-detalles.active,
+.modal-no-disponibles.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    background: linear-gradient(to right, #FF6B35, #FFA500);
+    color: white;
+    padding: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-family: "OswaldLight";
+    font-size: 24px;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e1e1e1;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Cards compactas para pedidos */
+.pedido-card-compacto {
+    background: white;
+    border-left: 4px solid #FF6B35;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.pedido-card-compacto:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.pedido-numero {
+    font-family: "OswaldLight";
+    font-size: 18px;
+    color: #3F51B5;
+    font-weight: bold;
+}
+
+.pedido-mesa, .pedido-hora, .pedido-tiempo, .pedido-cliente {
+    font-size: 12px;
+    color: #666;
+    background-color: #f5f5f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin: 0 2px;
+}
+
+.pedido-tiempo {
+    color: #ff5722;
+    font-weight: bold;
+}
+
+.pedido-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-ver-detalle, .btn-iniciar {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    font-family: "RobotoCondensedLight";
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-ver-detalle {
+    background-color: #2196F3;
+    color: white;
+}
+
+.btn-ver-detalle:hover {
+    background-color: #1976D2;
+}
+
+.btn-iniciar {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-iniciar:hover {
+    background-color: #388E3C;
+}
+
+/* Estados de preparación */
+.pedido-en-preparacion {
+    border-left-color: #4CAF50;
+    background-color: #f1f8e9;
+}
+
+.platillo-preparando {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.platillo-no-preparado {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* Listado de platillos no disponibles */
+.lista-no-disponibles {
+    margin-top: 20px;
+}
+
+.platillo-no-disponible-item {
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Botones de acción */
+.btn-marcar-no-disponible {
+    background-color: #FF9800;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "RobotoCondensedLight";
+    margin-right: 10px;
+}
+
+.btn-marcar-no-disponible:hover {
+    background-color: #F57C00;
+}
+
+.btn-lista-no-disponibles {
+    background-color: #9C27B0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "RobotoCondensedLight";
+}
+
+.btn-lista-no-disponibles:hover {
+    background-color: #7B1FA2;
+}
+
+/* Filtros de organización */
+.filtros-cocina {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.btn-filtro {
+    padding: 8px 16px;
+    background-color: #e9ecef;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "RobotoCondensedLight";
+    transition: all 0.2s ease;
+}
+
+.btn-filtro:hover {
+    background-color: #dee2e6;
+}
+
+.btn-filtro.active {
+    background-color: #3F51B5;
+    color: white;
+}
+
+/* Sonido toggle */
+.btn-sonido {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-sonido.active {
+    background-color: #4CAF50;
+}
+
+/* Grid de estadísticas */
+.estadisticas-cocina {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.estadistica-item {
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.estadistica-numero {
+    font-size: 32px;
+    font-family: "OswaldLight";
+    color: #3F51B5;
+    margin: 10px 0;
+}
+
+/* Columnas Kanban */
+.columnas-kanban {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.columna {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.columna-header {
+    padding: 15px;
+    color: white;
+    font-family: "OswaldLight";
+    font-size: 18px;
+}
+
+.columna-pendientes .columna-header {
+    background: linear-gradient(to right, #f44336, #ff7961);
+}
+
+.columna-preparacion .columna-header {
+    background: linear-gradient(to right, #FF9800, #ffb74d);
+}
+
+.columna-listos .columna-header {
+    background: linear-gradient(to right, #4CAF50, #81c784);
+}
+
+.columna-body {
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(63, 81, 181, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(63, 81, 181, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(63, 81, 181, 0); }
+}
+
+.btn-pulse {
+    animation: pulse 2s infinite;
+}
+
+/* =====================================================
+   RESPONSIVE PARA COCINA
+   ===================================================== */
+@media (max-width: 768px) {
+    .pedido-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .pedido-mesa, .pedido-hora, .pedido-tiempo, .pedido-cliente {
+        font-size: 10px;
+        padding: 1px 6px;
+    }
+    
+    .pedido-acciones {
+        flex-direction: column;
+    }
+    
+    .columnas-kanban {
+        grid-template-columns: 1fr;
+    }
+    
+    .estadisticas-cocina {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .estadisticas-cocina {
+        grid-template-columns: 1fr;
+    }
+    
+    .filtros-cocina {
+        flex-direction: column;
+    }
+    
+    .btn-filtro {
+        width: 100%;
+    }
+}
+
 /*=====================================================
                     Media  Queries
 ======================================================*/

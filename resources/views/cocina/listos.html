@@ -1,0 +1,155 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Pedidos Listos{% endblock %}
+{% block page_title %}Pedidos Listos para Servir{% endblock %}
+{% block page_subtitle %}Pedidos listos para entregar al cliente{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_pedidos') }}" class="nav-link">
+    <i class="bi bi-list-task"></i>
+    <span>Pedidos Pendientes</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_en_proceso') }}" class="nav-link">
+    <i class="bi bi-hourglass-split"></i>
+    <span>En Preparación</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_listos') }}" class="nav-link active">
+    <i class="bi bi-check-circle"></i>
+    <span>Listos</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
+    <i class="bi bi-box-seam"></i>
+    <span>Inventario</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- HEADER -->
+<div class="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white mb-6 flex items-center justify-between">
+    <div>
+        <h2 class="text-2xl font-bold">Pedidos Listos ✅</h2>
+        <p class="text-sm opacity-90 mt-1">Esperando ser entregados al cliente</p>
+    </div>
+    <div class="text-right">
+        <div class="text-5xl font-bold" id="total-listos">0</div>
+        <p class="text-sm opacity-90">Total</p>
+    </div>
+</div>
+
+<!-- CONTROLES -->
+<div class="bg-white p-4 rounded-xl shadow-md mb-6 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-2">
+        <button onclick="actualizarListos()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center gap-2">
+            <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+    </div>
+</div>
+
+<!-- LAYOUT: GRID + LISTADO LATERAL -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    
+    <!-- COLUMNA PRINCIPAL: RECTÁNGULOS CON TOTAL -->
+    <div class="lg:col-span-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contenedor-listos">
+            <div class="col-span-2 text-center py-16 text-gray-400">
+                <i class="bi bi-inbox text-6xl mb-3 block"></i>
+                <p class="text-lg font-semibold">Sin pedidos listos</p>
+                <p class="text-sm mt-1">Los pedidos listos aparecerán aquí</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- COLUMNA LATERAL: LISTADO RÁPIDO -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-md p-4 sticky top-20 max-h-[600px] overflow-y-auto">
+            <h3 class="font-bold text-lg mb-4 text-gray-800 pb-3 border-b-2 border-green-300">
+                <i class="bi bi-list-check"></i> Para Entregar
+            </h3>
+            <div id="listado-rapido-listos" class="space-y-2">
+                <p class="text-sm text-gray-500 text-center py-6">Cargando...</p>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- MODAL: VER DETALLES Y CONFIRMAR ENTREGA -->
+<div id="modal-detalles-listos" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 sticky top-0 z-10 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold" id="modal-listos-numero-pedido">Pedido #001</h2>
+                <p class="text-sm opacity-90 mt-1">Mesa <span id="modal-listos-numero-mesa">1</span></p>
+            </div>
+            <button onclick="cerrarModalDetallesListos()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="p-6">
+            
+            <!-- Info General -->
+            <div class="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="text-xs text-gray-600 font-semibold">TIEMPO TOTAL</p>
+                    <p class="text-lg font-bold text-gray-800" id="modal-listos-tiempo-total">-- min</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-600 font-semibold">TOTAL CUENTA</p>
+                    <p class="text-2xl font-bold text-green-600" id="modal-listos-total-cuenta">$0.00</p>
+                </div>
+            </div>
+            
+            <!-- Platillos -->
+            <div class="mb-6">
+                <h3 class="font-bold text-lg mb-4 text-gray-800 pb-2 border-b-2 border-green-300">
+                    <i class="bi bi-egg-fried"></i> Platillos Preparados
+                </h3>
+                <div id="modal-listos-platillos" class="space-y-3">
+                    <!-- Los platillos se cargan aquí -->
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="bg-gray-50 p-6 border-t-2 border-gray-200 sticky bottom-0 flex gap-3">
+            <button onclick="cerrarModalDetallesListos()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                <i class="bi bi-x-circle"></i> Cancelar
+            </button>
+            <button onclick="confirmarEntregaDesdeModal()" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition font-semibold">
+                <i class="bi bi-send"></i> Entregar
+            </button>
+        </div>
+        
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cocina/listos.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cocina/listos.js') }}"></script>
+{% endblock %}
+
+{% block footer %}
+<a href="{{ url_for('routes.cocina_pedidos') }}">Pedidos Pendientes</a>
+<a href="{{ url_for('routes.cocina_en_proceso') }}">En Preparación</a>
+<a href="{{ url_for('routes.cocina_listos') }}">Listos</a>
+<a href="{{ url_for('routes.cocina_inventario') }}">Inventario</a>
+{% endblock %}
