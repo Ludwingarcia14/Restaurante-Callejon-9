@@ -26,6 +26,14 @@ def api_auth_error(message="No autorizado", code=401):
 # ============================================
 
 # Ruta raíz - redirige según estado de sesión
+
+routes_bp = Blueprint("routes", __name__)
+
+# ============================================
+#  AUTENTICACIÓN
+# ============================================
+
+# Ruta raíz - redirige según estado de sesión
 @routes_bp.route("/")
 def home():
     return DashboardController.index()
@@ -35,6 +43,91 @@ routes_bp.add_url_rule("/login", view_func=AuthController.login, methods=["GET",
 routes_bp.add_url_rule("/logout", view_func=AuthController.logout, endpoint="logout")
 routes_bp.add_url_rule("/verify-2fa", view_func=AuthController.verify_2fa, methods=["POST"], endpoint="verify_2fa")
 
+# ============================================
+#  API ENDPOINTS
+# ============================================
+
+# API de estadísticas del dashboard
+@routes_bp.route('/api/dashboard/admin/stats')
+@login_required
+@rol_required(['1'])
+def api_dashboard_stats():
+    """API endpoint para obtener estadísticas reales del dashboard"""
+    return DashboardAPIController.get_stats()
+
+@routes_bp.route("/api/dashboard/admin/actividad")
+@login_required
+@rol_required(['1'])
+def api_dashboard_actividad():
+    """API endpoint para obtener actividad reciente"""
+    return DashboardAPIController.get_actividad_reciente()
+
+@routes_bp.route("/api/dashboard/admin/personal")
+@login_required
+@rol_required(['1'])
+def api_dashboard_personal():
+    """API endpoint para obtener personal activo"""
+    return DashboardAPIController.get_personal_activo()
+
+@routes_bp.route("/api/empleados/todos")
+@login_required
+@rol_required(['1'])
+def api_empleados_todos():
+    """API endpoint para obtener todos los empleados"""
+    return DashboardAPIController.get_todos_empleados()
+
+# ============================================
+#  API NOTIFICACIONES
+# ============================================
+
+# Obtener datos del usuario para Socket.IO
+@routes_bp.route('/api/me', methods=['GET'])
+@login_required
+def api_me():
+    """Endpoint para obtener datos del usuario autenticado y token de socket"""
+    return NotificacionController.get_datos_socket()
+
+# Obtener todas las notificaciones
+@routes_bp.route('/api/notificaciones', methods=['GET'])
+@login_required
+def api_notificaciones():
+    """Obtiene todas las notificaciones del usuario"""
+    return NotificacionController.get_notificaciones()
+
+# Obtener solo notificaciones no leídas
+@routes_bp.route('/api/notificaciones/no-leidas', methods=['GET'])
+@login_required
+def api_notificaciones_no_leidas():
+    """Obtiene notificaciones no leídas"""
+    return NotificacionController.get_notificaciones_no_leidas()
+
+# Contador de notificaciones no leídas
+@routes_bp.route('/api/notificaciones/contador', methods=['GET'])
+@login_required
+def api_notificaciones_contador():
+    """Obtiene el número de notificaciones no leídas"""
+    return NotificacionController.get_contador()
+
+# Marcar una notificación como leída
+@routes_bp.route('/api/notificaciones/<id_notificacion>/leida', methods=['PUT'])
+@login_required
+def api_notificacion_leida(id_notificacion):
+    """Marca una notificación específica como leída"""
+    return NotificacionController.marcar_leida(id_notificacion)
+
+# Marcar todas como leídas
+@routes_bp.route('/api/notificaciones/marcar-todas-leidas', methods=['POST'])
+@login_required
+def api_marcar_todas_leidas():
+    """Marca todas las notificaciones del usuario como leídas"""
+    return NotificacionController.marcar_todas_leidas()
+
+# Eliminar notificación
+@routes_bp.route('/api/notificaciones/<id_notificacion>', methods=['DELETE'])
+@login_required
+def api_eliminar_notificacion(id_notificacion):
+    """Elimina una notificación específica"""
+    return NotificacionController.eliminar_notificacion(id_notificacion)
 
 # ============================================
 #  PANEL DE ADMINISTRACIÓN (Rol 1)
@@ -67,23 +160,6 @@ def admin_empleados_crear():
 def admin_reportes():
     return DashboardController.reportes()
 
-@routes_bp.route("/api/dashboard/admin/stats")
-@login_required
-@rol_required(['1'])
-def api_dashboard_stats():
-    return DashboardAPIController.get_stats()
-
-@routes_bp.route("/api/dashboard/admin/actividad")
-@login_required
-@rol_required(['1'])
-def api_dashboard_actividad():
-    return DashboardAPIController.get_actividad_reciente()
-
-@routes_bp.route("/api/dashboard/admin/personal")
-@login_required
-@rol_required(['1'])
-def api_dashboard_personal():
-    return DashboardAPIController.get_personal_activo()
 # ============================================
 # 🍽️ PANEL DE MESERO (Rol 2)
 # ============================================
@@ -435,7 +511,6 @@ class Comanda:
 # ============================================
 # 👨‍🍳 PANEL DE COCINA (Rol 3)
 # ============================================
-
 @routes_bp.route("/dashboard/cocina")
 @login_required
 @rol_required(['3'])
@@ -489,15 +564,9 @@ def cocina_inventario():
     # Placeholder: implementar vista de inventario
     return render_template("cocina/dashboard.html")
 
-"""
-Rutas del Módulo de Inventario
-Agregar estas rutas al archivo routes.py principal
-"""
-
 # ============================================
 # 📦 PANEL DE INVENTARIO (Rol 4)
 # ============================================
-
 
 # Dashboard
 @routes_bp.route("/inventario/dashboard")
@@ -576,31 +645,42 @@ def inventario_crear_proveedor():
 @rol_required(['1', '4'])
 def inventario_reportes():
     return InventarioController.reportes()
+
 # ============================================
-#  UTILIDADES
+# 🔒 MÓDULO DE SEGURIDAD Y BACKUP
 # ============================================
 
-@routes_bp.route('/toggle/theme')
+# Gestión Principal de Respaldos
+@routes_bp.route('/admin/backup', methods=['GET'])
 @login_required
-def toggle_theme():
-    from controllers.dashboard.dashboard_controller import toggle_theme as toggle_theme_func
-    return toggle_theme_func()
+@rol_required(['1'])
+def admin_backup_view():
+    return BackupController.index()
 
-# ------------------------------------------------------------
-# Módulo de Seguridad y Backup
-# Gestión Principal de Respaldos (Listar y Panel)
-routes_bp.add_url_rule("/admin/backup", view_func=BackupController.index, endpoint="admin_backup_view")
-
-# Creación de Respaldo (POST)
-routes_bp.add_url_rule("/admin/backup/create", view_func=BackupController.create, methods=["POST"], endpoint="admin_backup_create")
+# Creación de Respaldo
+@routes_bp.route('/admin/backup/create', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def admin_backup_create():
+    return BackupController.create()
 
 # Eliminación de Archivo Físico
-routes_bp.add_url_rule("/admin/backup/delete/<filename>", view_func=BackupController.delete_file, endpoint="admin_backup_delete")
+@routes_bp.route('/admin/backup/delete/<filename>', methods=['GET'])
+@login_required
+@rol_required(['1'])
+def admin_backup_delete(filename):
+    return BackupController.delete_file(filename)
 
 # Restauración
-# Vista de Restauración (Historial y Carga)
-routes_bp.add_url_rule("/admin/restore", view_func=BackupController.restore_view, endpoint="admin_backup_restore_view")
-routes_bp.add_url_rule("/admin/backup/restore", view_func=BackupController.restore, methods=["POST"], endpoint="admin_backup_restore")
+@routes_bp.route('/admin/backup/restore', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def admin_backup_restore():
+    return BackupController.restore()
 
-# Acción de Restaurar (POST - Procesa archivos del servidor y subidos)
-routes_bp.add_url_rule("/admin/backup/restore", view_func=BackupController.restore, methods=["POST"], endpoint="admin_backup_restore")
+# Configuración de Backup Automático
+@routes_bp.route('/admin/backup/configure', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def admin_backup_configure():
+    return BackupController.configure_auto_backup()
