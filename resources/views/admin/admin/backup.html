@@ -2,30 +2,676 @@
 
 {% block title %}Sistema de Respaldos{% endblock %}
 {% block page_title %}Gestión de Respaldos{% endblock %}
-{% block page_subtitle %}Backup y restauración de datos{% endblock %}
+{% block page_subtitle %}Protege la información crítica de tu restaurante{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+
 <style>
+    :root {
+        --color-primary: #F2913D;      
+        --color-primary-dark: #DE823D; 
+        --color-secondary: #F2CA99;
+        --color-accent: #F2A399;       
+        --color-dark: #0D0D0D;
+    }
+    
+    * {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+    }
+    
+    /* Hero Section con Diseño Moderno */
+    .backup-hero {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border-radius: 24px;
+        padding: 3.5rem;
+        color: white;
+        box-shadow: 0 20px 60px rgba(242, 145, 61, 0.25);
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .backup-hero::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+    }
+    
+    .backup-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: float 10s ease-in-out infinite reverse;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, -30px) scale(1.05); }
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-stat {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .hero-stat-number {
+        font-size: 3.5rem;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Cards Modernos */
     .backup-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        border: 1px solid rgba(242, 202, 153, 0.3);
+    }
+    
+    .backup-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        border-color: var(--color-primary);
+    }
+    
+    .backup-card-header {
+        padding: 2rem;
+        border-bottom: 2px solid var(--color-secondary);
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.08) 0%, rgba(242, 163, 153, 0.08) 100%);
+    }
+    
+    .backup-card-body {
+        padding: 2rem;
+    }
+    
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+    
+    .card-title i {
+        color: var(--color-primary);
+        font-size: 1.75rem;
+    }
+    
+    /* Formularios Elegantes */
+    .form-group {
+        margin-bottom: 1.75rem;
+    }
+    
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--color-dark);
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-label i {
+        color: var(--color-primary);
+        font-size: 1.125rem;
+    }
+    
+    .form-input,
+    .form-select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e5e5e5;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        color: var(--color-dark);
+        font-weight: 500;
+    }
+    
+    .form-input:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 4px rgba(242, 145, 61, 0.1);
+        background: #fffcf9;
+    }
+    
+    .form-hint {
+        font-size: 0.75rem;
+        color: #737373;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    
+    /* Radio Buttons Modernos */
+    .radio-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .radio-option {
+        position: relative;
+    }
+    
+    .radio-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .radio-option label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        border: 2px solid #e5e5e5;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .radio-option input[type="radio"]:checked + label {
+        border-color: var(--color-primary);
+        background: linear-gradient(135deg, rgba(242, 145, 61, 0.1) 0%, rgba(222, 130, 61, 0.1) 100%);
+        color: var(--color-primary-dark);
+        box-shadow: 0 4px 12px rgba(242, 145, 61, 0.2);
+    }
+    
+    .radio-option label i {
+        font-size: 2rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .radio-option input[type="radio"]:checked + label i {
+        transform: scale(1.1);
+    }
+    
+    /* Checkbox List con Scroll */
+    .checkbox-list {
+        max-height: 320px;
+        overflow-y: auto;
+        border: 2px solid #e5e5e5;
+        border-radius: 16px;
+        padding: 1rem;
+        background: #fafafa;
+    }
+    
+    .checkbox-list::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    .checkbox-list::-webkit-scrollbar-track {
+        background: #f5f5f5;
+        border-radius: 8px;
+    }
+    
+    .checkbox-list::-webkit-scrollbar-thumb {
+        background: var(--color-secondary);
+        border-radius: 8px;
+    }
+    
+    .checkbox-list::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary);
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 0.625rem;
+        background: white;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .checkbox-item:hover {
+        background: var(--color-secondary);
+        border-color: var(--color-primary);
+        transform: translateX(8px);
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+        width: 1.375rem;
+        height: 1.375rem;
+        cursor: pointer;
+        accent-color: var(--color-primary);
+    }
+    
+    .checkbox-item label {
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        flex: 1;
+    }
+    
+    /* Botones Premium */
+    .btn-submit {
+        width: 100%;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1.0625rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        box-shadow: 0 8px 24px rgba(242, 145, 61, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(242, 145, 61, 0.4);
+    }
+    
+    .btn-submit:active {
+        transform: translateY(-1px);
+    }
+    
+    .btn-submit i {
+        font-size: 1.375rem;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-danger:hover {
+        box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4);
+    }
+    
+    /* Toggle Switch Moderno */
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.12) 0%, rgba(242, 163, 153, 0.12) 100%);
+        border-radius: 16px;
+        margin-bottom: 1.75rem;
+        border: 2px solid rgba(242, 145, 61, 0.15);
+    }
+    
+    .toggle-switch {
+        position: relative;
+        width: 64px;
+        height: 36px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #d4d4d4;
+        transition: 0.3s;
+        border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 28px;
+        width: 28px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    input:checked + .toggle-slider {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(28px);
+    }
+    
+    /* Tabla de Archivos */
+    .file-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .file-table thead th {
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.15) 0%, rgba(242, 163, 153, 0.15) 100%);
+        padding: 1.25rem 1.75rem;
+        text-align: left;
+        font-weight: 800;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--color-dark);
+        border-bottom: 3px solid var(--color-primary);
+    }
+    
+    .file-table thead th:first-child {
+        border-top-left-radius: 16px;
+    }
+    
+    .file-table thead th:last-child {
+        border-top-right-radius: 16px;
+    }
+    
+    .file-table tbody tr {
         transition: all 0.3s ease;
     }
-    .backup-card:hover {
+    
+    .file-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.1) 0%, rgba(242, 163, 153, 0.1) 100%);
+    }
+    
+    .file-table tbody td {
+        padding: 1.5rem 1.75rem;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .file-icon {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .file-icon i {
+        font-size: 1.625rem;
+        color: white;
+    }
+    
+    .file-name {
+        font-weight: 700;
+        color: var(--color-dark);
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        width: 2.75rem;
+        height: 2.75rem;
+        border: none;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.25rem;
+    }
+    
+    .action-btn-download {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+    }
+    
+    .action-btn-download:hover {
+        background: #10b981;
+        color: white;
+        transform: scale(1.15) rotate(-10deg);
+    }
+    
+    .action-btn-restore {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+    }
+    
+    .action-btn-restore:hover {
+        background: #3b82f6;
+        color: white;
+        transform: scale(1.15) rotate(10deg);
+    }
+    
+    .action-btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+    
+    .action-btn-delete:hover {
+        background: #ef4444;
+        color: white;
+        transform: scale(1.15);
+    }
+    
+    /* Badges */
+    .file-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 0.875rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .file-badge-auto {
+        background: rgba(168, 85, 247, 0.12);
+        color: #7c3aed;
+    }
+    
+    .file-badge-manual {
+        background: rgba(16, 185, 129, 0.12);
+        color: #059669;
+    }
+    
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: 18px;
+        padding: 2rem;
+        border: 2px solid var(--color-secondary);
+        transition: all 0.4s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+        border-color: var(--color-primary);
+    }
+    
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #737373;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 6rem;
+        color: #d4d4d4;
+        margin-bottom: 2rem;
+        display: block;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #404040;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: #737373;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(242, 202, 153, 0.08) 0%, rgba(242, 163, 153, 0.08) 100%);
+        border-top: 2px solid var(--color-secondary);
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+    
+    .pagination-info {
+        font-size: 0.9375rem;
+        color: var(--color-dark);
+        font-weight: 700;
+    }
+    
+    .pagination-buttons {
+        display: flex;
+        gap: 0.625rem;
+    }
+    
+    .pagination-btn {
+        padding: 0.75rem 1.125rem;
+        border: 2px solid #e5e5e5;
+        background: white;
+        border-radius: 10px;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: var(--color-dark);
+    }
+    
+    .pagination-btn:hover {
+        border-color: var(--color-primary);
+        background: rgba(242, 145, 61, 0.1);
+        color: var(--color-primary-dark);
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
     
-    .file-item {
-        transition: all 0.2s ease;
+    .pagination-btn.active {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border-color: var(--color-primary);
+        color: white;
     }
     
-    .file-item:hover {
-        background-color: #F2CA99;
-        transform: translateX(5px);
+    /* Progress Modal */
+    .progress-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
     }
     
-    .progress-bar {
-        transition: width 0.3s ease;
+    .progress-content {
+        background: white;
+        border-radius: 24px;
+        padding: 3.5rem;
+        max-width: 520px;
+        width: 90%;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+    }
+    
+    .progress-icon {
+        font-size: 5rem;
+        color: var(--color-primary);
+        animation: spin 1s linear infinite;
+        display: block;
+        text-align: center;
+        margin-bottom: 2rem;
     }
     
     @keyframes spin {
@@ -33,401 +679,432 @@
         to { transform: rotate(360deg); }
     }
     
-    .spinning {
-        animation: spin 1s linear infinite;
+    .progress-title {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--color-dark);
+        text-align: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .progress-text {
+        text-align: center;
+        color: #737373;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .progress-bar-container {
+        width: 100%;
+        height: 10px;
+        background: #f5f5f5;
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-top: 2rem;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        transition: width 0.3s ease;
+        border-radius: 9999px;
     }
 </style>
 {% endblock %}
 
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link">
-    <i class="bi bi-speedometer2"></i>
-    <span>Dashboard</span>
-</a>
-
-<a href="{{ url_for('routes.admin_empleados_lista') }}" class="nav-link">
-    <i class="bi bi-people"></i>
-    <span>Empleados</span>
-</a>
-
-<a href="{{ url_for('routes.admin_backup_view') }}" class="nav-link active">
-    <i class="bi bi-hdd"></i>
-    <span>Respaldos</span>
-</a>
-
-<a href="{{ url_for('routes.admin_reportes') }}" class="nav-link">
-    <i class="bi bi-graph-up"></i>
-    <span>Reportes</span>
-</a>
-{% endblock %}
-
 {% block content %}
 
-<!-- Header con estadísticas -->
-<div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-xl shadow-lg text-white mb-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-2xl font-bold mb-2 flex items-center gap-2">
-                <i class="ri-database-2-line"></i>
-                Sistema de Respaldos
-            </h2>
-            <p class="opacity-90 text-sm">Protege la información crítica de tu restaurante</p>
-        </div>
-        <div class="text-right">
-            <div class="text-3xl font-bold">{{ total_files }}</div>
-            <div class="text-sm opacity-90">Respaldos guardados</div>
+<!-- Hero Section -->
+<div class="backup-hero">
+    <div class="hero-content">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem;">
+            <div style="flex: 1; min-width: 300px;">
+                <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                    <i class="ri-database-2-line"></i>
+                    Sistema de Respaldos
+                </h2>
+                <p style="opacity: 0.95; font-size: 1.125rem; line-height: 1.7; font-weight: 500;">
+                    Protege la información crítica de tu restaurante con respaldos automáticos<br>
+                    y restauración instantánea de datos.
+                </p>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">{{ total_files }}</div>
+                <div style="font-size: 1rem; font-weight: 700; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px;">
+                    Respaldos Guardados
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Grid Principal -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
     
-    <!-- COLUMNA 1: Crear Respaldo -->
-    <div class="lg:col-span-1">
-        <div class="card backup-card">
-            <div class="card-header bg-gradient-to-r from-green-500 to-emerald-600 text-white">
-                <h3 class="font-bold flex items-center gap-2">
-                    <i class="ri-save-3-line text-xl"></i>
-                    Crear Nuevo Respaldo
-                </h3>
-            </div>
-            <div class="card-body">
-                <form id="backupForm" action="{{ url_for('routes.admin_backup_create') }}" method="POST">
-                    
-                    <!-- Nombre del Respaldo -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="ri-file-text-line"></i>
-                            Nombre del Respaldo
-                        </label>
-                        <input type="text" 
-                               name="backup_name" 
-                               id="backupName"
-                               placeholder="respaldo_callejon9" 
-                               required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                        <p class="text-xs text-gray-500 mt-1">Se agregará fecha automáticamente</p>
-                    </div>
-
-                    <!-- Rango de Tiempo -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="ri-calendar-line"></i>
-                            Rango de Tiempo
-                        </label>
-                        <select name="time_range" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                            <option value="all">Todos los datos</option>
-                            <option value="24h">Últimas 24 horas</option>
-                            <option value="7d">Últimos 7 días</option>
-                            <option value="30d">Últimos 30 días</option>
-                        </select>
-                    </div>
-
-                    <!-- Formato -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="ri-file-zip-line"></i>
-                            Formato de Exportación
-                        </label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="cursor-pointer">
-                                <input type="radio" name="format" value="json" class="peer hidden" checked>
-                                <div class="p-3 border-2 border-gray-200 rounded-lg text-center text-sm font-semibold peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 transition">
-                                    <i class="ri-braces-line text-xl block mb-1"></i>
-                                    JSON
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="format" value="zip" class="peer hidden">
-                                <div class="p-3 border-2 border-gray-200 rounded-lg text-center text-sm font-semibold peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 transition">
-                                    <i class="ri-file-zip-line text-xl block mb-1"></i>
-                                    ZIP
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Seleccionar Colecciones -->
-                    <div class="mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-semibold text-gray-700">
-                                <i class="ri-database-line"></i>
-                                Colecciones
-                            </label>
-                            <button type="button" onclick="toggleAll()" class="text-xs text-green-600 hover:text-green-700 font-semibold">
-                                <span id="toggleText">Todas</span>
-                            </button>
-                        </div>
-                        <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
-                            {% for col in collections %}
-                            <label class="flex items-center gap-2 p-2 hover:bg-white rounded cursor-pointer transition">
-                                <input type="checkbox" 
-                                       name="collections" 
-                                       value="{{ col }}" 
-                                       class="collection-check w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500" 
-                                       checked>
-                                <span class="text-sm text-gray-700">{{ col|capitalize }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Botón Generar -->
-                    <button type="submit" 
-                            id="btnGenerar"
-                            class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
-                        <i class="ri-download-cloud-line text-xl"></i>
-                        <span>Generar Respaldo</span>
-                    </button>
-                </form>
-            </div>
+    <!-- TARJETA 1: Crear Respaldo -->
+    <div class="backup-card">
+        <div class="backup-card-header">
+            <h3 class="card-title">
+                <i class="ri-save-3-line"></i>
+                Crear Nuevo Respaldo
+            </h3>
         </div>
-
-        <!-- Respaldos Automáticos -->
-        <div class="card backup-card mt-6">
-            <div class="card-header bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-                <h3 class="font-bold flex items-center gap-2">
-                    <i class="ri-time-line text-xl"></i>
-                    Respaldos Automáticos
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="space-y-3">
-                    <!-- Toggle Activar -->
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                            <p class="font-semibold text-gray-800 text-sm">Estado</p>
-                            <p class="text-xs text-gray-600">Activar respaldos automáticos</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="autoBackupToggle" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                        </label>
-                    </div>
-
-                    <!-- Frecuencia -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Frecuencia</label>
-                        <select id="autoFrequency" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
-                            <option value="daily">Diario</option>
-                            <option value="weekly">Semanal</option>
-                            <option value="monthly">Mensual</option>
-                        </select>
-                    </div>
-
-                    <!-- Hora -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Hora</label>
-                        <input type="time" 
-                               id="autoTime" 
-                               value="02:00"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
-                    </div>
-
-                    <!-- Retención -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Días de retención</label>
-                        <input type="number" 
-                               id="autoRetention" 
-                               value="30" 
-                               min="1"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
-                    </div>
-
-                    <button onclick="guardarConfiguracion()" 
-                            class="w-full py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition">
-                        <i class="ri-save-line"></i>
-                        Guardar Configuración
-                    </button>
+        <div class="backup-card-body">
+            <form id="backupForm" action="{{ url_for('routes.admin_backup_create') }}" method="POST">
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ri-file-text-line"></i>
+                        Nombre del Respaldo
+                    </label>
+                    <input type="text" 
+                           name="backup_name" 
+                           id="backupName"
+                           placeholder="respaldo_callejon9" 
+                           required
+                           class="form-input">
+                    <p class="form-hint">Se agregará fecha automáticamente</p>
                 </div>
-            </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ri-calendar-line"></i>
+                        Rango de Tiempo
+                    </label>
+                    <select name="time_range" class="form-select">
+                        <option value="all">Todos los datos</option>
+                        <option value="24h">Últimas 24 horas</option>
+                        <option value="7d">Últimos 7 días</option>
+                        <option value="30d">Últimos 30 días</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="ri-file-zip-line"></i>
+                        Formato de Exportación
+                    </label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" name="format" value="json" id="formatJson" checked>
+                            <label for="formatJson">
+                                <i class="ri-braces-line"></i>
+                                JSON
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="format" value="zip" id="formatZip">
+                            <label for="formatZip">
+                                <i class="ri-file-zip-line"></i>
+                                ZIP
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <label class="form-label" style="margin: 0;">
+                            <i class="ri-database-line"></i>
+                            Colecciones
+                        </label>
+                        <button type="button" onclick="toggleAll()" style="background: none; border: none; color: var(--color-primary); font-weight: 700; font-size: 0.8125rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <span id="toggleText">Todas</span>
+                        </button>
+                    </div>
+                    <div class="checkbox-list">
+                        {% for col in collections %}
+                        <div class="checkbox-item">
+                            <input type="checkbox" 
+                                   name="collections" 
+                                   value="{{ col }}" 
+                                   id="col_{{ loop.index }}"
+                                   class="collection-check" 
+                                   checked>
+                            <label for="col_{{ loop.index }}">{{ col|capitalize }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="ri-download-cloud-line"></i>
+                    <span>Generar Respaldo</span>
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- COLUMNA 2-3: Historial de Respaldos -->
-    <div class="lg:col-span-2">
-        <div class="card backup-card">
-            <div class="card-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-bold flex items-center gap-2">
-                        <i class="ri-history-line text-xl"></i>
-                        Historial de Respaldos
-                    </h3>
-                    <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-semibold">
-                        {{ total_files }} archivos
-                    </span>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                {% if files %}
-                <!-- Tabla de Archivos -->
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b-2 border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    <i class="ri-file-line"></i> Archivo
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    <i class="ri-calendar-line"></i> Fecha
-                                </th>
-                                <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    <i class="ri-tools-line"></i> Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% for file in files %}
-                            <tr class="file-item hover:bg-gray-50">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            {% if file.endswith('.zip') %}
-                                            <i class="ri-file-zip-line text-xl text-blue-600"></i>
-                                            {% else %}
-                                            <i class="ri-file-code-line text-xl text-blue-600"></i>
-                                            {% endif %}
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-gray-800 text-sm">{{ file }}</p>
-                                            <p class="text-xs text-gray-500">
-                                                {% if file.startswith('auto_backup_') %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                                                    <i class="ri-time-line mr-1"></i> Automático
-                                                </span>
-                                                {% else %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                    <i class="ri-hand-coin-line mr-1"></i> Manual
-                                                </span>
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">
-                                    <i class="ri-calendar-event-line"></i>
-                                    {% set parts = file.split('_') %}
-                                    {% if parts|length > 2 %}
-                                        {{ parts[-2] }} {{ parts[-1].split('.')[0] }}
-                                    {% else %}
-                                        Fecha no disponible
-                                    {% endif %}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <!-- Descargar -->
-                                        <a href="/static/backup/{{ file }}" 
-                                           download
-                                           class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
-                                           title="Descargar">
-                                            <i class="ri-download-2-line"></i>
-                                        </a>
-                                        
-                                        <!-- Restaurar -->
-                                        <button onclick="confirmarRestaurar('{{ file }}')" 
-                                                class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
-                                                title="Restaurar">
-                                            <i class="ri-refresh-line"></i>
-                                        </button>
-                                        
-                                        <!-- Eliminar -->
-                                        <button onclick="confirmarEliminar('{{ file }}')" 
-                                                class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
-                                                title="Eliminar">
-                                            <i class="ri-delete-bin-line"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                {% if total_pages > 1 %}
-                <div class="p-4 border-t bg-gray-50 flex justify-between items-center">
-                    <span class="text-sm text-gray-600">
-                        Página {{ page }} de {{ total_pages }}
-                    </span>
-                    <div class="flex gap-2">
-                        {% if page > 1 %}
-                        <a href="{{ url_for('routes.admin_backup_view', page=page-1) }}" 
-                           class="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                            <i class="ri-arrow-left-s-line"></i>
-                        </a>
-                        {% endif %}
-                        
-                        {% for p in range(1, total_pages + 1) %}
-                        <a href="{{ url_for('routes.admin_backup_view', page=p) }}" 
-                           class="px-3 py-1 border rounded-lg text-sm {{ 'bg-blue-600 text-white border-blue-600' if p == page else 'bg-white border-gray-300 hover:bg-gray-50' }}">
-                            {{ p }}
-                        </a>
-                        {% endfor %}
-                        
-                        {% if page < total_pages %}
-                        <a href="{{ url_for('routes.admin_backup_view', page=page+1) }}" 
-                           class="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                            <i class="ri-arrow-right-s-line"></i>
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% else %}
-                <!-- Sin Archivos -->
-                <div class="text-center py-12">
-                    <i class="ri-inbox-line text-6xl text-gray-300 mb-4 block"></i>
-                    <p class="text-lg font-semibold text-gray-700 mb-2">No hay respaldos guardados</p>
-                    <p class="text-sm text-gray-500">Crea tu primer respaldo usando el formulario</p>
-                </div>
-                {% endif %}
-            </div>
+    <!-- TARJETA 2: Respaldos Automáticos -->
+    <div class="backup-card">
+        <div class="backup-card-header">
+            <h3 class="card-title">
+                <i class="ri-time-line"></i>
+                Respaldos Automáticos
+            </h3>
         </div>
-
-        <!-- Botón de Restauración Manual -->
-        <div class="card backup-card mt-6">
-            <div class="card-header bg-gradient-to-r from-orange-500 to-red-600 text-white">
-                <h3 class="font-bold flex items-center gap-2">
-                    <i class="ri-upload-cloud-line text-xl"></i>
-                    Restaurar desde Archivo Externo
-                </h3>
+        <div class="backup-card-body">
+            
+            <div class="toggle-container">
+                <div>
+                    <p style="font-weight: 700; color: var(--color-dark); font-size: 1rem; margin-bottom: 0.375rem;">Estado del Sistema</p>
+                    <p style="font-size: 0.8125rem; color: #737373; font-weight: 500;">Activar respaldos programados</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoBackupToggle" 
+                           {% if auto_backup_config.enabled %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
-            <div class="card-body">
-                <form action="{{ url_for('routes.admin_backup_restore') }}" method="POST" enctype="multipart/form-data">
-                    <div class="mb-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Selecciona un archivo de respaldo
-                        </label>
-                        <input type="file" 
-                               name="backup_file" 
-                               accept=".json,.zip,.sql"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="ri-repeat-line"></i>
+                    Frecuencia
+                </label>
+                <select id="autoFrequency" class="form-select">
+                    <option value="daily" {% if auto_backup_config.frequency == 'daily' %}selected{% endif %}>Diario</option>
+                    <option value="weekly" {% if auto_backup_config.frequency == 'weekly' %}selected{% endif %}>Semanal</option>
+                    <option value="monthly" {% if auto_backup_config.frequency == 'monthly' %}selected{% endif %}>Mensual</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="ri-time-line"></i>
+                    Hora de Ejecución
+                </label>
+                <input type="time" 
+                       id="autoTime" 
+                       value="{{ auto_backup_config.hour or '02:00' }}"
+                       class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="ri-history-line"></i>
+                    Días de Retención
+                </label>
+                <input type="number" 
+                       id="autoRetention" 
+                       value="{{ auto_backup_config.retention_days or 30 }}" 
+                       min="1"
+                       class="form-input">
+                <p class="form-hint">Los respaldos antiguos se eliminarán automáticamente</p>
+            </div>
+
+            <button onclick="guardarConfiguracion()" class="btn-submit">
+                <i class="ri-save-line"></i>
+                <span>Guardar Configuración</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- TARJETA 3: Estadísticas -->
+    <div class="backup-card">
+        <div class="backup-card-header">
+            <h3 class="card-title">
+                <i class="ri-bar-chart-box-line"></i>
+                Estadísticas
+            </h3>
+        </div>
+        <div class="backup-card-body">
+            <div style="display: grid; gap: 1.5rem;">
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: white;">
+                        <i class="ri-database-2-line"></i>
                     </div>
-                    <button type="submit" 
-                            onclick="return confirm('⚠️ ¿ESTÁS SEGURO? Esto reemplazará todos los datos actuales.')"
-                            class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg font-bold hover:from-orange-600 hover:to-red-700 shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
-                        <i class="ri-refresh-line text-xl"></i>
-                        <span>Restaurar Base de Datos</span>
-                    </button>
-                </form>
+                    <div class="stat-number">{{ total_files }}</div>
+                    <div class="stat-label">Total de Respaldos</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%); color: white;">
+                        <i class="ri-calendar-check-line"></i>
+                    </div>
+                    <div class="stat-number">Hoy</div>
+                    <div class="stat-label">Último Respaldo</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%); color: white;">
+                        <i class="ri-shield-check-line"></i>
+                    </div>
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Integridad de Datos</div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de Progreso -->
-<div id="progressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
-        <div class="text-center">
-            <i class="ri-loader-4-line text-6xl text-blue-600 spinning mb-4 block"></i>
-            <h3 class="text-xl font-bold text-gray-800 mb-2" id="progressTitle">Procesando...</h3>
-            <p class="text-gray-600 mb-4" id="progressText">Por favor espera</p>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div id="progressBar" class="bg-blue-600 h-2 rounded-full progress-bar" style="width: 0%"></div>
+<!-- Historial de Respaldos -->
+<div class="backup-card">
+    <div class="backup-card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <h3 class="card-title">
+                <i class="ri-history-line"></i>
+                Historial de Respaldos
+            </h3>
+            <span class="file-badge" style="background: rgba(242, 145, 61, 0.15); color: var(--color-primary-dark); padding: 0.625rem 1.25rem; font-size: 0.875rem;">
+                <i class="ri-file-list-line"></i>
+                {{ total_files }} archivos
+            </span>
+        </div>
+    </div>
+    <div style="padding: 0;">
+        {% if files %}
+        <div style="overflow-x: auto;">
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th><i class="ri-file-line"></i> Archivo</th>
+                        <th><i class="ri-calendar-line"></i> Fecha</th>
+                        <th style="text-align: center;"><i class="ri-tools-line"></i> Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                                <div class="file-icon">
+                                    {% if file.endswith('.zip') %}
+                                    <i class="ri-file-zip-line"></i>
+                                    {% else %}
+                                    <i class="ri-file-code-line"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="file-name">{{ file }}</p>
+                                    {% if file.startswith('auto_backup_') %}
+                                    <span class="file-badge file-badge-auto">
+                                        <i class="ri-time-line"></i> Automático
+                                    </span>
+                                    {% else %}
+                                    <span class="file-badge file-badge-manual">
+                                        <i class="ri-hand-coin-line"></i> Manual
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-size: 0.9375rem; color: #525252; font-weight: 600;">
+                            <i class="ri-calendar-event-line" style="color: var(--color-primary); margin-right: 0.5rem;"></i>
+                            {% set parts = file.split('_') %}
+                            {% if parts|length > 2 %}
+                                {{ parts[-2] }} {{ parts[-1].split('.')[0] }}
+                            {% else %}
+                                Fecha no disponible
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                                <a href="/static/backup/{{ file }}" 
+                                   download
+                                   class="action-btn action-btn-download"
+                                   title="Descargar">
+                                    <i class="ri-download-2-line"></i>
+                                </a>
+                                
+                                <button onclick="confirmarRestaurar('{{ file }}')" 
+                                        class="action-btn action-btn-restore"
+                                        title="Restaurar">
+                                    <i class="ri-refresh-line"></i>
+                                </button>
+                                
+                                <button onclick="confirmarEliminar('{{ file }}')" 
+                                        class="action-btn action-btn-delete"
+                                        title="Eliminar">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            <span class="pagination-info">
+                Página {{ page }} de {{ total_pages }}
+            </span>
+            <div class="pagination-buttons">
+                {% if page > 1 %}
+                <a href="{{ url_for('routes.admin_backup_view', page=page-1) }}" class="pagination-btn">
+                    <i class="ri-arrow-left-s-line"></i>
+                </a>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                <a href="{{ url_for('routes.admin_backup_view', page=p) }}" 
+                   class="pagination-btn {{ 'active' if p == page else '' }}">
+                    {{ p }}
+                </a>
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                <a href="{{ url_for('routes.admin_backup_view', page=page+1) }}" class="pagination-btn">
+                    <i class="ri-arrow-right-s-line"></i>
+                </a>
+                {% endif %}
             </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="ri-inbox-line"></i>
+            <h3>No hay respaldos guardados</h3>
+            <p>Crea tu primer respaldo usando el formulario de arriba</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Restauración Manual -->
+<div class="backup-card" style="margin-top: 2rem;">
+    <div class="backup-card-header" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.08) 100%); border-bottom-color: rgba(239, 68, 68, 0.2);">
+        <h3 class="card-title">
+            <i class="ri-upload-cloud-line" style="color: #ef4444;"></i>
+            Restaurar desde Archivo Externo
+        </h3>
+    </div>
+    <div class="backup-card-body">
+        <form action="{{ url_for('routes.admin_backup_restore') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="ri-file-upload-line" style="color: #ef4444;"></i>
+                    Selecciona un archivo de respaldo
+                </label>
+                <input type="file" 
+                       name="backup_file" 
+                       accept=".json,.zip"
+                       class="form-input"
+                       style="padding: 1.125rem;">
+            </div>
+            <button type="submit" 
+                    onclick="return confirm('⚠️ ¿ESTÁS SEGURO? Esto reemplazará todos los datos actuales con el contenido del respaldo seleccionado. Esta acción NO se puede deshacer.')"
+                    class="btn-submit btn-danger">
+                <i class="ri-refresh-line"></i>
+                <span>Restaurar Base de Datos</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Progreso -->
+<div id="progressModal" class="progress-modal" style="display: none;">
+    <div class="progress-content">
+        <i class="ri-loader-4-line progress-icon"></i>
+        <h3 id="progressTitle" class="progress-title">Procesando...</h3>
+        <p id="progressText" class="progress-text">Por favor espera</p>
+        <div class="progress-bar-container">
+            <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
         </div>
     </div>
 </div>
@@ -436,9 +1113,7 @@
 
 {% block extra_js %}
 <script>
-// ===================================
-// TOGGLE DE COLECCIONES
-// ===================================
+// Toggle de colecciones
 function toggleAll() {
     const checkboxes = document.querySelectorAll('.collection-check');
     const allChecked = Array.from(checkboxes).every(cb => cb.checked);
@@ -450,9 +1125,7 @@ function toggleAll() {
     document.getElementById('toggleText').textContent = allChecked ? 'Todas' : 'Ninguna';
 }
 
-// ===================================
-// GENERAR RESPALDO
-// ===================================
+// Generar respaldo
 document.getElementById('backupForm').addEventListener('submit', function(e) {
     const checkedBoxes = document.querySelectorAll('.collection-check:checked');
     
@@ -461,27 +1134,25 @@ document.getElementById('backupForm').addEventListener('submit', function(e) {
         Swal.fire({
             icon: 'warning',
             title: 'Selección requerida',
-            text: 'Debes seleccionar al menos una colección'
+            text: 'Debes seleccionar al menos una colección',
+            confirmButtonColor: '#F2913D'
         });
         return;
     }
     
-    // Mostrar progreso
     showProgress('Generando respaldo...', 'Empaquetando datos seleccionados');
     simulateProgress();
 });
 
-// ===================================
-// CONFIRMAR ELIMINAR
-// ===================================
+// Confirmar eliminar
 function confirmarEliminar(filename) {
     Swal.fire({
         title: '¿Eliminar respaldo?',
-        html: `<p class="text-gray-600">Se eliminará: <strong>${filename}</strong></p>`,
+        html: `<p style="color: #737373; font-size: 1rem;">Se eliminará: <strong>${filename}</strong></p>`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#6b7280',
+        cancelButtonColor: '#a3a3a3',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
     }).then((result) => {
@@ -491,27 +1162,25 @@ function confirmarEliminar(filename) {
     });
 }
 
-// ===================================
-// CONFIRMAR RESTAURAR
-// ===================================
+// Confirmar restaurar
 function confirmarRestaurar(filename) {
     Swal.fire({
         title: '⚠️ ADVERTENCIA CRÍTICA',
         html: `
-            <div class="text-left space-y-3">
-                <p class="text-gray-700">Esta acción:</p>
-                <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>Eliminará TODOS los datos actuales</li>
-                    <li>Los reemplazará con: <strong>${filename}</strong></li>
-                    <li>NO se puede deshacer</li>
+            <div style="text-align: left; padding: 1.5rem;">
+                <p style="color: var(--color-dark); margin-bottom: 1.25rem; font-size: 1rem; font-weight: 600;">Esta acción:</p>
+                <ul style="list-style: disc; list-style-position: inside; color: #737373; margin-bottom: 1.25rem; line-height: 1.8;">
+                    <li>Eliminará <strong>TODOS</strong> los datos actuales</li>
+                    <li>Los reemplazará con: <strong style="color: var(--color-primary);">${filename}</strong></li>
+                    <li><strong>NO</strong> se puede deshacer</li>
                 </ul>
-                <p class="text-red-600 font-semibold mt-4">¿Estás absolutamente seguro?</p>
+                <p style="color: #dc2626; font-weight: 700; font-size: 1.0625rem;">¿Estás absolutamente seguro?</p>
             </div>
         `,
         icon: 'error',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
+        cancelButtonColor: '#a3a3a3',
         confirmButtonText: 'Sí, restaurar ahora',
         cancelButtonText: 'Cancelar'
     }).then((result) => {
@@ -524,7 +1193,6 @@ function confirmarRestaurar(filename) {
 function restaurarArchivo(filename) {
     showProgress('Restaurando base de datos...', 'No cierres esta ventana');
     
-    // Crear formulario y enviarlo
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '{{ url_for("routes.admin_backup_restore") }}';
@@ -539,9 +1207,7 @@ function restaurarArchivo(filename) {
     form.submit();
 }
 
-// ===================================
-// CONFIGURACIÓN AUTOMÁTICA
-// ===================================
+// Configuración automática
 async function guardarConfiguracion() {
     const enabled = document.getElementById('autoBackupToggle').checked;
     const frequency = document.getElementById('autoFrequency').value;
@@ -549,7 +1215,7 @@ async function guardarConfiguracion() {
     const retention = document.getElementById('autoRetention').value;
     
     try {
-        const response = await fetch('/admin/backup/configure', {
+        const response = await fetch('{{ url_for("routes.admin_backup_configure") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -557,7 +1223,7 @@ async function guardarConfiguracion() {
             body: JSON.stringify({
                 enabled: enabled,
                 frequency: frequency,
-                time: time,
+                hour: time,
                 retention_days: parseInt(retention)
             })
         });
@@ -569,7 +1235,8 @@ async function guardarConfiguracion() {
                 icon: 'success',
                 title: '¡Configuración guardada!',
                 text: enabled ? 'Respaldos automáticos activados' : 'Respaldos automáticos desactivados',
-                timer: 2000
+                timer: 2000,
+                confirmButtonColor: '#F2913D'
             });
         } else {
             throw new Error(data.message || 'Error desconocido');
@@ -578,23 +1245,22 @@ async function guardarConfiguracion() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo guardar la configuración: ' + error.message
+            text: 'No se pudo guardar la configuración: ' + error.message,
+            confirmButtonColor: '#F2913D'
         });
     }
 }
 
-// ===================================
-// MODAL DE PROGRESO
-// ===================================
+// Modal de progreso
 function showProgress(title, text) {
     document.getElementById('progressTitle').textContent = title;
     document.getElementById('progressText').textContent = text;
     document.getElementById('progressBar').style.width = '0%';
-    document.getElementById('progressModal').classList.remove('hidden');
+    document.getElementById('progressModal').style.display = 'flex';
 }
 
 function hideProgress() {
-    document.getElementById('progressModal').classList.add('hidden');
+    document.getElementById('progressModal').style.display = 'none';
 }
 
 function simulateProgress() {
@@ -610,6 +1276,6 @@ function simulateProgress() {
 }
 
 // Auto-generar nombre con fecha
-document.getElementById('backupName').value = 'backup_callejon9_' + new Date().toISOString().split('T')[0];
+document.getElementById('backupName').value = 'backup_callejon9_' + new Date().toISOString().split('T')[0].replace(/-/g, '');
 </script>
 {% endblock %}

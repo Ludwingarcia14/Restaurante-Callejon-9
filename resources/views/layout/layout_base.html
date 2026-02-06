@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <title>{% block title %}Callejón 9{% endblock %} - Sistema de Restaurante</title>
+    <title>{% block title %}Callejón 19{% endblock %} - Sistema de Restaurante</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/callejon9.jpeg') }}" type="image/x-icon">
@@ -60,6 +60,134 @@
                      class="sidebar-logo">
                 <h2 class="sidebar-title">Callejón 19</h2>
                 <p class="sidebar-subtitle">Sistema de Restaurante</p>
+                <!-- 
+Widget de Notificaciones - Restaurante Callejón 9
+Incluir este código en tu layout base (layout_base.html, layout_mesero.html, etc.)
+Colocar dentro del navbar o header
+-->
+
+<div class="relative">
+    <!-- Botón de Notificaciones con Contador -->
+    <button id="btnNotificaciones" 
+            class="relative p-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors"
+            aria-label="Notificaciones">
+        <!-- Icono de campana -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+            </path>
+        </svg>
+        
+        <!-- Contador (Badge) -->
+        <span id="contador-notificaciones" 
+              class="absolute -top-1 -right-1 hidden bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+            0
+        </span>
+    </button>
+
+    <!-- Dropdown de Notificaciones -->
+    <div id="listaNotificaciones" 
+         class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+        
+        <!-- Header del dropdown -->
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-700">Notificaciones</h3>
+            <button onclick="marcarTodasLeidas()" 
+                    class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    title="Marcar todas como leídas">
+                Limpiar todo
+            </button>
+        </div>
+
+        <!-- Lista de Notificaciones -->
+        <div class="overflow-y-auto max-h-80">
+            <ul id="lista-items-notificaciones" class="divide-y divide-gray-100">
+                <!-- Las notificaciones se insertarán aquí dinámicamente -->
+            </ul>
+
+            <!-- Mensaje cuando no hay notificaciones -->
+            <div id="sin-notificaciones" class="px-4 py-8 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                    </path>
+                </svg>
+                <p class="mt-2 text-sm text-gray-500">No hay notificaciones nuevas</p>
+            </div>
+        </div>
+
+        <!-- Footer (opcional) -->
+        <div class="bg-gray-50 px-4 py-2 border-t border-gray-200 text-center">
+            <a href="#" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                Ver todas
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Adicional (Agregar a tu archivo CSS o en un <style> tag) -->
+<style>
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+    }
+
+    /* Animación de pulso personalizada para el contador */
+    @keyframes pulse-custom {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    #contador-notificaciones {
+        animation: pulse-custom 2s infinite;
+    }
+
+    /* Scroll personalizado para la lista */
+    #listaNotificaciones::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #listaNotificaciones::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    #listaNotificaciones::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    #listaNotificaciones::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+
+<!-- Scripts necesarios -->
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<!-- Script de notificaciones -->
+<script src="{{ url_for('static', filename='js/notificaciones_restaurante.js') }}"></script>
             </div>
             
             <!-- Info del Usuario -->

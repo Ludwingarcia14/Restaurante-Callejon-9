@@ -14,6 +14,7 @@ from flask import (
 )
 from models.empleado_model import Usuario, RolPermisos
 from functools import wraps
+from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 import secrets
 import logging
 
@@ -182,6 +183,45 @@ class AuthController:
             "message": "2FA no implementado"
         }), 400
 
+    @staticmethod
+    def login():
+        if request.method == "POST":
+            # ... tu validación actual ...
+            
+            if usuario_valido:
+                # Establecer sesión
+                session["usuario_id"] = str(usuario["_id"])
+                session["usuario_nombre"] = usuario["nombre"]
+                session["usuario_rol"] = usuario["rol"]
+                
+                # ✨ NOTIFICAR LOGIN
+                NotificacionSistemaController.notificar_login(
+                    usuario_id=str(usuario["_id"]),
+                    nombre_usuario=usuario["nombre"],
+                    rol=usuario["rol"]
+                )
+                
+                return redirect(...)
+        
+        return render_template("login.html")
+    
+    @staticmethod
+    def logout():
+        # Guardar datos antes de limpiar
+        usuario_id = session.get("usuario_id")
+        usuario_nombre = session.get("usuario_nombre")
+        usuario_rol = session.get("usuario_rol")
+        
+        # ✨ NOTIFICAR LOGOUT
+        if usuario_id:
+            NotificacionSistemaController.notificar_logout(
+                usuario_id=usuario_id,
+                nombre_usuario=usuario_nombre,
+                rol=usuario_rol
+            )
+        
+        session.clear()
+        return redirect(url_for("routes.login"))
 
 # =====================================================
 # DECORADORES DE SEGURIDAD

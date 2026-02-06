@@ -1,6 +1,5 @@
 """
 Modelo de Usuario - Sistema de Roles para Restaurante
-Adaptado a la estructura actual de la BD
 """
 from config.db import db
 from datetime import datetime
@@ -139,6 +138,22 @@ class Usuario:
             "puede_modificar_menu": usuario_doc.get("cocina_puede_modificar_menu", False),
             "puede_ver_recetas_completas": usuario_doc.get("cocina_puede_ver_recetas_completas", False),
             "certificaciones": usuario_doc.get("cocina_certificaciones", [])
+        }
+    @staticmethod
+    def get_perfil_inventario(usuario_doc):
+        """Extrae el perfil de inventario del documento"""
+        if not usuario_doc or usuario_doc.get("usuario_rol") != "4":
+            return None
+        
+        return {
+            "numero_empleado": usuario_doc.get("inventario_numero"),
+            "turno": usuario_doc.get("inventario_turno"),
+            "areas_responsables": usuario_doc.get("inventario_areas_responsables", []),
+            "puede_registrar_entradas": usuario_doc.get("inventario_puede_registrar_entradas", False),
+            "puede_registrar_salidas": usuario_doc.get("inventario_puede_registrar_salidas", False),
+            "puede_realizar_ajustes": usuario_doc.get("inventario_puede_realizar_ajustes", False),
+            "gestiona_proveedores": usuario_doc.get("inventario_gestiona_proveedores", False),
+            "recibe_alertas_stock": usuario_doc.get("inventario_recibe_alertas_stock", True)
         }
 
 

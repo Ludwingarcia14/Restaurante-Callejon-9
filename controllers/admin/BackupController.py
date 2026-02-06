@@ -1,9 +1,10 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from bson import json_util
 from config.db import db
+from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 import zipfile
 import threading
 import schedule
@@ -66,6 +67,13 @@ class BackupController:
         
         # Obtener configuración de auto-backup
         auto_backup_config = db.configuracion.find_one({"tipo": "auto_backup"}) or {}
+        
+        # ✅ INICIAR AUTO-BACKUP SI ESTÁ CONFIGURADO
+        if auto_backup_config.get('enabled'):
+            BackupController._schedule_auto_backups(
+                auto_backup_config.get('frequency', 'daily'),
+                auto_backup_config.get('hour', '02:00')
+            )
         
         return render_template(
             "admin/admin/backup.html", 
@@ -142,9 +150,28 @@ class BackupController:
             
             flash(f"✅ Respaldo '{filename}' generado con éxito. Total de colecciones: {len(selected_collections)}", "success")
             
+            # ✨ NOTIFICAR BACKUP CREADO
+            try:
+                NotificacionSistemaController.notificar_backup_creado(
+                    usuario_id=session.get("usuario_id"),
+                    nombre_archivo=filename
+                )
+            except Exception as notif_error:
+                print(f"⚠️ Error al notificar backup: {notif_error}")
+            
         except Exception as e:
             print(f"❌ Error al generar respaldo: {str(e)}")
             flash(f"❌ Error al generar respaldo: {str(e)}", "error")
+            
+            # ✨ NOTIFICAR ERROR
+            try:
+                NotificacionSistemaController.notificar_error(
+                    usuario_id=session.get("usuario_id"),
+                    tipo_error="BACKUP_ERROR",
+                    descripcion=str(e)
+                )
+            except Exception as notif_error:
+                print(f"⚠️ Error al notificar error: {notif_error}")
 
         return redirect(url_for('routes.admin_backup_view'))
 
@@ -162,20 +189,6 @@ class BackupController:
             print(f"Error al eliminar: {str(e)}")
             flash(f"❌ Error al eliminar: {str(e)}", "error")
         return redirect(url_for('routes.admin_backup_view'))
-
-    @staticmethod
-    def restore_view():
-        """Vista de restauración"""
-        backup_dir = os.path.join('static', 'backup')
-        files = []
-        
-        if os.path.exists(backup_dir):
-            files = sorted(
-                [f for f in os.listdir(backup_dir) if f.endswith(('.json', '.zip'))],
-                reverse=True
-            )
-        
-        return render_template("admin/admin/restore.html", files=files)
 
     @staticmethod
     def restore():
@@ -218,7 +231,7 @@ class BackupController:
                 file = request.files['backup_file']
                 if file.filename == '':
                     flash("❌ No se seleccionó ningún archivo.", "error")
-                    return redirect(url_for('routes.admin_backup_restore_view'))
+                    return redirect(url_for('routes.admin_backup_view'))
                 
                 # Leer archivo
                 if file.filename.endswith('.zip'):
@@ -246,7 +259,7 @@ class BackupController:
                     data = json.loads(file.read().decode('utf-8'))
             else:
                 flash("❌ No hay origen de datos para restaurar.", "error")
-                return redirect(url_for('routes.admin_backup_restore_view'))
+                return redirect(url_for('routes.admin_backup_view'))
 
             # Proceso de restauración en MongoDB
             restored_collections = 0
@@ -267,7 +280,7 @@ class BackupController:
             print(f"❌ Error en la restauración: {str(e)}")
             flash(f"❌ Error en la restauración: {str(e)}", "error")
             
-        return redirect(url_for('routes.admin_backup_restore_view'))
+        return redirect(url_for('routes.admin_backup_view'))
     
     @staticmethod
     def configure_auto_backup():
@@ -297,7 +310,7 @@ class BackupController:
             # Iniciar o detener el scheduler
             if enabled:
                 BackupController._schedule_auto_backups(frequency, hour)
-                message = "✅ Respaldos automáticos activados"
+                message = "✅ Respaldos automáticos activados correctamente"
             else:
                 BackupController._backup_running = False
                 message = "✅ Respaldos automáticos desactivados"
@@ -345,6 +358,7 @@ class BackupController:
         if BackupController._backup_thread is None or not BackupController._backup_thread.is_alive():
             BackupController._backup_thread = threading.Thread(target=run_scheduler, daemon=True)
             BackupController._backup_thread.start()
+            print("🤖 Thread de auto-backup iniciado")
     
     @staticmethod
     def _ejecutar_respaldo_automatico():
@@ -366,8 +380,12 @@ class BackupController:
             backup_data = {}
             for col_name in collections:
                 if col_name != 'configuracion':  # Excluir configuración
-                    data = list(db[col_name].find())
-                    backup_data[col_name] = json.loads(json_util.dumps(data))
+                    try:
+                        data = list(db[col_name].find())
+                        backup_data[col_name] = json.loads(json_util.dumps(data))
+                    except Exception as e:
+                        print(f"⚠️ Error al respaldar {col_name}: {e}")
+                        backup_data[col_name] = []
             
             with open(full_path, 'w', encoding='utf-8') as f:
                 json.dump(backup_data, f, ensure_ascii=False, indent=4)

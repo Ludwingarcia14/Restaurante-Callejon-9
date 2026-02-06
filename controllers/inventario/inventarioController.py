@@ -9,6 +9,7 @@ from models.inventario_model import (
 )
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
+from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 import logging
 from datetime import datetime
 
@@ -479,3 +480,24 @@ class InventarioController:
             return redirect(url_for("routes.login"))
         
         return render_template("inventario/reportes/index.html")
+    
+    # En controllers/inventario/inventarioController.py
+
+    
+    @staticmethod
+    def registrar_entrada():
+        if request.method == "POST":
+            nombre_insumo = request.form.get("nombre_insumo")
+            cantidad = int(request.form.get("cantidad"))
+            
+            # ... registrar entrada ...
+            
+            # ✨ NOTIFICAR MOVIMIENTO
+            NotificacionSistemaController.notificar_movimiento_inventario(
+                usuario_id=session.get("usuario_id"),
+                tipo_movimiento="entrada",
+                nombre_insumo=nombre_insumo,
+                cantidad=cantidad
+            )
+            
+            return redirect(...)
