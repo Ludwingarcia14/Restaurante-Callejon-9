@@ -567,10 +567,11 @@ async function verMesa(numeroMesa) {
             const total = comanda ? Number(comanda.total).toFixed(2) : "0.00";
             const folio = comanda ? comanda.folio : 'Generando...';
             const personas =
-            mesaInfo.comensales ??
-            mesaInfo.num_comensales ??
+            comanda?.num_comensales ??
+            comanda?.comensales ??
+            mesa?.num_comensales ??
             0;
-            comensalesP.textContent = `${personas} PERSONAS`;
+            console.log("COMANDA DETALLE:", comanda);
             content.innerHTML = `
                 <div class="space-y-4">
                     <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">

@@ -48,7 +48,8 @@ class MesaController:
                 comanda_data = {
                     "folio": comanda.get("folio"),
                     "total": float(comanda.get("total", 0)),
-                    "items": comanda.get("items", [])
+                    "items": comanda.get("items", []),
+                    "num_comensales": int(comanda.get("num_comensales", mesa.get("comensales", 0)))
                 }
 
         return jsonify({
