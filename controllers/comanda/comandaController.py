@@ -2,24 +2,36 @@ from flask import jsonify, request, session, render_template
 from models.comanda_model import Comanda
 from config.db import db
 from bson.objectid import ObjectId
-
+from bson.errors import InvalidId
 class ComandaController:
 
     @staticmethod
     def comandas_activas():
-        mesero_id = session.get("user_id")
+        mesero_id = session.get("usuario_id")
 
-        query = {
+        if not mesero_id:
+            return jsonify({"success": True, "comandas": [], "total": 0})
+
+        mesero_oid = ObjectId(mesero_id)
+
+        cursor = db.comandas.find({
             "estado": {"$ne": "pagada"},
-            "mesero_id": mesero_id
-        }
+            "mesero_id": mesero_oid
+        }).sort("fecha_apertura", -1)
 
-        cursor = db.comandas.find(query).sort("fecha_apertura", -1)
-        comandas = list(cursor)
+        comandas = []
 
-        for c in comandas:
+        for c in cursor:
+            c["id"] = str(c["_id"])
             c["_id"] = str(c["_id"])
+            c["mesero_id"] = str(c["mesero_id"])
+
+            for item in c.get("items", []):
+                if "id" in item:
+                    item["id"] = str(item["id"])
+
             c["total"] = float(c.get("total", 0))
+            comandas.append(c)
 
         return jsonify({
             "success": True,
@@ -27,17 +39,31 @@ class ComandaController:
             "total": len(comandas)
         })
 
+
     @staticmethod
     def abrir_cuenta():
         data = request.json
         numero_mesa = data.get("numero_mesa")
         num_comensales = data.get("num_comensales")
-        mesero_id = session.get("user_id")
+        mesero_id = session.get("usuario_id")
+
+        if not mesero_id:
+            return jsonify({
+                "success": False,
+                "error": "Sesión no válida"
+            }), 401
 
         if not numero_mesa or not num_comensales:
-            return jsonify({"success": False, "error": "Datos incompletos"}), 400
+            return jsonify({
+                "success": False,
+                "error": "Datos incompletos"
+            }), 400
 
-        cuenta_id = Comanda.crear_comanda(numero_mesa, num_comensales, mesero_id)
+        cuenta_id = Comanda.crear_comanda(
+            numero_mesa,
+            num_comensales,
+            mesero_id
+        )
 
         db.mesas.update_one(
             {"numero": int(numero_mesa)},

@@ -10,10 +10,11 @@ class Comanda:
 
     @classmethod
     def crear_comanda(cls, numero_mesa, num_comensales, mesero_id):
+        print("MESERO_ID RECIBIDO:", mesero_id, type(mesero_id))
         nueva_comanda = {
             "mesa_numero": int(numero_mesa),
             "num_comensales": int(num_comensales),
-            "mesero_id": str(mesero_id),
+            "mesero_id": ObjectId(mesero_id), 
             "estado": "nueva",  # nueva, enviada, lista, pagada
             "items": [],
             "total": 0.0,

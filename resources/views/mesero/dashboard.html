@@ -397,11 +397,7 @@ function actualizarVisualizacionMesas() {
     
     mesasCards.forEach(card => {
         const numeroMesa = card.dataset.mesa;
-        
-        // --- LA CLAVE DEL CAMBIO AQUÍ ---
-        // Intentamos buscar la mesa como string y como número para asegurar la coincidencia
         const mesaInfo = mesasData[numeroMesa] || mesasData[parseInt(numeroMesa)]; 
-        
         const statusSpan = card.querySelector('.mesa-status');
         const comensalesP = card.querySelector('.mesa-comensales');
         const iconContainer = card.querySelector('.icon-container');
@@ -487,7 +483,7 @@ function renderizarComandas() {
     
     comandasActivas.forEach(comanda => {
         const tiempoTranscurrido = calcularTiempoTranscurrido(comanda.fecha_apertura);
-        
+        console.log("COMANDA RENDER:", comanda.id, typeof comanda.id);
         html += `
             <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 hover:shadow-md transition">
                 <div class="flex items-center justify-between mb-3">
@@ -519,11 +515,11 @@ function renderizarComandas() {
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="verDetalleComanda(${comanda._id})" class="btn btn-sm btn-secondary">
-                        <i class="bi bi-eye"></i> Ver
+                    <button onclick="verDetalleComanda('${comanda.id}')" class="btn btn-sm btn-secondary">
+                    <i class="bi bi-eye"></i> Ver
                     </button>
-                    <button onclick="agregarItemsComanda(${comanda._id})" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus"></i> Agregar
+                    <button onclick="agregarItemsComanda('${comanda.id}')" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Agregar
                     </button>
                 </div>
             </div>
@@ -571,12 +567,10 @@ async function verMesa(numeroMesa) {
             const total = comanda ? Number(comanda.total).toFixed(2) : "0.00";
             const folio = comanda ? comanda.folio : 'Generando...';
             const personas =
-            comanda?.num_comensales ??
-            comanda?.comensales ??
-            mesa?.comensales ??
+            mesaInfo.comensales ??
+            mesaInfo.num_comensales ??
             0;
-
-
+            comensalesP.textContent = `${personas} PERSONAS`;
             content.innerHTML = `
                 <div class="space-y-4">
                     <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">

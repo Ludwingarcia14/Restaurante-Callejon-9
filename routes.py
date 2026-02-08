@@ -16,18 +16,6 @@ from models.mesa_model import Mesa
 from models.comanda_model import Comanda
 from models.producto_model import Producto
 from config.db import db
-routes_bp = Blueprint("routes", __name__)
-def api_auth_error(message="No autorizado", code=401):
-    return jsonify({
-        "success": False,
-        "error": message
-    }), code
-
-# ============================================
-#  AUTENTICACIÓN
-# ============================================
-
-# Ruta raíz - redirige según estado de sesión
 
 routes_bp = Blueprint("routes", __name__)
 
