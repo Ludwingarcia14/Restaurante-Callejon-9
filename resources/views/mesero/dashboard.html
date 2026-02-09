@@ -602,6 +602,11 @@ async function verMesa(numeroMesa) {
                                 class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
                             Cerrar Detalle
                         </button>
+                            <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
+        class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+        <i class="bi bi-cash-coin"></i>
+        CERRAR CUENTA
+    </button>
                     </div>
                 </div>`;
         }
@@ -890,18 +895,55 @@ function agregarItemsComanda(cuentaId) {
     abrirModalMenu(comanda ? comanda.mesa_numero : "??");
 }
 
-function solicitarCuentaMesa(numeroMesa, cuentaId) {
+function cerrarCuenta(cuentaId, numeroMesa) {
     Swal.fire({
-        title: '¿Solicitar la cuenta?',
-        text: `Se generará la cuenta para la Mesa ${numeroMesa}`,
-        icon: 'question',
+        title: `Cerrar cuenta Mesa ${numeroMesa}`,
+        html: `
+            <input id="propina" type="number" min="0" class="swal2-input" placeholder="Propina">
+            <select id="metodo" class="swal2-select">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+            </select>
+        `,
+        confirmButtonText: 'Cerrar cuenta',
         showCancelButton: true,
-        confirmButtonText: 'Sí, generar cuenta',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Redirigir a la vista de cierre de cuenta
-            window.location.href = `/mesero/cuenta/${cuentaId}/cerrar`;
+        preConfirm: () => ({
+            propina: document.getElementById('propina').value || 0,
+            metodo_pago: document.getElementById('metodo').value
+        })
+    }).then(async (result) => {
+        if (!result.isConfirmed) return;
+
+        showLoading('Cerrando cuenta...');
+
+        const res = await fetch(
+            `/api/mesero/cuenta/${cuentaId}/cerrar`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(result.value)
+            }
+        );
+
+        const data = await res.json();
+        hideLoading();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Cuenta cerrada',
+                text: `Total final: $${data.total_final.toFixed(2)}`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            cerrarModalMesa();
+            cargarEstadoMesas();
+            actualizarComandas();
+            cargarEstadisticasDia();
+        } else {
+            showError(data.error);
         }
     });
 }

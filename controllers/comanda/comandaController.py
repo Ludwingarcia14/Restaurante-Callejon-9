@@ -3,6 +3,8 @@ from models.comanda_model import Comanda
 from config.db import db
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+from datetime import datetime
+
 class ComandaController:
 
     @staticmethod
@@ -102,3 +104,77 @@ class ComandaController:
             perfil=perfil_mesero,
             cuenta_id=cuenta_id
         )
+    @staticmethod
+    def cerrar_cuenta(cuenta_id):
+        data = request.json or {}
+
+        propina = float(data.get("propina", 0))
+        metodo_pago = data.get("metodo_pago", "efectivo")
+
+        comanda = db.comandas.find_one({"_id": ObjectId(cuenta_id)})
+        if not comanda:
+            return jsonify({"success": False, "error": "Comanda no encontrada"}), 404
+
+        total = float(comanda.get("total", 0))
+        total_final = total + propina
+
+        db.comandas.update_one(
+            {"_id": ObjectId(cuenta_id)},
+            {"$set": {
+                "estado": "pagada",
+                "propina": propina,
+                "metodo_pago": metodo_pago,
+                "total_final": total_final,
+                "fecha_cierre": datetime.utcnow()
+            }}
+        )
+
+        db.mesas.update_one(
+            {"cuenta_activa_id": ObjectId(cuenta_id)},
+            {"$set": {
+                "estado": "libre",
+                "cuenta_activa_id": None,
+                "comensales": 0
+            }}
+        )
+
+        return jsonify({
+            "success": True,
+            "total_final": total_final
+        })
+        
+    @staticmethod
+    def comandas_cerradas():
+        mesero_id = session.get("usuario_id")
+
+        if not mesero_id:
+            return jsonify({"success": True, "comandas": []})
+
+        try:
+            mesero_oid = ObjectId(mesero_id)
+        except Exception:
+            return jsonify({"success": True, "comandas": []})
+
+        cursor = db.comandas.find({
+            "estado": "pagada",
+            "mesero_id": mesero_oid
+        }).sort("fecha_cierre", -1)
+
+        comandas = []
+        for c in cursor:
+            comandas.append({
+                "id": str(c["_id"]),
+                "folio": c.get("folio"),
+                "mesa": c.get("mesa_numero"),
+                "total": float(c.get("total", 0)),
+                "propina": float(c.get("propina", 0)),
+                "total_final": float(c.get("total_final", c.get("total", 0))),
+                "metodo_pago": c.get("metodo_pago"),
+                "fecha": c.get("fecha_cierre")
+            })
+
+        return jsonify({
+            "success": True,
+            "comandas": comandas
+        })
+

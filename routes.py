@@ -303,6 +303,20 @@ def api_abrir_cuenta():
 @rol_required(['2'])
 def api_guardar_items_comanda(cuenta_id):
     return ComandaController.guardar_items(cuenta_id)
+
+@routes_bp.route("/api/mesero/cuenta/<cuenta_id>/cerrar", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_cerrar_cuenta(cuenta_id):
+    return ComandaController.cerrar_cuenta(cuenta_id)
+
+@routes_bp.route("/api/mesero/comandas/cerradas", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_comandas_cerradas():
+    return ComandaController.comandas_cerradas()
+
+
 # ============================================
 # 👨‍🍳 PANEL DE COCINA (Rol 3)
 # ============================================
