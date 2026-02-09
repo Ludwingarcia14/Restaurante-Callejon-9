@@ -593,7 +593,7 @@ async function verMesa(numeroMesa) {
                     </div>
 
                     <div class="grid grid-cols-1 gap-3">
-                        <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}')" 
+                        <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}', true)" 
                                 class="w-full bg-[#F2913D] hover:bg-[#F2A339] text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
                             <i class="bi bi-plus-circle-fill text-xl"></i>
                             AGREGAR PRODUCTOS AL PEDIDO
@@ -620,8 +620,8 @@ function cerrarModalMesa() {
     document.getElementById('modalMesa').classList.add('hidden');
 }
 
-async function abrirModalMenu(numMesa, idCuenta) {
-    cuentaActivaId = idCuenta; // Guardar para usar al confirmar pedido
+async function abrirModalMenu(numMesa, idCuenta, cargarItemsExistentes = false) {
+    cuentaActivaId = idCuenta;
     const modal = document.getElementById('modalMenu');
     const labelMesa = document.getElementById('menu-mesa-num');
     const grid = document.getElementById('lista-productos-grid');
@@ -630,15 +630,21 @@ async function abrirModalMenu(numMesa, idCuenta) {
 
     labelMesa.textContent = numMesa;
     modal.classList.remove('hidden');
-    carrito = []; // Resetear carrito al abrir
+    
+    // 🔥 CAMBIO IMPORTANTE: Solo resetear si NO es para agregar items
+    if (cargarItemsExistentes && cuentaActivaId) {
+        await cargarItemsExistentesEnCarrito(cuentaActivaId);
+    } else {
+        carrito = []; // Solo resetear si es cuenta nueva
+    }
+    
     renderizarCarrito();
 
     try {
-        const res = await fetch('/api/menu'); // Ajusta a tu ruta de productos
+        const res = await fetch('/api/menu');
         const data = await res.json();
         
         grid.innerHTML = '';
-        // Asumiendo que data.menu es un array de productos
         data.menu.forEach(p => {
             grid.innerHTML += `
                 <div onclick="agregarAlCarrito('${p._id}', '${p.nombre}', ${p.precio})" 
@@ -654,7 +660,24 @@ async function abrirModalMenu(numMesa, idCuenta) {
         grid.innerHTML = '<p class="text-red-500">Error al cargar productos</p>';
     }
 }
-
+async function cargarItemsExistentesEnCarrito(cuentaId) {
+    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+    
+    if (!comanda || !comanda.items) {
+        carrito = [];
+        return;
+    }
+    
+    // Cargar los items existentes en el carrito
+    carrito = comanda.items.map(item => ({
+        id: item.producto_id || item.id || item._id,
+        nombre: item.nombre,
+        precio: item.precio,
+        cantidad: item.cantidad
+    }));
+    
+    console.log('✅ Items existentes cargados en carrito:', carrito);
+}
 function agregarAlCarrito(id, nombre, precio) {
     const itemExistente = carrito.find(i => i.id === id);
     if (itemExistente) {
@@ -832,10 +855,66 @@ function verComandas() {
     window.location.href = "{{ url_for('routes.mesero_comandas') }}";
 }
 
-function verDetalleComanda(cuentaId) {
-    // Redirigir a la vista de detalle de comanda
-    window.location.href = `/mesero/comanda/${cuentaId}`;
+async function verDetalleComanda(cuentaId) {
+    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+    
+    if (!comanda) {
+        showError('No se encontró la comanda');
+        return;
+    }
+    
+    // Construir HTML con los items de la comanda
+    let itemsHtml = '';
+    if (comanda.items && comanda.items.length > 0) {
+        itemsHtml = comanda.items.map(item => `
+            <div class="flex justify-between items-center py-2 border-b">
+                <div>
+                    <p class="font-semibold text-gray-800">${item.nombre}</p>
+                    <p class="text-xs text-gray-500">$${item.precio.toFixed(2)} c/u</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-bold text-gray-800">${item.cantidad}x</p>
+                    <p class="text-sm text-green-600">$${(item.precio * item.cantidad).toFixed(2)}</p>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        itemsHtml = '<p class="text-gray-500 text-center py-4">No hay items en esta comanda</p>';
+    }
+    
+    Swal.fire({
+        title: `<div class="text-left">
+            <p class="text-lg font-bold">${comanda.folio}</p>
+            <p class="text-sm text-gray-500">Mesa ${comanda.mesa_numero} · ${comanda.num_comensales ?? comanda.comensales ?? 0} personas</p>
+        </div>`,
+        html: `
+            <div class="text-left max-h-96 overflow-y-auto">
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 uppercase font-bold mb-2">Productos ordenados:</p>
+                    ${itemsHtml}
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600 font-semibold">TOTAL:</span>
+                        <span class="text-2xl font-bold text-green-600">$${comanda.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `,
+        width: 600,
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#F2913D',
+        showCancelButton: true,
+        cancelButtonText: 'Agregar más productos',
+        cancelButtonColor: '#6B7280'
+    }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            // Si presiona "Agregar más productos"
+            agregarItemsComanda(cuentaId);
+        }
+    });
 }
+
 function verDetalleMesa(numero) {
     fetch(`/api/mesero/mesa/${numero}`)
         .then(res => res.json())
@@ -890,9 +969,14 @@ function verDetalleMesa(numero) {
         });
 }
 function agregarItemsComanda(cuentaId) {
-    cuentaActivaId = cuentaId;
     const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
-    abrirModalMenu(comanda ? comanda.mesa_numero : "??");
+    
+    if (!comanda) {
+        showError('No se encontró la comanda');
+        return;
+    }
+    // 🔥 TRUE indica que debe cargar items existentes
+    abrirModalMenu(comanda.mesa_numero, cuentaId, true);
 }
 
 function cerrarCuenta(cuentaId, numeroMesa) {

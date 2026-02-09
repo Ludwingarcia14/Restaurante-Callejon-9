@@ -84,17 +84,82 @@ class ComandaController:
 
     @staticmethod
     def guardar_items(cuenta_id):
+        """
+        VERSIÓN CORREGIDA: Ahora SUMA los items en lugar de reemplazarlos
+        """
         data = request.get_json(silent=True)
         if not data:
             return jsonify({"success": False, "error": "No se recibieron datos"}), 400
-        items = data.get("items", [])
-        if not items:
+        
+        items_nuevos = data.get("items", [])
+        if not items_nuevos:
             return jsonify({"success": False, "error": "Pedido vacío"}), 400
-        Comanda.agregar_items(cuenta_id, items)
-        return jsonify({
-        "success": True,
-        "message": "Pedido enviado a cocina"
-    }), 200
+
+        try:
+            # 1. Obtener la comanda actual
+            comanda = db.comandas.find_one({"_id": ObjectId(cuenta_id)})
+            
+            if not comanda:
+                return jsonify({"success": False, "error": "Comanda no encontrada"}), 404
+            
+            # 2. Obtener items existentes
+            items_existentes = comanda.get("items", [])
+            
+            # 3. FUSIONAR items: si el producto ya existe, SUMAR cantidad; si no, agregarlo
+            for item_nuevo in items_nuevos:
+                producto_id = item_nuevo.get('id')
+                encontrado = False
+                
+                # Buscar si el producto ya existe en la comanda
+                for item_existente in items_existentes:
+                    # Comparar por ID (puede estar como 'id' o 'producto_id')
+                    item_id = item_existente.get('producto_id') or item_existente.get('id')
+                    
+                    if str(item_id) == str(producto_id):
+                        # SUMAR la cantidad al item existente
+                        item_existente['cantidad'] += item_nuevo['cantidad']
+                        encontrado = True
+                        break
+                
+                if not encontrado:
+                    # Agregar como nuevo item
+                    items_existentes.append({
+                        'producto_id': producto_id,
+                        'id': producto_id,  # Por compatibilidad
+                        'nombre': item_nuevo['nombre'],
+                        'precio': item_nuevo['precio'],
+                        'cantidad': item_nuevo['cantidad']
+                    })
+            
+            # 4. Recalcular el total
+            total = sum(
+                float(item.get('precio', 0)) * int(item.get('cantidad', 0)) 
+                for item in items_existentes
+            )
+            
+            # 5. Actualizar la comanda en la base de datos
+            db.comandas.update_one(
+                {"_id": ObjectId(cuenta_id)},
+                {"$set": {
+                    "items": items_existentes,
+                    "total": total,
+                    "fecha_actualizacion": datetime.utcnow()
+                }}
+            )
+            
+            return jsonify({
+                "success": True,
+                "message": "Pedido enviado a cocina",
+                "total": total,
+                "items_count": len(items_existentes)
+            }), 200
+            
+        except Exception as e:
+            print(f"Error en guardar_items: {e}")
+            return jsonify({
+                "success": False, 
+                "error": f"Error al guardar items: {str(e)}"
+            }), 500
 
     @staticmethod
     def vista_agregar_items(cuenta_id):
