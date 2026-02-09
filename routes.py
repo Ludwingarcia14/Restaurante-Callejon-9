@@ -231,13 +231,6 @@ def mesero_historial():
 
     return render_template("mesero/mesero_historial.html", perfil=perfil_mesero)
 
-
-@routes_bp.route("/mesero/comanda/<cuenta_id>/agregar")
-@login_required
-@rol_required(['2'])
-def vista_agregar_items(cuenta_id):
-    return ComandaController.vista_agregar_items(cuenta_id)
-
 # =========================
 # API GENERALES
 # =========================
