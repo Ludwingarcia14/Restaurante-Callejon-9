@@ -7,11 +7,13 @@ from flask import render_template, session, redirect, url_for, jsonify
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
+from controllers.historial.historialController import HistorialController
 from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
 from controllers.comanda.comandaController import ComandaController
 from controllers.mesa.mesaController import MesaController
 from flask import jsonify, request
+from controllers.propina.propinasController import PropinasController
 from models.mesa_model import Mesa
 from models.comanda_model import Comanda
 from models.producto_model import Producto
@@ -220,6 +222,11 @@ def mesero_propinas():
 
     return render_template("mesero/mesero_propinas.html", perfil=perfil_mesero)
 
+@routes_bp.route("/api/mesero/propinas/hoy", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_propinas_hoy():
+    return PropinasController.propinas_hoy()
 
 @routes_bp.route("/mesero/historial")
 @login_required
@@ -230,6 +237,12 @@ def mesero_historial():
         return redirect(url_for("routes.login"))
 
     return render_template("mesero/mesero_historial.html", perfil=perfil_mesero)
+
+@routes_bp.route("/api/mesero/historial", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_historial():
+    return HistorialController.historial_mesero()
 
 # =========================
 # API GENERALES
@@ -247,17 +260,8 @@ def api_get_menu():
 @login_required
 @rol_required(['2'])
 def api_mesero_estadisticas_dia():
-    perfil_mesero = session.get("perfil_mesero")
-    if not perfil_mesero:
-        return jsonify({"success": False, "error": "Sesión inválida"}), 401
+    return ComandaController.estadisticas_dia_mesero()
 
-    return jsonify({
-        "success": True,
-        "estadisticas": {
-            "venta_dia": float(perfil_mesero.get("rendimiento", {}).get("ventas_promedio_dia", 0)),
-            "propinas": float(perfil_mesero.get("propinas", {}).get("acumulada_dia", 0))
-        }
-    })
 
 # =========================
 # API MESAS

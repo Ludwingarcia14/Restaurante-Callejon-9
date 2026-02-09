@@ -31,11 +31,14 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- RESUMEN -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-green-500">
         <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Total Acumulado</p>
         <div class="flex items-center justify-between mt-2">
-            <h3 class="text-3xl font-black text-gray-800" id="total-propinas-dia">$0.00</h3>
+            <h3 id="total-propinas-dia" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-piggy-bank text-4xl text-green-500 opacity-20"></i>
         </div>
     </div>
@@ -43,7 +46,7 @@
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
         <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Por Tarjeta</p>
         <div class="flex items-center justify-between mt-2">
-            <h3 class="text-3xl font-black text-gray-800" id="propinas-tarjeta">$0.00</h3>
+            <h3 id="propinas-tarjeta" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-credit-card text-4xl text-blue-500 opacity-20"></i>
         </div>
     </div>
@@ -51,12 +54,14 @@
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-orange-500">
         <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Efectivo</p>
         <div class="flex items-center justify-between mt-2">
-            <h3 class="text-3xl font-black text-gray-800" id="propinas-efectivo">$0.00</h3>
+            <h3 id="propinas-efectivo" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-cash-stack text-4xl text-orange-500 opacity-20"></i>
         </div>
     </div>
+
 </div>
 
+<!-- TABLA -->
 <div class="bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#0D0D0D]">
     <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
         <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
@@ -65,6 +70,7 @@
         </h2>
         <span id="fecha-actual" class="text-xs font-bold text-gray-400 uppercase"></span>
     </div>
+
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
@@ -77,50 +83,40 @@
                 </tr>
             </thead>
             <tbody id="tabla-propinas-body" class="divide-y divide-gray-100 text-sm">
-                </tbody>
+                <!-- JS -->
+            </tbody>
         </table>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Poner la fecha de hoy
-    const ahora = new Date();
-    document.getElementById('fecha-actual').textContent = ahora.toLocaleDateString('es-MX', { 
-        day: '2-digit', month: '2-digit', year: 'numeric' 
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    const hoy = new Date();
+    document.getElementById('fecha-actual').textContent =
+        hoy.toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' });
 
     cargarPropinas();
 });
 
-// Reemplaza tu función cargarPropinas en mesero_propinas.html con esta:
 async function cargarPropinas() {
-    // DATOS SIMULADOS (MOCKS)
-    const datosPrueba = {
-        success: true,
-        total: 455.50,
-        tarjeta: 320.00,
-        efectivo: 135.50,
-        lista: [
-            { hora: '14:20', mesa: '4', total_cuenta: 850.00, metodo: 'TARJETA', monto: 85.00 },
-            { hora: '15:10', mesa: '2', total_cuenta: 420.00, metodo: 'EFECTIVO', monto: 42.00 },
-            { hora: '16:45', mesa: '8', total_cuenta: 1240.50, metodo: 'TARJETA', monto: 186.00 },
-            { hora: '17:30', mesa: '1', total_cuenta: 680.00, metodo: 'EFECTIVO', monto: 68.00 },
-            { hora: '18:15', mesa: '5', total_cuenta: 495.00, metodo: 'TARJETA', monto: 74.50 }
-        ]
-    };
-
     try {
-        // Intentamos obtener datos reales
-        const response = await fetch('/api/mesero/propinas/hoy');
-        const data = await response.json();
-        renderizarPropinas(data.success ? data : datosPrueba);
-    } catch (e) {
-        // Si falla la API, usamos los simulados
-        console.warn("Usando datos simulados para propinas");
-        renderizarPropinas(datosPrueba);
+        const res = await fetch('/api/mesero/propinas/hoy');
+        const data = await res.json();
+
+        if (!data.success) throw new Error('API error');
+
+        renderizarPropinas(data);
+    } catch (err) {
+        console.error(err);
+        renderizarPropinas({
+            total: 0,
+            tarjeta: 0,
+            efectivo: 0,
+            lista: []
+        });
     }
 }
 
@@ -128,19 +124,38 @@ function renderizarPropinas(data) {
     document.getElementById('total-propinas-dia').textContent = `$${data.total.toFixed(2)}`;
     document.getElementById('propinas-tarjeta').textContent = `$${data.tarjeta.toFixed(2)}`;
     document.getElementById('propinas-efectivo').textContent = `$${data.efectivo.toFixed(2)}`;
-    
+
     const body = document.getElementById('tabla-propinas-body');
+
+    if (!data.lista.length) {
+        body.innerHTML = `
+            <tr>
+                <td colspan="5" class="p-6 text-center text-gray-400">
+                    <i class="bi bi-emoji-neutral text-2xl block mb-2"></i>
+                    Aún no hay propinas registradas hoy
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
     body.innerHTML = data.lista.map(item => `
-        <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-            <td class="p-4 text-gray-500 text-xs">${item.hora}</td>
+        <tr class="hover:bg-gray-50 transition">
+            <td class="p-4 text-xs text-gray-500">${item.hora}</td>
             <td class="p-4 font-bold text-gray-700">Mesa ${item.mesa}</td>
-            <td class="p-4 text-gray-600 font-medium">$${item.total_cuenta.toFixed(2)}</td>
+            <td class="p-4 text-gray-600">$${item.total_cuenta.toFixed(2)}</td>
             <td class="p-4">
-                <span class="px-2 py-1 ${item.metodo === 'TARJETA' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'} rounded-full text-[10px] font-bold">
+                <span class="px-2 py-1 ${
+                    item.metodo === 'TARJETA'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-orange-100 text-orange-700'
+                } rounded-full text-[10px] font-bold">
                     ${item.metodo}
                 </span>
             </td>
-            <td class="p-4 text-right font-bold text-green-600">+$${item.monto.toFixed(2)}</td>
+            <td class="p-4 text-right font-bold text-green-600">
+                +$${item.monto.toFixed(2)}
+            </td>
         </tr>
     `).join('');
 }

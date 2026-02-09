@@ -54,48 +54,67 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Setear fecha de hoy por defecto en el input
-    document.getElementById('filtro-fecha').valueAsDate = new Date();
+    const inputFecha = document.getElementById('filtro-fecha');
+    inputFecha.valueAsDate = new Date();
     cargarHistorial();
 });
 
-// Reemplaza tu función cargarHistorial en mesero_historial.html con esta:
 async function cargarHistorial() {
-    // DATOS SIMULADOS (MOCKS)
-    const datosPrueba = {
-        success: true,
-        total_dia: 3685.50,
-        registros: [
-            { mesa_numero: '8', hora_cierre: '16:45 PM', total: 1240.50, metodo_pago: 'TARJETA', estado: 'PAGADO' },
-            { mesa_numero: '3', hora_cierre: '15:20 PM', total: 0.00, metodo_pago: 'N/A', estado: 'CANCELADO' },
-            { mesa_numero: '12', hora_cierre: '14:10 PM', total: 850.00, metodo_pago: 'EFECTIVO', estado: 'PAGADO' },
-            { mesa_numero: '5', hora_cierre: '13:45 PM', total: 945.00, metodo_pago: 'TARJETA', estado: 'PAGADO' },
-            { mesa_numero: '2', hora_cierre: '13:00 PM', total: 650.00, metodo_pago: 'EFECTIVO', estado: 'PAGADO' }
-        ]
-    };
-
+    const fecha = document.getElementById('filtro-fecha').value;
     const contenedor = document.getElementById('contenedor-historial');
-    
+
+    contenedor.innerHTML = `
+        <div class="text-center py-10 text-gray-400">
+            <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
+            <p class="mt-2 font-medium text-sm">Cargando registros...</p>
+        </div>
+    `;
+
     try {
-        const response = await fetch(`/api/mesero/historial?fecha=${document.getElementById('filtro-fecha').value}`);
+        const response = await fetch(`/api/mesero/historial?fecha=${fecha}`);
+
+        if (!response.ok) throw new Error("Error servidor");
+
         const data = await response.json();
-        renderizarHistorial(data.success ? data : datosPrueba);
-    } catch (e) {
-        console.warn("Usando datos simulados para historial");
-        renderizarHistorial(datosPrueba);
+
+        if (!data.success) throw new Error("Respuesta inválida");
+
+        renderizarHistorial(data);
+
+    } catch (error) {
+        console.error("❌ Error historial:", error);
+        contenedor.innerHTML = `
+            <div class="text-center py-10 text-red-500">
+                <i class="bi bi-exclamation-triangle text-3xl"></i>
+                <p class="mt-2 font-medium text-sm">No se pudo cargar el historial</p>
+            </div>
+        `;
+        document.getElementById('total-ventas-historial').textContent = '$0.00';
     }
 }
 
 function renderizarHistorial(data) {
-    document.getElementById('total-ventas-historial').textContent = `$${data.total_dia.toFixed(2)}`;
+    document.getElementById('total-ventas-historial').textContent =
+        `$${data.total_dia.toFixed(2)}`;
+
     const contenedor = document.getElementById('contenedor-historial');
-    
+
+    if (!data.registros.length) {
+        contenedor.innerHTML = `
+            <div class="text-center py-10 text-gray-400">
+                <i class="bi bi-inbox text-3xl"></i>
+                <p class="mt-2 font-medium text-sm">Sin registros para esta fecha</p>
+            </div>
+        `;
+        return;
+    }
+
     contenedor.innerHTML = data.registros.map(reg => {
         const esCancelado = reg.estado === 'CANCELADO';
+
         return `
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition ${esCancelado ? 'opacity-60 bg-gray-50' : ''}">
             <div class="flex justify-between items-start">
@@ -105,20 +124,33 @@ function renderizarHistorial(data) {
                     </div>
                     <div>
                         <h4 class="font-bold text-gray-800 text-sm">Mesa ${reg.mesa_numero}</h4>
-                        <p class="text-[10px] text-gray-400 uppercase font-semibold">${reg.hora_cierre} • ${reg.estado}</p>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">
+                            ${reg.hora_cierre} • ${reg.estado}
+                        </p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="font-black ${esCancelado ? 'text-gray-400 line-through' : 'text-gray-800'}">$${reg.total.toFixed(2)}</p>
+                    <p class="font-black ${esCancelado ? 'text-gray-400 line-through' : 'text-gray-800'}">
+                        $${reg.total.toFixed(2)}
+                    </p>
                     ${!esCancelado ? `
-                        <span class="text-[9px] font-bold ${reg.metodo_pago === 'TARJETA' ? 'text-blue-600 bg-blue-50' : 'text-orange-600 bg-orange-50'} px-2 py-0.5 rounded uppercase">
+                        <span class="text-[9px] font-bold ${
+                            reg.metodo_pago === 'TARJETA'
+                                ? 'text-blue-600 bg-blue-50'
+                                : 'text-orange-600 bg-orange-50'
+                        } px-2 py-0.5 rounded uppercase">
                             ${reg.metodo_pago}
                         </span>
-                    ` : '<span class="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded uppercase">ERROR</span>'}
+                    ` : `
+                        <span class="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded uppercase">
+                            CANCELADO
+                        </span>
+                    `}
                 </div>
             </div>
         </div>
-    `}).join('');
+        `;
+    }).join('');
 }
 </script>
-{% endblock %}  
+{% endblock %}

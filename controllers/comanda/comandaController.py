@@ -3,7 +3,7 @@ from models.comanda_model import Comanda
 from config.db import db
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 class ComandaController:
 
@@ -104,31 +104,52 @@ class ComandaController:
             perfil=perfil_mesero,
             cuenta_id=cuenta_id
         )
+
     @staticmethod
     def cerrar_cuenta(cuenta_id):
         data = request.json or {}
 
-        propina = float(data.get("propina", 0))
         metodo_pago = data.get("metodo_pago", "efectivo")
+        tipo_propina = data.get("tipo_propina", "sin")
+        custom_porcentaje = data.get("custom_porcentaje")
 
         comanda = db.comandas.find_one({"_id": ObjectId(cuenta_id)})
         if not comanda:
             return jsonify({"success": False, "error": "Comanda no encontrada"}), 404
 
         total = float(comanda.get("total", 0))
-        total_final = total + propina
 
+        # ==========================
+        # 🧮 CALCULAR PROPINA
+        # ==========================
+        porcentaje = 0
+
+        if tipo_propina == "custom":
+            porcentaje = float(custom_porcentaje or 0)
+        elif tipo_propina.isdigit():
+            porcentaje = float(tipo_propina)
+
+        propina = round(total * (porcentaje / 100), 2)
+        total_final = round(total + propina, 2)
+
+        # ==========================
+        # 💾 GUARDAR COMANDA
+        # ==========================
         db.comandas.update_one(
             {"_id": ObjectId(cuenta_id)},
             {"$set": {
                 "estado": "pagada",
-                "propina": propina,
                 "metodo_pago": metodo_pago,
+                "propina": propina,
+                "porcentaje_propina": porcentaje,
                 "total_final": total_final,
                 "fecha_cierre": datetime.utcnow()
             }}
         )
 
+        # ==========================
+        # 🪑 LIBERAR MESA
+        # ==========================
         db.mesas.update_one(
             {"cuenta_activa_id": ObjectId(cuenta_id)},
             {"$set": {
@@ -140,8 +161,12 @@ class ComandaController:
 
         return jsonify({
             "success": True,
+            "total": total,
+            "propina": propina,
+            "porcentaje": porcentaje,
             "total_final": total_final
         })
+
         
     @staticmethod
     def comandas_cerradas():
@@ -177,4 +202,43 @@ class ComandaController:
             "success": True,
             "comandas": comandas
         })
+        
+    @staticmethod
+    def estadisticas_dia_mesero():
+        mesero_id = session.get("usuario_id")
+        if not mesero_id:
+            return jsonify({"success": False}), 401
 
+        mesero_oid = ObjectId(mesero_id)
+
+        inicio_dia = datetime.utcnow().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        fin_dia = inicio_dia + timedelta(days=1)
+
+        cursor = db.comandas.find({
+            "estado": "pagada",
+            "mesero_id": mesero_oid,
+            "fecha_cierre": {
+                "$gte": inicio_dia,
+                "$lt": fin_dia
+            }
+        })
+
+        venta = 0
+        propinas = 0
+        ordenes = 0
+
+        for c in cursor:
+            venta += float(c.get("total_final", 0))
+            propinas += float(c.get("propina", 0))
+            ordenes += 1
+
+        return jsonify({
+            "success": True,
+            "estadisticas": {
+                "venta_dia": venta,
+                "propinas_dia": propinas,
+                "num_ordenes": ordenes
+            }
+        })
