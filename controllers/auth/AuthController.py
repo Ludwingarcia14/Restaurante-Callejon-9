@@ -8,6 +8,7 @@ from models.empleado_model import Usuario, RolPermisos
 from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 import secrets
 import logging
+from functools import wraps
 
 logging.basicConfig(level=logging.INFO)
 
@@ -110,16 +111,26 @@ class AuthController:
             
             # 7. Determinar dashboard según rol
             rol_endpoints = {
-                "1": "dashboard_admin",   # Administración
-                "2": "dashboard_mesero",   # Mesero
-                "3": "dashboard_cocina",  # Cocina
-                "4": "dashboard_inventario" # Inventario
+                "1": "dashboard_admin",      # Administración
+                "2": "dashboard_mesero",      # Mesero
+                "3": "dashboard_cocina",      # Cocina
+                "4": "dashboard_inventario"   # Inventario
             }
             
             endpoint = rol_endpoints.get(rol)
             
             if endpoint:
                 logging.info(f"✅ Login exitoso: {email} | Rol: {RolPermisos.get_nombre_rol(rol)}")
+                
+                # ✨ NOTIFICAR LOGIN
+                try:
+                    NotificacionSistemaController.notificar_login(
+                        usuario_id=user_id,
+                        nombre_usuario=usuario_doc.get("usuario_nombre", ""),
+                        rol=rol
+                    )
+                except Exception as e:
+                    logging.warning(f"⚠️ No se pudo enviar notificación de login: {e}")
                 
                 return jsonify({
                     "status": "success",
@@ -142,7 +153,10 @@ class AuthController:
     @staticmethod
     def logout():
         """Cierra sesión del usuario"""
+        # Guardar datos antes de limpiar
         usuario_id = session.get("usuario_id")
+        usuario_nombre = session.get("usuario_nombre")
+        usuario_rol = session.get("usuario_rol")
         
         if usuario_id:
             try:
@@ -150,6 +164,16 @@ class AuthController:
                 Usuario.update_session_token(usuario_id, None, 0)
             except Exception as e:
                 logging.error(f"Error al actualizar estado en logout: {e}")
+            
+            # ✨ NOTIFICAR LOGOUT
+            try:
+                NotificacionSistemaController.notificar_logout(
+                    usuario_id=usuario_id,
+                    nombre_usuario=usuario_nombre,
+                    rol=usuario_rol
+                )
+            except Exception as e:
+                logging.warning(f"⚠️ No se pudo enviar notificación de logout: {e}")
         
         session.clear()
         return redirect(url_for("routes.login"))
@@ -163,51 +187,10 @@ class AuthController:
             "message": "2FA no implementado en esta versión"
         }), 400
 
-    @staticmethod
-    def login():
-        if request.method == "POST":
-            # ... tu validación actual ...
-            
-            if usuario_valido:
-                # Establecer sesión
-                session["usuario_id"] = str(usuario["_id"])
-                session["usuario_nombre"] = usuario["nombre"]
-                session["usuario_rol"] = usuario["rol"]
-                
-                # ✨ NOTIFICAR LOGIN
-                NotificacionSistemaController.notificar_login(
-                    usuario_id=str(usuario["_id"]),
-                    nombre_usuario=usuario["nombre"],
-                    rol=usuario["rol"]
-                )
-                
-                return redirect(...)
-        
-        return render_template("login.html")
-    
-    @staticmethod
-    def logout():
-        # Guardar datos antes de limpiar
-        usuario_id = session.get("usuario_id")
-        usuario_nombre = session.get("usuario_nombre")
-        usuario_rol = session.get("usuario_rol")
-        
-        # ✨ NOTIFICAR LOGOUT
-        if usuario_id:
-            NotificacionSistemaController.notificar_logout(
-                usuario_id=usuario_id,
-                nombre_usuario=usuario_nombre,
-                rol=usuario_rol
-            )
-        
-        session.clear()
-        return redirect(url_for("routes.login"))
 
 # ==========================================
 # DECORADORES PARA PROTEGER RUTAS
 # ==========================================
-
-from functools import wraps
 
 def login_required(f):
     """Decorador para requerir autenticación"""
