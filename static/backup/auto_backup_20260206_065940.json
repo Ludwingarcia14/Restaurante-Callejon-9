@@ -1,0 +1,1985 @@
+{
+    "mesas": [
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09b"
+            },
+            "numero": 6,
+            "capacidad": 4,
+            "estado": "disponible",
+            "tipo": "interior",
+            "seccion": "A",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09c"
+            },
+            "numero": 7,
+            "capacidad": 2,
+            "estado": "disponible",
+            "tipo": "interior",
+            "seccion": "B",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf097"
+            },
+            "numero": 2,
+            "capacidad": 4,
+            "estado": "ocupada",
+            "tipo": "interior",
+            "seccion": "A",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 3,
+            "cuenta_activa_id": {
+                "$oid": "69862f89a0a2ac45dcfcfdd9"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf098"
+            },
+            "numero": 3,
+            "capacidad": 4,
+            "estado": "disponible",
+            "tipo": "interior",
+            "seccion": "B",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 5,
+            "cuenta_activa_id": {
+                "$oid": "6985399e572a82c0d49cb624"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09d"
+            },
+            "numero": 8,
+            "capacidad": 6,
+            "estado": "disponible",
+            "tipo": "terraza",
+            "seccion": "C",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf096"
+            },
+            "numero": 1,
+            "capacidad": 4,
+            "estado": "ocupada",
+            "tipo": "interior",
+            "seccion": "A",
+            "mesero_id": "69771fe45faa0869e04b5616",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 3,
+            "cuenta_activa_id": {
+                "$oid": "6986278b9eeb5f70703cb444"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09a"
+            },
+            "numero": 5,
+            "capacidad": 8,
+            "estado": "disponible",
+            "tipo": "terraza",
+            "seccion": "C",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 4,
+            "cuenta_activa_id": {
+                "$oid": "698626f79eeb5f70703cb443"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf099"
+            },
+            "numero": 4,
+            "capacidad": 4,
+            "estado": "disponible",
+            "tipo": "terraza",
+            "seccion": "C",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 3,
+            "cuenta_activa_id": {
+                "$oid": "69850eea45cce55b16edc50c"
+            }
+        }
+    ],
+    "pedidos/comandas": [],
+    "inventario": [],
+    "proveedores": [
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "nombre": "Comercializadora de Carnes del Valle",
+            "razon_social": "Comercializadora de Carnes del Valle S.A. de C.V.",
+            "rfc": "CCV123456789",
+            "telefono": "7221111111",
+            "email": "ventas@carnesvalle.com",
+            "direccion": "Av. Principal 123, Valle de Bravo",
+            "contacto_nombre": "Juan Pérez",
+            "contacto_telefono": "7221111112",
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b6"
+            },
+            "nombre": "Verduras Frescas del Sur",
+            "razon_social": "Verduras Frescas del Sur S.A.",
+            "rfc": "VFS987654321",
+            "telefono": "7222222222",
+            "email": "pedidos@verdurasfrescas.com",
+            "direccion": "Carretera Sur Km 5, Valle de Bravo",
+            "contacto_nombre": "María González",
+            "contacto_telefono": "7222222223",
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b7"
+            },
+            "nombre": "Lácteos y Derivados La Granja",
+            "razon_social": "Lácteos La Granja S.C.",
+            "rfc": "LGR456789123",
+            "telefono": "7223333333",
+            "email": "contacto@lacteoslagranja.com",
+            "direccion": "Camino Real 45, Valle de Bravo",
+            "contacto_nombre": "Carlos Ramírez",
+            "contacto_telefono": "7223333334",
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            }
+        }
+    ],
+    "insumos": [
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b8"
+            },
+            "nombre": "Carne de Res (Bistec)",
+            "categoria": "carnes",
+            "unidad_medida": "kg",
+            "stock_actual": 15.5,
+            "stock_minimo": 10.0,
+            "costo_unitario": 180.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824b9"
+            },
+            "nombre": "Pechuga de Pollo",
+            "categoria": "carnes",
+            "unidad_medida": "kg",
+            "stock_actual": 8.0,
+            "stock_minimo": 12.0,
+            "costo_unitario": 95.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824ba"
+            },
+            "nombre": "Lechuga Romana",
+            "categoria": "verduras",
+            "unidad_medida": "pza",
+            "stock_actual": 25,
+            "stock_minimo": 20,
+            "costo_unitario": 15.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b6"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824bb"
+            },
+            "nombre": "Tomate Bola",
+            "categoria": "verduras",
+            "unidad_medida": "kg",
+            "stock_actual": 5.0,
+            "stock_minimo": 8.0,
+            "costo_unitario": 22.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b6"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824bc"
+            },
+            "nombre": "Queso Manchego",
+            "categoria": "lacteos",
+            "unidad_medida": "kg",
+            "stock_actual": 3.5,
+            "stock_minimo": 5.0,
+            "costo_unitario": 180.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b7"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824bd"
+            },
+            "nombre": "Leche Entera",
+            "categoria": "lacteos",
+            "unidad_medida": "lt",
+            "stock_actual": 20.0,
+            "stock_minimo": 15.0,
+            "costo_unitario": 18.5,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b7"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e113aad3c73f5824be"
+            },
+            "nombre": "Sal de Grano",
+            "categoria": "condimentos",
+            "unidad_medida": "kg",
+            "stock_actual": 8.0,
+            "stock_minimo": 5.0,
+            "costo_unitario": 12.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e113aad3c73f5824bf"
+            },
+            "nombre": "Aceite Vegetal",
+            "categoria": "condimentos",
+            "unidad_medida": "lt",
+            "stock_actual": 2.0,
+            "stock_minimo": 5.0,
+            "costo_unitario": 45.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        }
+    ],
+    "movimientos_inventario": [
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c4"
+            },
+            "tipo": "entrada",
+            "insumo_id": {
+                "$oid": "697d54df13aad3c73f5824b8"
+            },
+            "insumo_nombre": "Carne de Res (Bistec)",
+            "cantidad": 10.0,
+            "unidad_medida": "kg",
+            "stock_anterior": 5.5,
+            "stock_nuevo": 15.5,
+            "costo_unitario": 180.0,
+            "costo_total": 1800.0,
+            "usuario_id": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "motivo": "Compra semanal",
+            "referencia": "FAC-2025-001",
+            "fecha": {
+                "$date": "2026-01-31T01:03:30.829Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e313aad3c73f5824c5"
+            },
+            "tipo": "salida",
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824ba"
+            },
+            "insumo_nombre": "Lechuga Romana",
+            "cantidad": 5.0,
+            "unidad_medida": "pza",
+            "stock_anterior": 30,
+            "stock_nuevo": 25,
+            "costo_unitario": 15.0,
+            "costo_total": 75.0,
+            "usuario_id": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "proveedor_id": null,
+            "motivo": "Consumo cocina",
+            "referencia": "",
+            "fecha": {
+                "$date": "2026-01-31T01:03:30.829Z"
+            }
+        }
+    ],
+    "menu": [],
+    "notificaciones": [
+        {
+            "_id": {
+                "$oid": "69846f58b55a7659dc6a97c0"
+            },
+            "tipo": "BACKUP_CREADO",
+            "mensaje": "Backup crear: backup_callejon9_20260205_20260205_042213.zip",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T10:22:16.317Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T10:22:16.317Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:21:29.619Z"
+            },
+            "datos_extra": {
+                "archivo": "backup_callejon9_20260205_20260205_042213.zip",
+                "timestamp": "2026-02-05T10:22:16.317979"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6985226ec2f59dc6dfe81a26"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:06:22.645Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:06:22.645Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:21:29.619Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:06:22.645175"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698524b6ef5915176b9e58fa"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:16:06.165Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:16:06.165Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:21:29.619Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:16:06.165171"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69852520ef5915176b9e58fb"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:17:52.470Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:17:52.470Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:21:29.619Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:17:52.470621"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6985252aef5915176b9e58fc"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "joari ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "6984523da558b535977fe753"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-05T23:18:02.514Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:18:02.514Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:18:02.514Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-05T23:18:02.514103"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69852537ef5915176b9e58fd"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "joari ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "6984523da558b535977fe753"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-05T23:18:15.039Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:18:15.039Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:18:15.039Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-05T23:18:15.039263"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6985253aef5915176b9e58fe"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:18:18.409Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:18:18.409Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:21:29.619Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:18:18.409684"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69852686ef5915176b9e58ff"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-05T23:23:50.801Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:23:50.801Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:23:50.801Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:23:50.801180"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853a38ef5915176b9e5900"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T00:47:52.522Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:47:52.522Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T00:47:52.522Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T00:47:52.522135"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853bc8ef5915176b9e5901"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T00:54:32.457Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:54:32.457Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T00:54:32.457Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T00:54:32.457435"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853ca9ef5915176b9e5902"
+            },
+            "tipo": "BACKUP_CREADO",
+            "mensaje": "Backup crear: backup_callejon9_20260206_20260205_185814.json",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T00:58:17.810Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:58:17.810Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T00:58:17.810Z"
+            },
+            "datos_extra": {
+                "archivo": "backup_callejon9_20260206_20260205_185814.json",
+                "timestamp": "2026-02-06T00:58:17.810386"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853cfdef5915176b9e5903"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T00:59:41.282Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:59:41.282Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T00:59:41.282Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T00:59:41.282942"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853d01ef5915176b9e5904"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Valeria ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T00:59:45.762Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:59:45.762Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T00:59:45.762Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-06T00:59:45.762626"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853d25ef5915176b9e5905"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T01:00:21.766Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T01:00:21.766Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T01:00:21.766Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T01:00:21.766124"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69854012ef5915176b9e5906"
+            },
+            "tipo": "BACKUP_CREADO",
+            "mensaje": "Backup crear: backup_callejon9_20260206_20260205_191248.json",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T01:12:50.201Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T01:12:50.201Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T01:12:50.201Z"
+            },
+            "datos_extra": {
+                "archivo": "backup_callejon9_20260206_20260205_191248.json",
+                "timestamp": "2026-02-06T01:12:50.201760"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69862c454134ec2d879a7536"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Octavio ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T18:00:37.638Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T18:00:37.638Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T18:00:37.638Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-06T18:00:37.638944"
+            }
+        }
+    ],
+    "platillos": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2261"
+            },
+            "nombre": "Quesadilla de Champiñones",
+            "descripcion": "Con queso Oaxaca",
+            "categoria": "tacos",
+            "precio": 35,
+            "disponible": true,
+            "ingredientes": [
+                "tortilla",
+                "queso oaxaca",
+                "champiñones"
+            ],
+            "tiempo_preparacion": 8,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2260"
+            },
+            "nombre": "Tacos al Pastor",
+            "descripcion": "3 tacos con piña y cilantro",
+            "categoria": "tacos",
+            "precio": 45,
+            "disponible": true,
+            "ingredientes": [
+                "tortilla",
+                "carne pastor",
+                "piña",
+                "cilantro",
+                "cebolla"
+            ],
+            "tiempo_preparacion": 10,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2264"
+            },
+            "nombre": "Guacamole",
+            "descripcion": "Preparado al momento",
+            "categoria": "entradas",
+            "precio": 45,
+            "disponible": true,
+            "ingredientes": [
+                "aguacate",
+                "tomate",
+                "cebolla",
+                "cilantro",
+                "limón"
+            ],
+            "tiempo_preparacion": 5,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2266"
+            },
+            "nombre": "Flan Napolitano",
+            "descripcion": "Casero",
+            "categoria": "postres",
+            "precio": 30,
+            "disponible": true,
+            "ingredientes": [
+                "leche",
+                "huevo",
+                "azúcar",
+                "vainilla"
+            ],
+            "tiempo_preparacion": 3,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2263"
+            },
+            "nombre": "Sopes de Pollo",
+            "descripcion": "Con frijoles y lechuga",
+            "categoria": "principales",
+            "precio": 50,
+            "disponible": true,
+            "ingredientes": [
+                "masa",
+                "frijol",
+                "pollo",
+                "lechuga",
+                "queso",
+                "crema"
+            ],
+            "tiempo_preparacion": 12,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2265"
+            },
+            "nombre": "Agua de Horchata",
+            "descripcion": "Jarra 1L",
+            "categoria": "bebidas",
+            "precio": 20,
+            "disponible": true,
+            "ingredientes": [
+                "arroz",
+                "canela",
+                "azúcar"
+            ],
+            "tiempo_preparacion": 2,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2262"
+            },
+            "nombre": "Enchiladas Suizas",
+            "descripcion": "Bañadas en salsa verde con crema",
+            "categoria": "principales",
+            "precio": 55,
+            "disponible": true,
+            "ingredientes": [
+                "tortilla",
+                "pollo",
+                "salsa verde",
+                "queso",
+                "crema"
+            ],
+            "tiempo_preparacion": 15,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        }
+    ],
+    "alertas_stock": [
+        {
+            "_id": {
+                "$oid": "697d54e113aad3c73f5824c0"
+            },
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824b9"
+            },
+            "insumo_nombre": "Pechuga de Pollo",
+            "stock_actual": 8.0,
+            "stock_minimo": 12.0,
+            "diferencia": 4.0,
+            "nivel_criticidad": "media",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:29.857Z"
+            },
+            "fecha_resolucion": null
+        },
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c1"
+            },
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824bb"
+            },
+            "insumo_nombre": "Tomate Bola",
+            "stock_actual": 5.0,
+            "stock_minimo": 8.0,
+            "diferencia": 3.0,
+            "nivel_criticidad": "media",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:30.116Z"
+            },
+            "fecha_resolucion": null
+        },
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c2"
+            },
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824bc"
+            },
+            "insumo_nombre": "Queso Manchego",
+            "stock_actual": 3.5,
+            "stock_minimo": 5.0,
+            "diferencia": 1.5,
+            "nivel_criticidad": "media",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:30.321Z"
+            },
+            "fecha_resolucion": null
+        },
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c3"
+            },
+            "insumo_id": {
+                "$oid": "697d54e113aad3c73f5824bf"
+            },
+            "insumo_nombre": "Aceite Vegetal",
+            "stock_actual": 2.0,
+            "stock_minimo": 5.0,
+            "diferencia": 3.0,
+            "nivel_criticidad": "alta",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:30.628Z"
+            },
+            "fecha_resolucion": null
+        }
+    ],
+    "comandas": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2242"
+            },
+            "numero_comanda": 1001,
+            "mesa_id": {
+                "$oid": "697d82ff2a0a1055937a223e"
+            },
+            "mesa_numero": 2,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "mesero_nombre": "Juan Pérez",
+            "estado": "en_cocina",
+            "comensales": 2,
+            "platillos": [
+                {
+                    "platillo_id": {
+                        "$oid": "697d82ff2a0a1055937a2260"
+                    },
+                    "nombre": "Tacos al Pastor",
+                    "cantidad": 3,
+                    "precio_unitario": 45,
+                    "subtotal": 135,
+                    "notas": "Sin cebolla",
+                    "estado": "preparando"
+                },
+                {
+                    "platillo_id": {
+                        "$oid": "697d82ff2a0a1055937a2261"
+                    },
+                    "nombre": "Quesadilla de Champiñones",
+                    "cantidad": 2,
+                    "precio_unitario": 35,
+                    "subtotal": 70,
+                    "notas": "",
+                    "estado": "preparando"
+                }
+            ],
+            "subtotal": 205,
+            "propina": 0,
+            "total": 205,
+            "created_at": {
+                "$date": "2026-01-31T14:35:00Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T14:35:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2243"
+            },
+            "numero_comanda": 1002,
+            "mesa_id": {
+                "$oid": "697d82ff2a0a1055937a223f"
+            },
+            "mesa_numero": 3,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2251"
+            },
+            "mesero_nombre": "María López",
+            "estado": "lista",
+            "comensales": 4,
+            "platillos": [
+                {
+                    "platillo_id": {
+                        "$oid": "697d82ff2a0a1055937a2262"
+                    },
+                    "nombre": "Enchiladas Suizas",
+                    "cantidad": 2,
+                    "precio_unitario": 55,
+                    "subtotal": 110,
+                    "notas": "",
+                    "estado": "listo"
+                },
+                {
+                    "platillo_id": {
+                        "$oid": "697d82ff2a0a1055937a2263"
+                    },
+                    "nombre": "Sopes de Pollo",
+                    "cantidad": 2,
+                    "precio_unitario": 50,
+                    "subtotal": 100,
+                    "notas": "Extra salsa",
+                    "estado": "listo"
+                }
+            ],
+            "subtotal": 210,
+            "propina": 0,
+            "total": 210,
+            "created_at": {
+                "$date": "2026-01-31T13:50:00Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T14:20:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6984f860905bd716e43b254e"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 3,
+            "mesero_id": "69771fe45faa0869e04b5616",
+            "estado": "nueva",
+            "items": [],
+            "total": 0.0,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:06:56.548Z"
+            },
+            "folio": "COM-260205140656"
+        },
+        {
+            "_id": {
+                "$oid": "6984f8c0905bd716e43b254f"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 1,
+            "mesero_id": "None",
+            "estado": "nueva",
+            "items": [],
+            "total": 0.0,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:08:32.283Z"
+            },
+            "folio": "COM-260205140832"
+        },
+        {
+            "_id": {
+                "$oid": "6984fa37552c7085fdd791cb"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 2,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984f61a3cc8086fc49de0f9",
+                    "nombre": "Tacos al Pastor",
+                    "precio": 85,
+                    "cantidad": 2
+                }
+            ],
+            "total": 170,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:14:47.448Z"
+            },
+            "folio": "COM-260205141447"
+        },
+        {
+            "_id": {
+                "$oid": "6984fbefd1a0bbcab3c44564"
+            },
+            "mesa_numero": 3,
+            "num_comensales": 4,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a384c",
+                    "nombre": "Papas a la Francesa",
+                    "precio": 55,
+                    "cantidad": 1
+                },
+                {
+                    "id": "6984fade6dee41f2f28a3847",
+                    "nombre": "Enchiladas Suizas",
+                    "precio": 125,
+                    "cantidad": 1
+                },
+                {
+                    "id": "6984fade6dee41f2f28a3848",
+                    "nombre": "Hamburguesa BBQ",
+                    "precio": 140,
+                    "cantidad": 1
+                }
+            ],
+            "total": 320,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:22:07.155Z"
+            },
+            "folio": "COM-260205142207"
+        },
+        {
+            "_id": {
+                "$oid": "6984fe407753d1c37f20a9e2"
+            },
+            "mesa_numero": 2,
+            "num_comensales": 4,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3846",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 1
+                },
+                {
+                    "id": "6984fade6dee41f2f28a384c",
+                    "nombre": "Papas a la Francesa",
+                    "precio": 55,
+                    "cantidad": 2
+                }
+            ],
+            "total": 205,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:32:00.494Z"
+            },
+            "folio": "COM-260205143200"
+        },
+        {
+            "_id": {
+                "$oid": "6984ff11710135ad2dc517db"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 4,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3846",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 1
+                }
+            ],
+            "total": 95,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:35:29.889Z"
+            },
+            "folio": "COM-260205143529"
+        },
+        {
+            "_id": {
+                "$oid": "6984ffc96f68d4cc8ed77278"
+            },
+            "mesa_numero": 2,
+            "num_comensales": 4,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a384c",
+                    "nombre": "Papas a la Francesa",
+                    "precio": 55,
+                    "cantidad": 1
+                }
+            ],
+            "total": 55,
+            "fecha_apertura": {
+                "$date": "2026-02-05T20:38:33.286Z"
+            },
+            "folio": "COM-260205143833"
+        },
+        {
+            "_id": {
+                "$oid": "69850e6a45cce55b16edc50b"
+            },
+            "mesa_numero": 3,
+            "num_comensales": 4,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3847",
+                    "nombre": "Enchiladas Suizas",
+                    "precio": 125,
+                    "cantidad": 2
+                },
+                {
+                    "id": "6984fade6dee41f2f28a3846",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 1
+                }
+            ],
+            "total": 345,
+            "fecha_apertura": {
+                "$date": "2026-02-05T21:40:58.888Z"
+            },
+            "folio": "COM-260205154058"
+        },
+        {
+            "_id": {
+                "$oid": "69850eea45cce55b16edc50c"
+            },
+            "mesa_numero": 4,
+            "num_comensales": 3,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3849",
+                    "nombre": "Cerveza Corona",
+                    "precio": 45,
+                    "cantidad": 3
+                }
+            ],
+            "total": 135,
+            "fecha_apertura": {
+                "$date": "2026-02-05T21:43:06.754Z"
+            },
+            "folio": "COM-260205154306"
+        },
+        {
+            "_id": {
+                "$oid": "6985274300c51960e6058c9a"
+            },
+            "mesa_numero": 2,
+            "num_comensales": 4,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a384d",
+                    "nombre": "Guacamole Extra",
+                    "precio": 25,
+                    "cantidad": 2
+                }
+            ],
+            "total": 50,
+            "fecha_apertura": {
+                "$date": "2026-02-05T23:26:59.790Z"
+            },
+            "folio": "COM-260205172659"
+        },
+        {
+            "_id": {
+                "$oid": "6985399e572a82c0d49cb624"
+            },
+            "mesa_numero": 3,
+            "num_comensales": 5,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3846",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 1
+                }
+            ],
+            "total": 95,
+            "fecha_apertura": {
+                "$date": "2026-02-06T00:45:18.872Z"
+            },
+            "folio": "COM-260205184518"
+        },
+        {
+            "_id": {
+                "$oid": "698626f79eeb5f70703cb443"
+            },
+            "mesa_numero": 5,
+            "num_comensales": 4,
+            "mesero_id": "69771fe45faa0869e04b5616",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a384a",
+                    "nombre": "Refresco de Vidrio",
+                    "precio": 30,
+                    "cantidad": 4
+                }
+            ],
+            "total": 120,
+            "fecha_apertura": {
+                "$date": "2026-02-06T17:37:59.069Z"
+            },
+            "folio": "COM-260206113759"
+        },
+        {
+            "_id": {
+                "$oid": "6986278b9eeb5f70703cb444"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 3,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3846",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 4
+                }
+            ],
+            "total": 380,
+            "fecha_apertura": {
+                "$date": "2026-02-06T17:40:27.636Z"
+            },
+            "folio": "COM-260206114027"
+        },
+        {
+            "_id": {
+                "$oid": "69862f89a0a2ac45dcfcfdd9"
+            },
+            "mesa_numero": 2,
+            "num_comensales": 3,
+            "mesero_id": "None",
+            "estado": "enviada",
+            "items": [
+                {
+                    "id": "6984fade6dee41f2f28a3846",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 4
+                }
+            ],
+            "total": 380,
+            "fecha_apertura": {
+                "$date": "2026-02-06T18:14:33.256Z"
+            },
+            "folio": "COM-260206121433"
+        }
+    ],
+    "ventas": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2245"
+            },
+            "numero_venta": 502,
+            "mesa_numero": 4,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2251"
+            },
+            "mesero_nombre": "María López",
+            "comensales": 3,
+            "platillos": [
+                {
+                    "nombre": "Quesadilla de Champiñones",
+                    "cantidad": 3,
+                    "precio_unitario": 35,
+                    "subtotal": 105
+                },
+                {
+                    "nombre": "Agua de Horchata",
+                    "cantidad": 3,
+                    "precio_unitario": 20,
+                    "subtotal": 60
+                }
+            ],
+            "subtotal": 165,
+            "propina": 16.5,
+            "total": 181.5,
+            "metodo_pago": "tarjeta",
+            "fecha": {
+                "$date": "2026-01-31T11:15:00Z"
+            },
+            "created_at": {
+                "$date": "2026-01-31T11:15:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2244"
+            },
+            "numero_venta": 501,
+            "mesa_numero": 1,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "mesero_nombre": "Juan Pérez",
+            "comensales": 2,
+            "platillos": [
+                {
+                    "nombre": "Guacamole",
+                    "cantidad": 1,
+                    "precio_unitario": 45,
+                    "subtotal": 45
+                },
+                {
+                    "nombre": "Tacos al Pastor",
+                    "cantidad": 4,
+                    "precio_unitario": 45,
+                    "subtotal": 180
+                }
+            ],
+            "subtotal": 225,
+            "propina": 22.5,
+            "total": 247.5,
+            "metodo_pago": "efectivo",
+            "fecha": {
+                "$date": "2026-01-31T12:30:00Z"
+            },
+            "created_at": {
+                "$date": "2026-01-31T12:30:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2246"
+            },
+            "numero_venta": 503,
+            "mesa_numero": 2,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "mesero_nombre": "Juan Pérez",
+            "comensales": 4,
+            "platillos": [
+                {
+                    "nombre": "Enchiladas Suizas",
+                    "cantidad": 4,
+                    "precio_unitario": 55,
+                    "subtotal": 220
+                },
+                {
+                    "nombre": "Flan Napolitano",
+                    "cantidad": 2,
+                    "precio_unitario": 30,
+                    "subtotal": 60
+                }
+            ],
+            "subtotal": 280,
+            "propina": 28,
+            "total": 308,
+            "metodo_pago": "efectivo",
+            "fecha": {
+                "$date": "2026-01-31T13:00:00Z"
+            },
+            "created_at": {
+                "$date": "2026-01-31T13:00:00Z"
+            }
+        }
+    ],
+    "usuarios": [
+        {
+            "_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "usuario_nombre": "Octavio",
+            "usuario_apellidos": "Duarte Villavicencio",
+            "usuario_email": "octavio@admin.com",
+            "usuario_clave": "mesero123",
+            "usuario_rol": "2",
+            "usuario_telefono": "7229876543",
+            "usuario_foto": null,
+            "usuario_status": 1,
+            "usuario_tokensession": "nX4ZxJClk7wQ3jAD87RnwMuV-ZAXECCCkH2Xe9H4H-k",
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "mesero_numero": "M001",
+            "mesero_turno": "matutino",
+            "mesero_mesas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+            ],
+            "mesero_puede_cerrar_cuenta": true,
+            "mesero_puede_aplicar_descuento": false,
+            "mesero_propina_sugerida": 10,
+            "mesero_propina_acumulada_dia": 0,
+            "mesero_ventas_promedio_dia": 0,
+            "mesero_calificacion_cliente": 0,
+            "created_at": "2026-01-26 08:03:31",
+            "updated_at": {
+                "$date": "2026-02-06T18:07:04.324Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6984523da558b535977fe753"
+            },
+            "usuario_nombre": "joari",
+            "usuario_apellidos": "ocampo",
+            "usuario_email": "joa@gmail.com",
+            "usuario_clave": "123456",
+            "usuario_rol": "4",
+            "usuario_telefono": "123456",
+            "usuario_foto": null,
+            "usuario_status": 0,
+            "usuario_tokensession": null,
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "created_at": "2026-02-05 08:18:05",
+            "updated_at": {
+                "$date": "2026-02-05T23:18:14.872Z"
+            },
+            "inventario_numero": "1",
+            "inventario_area": "",
+            "inventario_turno": "noche",
+            "inventario_puede_gestionar_proveedores": false,
+            "inventario_puede_realizar_auditorias": false
+        },
+        {
+            "_id": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "usuario_nombre": "Regina",
+            "usuario_apellidos": "Ibarra Alba",
+            "usuario_email": "regi@admin.com",
+            "usuario_clave": "cocina123",
+            "usuario_rol": "3",
+            "usuario_telefono": "7225551234",
+            "usuario_foto": null,
+            "usuario_status": 1,
+            "usuario_tokensession": "PEZnhnxI-SohFKA2QQehNiTZEkfptAWLG7FszOp1Ueo",
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "cocina_numero": "C001",
+            "cocina_puesto": "cocinero",
+            "cocina_area": "parrilla",
+            "cocina_turno": "matutino",
+            "cocina_especialidad": [
+                "carnes",
+                "asados"
+            ],
+            "cocina_puede_modificar_menu": false,
+            "cocina_puede_ver_recetas_completas": true,
+            "cocina_certificaciones": [
+                "manejo_higiénico",
+                "cortes_carne"
+            ],
+            "created_at": "2026-01-26 08:03:31",
+            "updated_at": {
+                "$date": "2026-02-05T05:10:23.553Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698022fe9b12104ab7a73e2e"
+            },
+            "usuario_nombre": "Luwin",
+            "usuario_apellidos": "gaga",
+            "usuario_email": "luwi@gmail.com",
+            "usuario_clave": "123456789",
+            "usuario_rol": "3",
+            "usuario_telefono": "7294986016",
+            "usuario_foto": null,
+            "usuario_status": 0,
+            "usuario_tokensession": null,
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "created_at": "2026-02-02 04:07:26",
+            "updated_at": {
+                "$date": "2026-02-02T04:08:18.061Z"
+            },
+            "cocina_numero": "2",
+            "cocina_puesto": "chef",
+            "cocina_area": "general",
+            "cocina_turno": "mañana",
+            "cocina_especialidad": [],
+            "cocina_puede_modificar_menu": false,
+            "cocina_puede_ver_recetas_completas": false,
+            "cocina_certificaciones": []
+        },
+        {
+            "_id": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "usuario_nombre": "Ludwin",
+            "usuario_apellidos": "Garcia Gaytan",
+            "usuario_email": "lud.dev@gmail.com",
+            "usuario_clave": "admin123",
+            "usuario_rol": "1",
+            "usuario_telefono": "7221234567",
+            "usuario_foto": null,
+            "usuario_status": 1,
+            "usuario_tokensession": "5IdIzrWPG5sxh4X06V0ARKnSe_k4_jczOacQnc-BQBk",
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "created_at": "2026-01-26 08:03:31",
+            "updated_at": {
+                "$date": "2026-02-06T01:00:21.585Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "usuario_nombre": "Valeria",
+            "usuario_apellidos": "Mercado Cerrano",
+            "usuario_email": "vale@admin.com",
+            "usuario_clave": "inventario123",
+            "usuario_rol": "4",
+            "usuario_telefono": "7221234567",
+            "usuario_foto": null,
+            "usuario_status": 1,
+            "usuario_tokensession": "INj9lYzpUxqVFjGSlBAkFdcLyyqPSb2YTjgIaLe5NJc",
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "inventario_numero": "INV-001",
+            "inventario_turno": "matutino",
+            "inventario_area_responsabilidad": "almacen_general",
+            "inventario_puede_autorizar_mermas": true,
+            "inventario_limite_ajustes": 1000,
+            "created_at": "2026-01-31 01:03:26",
+            "updated_at": {
+                "$date": "2026-02-06T00:59:45.429Z"
+            }
+        }
+    ],
+    "productos": [
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a3846"
+            },
+            "nombre": "Tacos al Pastor (5)",
+            "precio": 95.0,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a3847"
+            },
+            "nombre": "Enchiladas Suizas",
+            "precio": 125.0,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a3848"
+            },
+            "nombre": "Hamburguesa BBQ",
+            "precio": 140.0,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a3849"
+            },
+            "nombre": "Cerveza Corona",
+            "precio": 45.0,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a384a"
+            },
+            "nombre": "Refresco de Vidrio",
+            "precio": 30.0,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a384b"
+            },
+            "nombre": "Agua del Día",
+            "precio": 35.0,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a384c"
+            },
+            "nombre": "Papas a la Francesa",
+            "precio": 55.0,
+            "categoria": "Complementos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "6984fade6dee41f2f28a384d"
+            },
+            "nombre": "Guacamole Extra",
+            "precio": 25.0,
+            "categoria": "Complementos",
+            "estado": "activo"
+        }
+    ],
+    "configuracion_sistema": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2291"
+            },
+            "clave": "modo_mantenimiento",
+            "valor": false,
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2292"
+            },
+            "clave": "aceptar_reservas",
+            "valor": true,
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2290"
+            },
+            "clave": "backup_automatico",
+            "valor": {
+                "enabled": false,
+                "frequency": "diaria",
+                "hora": "02:00",
+                "retener_dias": 30
+            },
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        }
+    ],
+    "clientes": [],
+    "tickets": [],
+    "estadisticas_diarias": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2280"
+            },
+            "fecha": {
+                "$date": "2026-01-31T00:00:00Z"
+            },
+            "ventas_totales": 12450,
+            "numero_ventas": 45,
+            "ticket_promedio": 276.67,
+            "propinas_totales": 1245,
+            "mesas_atendidas": 38,
+            "platillos_vendidos": {
+                "Tacos al Pastor": 32,
+                "Quesadilla de Champiñones": 25,
+                "Enchiladas Suizas": 18,
+                "Guacamole": 15
+            },
+            "metodos_pago": {
+                "efectivo": 7200,
+                "tarjeta": 4500,
+                "transferencia": 750
+            },
+            "ventas_por_hora": [
+                {
+                    "hora": 11,
+                    "ventas": 850
+                },
+                {
+                    "hora": 12,
+                    "ventas": 1200
+                },
+                {
+                    "hora": 13,
+                    "ventas": 2100
+                },
+                {
+                    "hora": 14,
+                    "ventas": 3200
+                },
+                {
+                    "hora": 15,
+                    "ventas": 2500
+                },
+                {
+                    "hora": 16,
+                    "ventas": 1800
+                },
+                {
+                    "hora": 17,
+                    "ventas": 800
+                }
+            ],
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        }
+    ],
+    "actividad_reciente": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2271"
+            },
+            "tipo": "comanda_nueva",
+            "descripcion": "Nueva comanda en Mesa 12",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2251"
+            },
+            "usuario_nombre": "María López",
+            "mesa_numero": 12,
+            "timestamp": {
+                "$date": "2026-01-31T14:25:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2270"
+            },
+            "tipo": "venta_completada",
+            "descripcion": "Mesa 5 cerrada por Juan Pérez",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "usuario_nombre": "Juan Pérez",
+            "mesa_numero": 5,
+            "monto": 850,
+            "timestamp": {
+                "$date": "2026-01-31T14:28:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2272"
+            },
+            "tipo": "comanda_cocina",
+            "descripcion": "Pedido enviado a cocina",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "usuario_nombre": "Juan Pérez",
+            "comanda_id": {
+                "$oid": "697d82ff2a0a1055937a2242"
+            },
+            "timestamp": {
+                "$date": "2026-01-31T14:22:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2273"
+            },
+            "tipo": "pago_recibido",
+            "descripcion": "Pago recibido: $850 (Tarjeta)",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "usuario_nombre": "Juan Pérez",
+            "monto": 850,
+            "metodo_pago": "tarjeta",
+            "timestamp": {
+                "$date": "2026-01-31T14:20:00Z"
+            }
+        }
+    ]
+}

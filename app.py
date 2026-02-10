@@ -16,7 +16,7 @@ os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
 # Inicialización de Flask
 # En app.py
-app = Flask(__name__,template_folder="resources/views",static_folder="static")  # Asegúrate de esto
+app = Flask(__name__,template_folder="resources/views",static_folder="static")
 # Configuración de CORS
 lista_origenes = [
     "http://127.0.0.1:5500",
