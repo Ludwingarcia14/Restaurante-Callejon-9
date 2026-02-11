@@ -48,6 +48,7 @@ class ComandaController:
         numero_mesa = data.get("numero_mesa")
         num_comensales = data.get("num_comensales")
         mesero_id = session.get("usuario_id")
+        mesero_nombre = session.get("usuario_nombre", "Mesero")
 
         if not mesero_id:
             return jsonify({
@@ -64,7 +65,8 @@ class ComandaController:
         cuenta_id = Comanda.crear_comanda(
             numero_mesa,
             num_comensales,
-            mesero_id
+            mesero_id,
+            mesero_nombre
         )
 
         db.mesas.update_one(
@@ -85,7 +87,7 @@ class ComandaController:
     @staticmethod
     def guardar_items(cuenta_id):
         """
-        VERSIÓN CORREGIDA: Ahora SUMA los items en lugar de reemplazarlos
+        VERSIÓN MEJORADA: Ahora envía notificación a cocina cuando se agregan items
         """
         data = request.get_json(silent=True)
         if not data:
@@ -104,6 +106,7 @@ class ComandaController:
             
             # 2. Obtener items existentes
             items_existentes = comanda.get("items", [])
+            items_para_cocina = []  # Items nuevos que se enviarán a cocina
             
             # 3. FUSIONAR items: si el producto ya existe, SUMAR cantidad; si no, agregarlo
             for item_nuevo in items_nuevos:
@@ -119,17 +122,25 @@ class ComandaController:
                         # SUMAR la cantidad al item existente
                         item_existente['cantidad'] += item_nuevo['cantidad']
                         encontrado = True
+                        
+                        # 🔔 Marcar como pendiente de nuevo para cocina
+                        item_existente['estado_cocina'] = 'pendiente'
+                        items_para_cocina.append(producto_id)
                         break
                 
                 if not encontrado:
-                    # Agregar como nuevo item
-                    items_existentes.append({
+                    # Agregar como nuevo item con estado inicial de cocina
+                    nuevo_item = {
                         'producto_id': producto_id,
                         'id': producto_id,  # Por compatibilidad
                         'nombre': item_nuevo['nombre'],
                         'precio': item_nuevo['precio'],
-                        'cantidad': item_nuevo['cantidad']
-                    })
+                        'cantidad': item_nuevo['cantidad'],
+                        'estado_cocina': 'pendiente',  # 🔥 ESTADO INICIAL
+                        'fecha_pedido': datetime.utcnow()
+                    }
+                    items_existentes.append(nuevo_item)
+                    items_para_cocina.append(producto_id)
             
             # 4. Recalcular el total
             total = sum(
@@ -143,15 +154,26 @@ class ComandaController:
                 {"$set": {
                     "items": items_existentes,
                     "total": total,
+                    "estado": "enviada",  # Cambiar estado a enviada
                     "fecha_actualizacion": datetime.utcnow()
                 }}
             )
             
+            # 🔔 6. NOTIFICAR A COCINA (Socket.IO)
+            if items_para_cocina:
+                _notificar_cocina_nuevo_pedido(
+                    comanda_id=cuenta_id,
+                    mesa_numero=comanda.get("mesa_numero"),
+                    items=items_nuevos,
+                    mesero_nombre=comanda.get("mesero_nombre", "Mesero")
+                )
+            
             return jsonify({
                 "success": True,
-                "message": "Pedido enviado a cocina",
+                "message": "✅ Pedido enviado a cocina",
                 "total": total,
-                "items_count": len(items_existentes)
+                "items_count": len(items_existentes),
+                "items_nuevos": len(items_para_cocina)
             }), 200
             
         except Exception as e:
@@ -307,3 +329,65 @@ class ComandaController:
                 "num_ordenes": ordenes
             }
         })
+
+
+# ============================================
+# 🔔 FUNCIONES AUXILIARES - NOTIFICACIONES
+# ============================================
+
+def _notificar_cocina_nuevo_pedido(comanda_id, mesa_numero, items, mesero_nombre):
+    """
+    Notifica a cocina mediante Socket.IO cuando hay un nuevo pedido
+    """
+    try:
+        from extensions import socketio
+        
+        # Emitir evento a la sala de cocina
+        socketio.emit(
+            'nuevo_pedido',
+            {
+                'comanda_id': comanda_id,
+                'mesa': mesa_numero,
+                'items': items,
+                'mesero': mesero_nombre,
+                'timestamp': datetime.utcnow().isoformat(),
+                'num_items': len(items)
+            },
+            room='cocina',
+            namespace='/'
+        )
+        
+        print(f"✅ Notificación enviada a cocina - Mesa {mesa_numero}")
+        
+        # También crear notificación en BD para todos los usuarios de cocina
+        _crear_notificacion_bd_cocina(comanda_id, mesa_numero, items)
+        
+    except Exception as e:
+        print(f"⚠️ Error al notificar a cocina: {e}")
+
+
+def _crear_notificacion_bd_cocina(comanda_id, mesa_numero, items):
+    """
+    Crea notificación en base de datos para usuarios de cocina
+    """
+    try:
+        # Buscar todos los usuarios con rol de cocina (rol 3)
+        usuarios_cocina = db.usuarios.find({"rol": 3})
+        
+        for usuario in usuarios_cocina:
+            db.notificaciones.insert_one({
+                "id_usuario": usuario["_id"],
+                "tipo": "nuevo_pedido",
+                "titulo": f"🍽️ Nuevo Pedido - Mesa {mesa_numero}",
+                "mensaje": f"{len(items)} platillo(s) para preparar",
+                "leida": False,
+                "fecha": datetime.utcnow(),
+                "datos": {
+                    "comanda_id": comanda_id,
+                    "mesa": mesa_numero,
+                    "items": items
+                }
+            })
+            
+    except Exception as e:
+        print(f"⚠️ Error al crear notificación en BD: {e}")

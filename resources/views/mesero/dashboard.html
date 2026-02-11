@@ -857,63 +857,86 @@ function verComandas() {
 
 async function verDetalleComanda(cuentaId) {
     const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
-    
+
     if (!comanda) {
         showError('No se encontró la comanda');
         return;
     }
-    
-    // Construir HTML con los items de la comanda
+
     let itemsHtml = '';
     if (comanda.items && comanda.items.length > 0) {
         itemsHtml = comanda.items.map(item => `
-            <div class="flex justify-between items-center py-2 border-b">
+            <div class="flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm border">
                 <div>
-                    <p class="font-semibold text-gray-800">${item.nombre}</p>
-                    <p class="text-xs text-gray-500">$${item.precio.toFixed(2)} c/u</p>
+                    <p class="font-bold text-gray-800 text-sm">${item.nombre}</p>
+                    <p class="text-xs text-gray-500">
+                        $${item.precio.toFixed(2)} × ${item.cantidad}
+                    </p>
                 </div>
-                <div class="text-right">
-                    <p class="font-bold text-gray-800">${item.cantidad}x</p>
-                    <p class="text-sm text-green-600">$${(item.precio * item.cantidad).toFixed(2)}</p>
-                </div>
+                <p class="font-black text-green-600 text-lg">
+                    $${(item.precio * item.cantidad).toFixed(2)}
+                </p>
             </div>
         `).join('');
     } else {
-        itemsHtml = '<p class="text-gray-500 text-center py-4">No hay items en esta comanda</p>';
-    }
-    
-    Swal.fire({
-        title: `<div class="text-left">
-            <p class="text-lg font-bold">${comanda.folio}</p>
-            <p class="text-sm text-gray-500">Mesa ${comanda.mesa_numero} · ${comanda.num_comensales ?? comanda.comensales ?? 0} personas</p>
-        </div>`,
-        html: `
-            <div class="text-left max-h-96 overflow-y-auto">
-                <div class="mb-4">
-                    <p class="text-xs text-gray-500 uppercase font-bold mb-2">Productos ordenados:</p>
-                    ${itemsHtml}
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600 font-semibold">TOTAL:</span>
-                        <span class="text-2xl font-bold text-green-600">$${comanda.total.toFixed(2)}</span>
-                    </div>
-                </div>
+        itemsHtml = `
+            <div class="text-center text-gray-400 py-12">
+                <i class="bi bi-cart-x text-5xl block mb-3 opacity-30"></i>
+                <p class="text-sm">Sin productos aún</p>
             </div>
-        `,
-        width: 600,
-        confirmButtonText: 'Cerrar',
-        confirmButtonColor: '#F2913D',
-        showCancelButton: true,
-        cancelButtonText: 'Agregar más productos',
-        cancelButtonColor: '#6B7280'
-    }).then((result) => {
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            // Si presiona "Agregar más productos"
-            agregarItemsComanda(cuentaId);
-        }
+        `;
+    }
+
+    Swal.fire({
+        width: 720,
+        showConfirmButton: false,
+        showCancelButton: false,
+        backdrop: 'rgba(0,0,0,.6)',
+        customClass: {
+            popup: 'rounded-[28px] overflow-hidden relative'
+        },
+        html: `
+            <!-- BOTÓN CERRAR FLOTANTE -->
+            <button 
+                onclick="Swal.close()"
+                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 transition flex items-center justify-center text-2xl z-50">
+                &times;
+            </button>
+
+            <!-- HEADER -->
+            <div class="bg-orange-600 text-white px-6 pt-8 pb-6 rounded-t-[28px]">
+                <h3 class="text-2xl font-black">${comanda.folio}</h3>
+                <p class="text-sm opacity-90">
+                    Mesa ${comanda.mesa_numero} · 
+                    ${comanda.num_comensales ?? comanda.comensales ?? 0} personas
+                </p>
+            </div>
+
+            <!-- BODY -->
+            <div class="p-6 bg-gray-50 max-h-[55vh] overflow-y-auto space-y-3">
+                ${itemsHtml}
+            </div>
+
+            <!-- FOOTER -->
+            <div class="p-6 bg-white border-t flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Total</p>
+                    <p class="text-4xl font-black text-green-600">
+                        $${comanda.total.toFixed(2)}
+                    </p>
+                </div>
+
+                <button 
+                    onclick="agregarItemsComanda('${cuentaId}')"
+                    class="px-6 py-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-lg transition flex items-center gap-2">
+                    <i class="bi bi-plus-circle-fill text-xl"></i>
+                    Agregar productos
+                </button>
+            </div>
+        `
     });
 }
+
 
 function verDetalleMesa(numero) {
     fetch(`/api/mesero/mesa/${numero}`)

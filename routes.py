@@ -13,7 +13,9 @@ from controllers.dashboard.dashboardApiController import DashboardAPIController
 from controllers.comanda.comandaController import ComandaController
 from controllers.mesa.mesaController import MesaController
 from flask import jsonify, request
+from controllers.notificaciones.notificacion_controller import NotificacionController
 from controllers.propina.propinasController import PropinasController
+from controllers.cocina.cocinaController import CocinaController
 from models.mesa_model import Mesa
 from models.comanda_model import Comanda
 from models.producto_model import Producto
@@ -317,6 +319,7 @@ def api_comandas_cerradas():
 # ============================================
 # 👨‍🍳 PANEL DE COCINA (Rol 3)
 # ============================================
+
 @routes_bp.route("/dashboard/cocina")
 @login_required
 @rol_required(['3'])
@@ -346,7 +349,7 @@ def cocina_en_proceso():
         return redirect(url_for("routes.login"))
     
     # Placeholder: implementar vista
-    return render_template("cocina/dashboard.html")
+    return render_template("cocina/en_proceso.html")
 
 @routes_bp.route("/cocina/listos")
 @login_required
@@ -357,7 +360,7 @@ def cocina_listos():
         return redirect(url_for("routes.login"))
     
     # Placeholder: implementar vista
-    return render_template("cocina/dashboard.html")
+    return render_template("cocina/listos.html")
 
 @routes_bp.route("/cocina/inventario")
 @login_required
@@ -369,6 +372,63 @@ def cocina_inventario():
     
     # Placeholder: implementar vista de inventario
     return render_template("cocina/dashboard.html")
+
+
+# API: Obtener pedidos pendientes
+@routes_bp.route("/api/cocina/pedidos/pendientes", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])  # Admin y Cocina
+def api_cocina_pedidos_pendientes():
+    """Obtiene todos los pedidos pendientes de preparación"""
+    return CocinaController.obtener_pedidos_pendientes()
+
+# API: Obtener pedidos en proceso
+@routes_bp.route("/api/cocina/pedidos/en-proceso", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_pedidos_en_proceso():
+    """Obtiene pedidos que están siendo preparados"""
+    return CocinaController.obtener_pedidos_en_proceso()
+
+# API: Obtener pedidos listos
+@routes_bp.route("/api/cocina/pedidos/listos", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_pedidos_listos():
+    """Obtiene pedidos listos para servir"""
+    return CocinaController.obtener_pedidos_listos()
+
+# API: Iniciar preparación de pedido
+@routes_bp.route("/api/cocina/pedido/iniciar", methods=["POST"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_iniciar_preparacion():
+    """Marca items como en preparación"""
+    return CocinaController.iniciar_preparacion()
+
+# API: Marcar pedido como listo
+@routes_bp.route("/api/cocina/pedido/listo", methods=["POST"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_marcar_listo():
+    """Marca items como listos para servir"""
+    return CocinaController.marcar_como_listo()
+
+# API: Marcar pedido como entregado (desde mesero)
+@routes_bp.route("/api/cocina/pedido/entregado", methods=["POST"])
+@login_required
+@rol_required(['1', '2', '3'])  # Admin, Mesero y Cocina
+def api_cocina_marcar_entregado():
+    """Marca items como entregados"""
+    return CocinaController.marcar_como_entregado()
+
+# API: Estadísticas de cocina
+@routes_bp.route("/api/cocina/estadisticas", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_estadisticas():
+    """Obtiene estadísticas de rendimiento de cocina"""
+    return CocinaController.obtener_estadisticas_cocina()
 
 # ============================================
 # 📦 PANEL DE INVENTARIO (Rol 4)

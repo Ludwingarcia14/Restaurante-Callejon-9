@@ -7,7 +7,7 @@ from datetime import datetime
 from bson import ObjectId
 from models.notificacion import Notificacion
 from services.notificaciones.notification_service import notificar_usuario
-
+from config.db import db
 
 class NotificacionCommandHandler:
     """
@@ -287,3 +287,100 @@ class NotificacionSistemaHandler:
                 "timestamp": datetime.utcnow().isoformat()
             }
         )
+        
+        @staticmethod
+        def notificar_pedido_listo(mesero_id, comanda_id, mesa_numero):
+            """
+            Notifica al mesero que su pedido está listo para servir
+            
+            Args:
+                mesero_id (str): ID del mesero
+                comanda_id (str): ID de la comanda
+                mesa_numero (int): Número de mesa
+            
+            Returns:
+                dict: Resultado de la operación
+            """
+            try:
+                notificacion = {
+                    "id_usuario": ObjectId(mesero_id),
+                    "tipo": "pedido_listo",
+                    "titulo": f"✅ Pedido Listo - Mesa {mesa_numero}",
+                    "mensaje": f"Tu pedido para la mesa {mesa_numero} está listo para servir",
+                    "leida": False,
+                    "fecha": datetime.utcnow(),
+                    "datos": {
+                        "comanda_id": comanda_id,
+                        "mesa": mesa_numero,
+                        "accion_requerida": True
+                    }
+                }
+                
+                result = db.notificaciones.insert_one(notificacion)
+                
+                return {
+                    "success": True,
+                    "notificacion_id": str(result.inserted_id),
+                    "message": "Notificación enviada al mesero"
+                }
+                
+            except Exception as e:
+                print(f"❌ Error al notificar pedido listo: {e}")
+                return {
+                    "success": False,
+                    "error": str(e)
+                }
+
+    @staticmethod
+    def notificar_nuevo_pedido_cocina(usuarios_cocina_ids, comanda_id, mesa_numero, num_items):
+        """
+        Notifica a cocina sobre un nuevo pedido
+        
+        Args:
+            usuarios_cocina_ids (list): Lista de IDs de usuarios de cocina
+            comanda_id (str): ID de la comanda
+            mesa_numero (int): Número de mesa
+            num_items (int): Número de items en el pedido
+        
+        Returns:
+            dict: Resultado de la operación
+        """
+        try:
+            notificaciones = []
+            
+            for usuario_id in usuarios_cocina_ids:
+                notificacion = {
+                    "id_usuario": ObjectId(usuario_id),
+                    "tipo": "nuevo_pedido",
+                    "titulo": f"🍽️ Nuevo Pedido - Mesa {mesa_numero}",
+                    "mensaje": f"{num_items} platillo(s) para preparar",
+                    "leida": False,
+                    "fecha": datetime.utcnow(),
+                    "datos": {
+                        "comanda_id": comanda_id,
+                        "mesa": mesa_numero,
+                        "num_items": num_items,
+                        "accion_requerida": True
+                    }
+                }
+                notificaciones.append(notificacion)
+            
+            if notificaciones:
+                result = db.notificaciones.insert_many(notificaciones)
+                return {
+                    "success": True,
+                    "notificaciones_enviadas": len(result.inserted_ids),
+                    "message": "Notificaciones enviadas a cocina"
+                }
+            
+            return {
+                "success": False,
+                "error": "No hay usuarios de cocina para notificar"
+            }
+            
+        except Exception as e:
+            print(f"❌ Error al notificar nuevo pedido a cocina: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }

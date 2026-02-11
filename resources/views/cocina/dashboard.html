@@ -111,7 +111,7 @@
         </div>
         <p class="text-sm text-gray-600 font-medium">Completados Hoy</p>
         <p class="text-xs text-purple-600 mt-1">
-            <i class="bi bi-trophy"></i> Tiempo promedio: 15 min
+            <i class="bi bi-trophy"></i> Tiempo promedio: <span id="tiempo-promedio">--</span> min
         </p>
     </div>
     
@@ -239,6 +239,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
 <script>
 // ===================================
 // VARIABLES GLOBALES
@@ -249,43 +252,192 @@ let pedidosData = {
     listos: []
 };
 
+let socket = null;
+let audioNotificacion = null;
+
 // ===================================
 // INICIALIZACIÓN
 // ===================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Dashboard Cocina inicializado');
-    cargarPedidos();
+    console.log('🔥 Dashboard Cocina inicializado');
     
-    // Actualizar cada 15 segundos
+    // Inicializar Socket.IO
+    inicializarSocket();
+    
+    // Cargar pedidos iniciales
+    cargarTodosPedidos();
+    
+    // Cargar estadísticas
+    cargarEstadisticas();
+    
+    // Actualizar cada 30 segundos (respaldo, Socket.IO es la fuente principal)
     setInterval(() => {
-        cargarPedidos();
-    }, 15000);
+        cargarTodosPedidos();
+        cargarEstadisticas();
+    }, 30000);
     
-    // Simular algunos pedidos para demostración
-    setTimeout(() => {
-        agregarPedidoDemo();
-    }, 2000);
+    // Preparar sonido de notificación
+    audioNotificacion = new Audio('/static/sounds/notification.mp3');
 });
+
+// ===================================
+// SOCKET.IO - NOTIFICACIONES EN TIEMPO REAL
+// ===================================
+async function inicializarSocket() {
+    try {
+        // Obtener token de autenticación
+        const response = await fetch('/api/me');
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.error('❌ Error al obtener datos de usuario');
+            return;
+        }
+        
+        console.log('✅ Datos de usuario obtenidos');
+        
+        // Conectar a Socket.IO
+        socket = io({
+            auth: {
+                token: data.socket_token
+            }
+        });
+        
+        // Eventos de conexión
+        socket.on('connect', () => {
+            console.log('✅ Socket.IO conectado');
+            // Unirse a la sala de cocina
+            socket.emit('join_room', 'cocina');
+            console.log('📥 Unido a sala "cocina"');
+        });
+        
+        socket.on('disconnect', () => {
+            console.log('❌ Socket.IO desconectado');
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('❌ Error de conexión Socket.IO:', error);
+        });
+        
+        // Evento: NUEVO PEDIDO
+        socket.on('nuevo_pedido', (data) => {
+            console.log('🔔 NUEVO PEDIDO RECIBIDO:', data);
+            
+            // Reproducir sonido
+            reproducirSonido();
+            
+            // Mostrar notificación
+            mostrarNotificacionNuevoPedido(data);
+            
+            // Recargar pedidos
+            cargarTodosPedidos();
+            cargarEstadisticas();
+        });
+        
+        // Evento: PEDIDO ACTUALIZADO
+        socket.on('preparacion_iniciada', (data) => {
+            console.log('🔄 Pedido actualizado:', data);
+            cargarTodosPedidos();
+        });
+        
+        // Evento: PEDIDO LISTO (respuesta a cocina)
+        socket.on('pedido_listo_confirmado', (data) => {
+            console.log('✅ Pedido listo confirmado:', data);
+            cargarTodosPedidos();
+        });
+        
+    } catch (error) {
+        console.error('❌ Error al inicializar Socket.IO:', error);
+    }
+}
+
+function mostrarNotificacionNuevoPedido(data) {
+    // Notificación visual con SweetAlert2
+    Swal.fire({
+        icon: 'info',
+        title: '🔔 ¡Nuevo Pedido!',
+        html: `
+            <div class="text-left">
+                <p class="font-bold text-lg mb-2">Mesa ${data.mesa}</p>
+                <p class="text-sm text-gray-600 mb-2">Mesero: ${data.mesero || 'N/A'}</p>
+                <div class="bg-gray-100 p-3 rounded">
+                    <p class="font-semibold text-sm mb-2">${data.num_items} platillo(s):</p>
+                    <ul class="text-sm space-y-1">
+                        ${data.items.map(item => `
+                            <li>• <strong>${item.cantidad}x</strong> ${item.nombre}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `,
+        showConfirmButton: true,
+        confirmButtonText: 'Ver Pedidos',
+        timer: 5000,
+        toast: false,
+        position: 'center'
+    });
+}
+
+function reproducirSonido() {
+    try {
+        if (audioNotificacion) {
+            audioNotificacion.play().catch(e => {
+                console.log('No se pudo reproducir sonido:', e);
+            });
+        }
+    } catch (error) {
+        console.log('Error al reproducir sonido:', error);
+    }
+}
 
 // ===================================
 // CARGA Y GESTIÓN DE PEDIDOS
 // ===================================
-async function cargarPedidos() {
-    // Aquí conectarías con tu API
-    console.log('Cargando pedidos...');
-    actualizarContadores();
+async function cargarTodosPedidos() {
+    try {
+        // Cargar pedidos pendientes, en proceso y listos en paralelo
+        const [pendientes, enProceso, listos] = await Promise.all([
+            fetch('/api/cocina/pedidos/pendientes').then(r => r.json()),
+            fetch('/api/cocina/pedidos/en-proceso').then(r => r.json()),
+            fetch('/api/cocina/pedidos/listos').then(r => r.json())
+        ]);
+        
+        if (pendientes.success) {
+            pedidosData.pendientes = pendientes.pedidos || [];
+        }
+        
+        if (enProceso.success) {
+            pedidosData.preparacion = enProceso.pedidos || [];
+        }
+        
+        if (listos.success) {
+            pedidosData.listos = listos.pedidos || [];
+        }
+        
+        renderizarPedidos();
+        
+    } catch (error) {
+        console.error('❌ Error al cargar pedidos:', error);
+    }
 }
 
-function actualizarContadores() {
-    document.getElementById('stat-nuevos').textContent = pedidosData.pendientes.length;
-    document.getElementById('stat-preparacion').textContent = pedidosData.preparacion.length;
-    document.getElementById('stat-listos').textContent = pedidosData.listos.length;
-    
-    document.getElementById('count-pendientes').textContent = pedidosData.pendientes.length;
-    document.getElementById('count-preparacion').textContent = pedidosData.preparacion.length;
-    document.getElementById('count-listos').textContent = pedidosData.listos.length;
-    
-    document.getElementById('pedidos-pendientes-count').textContent = pedidosData.pendientes.length;
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch('/api/cocina/estadisticas');
+        const data = await response.json();
+        
+        if (data.success) {
+            const stats = data.estadisticas;
+            
+            // Actualizar estadísticas
+            document.getElementById('stat-completados').textContent = stats.entregados || 0;
+            
+            // Si tienes tiempo promedio en las stats, actualízalo
+            // document.getElementById('tiempo-promedio').textContent = stats.tiempo_promedio || '--';
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas:', error);
+    }
 }
 
 function renderizarPedidos() {
@@ -331,6 +483,22 @@ function renderizarPedidos() {
     actualizarContadores();
 }
 
+function actualizarContadores() {
+    const totalPendientes = pedidosData.pendientes.length;
+    const totalPreparacion = pedidosData.preparacion.length;
+    const totalListos = pedidosData.listos.length;
+    
+    document.getElementById('stat-nuevos').textContent = totalPendientes;
+    document.getElementById('stat-preparacion').textContent = totalPreparacion;
+    document.getElementById('stat-listos').textContent = totalListos;
+    
+    document.getElementById('count-pendientes').textContent = totalPendientes;
+    document.getElementById('count-preparacion').textContent = totalPreparacion;
+    document.getElementById('count-listos').textContent = totalListos;
+    
+    document.getElementById('pedidos-pendientes-count').textContent = totalPendientes;
+}
+
 function crearTarjetaPedido(pedido, estado) {
     const colorClass = estado === 'pendiente' ? 'border-red-500' : 
                       estado === 'preparacion' ? 'border-orange-500' : 'border-green-500';
@@ -338,7 +506,13 @@ function crearTarjetaPedido(pedido, estado) {
     const iconoEstado = estado === 'pendiente' ? 'bi-bell-fill' : 
                        estado === 'preparacion' ? 'bi-fire' : 'bi-check-circle-fill';
     
-    const tiempoTranscurrido = calcularTiempoTranscurrido(pedido.hora);
+    const tiempoTranscurrido = pedido.tiempo_espera || 0;
+    const tiempoColor = tiempoTranscurrido > 15 ? 'text-red-600 font-bold' : 
+                       tiempoTranscurrido > 10 ? 'text-orange-600' : 'text-gray-600';
+    
+    // Obtener IDs de items para el botón de acción
+    const itemIds = pedido.items.map(item => item.producto_id || item.id);
+    const itemIdsJson = JSON.stringify(itemIds);
     
     return `
         <div class="border-l-4 ${colorClass} bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition">
@@ -349,42 +523,48 @@ function crearTarjetaPedido(pedido, estado) {
                     </div>
                     <div>
                         <p class="font-bold text-gray-800">Mesa ${pedido.mesa}</p>
-                        <p class="text-xs text-gray-500">${pedido.hora}</p>
+                        <p class="text-xs text-gray-500">${pedido.folio || ''}</p>
+                        ${pedido.mesero ? `<p class="text-xs text-gray-500">Mesero: ${pedido.mesero}</p>` : ''}
                     </div>
                 </div>
-                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">
-                    ${tiempoTranscurrido}
+                <span class="px-2 py-1 bg-gray-100 ${tiempoColor} rounded text-xs font-semibold">
+                    ${tiempoTranscurrido} min
                 </span>
             </div>
             
             <div class="space-y-2 mb-3">
-                ${pedido.platillos.map(p => `
+                ${pedido.items.map(item => `
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-gray-700">
-                            <span class="font-bold text-orange-600">${p.cantidad}x</span>
-                            ${p.nombre}
+                            <span class="font-bold text-orange-600">${item.cantidad}x</span>
+                            ${item.nombre}
                         </span>
                     </div>
-                    ${p.notas ? `<p class="text-xs text-gray-500 italic ml-4">📝 ${p.notas}</p>` : ''}
+                    ${item.notas ? `<p class="text-xs text-gray-500 italic ml-4">📝 ${item.notas}</p>` : ''}
                 `).join('')}
             </div>
             
             ${estado === 'pendiente' ? `
-                <button onclick="iniciarPreparacion(${pedido.id})" class="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-sm">
+                <button onclick='iniciarPreparacion("${pedido.id}", ${itemIdsJson})' class="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-sm">
                     <i class="bi bi-play-fill"></i> Iniciar Preparación
                 </button>
             ` : ''}
             
             ${estado === 'preparacion' ? `
-                <button onclick="marcarListo(${pedido.id})" class="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold text-sm">
+                <button onclick='marcarListo("${pedido.id}", ${itemIdsJson})' class="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold text-sm">
                     <i class="bi bi-check-circle"></i> Marcar Listo
                 </button>
             ` : ''}
             
             ${estado === 'listo' ? `
-                <button onclick="entregarPedido(${pedido.id})" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold text-sm">
-                    <i class="bi bi-send"></i> Entregado
-                </button>
+                <div class="space-y-2">
+                    <div class="w-full py-2 bg-green-100 text-green-700 rounded-lg text-center font-semibold text-sm">
+                        <i class="bi bi-check-circle-fill"></i> Listo para servir
+                    </div>
+                    <button onclick='entregarPedido("${pedido.id}", ${itemIdsJson})' class="w-full py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold text-xs">
+                        <i class="bi bi-send"></i> Marcar Entregado
+                    </button>
+                </div>
             ` : ''}
         </div>
     `;
@@ -393,39 +573,98 @@ function crearTarjetaPedido(pedido, estado) {
 // ===================================
 // CAMBIO DE ESTADO DE PEDIDOS
 // ===================================
-function iniciarPreparacion(pedidoId) {
-    const pedido = pedidosData.pendientes.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedidosData.pendientes = pedidosData.pendientes.filter(p => p.id !== pedidoId);
-        pedidosData.preparacion.push(pedido);
-        renderizarPedidos();
-        showToast('Pedido en preparación', 'success');
+async function iniciarPreparacion(comandaId, itemIds) {
+    try {
+        const response = await fetch('/api/cocina/pedido/iniciar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                comanda_id: comandaId,
+                item_ids: itemIds
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('✅ Pedido en preparación', 'success');
+            
+            // Recargar pedidos
+            setTimeout(() => {
+                cargarTodosPedidos();
+            }, 500);
+        } else {
+            showToast('❌ Error al iniciar preparación', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showToast('❌ Error al iniciar preparación', 'error');
     }
 }
 
-function marcarListo(pedidoId) {
-    const pedido = pedidosData.preparacion.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedidosData.preparacion = pedidosData.preparacion.filter(p => p.id !== pedidoId);
-        pedidosData.listos.push(pedido);
-        renderizarPedidos();
-        showToast('¡Pedido listo!', 'success');
+async function marcarListo(comandaId, itemIds) {
+    try {
+        const response = await fetch('/api/cocina/pedido/listo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                comanda_id: comandaId,
+                item_ids: itemIds
+            })
+        });
         
-        // Notificar al mesero (aquí conectarías con tu sistema de notificaciones)
-        console.log(`Notificar mesero: Pedido ${pedidoId} listo - Mesa ${pedido.mesa}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('✅ ¡Pedido listo!', 'success');
+            
+            // Recargar pedidos
+            setTimeout(() => {
+                cargarTodosPedidos();
+                cargarEstadisticas();
+            }, 500);
+        } else {
+            showToast('❌ Error al marcar como listo', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showToast('❌ Error al marcar como listo', 'error');
     }
 }
 
-function entregarPedido(pedidoId) {
-    const pedido = pedidosData.listos.find(p => p.id === pedidoId);
-    if (pedido) {
-        pedidosData.listos = pedidosData.listos.filter(p => p.id !== pedidoId);
-        renderizarPedidos();
-        showToast('Pedido entregado', 'success');
+async function entregarPedido(comandaId, itemIds) {
+    try {
+        const response = await fetch('/api/cocina/pedido/entregado', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                comanda_id: comandaId,
+                item_ids: itemIds
+            })
+        });
         
-        // Incrementar contador de completados
-        const completados = parseInt(document.getElementById('stat-completados').textContent);
-        document.getElementById('stat-completados').textContent = completados + 1;
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('✅ Pedido entregado', 'success');
+            
+            // Recargar pedidos y estadísticas
+            setTimeout(() => {
+                cargarTodosPedidos();
+                cargarEstadisticas();
+            }, 500);
+        } else {
+            showToast('❌ Error al marcar como entregado', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showToast('❌ Error al marcar como entregado', 'error');
     }
 }
 
@@ -444,6 +683,7 @@ async function marcarNoDisponible() {
     });
     
     if (platillo) {
+        // Aquí conectarías con tu API de inventario
         showSuccess(`"${platillo}" marcado como no disponible`);
     }
 }
@@ -454,47 +694,55 @@ function verInventario() {
 
 function actualizarPedidos() {
     showLoading('Actualizando pedidos...');
+    cargarTodosPedidos();
+    cargarEstadisticas();
+    
     setTimeout(() => {
         hideLoading();
-        cargarPedidos();
-        showToast('Pedidos actualizados', 'success');
+        showToast('✅ Pedidos actualizados', 'success');
     }, 1000);
 }
 
 // ===================================
-// UTILIDADES
+// FUNCIONES DE NOTIFICACIÓN
 // ===================================
-function calcularTiempoTranscurrido(hora) {
-    // Simulación simple
-    const ahora = new Date();
-    const horaFormato = new Date(`2026-01-29 ${hora}`);
-    const diff = Math.floor((ahora - horaFormato) / 60000); // minutos
+function showToast(message, type = 'info') {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
     
-    if (diff < 0) return 'Ahora';
-    if (diff < 5) return `${diff} min`;
-    if (diff < 15) return `${diff} min ⚠️`;
-    return `${diff} min 🔴`;
+    Toast.fire({
+        icon: type,
+        title: message
+    });
 }
 
-// ===================================
-// DEMO: AGREGAR PEDIDO
-// ===================================
-function agregarPedidoDemo() {
-    const pedidoDemo = {
-        id: Date.now(),
-        mesa: Math.floor(Math.random() * 10) + 1,
-        hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-        platillos: [
-            { cantidad: 2, nombre: 'Tacos al Pastor', notas: 'Sin cilantro' },
-            { cantidad: 1, nombre: 'Quesadilla de Champiñones', notas: '' }
-        ]
-    };
-    
-    pedidosData.pendientes.push(pedidoDemo);
-    renderizarPedidos();
-    
-    // Reproducir sonido de notificación (opcional)
-    showToast('¡Nuevo pedido recibido!', 'info');
+function showSuccess(message) {
+    Swal.fire({
+        icon: 'success',
+        title: '¡Éxito!',
+        text: message,
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+
+function showLoading(message = 'Cargando...') {
+    Swal.fire({
+        title: message,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
+function hideLoading() {
+    Swal.close();
 }
 </script>
 {% endblock %}
