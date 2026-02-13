@@ -1,0 +1,156 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Mi Historial{% endblock %}
+{% block page_title %}Historial de Cuentas{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.mesero_mesas') }}" class="nav-link">
+    <i class="bi bi-grid-3x3"></i>
+    <span>Mis Mesas</span>
+</a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt"></i>
+    <span>Comandas Activas</span>
+</a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
+    <i class="bi bi-journal-text"></i>
+    <span>Menú</span>
+</a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin"></i>
+    <span>Propinas del Día</span>
+</a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link active">
+    <i class="bi bi-clock-history"></i>
+    <span>Historial</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap items-center gap-4">
+    <div class="flex-1 min-w-[200px]">
+        <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Rango de Fecha</label>
+        <div class="flex items-center gap-2">
+            <input type="date" id="filtro-fecha" class="w-full border-gray-200 rounded-lg text-sm">
+            <button onclick="cargarHistorial()" class="bg-[#F2913D] text-white p-2 rounded-lg">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
+        <span class="text-[10px] font-bold text-gray-400 uppercase block">Total Turno</span>
+        <span id="total-ventas-historial" class="text-xl font-black text-[#0D0D0D]">$0.00</span>
+    </div>
+</div>
+
+<div id="contenedor-historial" class="space-y-4">
+    <div class="text-center py-10 text-gray-400">
+        <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
+        <p class="mt-2 font-medium text-sm">Cargando registros...</p>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const inputFecha = document.getElementById('filtro-fecha');
+    inputFecha.valueAsDate = new Date();
+    cargarHistorial();
+});
+
+async function cargarHistorial() {
+    const fecha = document.getElementById('filtro-fecha').value;
+    const contenedor = document.getElementById('contenedor-historial');
+
+    contenedor.innerHTML = `
+        <div class="text-center py-10 text-gray-400">
+            <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
+            <p class="mt-2 font-medium text-sm">Cargando registros...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/mesero/historial?fecha=${fecha}`);
+
+        if (!response.ok) throw new Error("Error servidor");
+
+        const data = await response.json();
+
+        if (!data.success) throw new Error("Respuesta inválida");
+
+        renderizarHistorial(data);
+
+    } catch (error) {
+        console.error("❌ Error historial:", error);
+        contenedor.innerHTML = `
+            <div class="text-center py-10 text-red-500">
+                <i class="bi bi-exclamation-triangle text-3xl"></i>
+                <p class="mt-2 font-medium text-sm">No se pudo cargar el historial</p>
+            </div>
+        `;
+        document.getElementById('total-ventas-historial').textContent = '$0.00';
+    }
+}
+
+function renderizarHistorial(data) {
+    document.getElementById('total-ventas-historial').textContent =
+        `$${data.total_dia.toFixed(2)}`;
+
+    const contenedor = document.getElementById('contenedor-historial');
+
+    if (!data.registros.length) {
+        contenedor.innerHTML = `
+            <div class="text-center py-10 text-gray-400">
+                <i class="bi bi-inbox text-3xl"></i>
+                <p class="mt-2 font-medium text-sm">Sin registros para esta fecha</p>
+            </div>
+        `;
+        return;
+    }
+
+    contenedor.innerHTML = data.registros.map(reg => {
+        const esCancelado = reg.estado === 'CANCELADO';
+
+        return `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition ${esCancelado ? 'opacity-60 bg-gray-50' : ''}">
+            <div class="flex justify-between items-start">
+                <div class="flex gap-3">
+                    <div class="w-10 h-10 ${esCancelado ? 'bg-red-50' : 'bg-gray-50'} rounded-lg flex items-center justify-center border border-gray-200">
+                        <i class="bi ${esCancelado ? 'bi-x-circle text-red-500' : 'bi-receipt text-gray-400'}"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm">Mesa ${reg.mesa_numero}</h4>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">
+                            ${reg.hora_cierre} • ${reg.estado}
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="font-black ${esCancelado ? 'text-gray-400 line-through' : 'text-gray-800'}">
+                        $${reg.total.toFixed(2)}
+                    </p>
+                    ${!esCancelado ? `
+                        <span class="text-[9px] font-bold ${
+                            reg.metodo_pago === 'TARJETA'
+                                ? 'text-blue-600 bg-blue-50'
+                                : 'text-orange-600 bg-orange-50'
+                        } px-2 py-0.5 rounded uppercase">
+                            ${reg.metodo_pago}
+                        </span>
+                    ` : `
+                        <span class="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded uppercase">
+                            CANCELADO
+                        </span>
+                    `}
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+</script>
+{% endblock %}

@@ -3,21 +3,38 @@ Módulo Principal de la Aplicación Flask - Restaurante Callejón 9
 """
 from dotenv import load_dotenv
 load_dotenv()
+
 from flask import Flask, request, session, redirect, url_for
 from flask_cors import CORS
-from routes import routes_bp
+from flask_session import Session
+from flask_socketio import SocketIO, emit, join_room
+from datetime import datetime
 import os
 import sys
-from flask_session import Session
-from datetime import datetime
-# Configuración de entorno para PySpark
+
+from routes import routes_bp
+
+# ================================
+# CONFIG PYSPARK (si lo usas)
+# ================================
 os.environ["PYSPARK_PYTHON"] = sys.executable
 os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
-
 # Inicialización de Flask
 # En app.py
 app = Flask(__name__,template_folder="resources/views",static_folder="static")
 # Configuración de CORS
+# ================================
+# FLASK
+# ================================
+app = Flask(
+    __name__,
+    template_folder="resources/views",
+    static_folder="static"
+)
+
+# ================================
+# CORS
+# ================================
 lista_origenes = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
@@ -25,74 +42,105 @@ lista_origenes = [
     "http://localhost:5000",
 ]
 
-CORS(app, resources={r"/*": {"origins": lista_origenes}}, supports_credentials=True)
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": lista_origenes}})
 
-# Logging de peticiones
-@app.before_request
-def log_request_info():
-    """Log de información de cada petición"""
-    if request.path.startswith("/static"):
-        return
-    
-    print(f"\n📡 Petición: {request.method} {request.path}")
-    print(f"   🍪 Cookies: {list(request.cookies.keys())}")
-    
-    if 'usuario_id' in session:
-        print(f"   ✅ Usuario: {session.get('usuario_nombre')} (Rol: {session.get('usuario_rol')})")
-    else:
-        print(f"   ❌ Sin sesión activa")
+# ================================
+# SOCKET.IO
+# ================================
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=lista_origenes,
+        async_mode="threading",
+    manage_session=False
+)
 
-# Registrar Blueprint de rutas
-app.register_blueprint(routes_bp)
+# ================================
+# CONFIG SESIÓN
+# ================================
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
 
-# 🔑 CLAVE SECRETA (Usa una variable de entorno en producción)
-app.secret_key = os.getenv("SECRET_KEY", "22d6225b061b6b75979d7b4fd5bfb6993b32a66346c0d188fd6f3a37ac36698e")
-
-# Configuración de Sesiones
 session_dir = os.path.join(os.getcwd(), "flask_session")
-if not os.path.exists(session_dir):
-    os.makedirs(session_dir)
+os.makedirs(session_dir, exist_ok=True)
 
-app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = session_dir
-app.config["SESSION_PERMANENT"] = True
-app.config["SESSION_USE_SIGNER"] = True
-app.config["SESSION_COOKIE_SECURE"] = False  # True en producción con HTTPS
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_NAME"] = "callejon9_session"
+app.config.update(
+    SESSION_TYPE="filesystem",
+    SESSION_FILE_DIR=session_dir,
+    SESSION_PERMANENT=True,
+    SESSION_USE_SIGNER=True,
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_NAME="callejon9_session"
+)
 
-# Inicializar extensión de sesiones
 Session(app)
+
+# ================================
+# CONTEXT
+# ================================
 @app.context_processor
 def inject_now():
     return {"now": datetime.now}
-# Manejador de errores 404
-@app.errorhandler(404)
-def page_not_found(e):
-    return redirect(url_for('routes.login'))
 
-# Manejador de errores 403
+# ================================
+# LOG REQUEST
+# ================================
+@app.before_request
+def log_request():
+    if request.path.startswith("/static"):
+        return
+    print(f"\n📡 {request.method} {request.path}")
+    print("🍪 Cookies:", request.cookies.keys())
+
+# ================================
+# SOCKET EVENTS
+# ================================
+@socketio.on("connect")
+def socket_connect(auth):
+    print("🔌 Socket conectado")
+    print("Auth:", auth)
+
+@socketio.on("disconnect")
+def socket_disconnect():
+    print("❌ Socket desconectado")
+
+@socketio.on("join_room")
+def on_join_room(room):
+    join_room(room)
+    print(f"📥 Cliente unido a sala: {room}")
+
+# ================================
+# ERRORES
+# ================================
+@app.errorhandler(404)
+def not_found(e):
+    return redirect(url_for("routes.login"))
+
 @app.errorhandler(403)
 def forbidden(e):
-    return redirect(url_for('routes.login'))
+    return redirect(url_for("routes.login"))
 
+# ================================
+# BLUEPRINT
+# ================================
+app.register_blueprint(routes_bp)
+
+# ================================
+# RUN
+# ================================
 if __name__ == "__main__":
     import socket
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
-    
+
     print("=" * 60)
-    print("🍽️  CALLEJÓN 9 - SISTEMA DE RESTAURANTE")
+    print("🍽️ CALLEJÓN 9 - SOCKET.IO ACTIVO")
+    print(f"📍 http://127.0.0.1:5000")
+    print(f"📍 http://{local_ip}:5000")
     print("=" * 60)
-    print(f"🚀 Servidor iniciado en modo HTTP")
-    print(f"   📍 Local:  http://127.0.0.1:5000")
-    print(f"   📍 Red:    http://{local_ip}:5000")
-    print("=" * 60)
-    print("=" * 60 + "\n")
-    
-    app.run(
-        debug=True,
-        use_reloader=True,
-        host='0.0.0.0',
-        port=5000
+
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=5000,
+        debug=True
     )

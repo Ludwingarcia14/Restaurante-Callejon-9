@@ -38,10 +38,7 @@
 
 {% block content %}
 
-<!-- ===================================
-     INFO DEL MESERO Y TURNO
-     =================================== -->
-<div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-xl shadow-lg text-white mb-6">
+<div class="p-6 rounded-xl shadow-lg text-white mb-6" style="background: linear-gradient(135deg, #F2913D 0%, #F2A339 100%);">
     <div class="flex items-center justify-between">
         <div>
             <h2 class="text-2xl font-bold mb-2">¡Hola, {{ session.usuario_nombre }}! 👋</h2>
@@ -56,47 +53,41 @@
                 </div>
             </div>
         </div>
-        <div class="text-right">
+        <div class="text-right bg-white bg-opacity-20 p-3 rounded-lg backdrop-blur-sm">
             <div class="text-3xl font-bold">{{ stats.mesas_asignadas|length }}</div>
-            <div class="text-sm opacity-90">Mesas Asignadas</div>
+            <div class="text-xs uppercase tracking-wider opacity-90">Mesas Asignadas</div>
         </div>
     </div>
 </div>
 
-<!-- ===================================
-     ESTADÍSTICAS RÁPIDAS
-     =================================== -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     
-    <!-- Comandas Activas -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500 hover:shadow-lg transition">
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#F2913D] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
-            <i class="bi bi-receipt text-4xl text-orange-500"></i>
-            <span class="text-3xl font-bold text-gray-800">{{ stats.comandas_activas }}</span>
+            <i class="bi bi-receipt text-4xl text-[#F2913D]"></i>
+            <span class="text-3xl font-bold text-[#0D0D0D]" id="stat-comandas">{{ stats.comandas_activas }}</span>
         </div>
         <p class="text-sm text-gray-600 font-medium">Comandas Activas</p>
-        <p class="text-xs text-orange-600 mt-1">
+        <p class="text-xs text-[#F2913D] mt-1 font-semibold">
             <i class="bi bi-clock"></i> En proceso
         </p>
     </div>
 
-    <!-- Mesas Ocupadas -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500 hover:shadow-lg transition">
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#F2A339] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
-            <i class="bi bi-grid-3x3 text-4xl text-blue-500"></i>
-            <span class="text-3xl font-bold text-gray-800" id="mesas-ocupadas">0</span>
+            <i class="bi bi-grid-3x3 text-4xl text-[#F2A339]"></i>
+            <span class="text-3xl font-bold text-[#0D0D0D]" id="mesas-ocupadas">0</span>
         </div>
         <p class="text-sm text-gray-600 font-medium">Mesas Ocupadas</p>
-        <p class="text-xs text-blue-600 mt-1">
+        <p class="text-xs text-amber-600 mt-1">
             <i class="bi bi-check-circle"></i> <span id="mesas-libres">{{ stats.mesas_asignadas|length }}</span> disponibles
         </p>
     </div>
 
-    <!-- Propinas del Día -->
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-cash-coin text-4xl text-green-500"></i>
-            <span class="text-3xl font-bold text-gray-800">${{ stats.propinas_dia }}</span>
+            <span class="text-3xl font-bold text-[#0D0D0D]" id="stat-propinas">${{ "%.2f"|format(stats.propinas_dia) }}</span>
         </div>
         <p class="text-sm text-gray-600 font-medium">Propinas Hoy</p>
         <p class="text-xs text-green-600 mt-1">
@@ -104,218 +95,204 @@
         </p>
     </div>
 
-    <!-- Venta del Día -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-lg transition">
+    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#0D0D0D] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
-            <i class="bi bi-graph-up text-4xl text-purple-500"></i>
-            <span class="text-3xl font-bold text-gray-800" id="venta-dia">$0.00</span>
+            <i class="bi bi-graph-up text-4xl text-[#0D0D0D]"></i>
+            <span class="text-3xl font-bold text-[#0D0D0D]" id="venta-dia">$0.00</span>
         </div>
         <p class="text-sm text-gray-600 font-medium">Venta del Día</p>
-        <p class="text-xs text-purple-600 mt-1">
+        <p class="text-xs text-gray-500 mt-1">
             <i class="bi bi-star"></i> <span id="num-ordenes">0</span> órdenes
         </p>
     </div>
     
 </div>
 
-<!-- ===================================
-     GRID PRINCIPAL: MESAS Y COMANDAS
-     =================================== -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     
-    <!-- MESAS ASIGNADAS (2 columnas) -->
     <div class="lg:col-span-2">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-grid-3x3 text-green-600"></i>
+        <div class="card bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#F2913D]">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                <h2 class="text-lg font-bold text-[#0D0D0D] flex items-center gap-2">
+                    <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
                     Mis Mesas
                 </h2>
                 <div class="flex items-center gap-2">
-                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                        {{ stats.mesas_asignadas|length }} asignadas
+                    <span class="px-3 py-1 bg-[#F2CA99] bg-opacity-30 text-[#F2913D] rounded-full text-xs font-bold">
+                        {{ stats.mesas_asignadas|length }} ASIGNADAS
                     </span>
+                    <button onclick="cargarEstadoMesas()" class="p-2 hover:bg-gray-200 rounded-full transition text-gray-600">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-6">
                 {% if stats.mesas_asignadas %}
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {% for mesa in stats.mesas_asignadas %}
-                    <div class="mesa-card border-2 border-gray-200 rounded-xl p-6 hover:border-green-500 hover:shadow-md transition cursor-pointer text-center"
-                         data-mesa="{{ mesa }}"
-                         onclick="verMesa('{{ mesa }}')">
-                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="bi bi-table text-3xl text-green-600"></i>
-                        </div>
-                        <p class="font-bold text-gray-800 text-lg">Mesa {{ mesa }}</p>
-                        <div class="mt-2">
-                            <span class="mesa-status px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                                Disponible
-                            </span>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">0 comensales</p>
-                    </div>
-                    {% endfor %}
-                </div>
+                <div id="mesas-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    {% for mesa_num in stats.mesas_asignadas %}
+    <div class="mesa-card border-2 border-gray-200 rounded-xl p-4 transition cursor-pointer text-center group"
+         data-mesa="{{ mesa_num }}" 
+         onclick="verMesa('{{ mesa_num }}')">
+        
+        <div class="icon-container w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 transition">
+            <i class="bi bi-table text-xl"></i>
+        </div>
+        
+        <p class="font-bold text-[#0D0D0D]">Mesa {{ mesa_num }}</p>
+        
+        <span class="mesa-status px-2 py-1 text-[10px] rounded-full"></span>
+        
+        <p class="mesa-comensales text-[10px] uppercase tracking-tighter text-gray-400 mt-1 font-bold">
+            Cargando...
+        </p>
+    </div>
+    {% endfor %}
+</div>
                 {% else %}
-                <div class="text-center py-12 text-gray-500">
-                    <i class="bi bi-inbox text-6xl mb-4 block opacity-30"></i>
-                    <p class="text-lg">No tienes mesas asignadas</p>
-                    <p class="text-sm mt-2">Contacta al administrador para asignarte mesas</p>
+                <div class="text-center py-12 text-gray-400">
+                    <i class="bi bi-inbox text-5xl mb-3 opacity-20"></i>
+                    <p>No tienes mesas asignadas</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- ACCIONES RÁPIDAS (1 columna) -->
     <div class="lg:col-span-1">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="bi bi-lightning-charge text-orange-600"></i>
+        <div class="card bg-white rounded-xl shadow-md border-t-4 border-[#0D0D0D]">
+            <div class="p-4 border-b bg-gray-50">
+                <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+                    <i class="bi bi-lightning-charge-fill text-[#F2A339]"></i>
                     Acciones Rápidas
                 </h2>
             </div>
-            <div class="card-body">
-                <div class="space-y-3">
-                    
-                    <!-- Nueva Cuenta -->
-                    <button onclick="nuevaCuenta()" 
-                            class="w-full p-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                                <i class="bi bi-plus-circle text-xl"></i>
-                            </div>
-                            <span class="font-semibold">Nueva Cuenta</span>
-                        </div>
-                        <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
-                    </button>
+            <div class="card-body p-4 space-y-3">
+                
+                <button onclick="mostrarSeleccionMesa()" 
+                        class="w-full p-4 bg-[#F2913D] text-white rounded-lg hover:bg-[#F2A339] shadow-md transition flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <i class="bi bi-plus-circle-fill text-xl"></i>
+                        <span class="font-bold">NUEVA CUENTA</span>
+                    </div>
+                    <i class="bi bi-chevron-right group-hover:translate-x-1 transition"></i>
+                </button>
 
-                    <!-- Ver Menú -->
-                    <button onclick="verMenu()" 
-                            class="w-full p-4 bg-white border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="bi bi-journal-text text-xl"></i>
-                            </div>
-                            <span class="font-semibold">Ver Menú</span>
-                        </div>
-                        <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
-                    </button>
+                <button onclick="verMenu()" 
+                        class="w-full p-4 bg-white border-2 border-[#F2CA99] text-[#F2913D] rounded-lg hover:bg-[#F2CA99] hover:bg-opacity-20 transition flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <i class="bi bi-journal-text text-xl"></i>
+                        <span class="font-bold">VER MENÚ</span>
+                    </div>
+                    <i class="bi bi-chevron-right group-hover:translate-x-1 transition"></i>
+                </button>
 
-                    <!-- Comandas Activas -->
-                    <button onclick="verComandas()" 
-                            class="w-full p-4 bg-white border-2 border-orange-200 text-orange-700 rounded-lg hover:bg-orange-50 hover:border-orange-400 transition flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <i class="bi bi-receipt text-xl"></i>
-                            </div>
-                            <span class="font-semibold">Mis Comandas</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">
-                                {{ stats.comandas_activas }}
-                            </span>
-                            <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
-                        </div>
-                    </button>
-
-                    <!-- Solicitar Ayuda -->
-                    <button onclick="solicitarAyuda()" 
-                            class="w-full p-4 bg-white border-2 border-red-200 text-red-700 rounded-lg hover:bg-red-50 hover:border-red-400 transition flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                <i class="bi bi-exclamation-triangle text-xl"></i>
-                            </div>
-                            <span class="font-semibold">Solicitar Ayuda</span>
-                        </div>
-                        <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
-                    </button>
-
+                <button onclick="verComandas()" 
+                    class="w-full p-4 bg-white border-2 border-gray-800 text-gray-800 rounded-lg hover:bg-gray-800 hover:text-white transition flex items-center justify-between group">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-receipt text-xl"></i>
+                    <span class="font-bold">MIS COMANDAS</span>
                 </div>
+                <span id="badge-comandas" class="bg-[#F2913D] text-white px-2 py-0.5 rounded text-xs font-bold">
+                    {{ stats.comandas_activas }}
+                </span>
+            </button>
 
-                <!-- Permisos del Mesero -->
-                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <p class="text-xs font-semibold text-gray-600 mb-2">Mis Permisos:</p>
-                    <div class="space-y-1 text-xs text-gray-600">
-                        {% if perfil.puede_cerrar_cuenta %}
-                        <div class="flex items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-green-600"></i>
-                            <span>Cerrar cuentas</span>
-                        </div>
-                        {% endif %}
-                        {% if perfil.puede_aplicar_descuento %}
-                        <div class="flex items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-green-600"></i>
-                            <span>Aplicar descuentos</span>
-                        </div>
-                        {% endif %}
-                        {% if not perfil.puede_cerrar_cuenta and not perfil.puede_aplicar_descuento %}
-                        <div class="text-center py-2 text-gray-400">
-                            <i class="bi bi-info-circle"></i>
-                            <p class="mt-1">Permisos estándar</p>
-                        </div>
-                        {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#F2A339]">
+    <div class="card-header p-4 bg-gray-50 flex justify-between items-center border-b">
+        <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+            <i class="bi bi-list-stars text-[#F2913D]"></i>
+            Detalle de Comandas Activas
+        </h2>
+        <button onclick="actualizarComandas()" class="text-sm font-bold text-[#F2913D] hover:underline">
+            Refrescar lista
+        </button>
+    </div>
+    <div class="card-body p-6">
+        <div id="comandas-container">
+            <div class="text-center py-10">
+                <div class="animate-spin inline-block w-8 h-8 border-4 border-[#F2CA99] border-t-[#F2913D] rounded-full mb-4"></div>
+                <p class="text-gray-500 font-medium">Sincronizando cocina...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalMesa" class="hidden fixed inset-0 bg-[#0D0D0D] bg-opacity-80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div class="bg-[#F2913D] text-white p-5 flex items-center justify-between">
+            <h3 class="text-xl font-bold flex items-center gap-2 uppercase">
+                <i class="bi bi-house-door-fill"></i>
+                Detalle Mesa <span id="modal-mesa-numero"></span>
+            </h3>
+            <button onclick="cerrarModalMesa()" class="hover:bg-black hover:bg-opacity-10 p-1 rounded transition">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto" id="modal-mesa-content" style="max-height: calc(90vh - 70px);">
+            </div>
+    </div>
+</div>
+<div id="modalMenu" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[95vh] md:h-[85vh] flex flex-col overflow-hidden">
+        
+        <div class="p-5 border-b flex justify-between items-center bg-orange-50">
+            <div>
+                <h3 class="text-2xl font-black text-orange-800">Mesa #<span id="menu-mesa-num">--</span></h3>
+                <p class="text-sm text-orange-600/70 font-medium">Selecciona los productos para la comanda</p>
+            </div>
+            <button onclick="cerrarModalMenu()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-400 hover:text-red-500 shadow-sm transition-all text-2xl">&times;</button>
+        </div>
+        
+        <div class="flex flex-1 overflow-hidden flex-col md:flex-row">
+            
+            <div class="flex-1 p-4 overflow-y-auto bg-gray-50/50">
+                <div class="mb-4 flex gap-2 overflow-x-auto pb-2">
+                    <button class="px-4 py-2 bg-orange-500 text-white rounded-full text-xs font-bold whitespace-nowrap">Todos</button>
+                    <button class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">Platillos</button>
+                    <button class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">Bebidas</button>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="lista-productos-grid">
+                    <div class="animate-pulse flex flex-col items-center p-4 bg-white rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full mb-2"></div>
+                        <div class="h-4 bg-gray-200 w-full rounded"></div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-</div>
-
-<!-- ===================================
-     COMANDAS ACTIVAS
-     =================================== -->
-<div class="card">
-    <div class="card-header">
-        <h2 class="card-title">
-            <i class="bi bi-receipt text-orange-600"></i>
-            Comandas Activas
-        </h2>
-        <button onclick="actualizarComandas()" class="btn btn-secondary btn-sm">
-            <i class="bi bi-arrow-clockwise"></i>
-            Actualizar
-        </button>
-    </div>
-    <div class="card-body">
-        <div id="comandas-container">
-            <!-- Estado inicial -->
-            <div class="text-center py-12 text-gray-500">
-                <i class="bi bi-cart-check text-6xl mb-4 block opacity-30"></i>
-                <p class="text-lg">No hay comandas activas</p>
-                <p class="text-sm mt-2">Las comandas aparecerán aquí cuando tomes pedidos</p>
-                <button onclick="nuevaCuenta()" class="btn btn-primary mt-4">
-                    <i class="bi bi-plus-circle"></i>
-                    Crear Nueva Cuenta
-                </button>
+            
+            <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner">
+                <div class="p-4 border-b bg-gray-50/50 flex items-center gap-2">
+                    <i class="bi bi-cart3 text-orange-600"></i>
+                    <h4 class="font-bold text-gray-700 uppercase tracking-wider text-sm">Resumen de Pedido</h4>
+                </div>
+                
+                <div id="carrito-items" class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div class="text-center text-gray-400 py-10">
+                        <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
+                        <p class="text-xs">Selecciona un producto <br> de la izquierda</p>
+                    </div>
+                </div>
+                
+                <div class="p-5 border-t bg-gray-50">
+                    <div class="flex justify-between items-end mb-4">
+                        <span class="text-gray-500 text-sm font-medium">TOTAL A PAGAR</span>
+                        <span id="carrito-total" class="text-3xl font-black text-green-600">$0.00</span>
+                    </div>
+                    
+                    <button onclick="confirmarPedidoCocina()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i class="bi bi-send-check-fill"></i>
+                        ENVIAR A COCINA
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- ===================================
-     MODAL: VER MESA
-     =================================== -->
-<div id="modalMesa" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 flex items-center justify-between">
-            <h3 class="text-2xl font-bold flex items-center gap-2">
-                <i class="bi bi-table"></i>
-                Mesa <span id="modal-mesa-numero"></span>
-            </h3>
-            <button onclick="cerrarModalMesa()" class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition">
-                <i class="bi bi-x-lg text-2xl"></i>
-            </button>
-        </div>
-        
-        <div class="p-6" id="modal-mesa-content">
-            <!-- Contenido dinámico -->
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -325,163 +302,546 @@
 // ===================================
 let mesasData = {};
 let comandasActivas = [];
+const API_BASE = '/api/mesero';
 
 // ===================================
 // INICIALIZACIÓN
 // ===================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard Mesero inicializado');
+    
+    // Cargar datos iniciales
     cargarEstadoMesas();
     actualizarComandas();
+    cargarEstadisticasDia();
     
     // Actualizar cada 30 segundos
     setInterval(() => {
-        actualizarComandas();
         cargarEstadoMesas();
+        actualizarComandas();
+        cargarEstadisticasDia();
     }, 30000);
 });
 
 // ===================================
-// GESTIÓN DE MESAS
+// CARGA DE DATOS DESDE LA API
 // ===================================
-function verMesa(numeroMesa) {
-    const modal = document.getElementById('modalMesa');
-    const numero = document.getElementById('modal-mesa-numero');
-    const content = document.getElementById('modal-mesa-content');
+async function cargarEstadoMesas() {
+    try {
+        const response = await fetch(`${API_BASE}/mesas/estado`);
+        const data = await response.json();
+        
+        if (data.success) {
+            mesasData = data.mesas;
+            actualizarVisualizacionMesas();
+        } else {
+            console.error('Error al cargar mesas:', data.error);
+        }
+    } catch (error) {
+        console.error('Error en la petición:', error);
+    }
+}
+
+async function cargarEstadisticasDia() {
+    try {
+        const response = await fetch(`${API_BASE}/estadisticas/dia`);
+        const data = await response.json();
+
+        if (data.success && data.estadisticas) {
+            const stats = data.estadisticas;
+
+            const venta = stats.venta_dia ?? 0;
+            const propinas = stats.propinas_dia ?? 0;
+            const ordenes = stats.num_ordenes ?? 0;
+
+            document.getElementById('venta-dia').textContent = `$${Number(venta).toFixed(2)}`;
+            document.getElementById('num-ordenes').textContent = ordenes;
+            document.getElementById('stat-propinas').textContent = `$${Number(propinas).toFixed(2)}`;
+        }
+    } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+    }
+}
+
+async function actualizarComandas() {
+    try {
+        const response = await fetch(`${API_BASE}/comandas/activas`);
+        const data = await response.json();
+        
+        if (data.success) {
+            comandasActivas = data.comandas;
+            renderizarComandas();
+            
+            // Actualizar número en el card superior (Comandas Activas: 2)
+            const statComandas = document.getElementById('stat-comandas');
+            if (statComandas) statComandas.textContent = data.total;
+            
+            // Actualizar badge en el botón lateral
+            const badgeComandas = document.getElementById('badge-comandas');
+            if (badgeComandas) badgeComandas.textContent = data.total;
+            
+        } else {
+            console.error('Error al cargar comandas:', data.error);
+        }
+    } catch (error) {
+        console.error('Error en la petición:', error);
+    }
+}
+
+// ===================================
+// RENDERIZADO DE MESAS
+// ===================================
+function actualizarVisualizacionMesas() {
+    const mesasCards = document.querySelectorAll('.mesa-card');
+    let ocupadas = 0;
     
-    numero.textContent = numeroMesa;
+    mesasCards.forEach(card => {
+        const numeroMesa = card.dataset.mesa;
+        const mesaInfo = mesasData[numeroMesa] || mesasData[parseInt(numeroMesa)]; 
+        const statusSpan = card.querySelector('.mesa-status');
+        const comensalesP = card.querySelector('.mesa-comensales');
+        const iconContainer = card.querySelector('.icon-container');
+        const icon = iconContainer.querySelector('i');
+
+        // Reset de clases básicas
+        card.classList.remove('border-red-500', 'border-gray-200', 'bg-red-50', 'border-blue-400');
+        iconContainer.classList.remove('bg-green-100', 'bg-red-100', 'bg-gray-100', 'bg-blue-100');
+        icon.classList.remove('text-red-600', 'text-green-600', 'text-gray-600', 'text-blue-600');
+
+        if (mesaInfo) {
+            // Normalizamos el estado a minúsculas para comparar siempre igual
+            const estado = (mesaInfo.estado || "").toLowerCase().trim();
+
+            if (estado === 'ocupada') {
+                ocupadas++;
+                statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700';
+                statusSpan.textContent = 'OCUPADA';
+                comensalesP.textContent = `${mesaInfo.comensales || 0} PERSONAS`;
+                comensalesP.classList.remove('text-gray-400');
+                comensalesP.classList.add('text-red-500');
+                card.classList.add('border-red-500', 'bg-red-50');
+                iconContainer.classList.add('bg-red-100');
+                icon.classList.add('text-red-600');
+
+            } else if (estado === 'reservada') {
+                statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700';
+                statusSpan.textContent = 'RESERVADA';
+                comensalesP.textContent = mesaInfo.reserva_hora || 'RESERVA';
+                card.classList.add('border-blue-400');
+                iconContainer.classList.add('bg-blue-100');
+                icon.classList.add('text-blue-600');
+
+            } else {
+                // TRATAR COMO DISPONIBLE/LIBRE
+                statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700';
+                statusSpan.textContent = 'LIBRE';
+                comensalesP.textContent = 'SIN CLIENTES';
+                comensalesP.classList.remove('text-red-500');
+                comensalesP.classList.add('text-gray-400');
+                card.classList.add('border-gray-200');
+                iconContainer.classList.add('bg-green-100');
+                icon.classList.add('text-green-600');
+            }
+        } else {
+            // Si sigue saliendo SIN DATOS, imprimimos en consola para rastrear por qué
+            console.error(`Error: No hay data para la mesa ${numeroMesa}`, mesasData);
+            statusSpan.textContent = 'N/A';
+            comensalesP.textContent = 'SIN DATOS';
+        }
+    });
     
-    // Simular datos de la mesa (aquí conectarías con tu API)
-    const mesaInfo = mesasData[numeroMesa] || {
-        numero: numeroMesa,
-        estado: 'disponible',
-        comensales: 0,
-        cuenta_id: null,
-        total: 0
-    };
+    // Actualizar contadores
+    const totalMesas = mesasCards.length;
+    const mesasOcupadasElement = document.getElementById('mesas-ocupadas');
+    const mesasLibresElement = document.getElementById('mesas-libres');
+
+    if (mesasOcupadasElement) mesasOcupadasElement.textContent = ocupadas;
+    if (mesasLibresElement) mesasLibresElement.textContent = totalMesas - ocupadas;
+}
+// ===================================
+// RENDERIZADO DE COMANDAS
+// ===================================
+function renderizarComandas() {
+    const container = document.getElementById('comandas-container');
     
-    if (mesaInfo.estado === 'disponible') {
-        content.innerHTML = `
-            <div class="text-center py-8">
-                <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="bi bi-check-circle text-5xl text-green-600"></i>
-                </div>
-                <h4 class="text-xl font-bold text-gray-800 mb-2">Mesa Disponible</h4>
-                <p class="text-gray-600 mb-6">Esta mesa está lista para recibir clientes</p>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="abrirCuenta('${numeroMesa}')" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i>
-                        Abrir Cuenta
-                    </button>
-                    <button onclick="cerrarModalMesa()" class="btn btn-secondary">
-                        Cancelar
-                    </button>
-                </div>
+    if (comandasActivas.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+                <i class="bi bi-cart-check text-6xl mb-4 block opacity-30"></i>
+                <p class="text-lg">No hay comandas activas</p>
+                <p class="text-sm mt-2">Las comandas aparecerán aquí cuando tomes pedidos</p>
+                <button onclick="mostrarSeleccionMesa()" class="btn btn-primary mt-4">
+                    <i class="bi bi-plus-circle"></i>
+                    Crear Nueva Cuenta
+                </button>
             </div>
         `;
-    } else {
-        content.innerHTML = `
-            <div class="space-y-4">
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="font-semibold text-blue-900">Mesa Ocupada</span>
-                        <span class="badge badge-info">${mesaInfo.comensales} comensales</span>
-                    </div>
-                    <p class="text-sm text-blue-700">Cuenta: #${mesaInfo.cuenta_id || 'N/A'}</p>
-                    <p class="text-sm text-blue-700">Total actual: $${mesaInfo.total.toFixed(2)}</p>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="agregarPlatillos('${numeroMesa}')" class="btn btn-primary">
-                        <i class="bi bi-plus"></i>
-                        Agregar Platillos
-                    </button>
-                    <button onclick="verCuenta('${numeroMesa}')" class="btn btn-secondary">
-                        <i class="bi bi-eye"></i>
-                        Ver Cuenta
-                    </button>
-                    <button onclick="solicitarCuenta('${numeroMesa}')" class="btn btn-success">
-                        <i class="bi bi-receipt"></i>
-                        Solicitar Cuenta
-                    </button>
-                    <button onclick="cerrarModalMesa()" class="btn btn-error">
-                        Cerrar
-                    </button>
-                </div>
-            </div>
-        `;
+        return;
     }
     
-    modal.classList.remove('hidden');
+    let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
+    
+    comandasActivas.forEach(comanda => {
+        const tiempoTranscurrido = calcularTiempoTranscurrido(comanda.fecha_apertura);
+        console.log("COMANDA RENDER:", comanda.id, typeof comanda.id);
+        html += `
+            <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="bi bi-receipt text-orange-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">${comanda.folio}</p>
+                            <p class="text-xs text-gray-500">Mesa ${comanda.mesa_numero}</p>
+                        </div>
+                    </div>
+                    <span class="badge badge-warning">${tiempoTranscurrido}</span>
+                </div>
+                
+                <div class="space-y-2 text-sm mb-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Comensales:</span>
+                        <span class="font-semibold">${comanda.num_comensales ?? comanda.comensales ?? 0}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Items:</span>
+                        <span class="font-semibold">${comanda.items.length}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total:</span>
+                        <span class="font-bold text-lg text-green-600">$${comanda.total.toFixed(2)}</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="verDetalleComanda('${comanda.id}')" class="btn btn-sm btn-secondary">
+                    <i class="bi bi-eye"></i> Ver
+                    </button>
+                    <button onclick="agregarItemsComanda('${comanda.id}')" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Agregar
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ===================================
+// GESTIÓN DE MESAS
+// ===================================
+async function verMesa(numeroMesa) {
+    try {
+        const response = await fetch(`${API_BASE}/mesa/${numeroMesa}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            Swal.fire('Error', data.error || 'No se pudo cargar la mesa', 'error');
+            return;
+        }
+        
+        const mesa = data.mesa;
+        const comanda = data.comanda; // Info real que viene del backend
+        const modal = document.getElementById('modalMesa');
+        const content = document.getElementById('modal-mesa-content');
+        document.getElementById('modal-mesa-numero').textContent = numeroMesa;
+        
+        if (mesa.estado === 'libre' || mesa.estado === 'disponible') {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-check-circle text-5xl text-green-600"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">Mesa Disponible</h4>
+                    <p class="text-sm text-gray-500 mb-6">Capacidad: ${mesa.capacidad || 4} personas</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="abrirCuenta('${numeroMesa}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Abrir Cuenta</button>
+                        <button onclick="cerrarModalMesa()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold">Cancelar</button>
+                    </div>
+                </div>`;
+        } else {
+            // USAMOS LA INFO DE LA COMANDA QUE TRAE EL BACKEND
+            const total = comanda ? Number(comanda.total).toFixed(2) : "0.00";
+            const folio = comanda ? comanda.folio : 'Generando...';
+            const personas =
+            comanda?.num_comensales ??
+            comanda?.comensales ??
+            mesa?.num_comensales ??
+            0;
+            console.log("COMANDA DETALLE:", comanda);
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">
+                        <p class="font-black text-orange-900 text-lg uppercase">Mesa Ocupada</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <div>
+                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Folio</p>
+                                <p class="text-gray-800 font-mono">${folio}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Comensales</p>
+                                <p class="text-gray-800">${personas} personas</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-orange-200">
+                            <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Total Acumulado</p>
+                            <p class="text-4xl font-black text-gray-900">$${total}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}', true)" 
+                                class="w-full bg-[#F2913D] hover:bg-[#F2A339] text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="bi bi-plus-circle-fill text-xl"></i>
+                            AGREGAR PRODUCTOS AL PEDIDO
+                        </button>
+                        <button onclick="cerrarModalMesa()" 
+                                class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
+                            Cerrar Detalle
+                        </button>
+                            <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
+        class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+        <i class="bi bi-cash-coin"></i>
+        CERRAR CUENTA
+    </button>
+                    </div>
+                </div>`;
+        }
+        modal.classList.remove('hidden');
+    } catch (error) {
+        console.error('Error al cargar mesa:', error);
+    }
 }
 
 function cerrarModalMesa() {
     document.getElementById('modalMesa').classList.add('hidden');
 }
 
+async function abrirModalMenu(numMesa, idCuenta, cargarItemsExistentes = false) {
+    cuentaActivaId = idCuenta;
+    const modal = document.getElementById('modalMenu');
+    const labelMesa = document.getElementById('menu-mesa-num');
+    const grid = document.getElementById('lista-productos-grid');
+    
+    if (!modal || !grid) return console.error("No se encontró el modal de menú en el HTML");
+
+    labelMesa.textContent = numMesa;
+    modal.classList.remove('hidden');
+    
+    // 🔥 CAMBIO IMPORTANTE: Solo resetear si NO es para agregar items
+    if (cargarItemsExistentes && cuentaActivaId) {
+        await cargarItemsExistentesEnCarrito(cuentaActivaId);
+    } else {
+        carrito = []; // Solo resetear si es cuenta nueva
+    }
+    
+    renderizarCarrito();
+
+    try {
+        const res = await fetch('/api/menu');
+        const data = await res.json();
+        
+        grid.innerHTML = '';
+        data.menu.forEach(p => {
+            grid.innerHTML += `
+                <div onclick="agregarAlCarrito('${p._id}', '${p.nombre}', ${p.precio})" 
+                     class="p-4 border rounded-xl hover:bg-orange-50 cursor-pointer transition flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-800">${p.nombre}</p>
+                        <p class="text-sm text-orange-600 font-bold">$${p.precio.toFixed(2)}</p>
+                    </div>
+                    <i class="bi bi-plus-circle-fill text-orange-400 text-xl"></i>
+                </div>`;
+        });
+    } catch (e) {
+        grid.innerHTML = '<p class="text-red-500">Error al cargar productos</p>';
+    }
+}
+async function cargarItemsExistentesEnCarrito(cuentaId) {
+    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+    
+    if (!comanda || !comanda.items) {
+        carrito = [];
+        return;
+    }
+    
+    // Cargar los items existentes en el carrito
+    carrito = comanda.items.map(item => ({
+        id: item.producto_id || item.id || item._id,
+        nombre: item.nombre,
+        precio: item.precio,
+        cantidad: item.cantidad
+    }));
+    
+    console.log('✅ Items existentes cargados en carrito:', carrito);
+}
+function agregarAlCarrito(id, nombre, precio) {
+    const itemExistente = carrito.find(i => i.id === id);
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({ id, nombre, precio, cantidad: 1 });
+    }
+    renderizarCarrito();
+}
+
+function renderizarCarrito() {
+    const container = document.getElementById('carrito-items');
+    const totalElement = document.getElementById('carrito-total');
+    let total = 0;
+    
+    container.innerHTML = '';
+    carrito.forEach((item, index) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+        container.innerHTML += `
+            <div class="flex justify-between items-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                <div class="flex-1">
+                    <p class="font-bold text-xs">${item.nombre}</p>
+                    <p class="text-[10px] text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidad}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="modificarCantidad(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">-</button>
+                    <span class="text-xs font-bold">${item.cantidad}</span>
+                    <button onclick="modificarCantidad(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">+</button>
+                </div>
+            </div>`;
+    });
+    totalElement.textContent = `$${total.toFixed(2)}`;
+}
+
+function modificarCantidad(index, cambio) {
+    carrito[index].cantidad += cambio;
+    if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
+    renderizarCarrito();
+}
+
+async function confirmarPedidoCocina() {
+    console.log("Cuenta activa ID:", cuentaActivaId);
+    if (carrito.length === 0) return Swal.fire("Carrito vacío", "Agrega al menos un producto", "warning");
+
+    showLoading("Enviando a cocina...");
+    try {
+        const res = await fetch(`${API_BASE}/comanda/${cuentaActivaId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: carrito })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showSuccess("¡Pedido enviado correctamente!");
+            cerrarModalMenu();
+            actualizarComandas(); // Refrescar lista inferior
+        } else {
+            showError(data.error);
+        }
+    } catch (e) {
+        showError("Error al enviar pedido");
+    }
+}
+
+function cerrarModalMenu() {
+    document.getElementById('modalMenu').classList.add('hidden');
+    cuentaActivaId = null;
+}
 // ===================================
 // GESTIÓN DE CUENTAS
 // ===================================
 async function abrirCuenta(numeroMesa) {
     const { value: numComensales } = await Swal.fire({
-        title: `Abrir cuenta - Mesa ${numeroMesa}`,
+        title: `Mesa ${numeroMesa}`,
         input: 'number',
         inputLabel: '¿Cuántos comensales?',
-        inputPlaceholder: 'Número de personas',
-        inputAttributes: {
-            min: 1,
-            max: 20,
-            step: 1
-        },
+        inputAttributes: { min: 1, max: 20, step: 1 },
         showCancelButton: true,
-        confirmButtonText: 'Continuar',
-        cancelButtonText: 'Cancelar',
-        inputValidator: (value) => {
-            if (!value || value < 1) {
-                return '¡Debes ingresar al menos 1 comensal!';
-            }
-        }
+        confirmButtonText: 'Abrir y Tomar Pedido',
+        cancelButtonText: 'Solo Abrir',
+        confirmButtonColor: '#F2913D',
     });
-    
+
     if (numComensales) {
-        showLoading('Abriendo cuenta...');
-        
-        // Aquí harías la petición a tu API
-        setTimeout(() => {
+        try {
+            showLoading('Iniciando comanda...');
+            const response = await fetch(`${API_BASE}/cuenta/abrir`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    numero_mesa: numeroMesa,
+                    num_comensales: parseInt(numComensales)
+                })
+            });
+
+            const data = await response.json();
             hideLoading();
-            showSuccess(`Cuenta abierta para ${numComensales} ${numComensales > 1 ? 'comensales' : 'comensal'}`);
-            cerrarModalMesa();
-            
-            // Actualizar estado de la mesa
-            mesasData[numeroMesa] = {
-                numero: numeroMesa,
-                estado: 'ocupada',
-                comensales: parseInt(numComensales),
-                cuenta_id: Math.floor(Math.random() * 10000),
-                total: 0
-            };
-            
-            actualizarVisualizacionMesas();
-        }, 1000);
+
+            if (data.success) {
+                // 1. Guardar el ID globalmente
+                cuentaActivaId = data.cuenta_id; 
+
+                // 2. Notificar al usuario
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: 'Cuenta abierta correctamente',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // 3. Cerrar modales previos y refrescar Dashboard
+                cerrarModalMesa();
+                await cargarEstadoMesas();   // Actualiza colores de cuadritos
+                actualizarComandas();        // ¡Aquí es donde aparece en la lista inferior!
+                cargarEstadisticasDia();     // Actualiza contadores superiores
+
+                // 4. Abrir el menú pasando el ID de la cuenta recién creada
+                // Pasamos tanto el número de mesa como el ID de la cuenta
+                abrirModalMenu(numeroMesa, data.cuenta_id);
+
+            } else {
+                showError(data.error);
+            }
+        } catch (error) {
+            hideLoading();
+            showError('Error de conexión al abrir cuenta');
+            console.error(error);
+        }
     }
 }
-
-function nuevaCuenta() {
+function mostrarSeleccionMesa() {
+    // Filtrar mesas disponibles
+    const mesasDisponibles = Object.values(mesasData).filter(m => m.estado === 'disponible');
+    
+    if (mesasDisponibles.length === 0) {
+        Swal.fire({
+            title: 'No hay mesas disponibles',
+            text: 'Todas tus mesas están ocupadas o en limpieza',
+            icon: 'info'
+        });
+        return;
+    }
+    
+    // Crear opciones para el select
+    const opciones = {};
+    mesasDisponibles.forEach(mesa => {
+        opciones[mesa.numero] = `Mesa ${mesa.numero} (${mesa.capacidad} personas)`;
+    });
+    
     Swal.fire({
         title: 'Selecciona una mesa',
-        text: 'Elige la mesa para abrir la cuenta',
-        icon: 'question',
-        confirmButtonText: 'Ok'
+        input: 'select',
+        inputOptions: opciones,
+        inputPlaceholder: 'Elige una mesa',
+        showCancelButton: true,
+        confirmButtonText: 'Abrir cuenta',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            abrirCuenta(result.value);
+        }
     });
-}
-
-// ===================================
-// ACTUALIZACIÓN DE COMANDAS
-// ===================================
-async function actualizarComandas() {
-    // Aquí conectarías con tu API
-    console.log('Actualizando comandas...');
 }
 
 // ===================================
@@ -495,6 +855,251 @@ function verComandas() {
     window.location.href = "{{ url_for('routes.mesero_comandas') }}";
 }
 
+async function verDetalleComanda(cuentaId) {
+    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+
+    if (!comanda) {
+        showError('No se encontró la comanda');
+        return;
+    }
+
+    let itemsHtml = '';
+    if (comanda.items && comanda.items.length > 0) {
+        itemsHtml = comanda.items.map(item => `
+            <div class="flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm border">
+                <div>
+                    <p class="font-bold text-gray-800 text-sm">${item.nombre}</p>
+                    <p class="text-xs text-gray-500">
+                        $${item.precio.toFixed(2)} × ${item.cantidad}
+                    </p>
+                </div>
+                <p class="font-black text-green-600 text-lg">
+                    $${(item.precio * item.cantidad).toFixed(2)}
+                </p>
+            </div>
+        `).join('');
+    } else {
+        itemsHtml = `
+            <div class="text-center text-gray-400 py-12">
+                <i class="bi bi-cart-x text-5xl block mb-3 opacity-30"></i>
+                <p class="text-sm">Sin productos aún</p>
+            </div>
+        `;
+    }
+
+    Swal.fire({
+        width: 720,
+        showConfirmButton: false,
+        showCancelButton: false,
+        backdrop: 'rgba(0,0,0,.6)',
+        customClass: {
+            popup: 'rounded-[28px] overflow-hidden relative'
+        },
+        html: `
+            <!-- BOTÓN CERRAR FLOTANTE -->
+            <button 
+                onclick="Swal.close()"
+                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 transition flex items-center justify-center text-2xl z-50">
+                &times;
+            </button>
+
+            <!-- HEADER -->
+            <div class="bg-orange-600 text-white px-6 pt-8 pb-6 rounded-t-[28px]">
+                <h3 class="text-2xl font-black">${comanda.folio}</h3>
+                <p class="text-sm opacity-90">
+                    Mesa ${comanda.mesa_numero} · 
+                    ${comanda.num_comensales ?? comanda.comensales ?? 0} personas
+                </p>
+            </div>
+
+            <!-- BODY -->
+            <div class="p-6 bg-gray-50 max-h-[55vh] overflow-y-auto space-y-3">
+                ${itemsHtml}
+            </div>
+
+            <!-- FOOTER -->
+            <div class="p-6 bg-white border-t flex justify-between items-center">
+                <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Total</p>
+                    <p class="text-4xl font-black text-green-600">
+                        $${comanda.total.toFixed(2)}
+                    </p>
+                </div>
+
+                <button 
+                    onclick="agregarItemsComanda('${cuentaId}')"
+                    class="px-6 py-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-lg transition flex items-center gap-2">
+                    <i class="bi bi-plus-circle-fill text-xl"></i>
+                    Agregar productos
+                </button>
+            </div>
+        `
+    });
+}
+
+
+function verDetalleMesa(numero) {
+    fetch(`/api/mesero/mesa/${numero}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const mesa = data.mesa;
+                const comanda = data.comanda;
+                const infoDiv = document.getElementById('detalle-mesa-info');
+
+                document.getElementById('detalle-mesa-num').textContent = mesa.numero;
+                
+                if(mesa.estado === 'ocupada' && comanda) {
+                    // Generar lista de items si existen
+                    let itemsHtml = '';
+                    if (comanda.items && comanda.items.length > 0) {
+                        itemsHtml = `
+                            <div class="mt-4 border-t pt-2">
+                                <p class="text-xs font-bold text-gray-400 uppercase">Consumo actual:</p>
+                                <ul class="divide-y divide-gray-100 max-h-40 overflow-y-auto">
+                                    ${comanda.items.map(item => `
+                                        <li class="py-1 flex justify-between text-sm">
+                                            <span>${item.cantidad}x ${item.nombre}</span>
+                                            <span class="font-medium">$${(item.precio * item.cantidad).toFixed(2)}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>`;
+                    }
+
+                    infoDiv.innerHTML = `
+                        <p class="text-orange-600 font-bold">
+                        Mesa Ocupada - ${comanda.num_comensales ?? comanda.comensales ?? 0} personas</p>
+                        <p class="text-xs text-gray-500">Folio: <span class="font-mono">${comanda.folio}</span></p>
+                        <p class="text-2xl font-black text-gray-800">$${comanda.total.toFixed(2)}</p>
+                        ${itemsHtml}
+                    `;
+                    
+                    document.getElementById('btn-abrir-cuenta').classList.add('hidden');
+                    document.getElementById('btn-agregar-pedido').classList.remove('hidden');
+                    
+                    // IMPORTANTE: Guardar el ID de la cuenta en el botón para saber a cuál agregar
+                    document.getElementById('btn-agregar-pedido').onclick = () => abrirModalMenu(comanda.folio, mesa.numero, data.mesa.cuenta_activa_id);
+
+                } else {
+                    infoDiv.innerHTML = `<p class="text-green-600 font-bold text-lg py-4">Mesa Disponible</p>`;
+                    document.getElementById('btn-abrir-cuenta').classList.remove('hidden');
+                    document.getElementById('btn-agregar-pedido').classList.add('hidden');
+                }
+                
+                document.getElementById('modalDetalleMesa').classList.remove('hidden');
+            }
+        });
+}
+function agregarItemsComanda(cuentaId) {
+    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+    
+    if (!comanda) {
+        showError('No se encontró la comanda');
+        return;
+    }
+    // 🔥 TRUE indica que debe cargar items existentes
+    abrirModalMenu(comanda.mesa_numero, cuentaId, true);
+}
+
+function cerrarCuenta(cuentaId, numeroMesa) {
+    Swal.fire({
+        title: `Cerrar cuenta · Mesa ${numeroMesa}`,
+        html: `
+            <div class="text-left text-sm mb-2 font-bold text-gray-600">Propina del cliente</div>
+
+            <select id="tipo_propina" class="swal2-select w-full">
+                <option value="sin">Sin propina</option>
+                <option value="10">10%</option>
+                <option value="15" selected>15%</option>
+                <option value="20">20%</option>
+                <option value="custom">Otro porcentaje</option>
+            </select>
+
+            <input 
+                id="custom_propina" 
+                type="number" 
+                min="0" 
+                max="30"
+                class="swal2-input"
+                placeholder="Porcentaje personalizado"
+                style="display:none"
+            >
+
+            <div class="text-left text-sm mt-4 mb-2 font-bold text-gray-600">Método de pago</div>
+            <select id="metodo" class="swal2-select w-full">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+            </select>
+        `,
+        confirmButtonText: 'Cerrar cuenta',
+        showCancelButton: true,
+        didOpen: () => {
+            const select = document.getElementById('tipo_propina');
+            const customInput = document.getElementById('custom_propina');
+
+            select.addEventListener('change', () => {
+                customInput.style.display =
+                    select.value === 'custom' ? 'block' : 'none';
+            });
+        },
+        preConfirm: () => {
+            const tipo = document.getElementById('tipo_propina').value;
+            const custom = document.getElementById('custom_propina').value;
+            const metodo = document.getElementById('metodo').value;
+
+            if (tipo === 'custom' && (!custom || custom < 0 || custom > 30)) {
+                Swal.showValidationMessage('El porcentaje debe estar entre 0 y 30');
+                return false;
+            }
+
+            return {
+                tipo_propina: tipo,
+                custom_porcentaje: tipo === 'custom' ? Number(custom) : null,
+                metodo_pago: metodo
+            };
+        }
+    }).then(async (result) => {
+        if (!result.isConfirmed) return;
+
+        showLoading('Cerrando cuenta...');
+
+        const res = await fetch(
+            `/api/mesero/cuenta/${cuentaId}/cerrar`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(result.value)
+            }
+        );
+
+        const data = await res.json();
+        hideLoading();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Cuenta cerrada',
+                html: `
+                    <p>Total: <b>$${data.total.toFixed(2)}</b></p>
+                    <p>Propina (${data.porcentaje_propina}%): <b>$${data.propina.toFixed(2)}</b></p>
+                    <p class="text-lg mt-2">Total final: <b>$${data.total_final.toFixed(2)}</b></p>
+                `,
+                timer: 2500,
+                showConfirmButton: false
+            });
+
+            cerrarModalMesa();
+            cargarEstadoMesas();
+            actualizarComandas();
+            cargarEstadisticasDia();
+        } else {
+            showError(data.error);
+        }
+    });
+}
+
 function solicitarAyuda() {
     Swal.fire({
         title: '¿Necesitas ayuda?',
@@ -505,6 +1110,7 @@ function solicitarAyuda() {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
+            // Aquí implementarías la notificación real
             showSuccess('¡Ayuda solicitada! Un supervisor se acercará pronto');
         }
     });
@@ -513,34 +1119,53 @@ function solicitarAyuda() {
 // ===================================
 // UTILIDADES
 // ===================================
-function cargarEstadoMesas() {
-    // Simular carga de estado de mesas
-    const mesasCards = document.querySelectorAll('.mesa-card');
-    mesasCards.forEach(card => {
-        const numeroMesa = card.dataset.mesa;
-        const mesaInfo = mesasData[numeroMesa];
-        const statusSpan = card.querySelector('.mesa-status');
-        
-        if (mesaInfo && mesaInfo.estado === 'ocupada') {
-            statusSpan.className = 'mesa-status px-2 py-1 text-xs rounded-full bg-red-100 text-red-700';
-            statusSpan.textContent = 'Ocupada';
-            card.querySelector('p:last-child').textContent = `${mesaInfo.comensales} comensales`;
+function calcularTiempoTranscurrido(fechaInicio) {
+    if (!fechaInicio) return 'N/A';
+    
+    const inicio = new Date(fechaInicio);
+    const ahora = new Date();
+    const diff = Math.floor((ahora - inicio) / 60000); // minutos
+    
+    if (diff < 60) {
+        return `${diff} min`;
+    } else {
+        const horas = Math.floor(diff / 60);
+        const mins = diff % 60;
+        return `${horas}h ${mins}m`;
+    }
+}
+
+// Funciones de UI (asegúrate de tener SweetAlert2 incluido)
+function showLoading(message = 'Cargando...') {
+    Swal.fire({
+        title: message,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
         }
     });
-    
-    actualizarContadores();
 }
 
-function actualizarVisualizacionMesas() {
-    cargarEstadoMesas();
+function hideLoading() {
+    Swal.close();
 }
 
-function actualizarContadores() {
-    const ocupadas = Object.values(mesasData).filter(m => m.estado === 'ocupada').length;
-    const total = {{ stats.mesas_asignadas|length }};
-    
-    document.getElementById('mesas-ocupadas').textContent = ocupadas;
-    document.getElementById('mesas-libres').textContent = total - ocupadas;
+function showSuccess(message) {
+    Swal.fire({
+        icon: 'success',
+        title: '¡Éxito!',
+        text: message,
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+
+function showError(message) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: message
+    });
 }
 </script>
 {% endblock %}

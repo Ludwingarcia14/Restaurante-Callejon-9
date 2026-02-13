@@ -2,10 +2,11 @@
 
 {% block title %}Mis Comandas - Mesero{% endblock %}
 {% block page_title %}Gestión de Comandas{% endblock %}
-{% block page_subtitle %}Comandas activas y en proceso{% endblock %}
+{% block page_subtitle %}Comandas activas y cuentas cerradas{% endblock %}
+
 
 {% block navigation %}
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link active">
     <i class="bi bi-house-door"></i>
     <span>Inicio</span>
 </a>
@@ -15,7 +16,7 @@
     <span>Mis Mesas</span>
 </a>
 
-<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link active">
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
     <i class="bi bi-receipt"></i>
     <span>Comandas Activas</span>
 </a>
@@ -24,70 +25,107 @@
     <i class="bi bi-journal-text"></i>
     <span>Menú</span>
 </a>
+
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin"></i>
+    <span>Propinas del Día</span>
+</a>
+
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history"></i>
+    <span>Historial</span>
+</a>
 {% endblock %}
 
 {% block content %}
 
-<!-- Header -->
-<div class="flex items-center justify-between mb-6">
+<!-- ================= COMANDAS ACTIVAS ================= -->
+<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
     <div>
         <h2 class="text-2xl font-bold text-gray-800">Comandas Activas</h2>
-        <p class="text-gray-600">Gestiona tus pedidos en proceso</p>
+        <p class="text-gray-500">Pedidos en proceso</p>
     </div>
-    <button onclick="actualizarComandas()" class="btn btn-primary">
-        <i class="bi bi-arrow-clockwise"></i>
-        Actualizar
+    <button onclick="cargarComandas()" class="btn btn-primary">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar
     </button>
 </div>
 
-<!-- Filtros -->
-<div class="card mb-6">
+<div id="comandas-grid"
+     class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12"></div>
+
+<!-- ================= HISTORIAL ================= -->
+<h3 class="text-xl font-bold text-gray-800 mb-4">
+    Historial de Cuentas Cerradas
+</h3>
+
+<!-- FILTROS -->
+<div class="card mb-6 border border-gray-100">
     <div class="card-body">
-        <div class="flex items-center gap-4">
-            <div class="flex-1">
-                <input type="text" id="buscarComanda" placeholder="Buscar por mesa o comanda..." 
-                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="text-sm font-semibold text-gray-600">Desde</label>
+                <input id="filtro-desde" type="date"
+                       class="input input-bordered w-full">
             </div>
-            <select id="filtroEstado" class="px-4 py-2 border rounded-lg">
-                <option value="">Todos los estados</option>
-                <option value="nueva">Nueva</option>
-                <option value="enviada">Enviada a cocina</option>
-                <option value="preparacion">En preparación</option>
-                <option value="lista">Lista para servir</option>
-            </select>
-            <select id="filtroMesa" class="px-4 py-2 border rounded-lg">
-                <option value="">Todas las mesas</option>
-                {% for mesa in stats.mesas_asignadas %}
-                <option value="{{ mesa }}">Mesa {{ mesa }}</option>
-                {% endfor %}
-            </select>
+            <div>
+                <label class="text-sm font-semibold text-gray-600">Hasta</label>
+                <input id="filtro-hasta" type="date"
+                       class="input input-bordered w-full">
+            </div>
+            <div>
+                <label class="text-sm font-semibold text-gray-600">Mesa</label>
+                <input id="filtro-mesa" type="number" min="1"
+                       placeholder="Ej. 3"
+                       class="input input-bordered w-full">
+            </div>
+            <div class="flex items-end gap-2">
+                <button onclick="aplicarFiltros()"
+                        class="btn btn-success w-full">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <button onclick="limpiarFiltros()"
+                        class="btn btn-outline w-full">
+                    Limpiar
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Grid de Comandas -->
-<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="comandas-grid">
-    <!-- Las comandas se cargan dinámicamente -->
+<!-- ======= HISTORIAL MOBILE (CARDS) ======= -->
+<div id="historial-cards"
+     class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden"></div>
+
+<!-- ======= HISTORIAL DESKTOP (TABLA) ======= -->
+<div class="card hidden md:block">
+    <div class="card-body overflow-x-auto">
+        <table class="table w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th>Folio</th>
+                    <th>Mesa</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody id="historial-tabla"></tbody>
+        </table>
+    </div>
 </div>
 
-<!-- Modal: Detalle de Comanda -->
-<div id="modalComanda" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-2xl font-bold">Comanda #<span id="modal-comanda-id"></span></h3>
-                    <p class="text-sm opacity-90">Mesa <span id="modal-comanda-mesa"></span></p>
-                </div>
-                <button onclick="cerrarModalComanda()" class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg">
-                    <i class="bi bi-x-lg text-2xl"></i>
-                </button>
+<!-- ================= MODAL ================= -->
+<div id="modalComanda"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl
+                max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="bg-green-600 text-white p-4 flex justify-between">
+            <div>
+                <h3 class="text-xl font-bold" id="modal-folio"></h3>
+                <p>Mesa <span id="modal-mesa"></span></p>
             </div>
+            <button onclick="cerrarModal()" class="text-xl">✕</button>
         </div>
-        
-        <div class="p-6" id="modal-comanda-content">
-            <!-- Contenido dinámico -->
-        </div>
+        <div class="p-6" id="modal-content"></div>
     </div>
 </div>
 
@@ -95,241 +133,171 @@
 
 {% block extra_js %}
 <script>
-let comandasData = [];
+let comandas = [];
+let historialOriginal = [];
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     cargarComandas();
-    
-    // Filtros
-    document.getElementById('buscarComanda').addEventListener('input', filtrarComandas);
-    document.getElementById('filtroEstado').addEventListener('change', filtrarComandas);
-    document.getElementById('filtroMesa').addEventListener('change', filtrarComandas);
-    
-    // Actualizar cada 20 segundos
-    setInterval(cargarComandas, 20000);
+    cargarHistorial();
 });
 
+/* ================= COMANDAS ACTIVAS ================= */
 async function cargarComandas() {
-    // Simular datos (conectar con API)
-    comandasData = [
-        {
-            id: 1001,
-            mesa: 5,
-            comensales: 4,
-            estado: 'preparacion',
-            hora: '14:30',
-            platillos: [
-                { id: 1, nombre: 'Tacos al Pastor', cantidad: 3, precio: 45, estado: 'preparacion', notas: 'Sin cebolla' },
-                { id: 2, nombre: 'Quesadilla Grande', cantidad: 2, precio: 35, estado: 'preparacion', notas: '' }
-            ],
-            total: 205,
-            propina_sugerida: 20.50
-        },
-        {
-            id: 1002,
-            mesa: 8,
-            comensales: 2,
-            estado: 'lista',
-            hora: '14:15',
-            platillos: [
-                { id: 3, nombre: 'Enchiladas Suizas', cantidad: 2, precio: 55, estado: 'listo', notas: '' }
-            ],
-            total: 110,
-            propina_sugerida: 11.00
-        }
-    ];
-    
-    renderizarComandas();
-}
-
-function renderizarComandas() {
     const grid = document.getElementById('comandas-grid');
-    
-    if (comandasData.length === 0) {
+    grid.innerHTML = '';
+
+    const res = await fetch('/api/mesero/comandas/activas');
+    const data = await res.json();
+
+    if (!data.success || data.comandas.length === 0) {
         grid.innerHTML = `
-            <div class="col-span-full text-center py-12 text-gray-500">
-                <i class="bi bi-inbox text-6xl mb-4 block opacity-30"></i>
-                <p class="text-lg">No hay comandas activas</p>
-            </div>
-        `;
+            <div class="col-span-full text-center text-gray-500 py-16">
+                No hay comandas activas
+            </div>`;
         return;
     }
-    
-    grid.innerHTML = comandasData.map(comanda => `
-        <div class="card hover:shadow-xl transition cursor-pointer" onclick="verComanda(${comanda.id})">
-            <div class="card-header">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-lg">Comanda #${comanda.id}</span>
-                    <span class="badge ${getEstadoClass(comanda.estado)}">
-                        ${getEstadoText(comanda.estado)}
-                    </span>
-                </div>
-            </div>
+
+    comandas = data.comandas;
+
+    grid.innerHTML = comandas.map(c => `
+        <div class="card border border-gray-100 hover:shadow-lg cursor-pointer
+                    transition active:scale-[0.98]"
+             onclick="verComanda('${c.id}')">
             <div class="card-body">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="bi bi-table text-xl text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-gray-800">Mesa ${comanda.mesa}</p>
-                        <p class="text-sm text-gray-600">${comanda.comensales} comensales</p>
-                    </div>
-                    <div class="ml-auto text-right">
-                        <p class="text-xs text-gray-500">Hora</p>
-                        <p class="font-semibold">${comanda.hora}</p>
-                    </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold">${c.folio}</span>
+                    <span class="badge badge-info">${c.estado}</span>
                 </div>
-                
-                <div class="border-t pt-3 mb-3">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Platillos:</p>
-                    ${comanda.platillos.slice(0, 2).map(p => `
-                        <div class="flex justify-between text-sm mb-1">
-                            <span>${p.cantidad}x ${p.nombre}</span>
-                            <span class="text-gray-600">$${p.precio}</span>
-                        </div>
-                    `).join('')}
-                    ${comanda.platillos.length > 2 ? `<p class="text-xs text-gray-500 mt-1">+${comanda.platillos.length - 2} más...</p>` : ''}
-                </div>
-                
-                <div class="border-t pt-3 flex items-center justify-between">
-                    <span class="text-sm font-semibold text-gray-700">Total:</span>
-                    <span class="text-xl font-bold text-green-600">$${comanda.total.toFixed(2)}</span>
-                </div>
+                <p class="text-sm text-gray-500">Mesa ${c.mesa_numero}</p>
+                <p class="text-sm">${(c.items || []).length} items</p>
+                <p class="font-bold text-green-600 mt-2">
+                    $${c.total.toFixed(2)}
+                </p>
             </div>
         </div>
     `).join('');
 }
 
-function verComanda(comandaId) {
-    const comanda = comandasData.find(c => c.id === comandaId);
-    if (!comanda) return;
-    
-    document.getElementById('modal-comanda-id').textContent = comanda.id;
-    document.getElementById('modal-comanda-mesa').textContent = comanda.mesa;
-    
-    const content = document.getElementById('modal-comanda-content');
-    content.innerHTML = `
-        <div class="space-y-6">
-            <!-- Info General -->
-            <div class="grid grid-cols-3 gap-4">
-                <div class="bg-gray-50 p-4 rounded-lg text-center">
-                    <i class="bi bi-people text-2xl text-gray-600 mb-2 block"></i>
-                    <p class="text-sm text-gray-600">Comensales</p>
-                    <p class="text-xl font-bold">${comanda.comensales}</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg text-center">
-                    <i class="bi bi-clock text-2xl text-gray-600 mb-2 block"></i>
-                    <p class="text-sm text-gray-600">Hora</p>
-                    <p class="text-xl font-bold">${comanda.hora}</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg text-center">
-                    <i class="bi bi-receipt text-2xl text-gray-600 mb-2 block"></i>
-                    <p class="text-sm text-gray-600">Estado</p>
-                    <p class="badge ${getEstadoClass(comanda.estado)} mt-1">${getEstadoText(comanda.estado)}</p>
-                </div>
+function verComanda(id) {
+    const c = comandas.find(x => x.id === id);
+    if (!c) return;
+
+    document.getElementById('modal-folio').textContent = c.folio;
+    document.getElementById('modal-mesa').textContent = c.mesa_numero;
+
+    document.getElementById('modal-content').innerHTML = `
+        ${c.items.map(i => `
+            <div class="flex justify-between border-b py-2 text-sm">
+                <span>${i.cantidad}x ${i.nombre}</span>
+                <span>$${(i.precio * i.cantidad).toFixed(2)}</span>
             </div>
-            
-            <!-- Platillos -->
-            <div>
-                <h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <i class="bi bi-list-ul text-green-600"></i>
-                    Platillos Ordenados
-                </h4>
-                <div class="space-y-3">
-                    ${comanda.platillos.map(p => `
-                        <div class="border rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="flex-1">
-                                    <p class="font-semibold text-gray-800">
-                                        <span class="text-green-600">${p.cantidad}x</span>
-                                        ${p.nombre}
-                                    </p>
-                                    ${p.notas ? `<p class="text-sm text-gray-600 italic mt-1">📝 ${p.notas}</p>` : ''}
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-bold text-gray-800">$${(p.precio * p.cantidad).toFixed(2)}</p>
-                                    <span class="badge badge-sm ${getEstadoClass(p.estado)} mt-1">
-                                        ${getEstadoText(p.estado)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- Totales -->
-            <div class="border-t pt-4">
-                <div class="space-y-2">
-                    <div class="flex justify-between text-gray-700">
-                        <span>Subtotal:</span>
-                        <span class="font-semibold">$${comanda.total.toFixed(2)}</span>
-                    </div>
-                    <div class="flex justify-between text-green-600">
-                        <span>Propina sugerida (10%):</span>
-                        <span class="font-semibold">$${comanda.propina_sugerida.toFixed(2)}</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-bold text-gray-800 border-t pt-2">
-                        <span>Total estimado:</span>
-                        <span>$${(comanda.total + comanda.propina_sugerida).toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Acciones -->
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="agregarPlatillo(${comanda.id})" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i>
-                    Agregar Platillo
-                </button>
-                <button onclick="solicitarCuentaModal(${comanda.id})" class="btn btn-success">
-                    <i class="bi bi-receipt"></i>
-                    Solicitar Cuenta
-                </button>
-            </div>
+        `).join('')}
+        <div class="flex justify-between mt-4 font-bold text-lg">
+            <span>Total</span>
+            <span class="text-green-600">$${c.total.toFixed(2)}</span>
         </div>
     `;
-    
+
     document.getElementById('modalComanda').classList.remove('hidden');
 }
 
-function cerrarModalComanda() {
+function cerrarModal() {
     document.getElementById('modalComanda').classList.add('hidden');
 }
 
-function getEstadoClass(estado) {
-    const clases = {
-        'nueva': 'badge-warning',
-        'enviada': 'badge-info',
-        'preparacion': 'badge-warning',
-        'lista': 'badge-success',
-        'listo': 'badge-success'
-    };
-    return clases[estado] || 'badge-secondary';
+/* ================= HISTORIAL ================= */
+async function cargarHistorial() {
+    const res = await fetch('/api/mesero/comandas/cerradas');
+    const data = await res.json();
+    historialOriginal = data.comandas || [];
+    renderHistorial(historialOriginal);
 }
 
-function getEstadoText(estado) {
-    const textos = {
-        'nueva': 'Nueva',
-        'enviada': 'Enviada',
-        'preparacion': 'En Preparación',
-        'lista': 'Lista',
-        'listo': 'Listo'
-    };
-    return textos[estado] || estado;
+function aplicarFiltros() {
+    const desdeVal = document.getElementById('filtro-desde').value;
+    const hastaVal = document.getElementById('filtro-hasta').value;
+    const mesaVal  = document.getElementById('filtro-mesa').value;
+
+    let filtrado = [...historialOriginal];
+
+    // 🔹 Filtro por mesa
+    if (mesaVal) {
+        filtrado = filtrado.filter(c =>
+            String(c.mesa) === String(mesaVal)
+        );
+    }
+
+    // 🔹 Filtro fecha desde
+    if (desdeVal) {
+        const desde = new Date(desdeVal);
+        desde.setHours(0, 0, 0, 0);
+
+        filtrado = filtrado.filter(c =>
+            new Date(c.fecha) >= desde
+        );
+    }
+
+    // 🔹 Filtro fecha hasta (día completo)
+    if (hastaVal) {
+        const hasta = new Date(hastaVal);
+        hasta.setHours(23, 59, 59, 999);
+
+        filtrado = filtrado.filter(c =>
+            new Date(c.fecha) <= hasta
+        );
+    }
+
+    renderHistorial(filtrado);
 }
 
-function filtrarComandas() {
-    // Implementar filtrado
+function limpiarFiltros() {
+    document.getElementById('filtro-desde').value = '';
+    document.getElementById('filtro-hasta').value = '';
+    document.getElementById('filtro-mesa').value = '';
+    renderHistorial(historialOriginal);
 }
 
-function actualizarComandas() {
-    showLoading('Actualizando...');
-    setTimeout(() => {
-        cargarComandas();
-        hideLoading();
-        showToast('Comandas actualizadas', 'success');
-    }, 1000);
+function renderHistorial(lista) {
+    const cards = document.getElementById('historial-cards');
+    const tabla = document.getElementById('historial-tabla');
+
+    if (!lista.length) {
+        cards.innerHTML = tabla.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-gray-500 py-6">
+                    Sin resultados
+                </td>
+            </tr>`;
+        return;
+    }
+
+    // Cards (mobile)
+    cards.innerHTML = lista.map(c => `
+        <div class="card border border-gray-100">
+            <div class="card-body">
+                <div class="flex justify-between">
+                    <span class="font-bold">${c.folio}</span>
+                    <span class="text-sm text-gray-500">Mesa ${c.mesa}</span>
+                </div>
+                <p class="text-green-600 font-bold mt-2">
+                    $${c.total.toFixed(2)}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                    ${new Date(c.fecha).toLocaleString('es-MX')}
+                </p>
+            </div>
+        </div>
+    `).join('');
+
+    // Tabla (desktop)
+    tabla.innerHTML = lista.map(c => `
+        <tr>
+            <td>${c.folio}</td>
+            <td>Mesa ${c.mesa}</td>
+            <td class="font-bold text-green-600">$${c.total.toFixed(2)}</td>
+            <td>${new Date(c.fecha).toLocaleString('es-MX')}</td>
+        </tr>
+    `).join('');
 }
 </script>
 {% endblock %}

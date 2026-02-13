@@ -2,14 +2,24 @@
 Módulo de Rutas - Sistema de Restaurante Callejón 9
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
-from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
+from flask import Blueprint, render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, jsonify
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
+from controllers.historial.historialController import HistorialController
 from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
-from controllers.cocina.pedidos_controller import PedidosController
-from controllers.cocina.platillos_no_disponibles_controller import PlatillosNoDisponiblesController
+from controllers.comanda.comandaController import ComandaController
+from controllers.mesa.mesaController import MesaController
+from flask import jsonify, request
+from controllers.notificaciones.notificacion_controller import NotificacionController
+from controllers.propina.propinasController import PropinasController
+from controllers.cocina.cocinaController import CocinaController
+from models.mesa_model import Mesa
+from models.comanda_model import Comanda
+from models.producto_model import Producto
+from config.db import db
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -27,6 +37,91 @@ routes_bp.add_url_rule("/login", view_func=AuthController.login, methods=["GET",
 routes_bp.add_url_rule("/logout", view_func=AuthController.logout, endpoint="logout")
 routes_bp.add_url_rule("/verify-2fa", view_func=AuthController.verify_2fa, methods=["POST"], endpoint="verify_2fa")
 
+# ============================================
+#  API ENDPOINTS
+# ============================================
+
+# API de estadísticas del dashboard
+@routes_bp.route('/api/dashboard/admin/stats')
+@login_required
+@rol_required(['1'])
+def api_dashboard_stats():
+    """API endpoint para obtener estadísticas reales del dashboard"""
+    return DashboardAPIController.get_stats()
+
+@routes_bp.route("/api/dashboard/admin/actividad")
+@login_required
+@rol_required(['1'])
+def api_dashboard_actividad():
+    """API endpoint para obtener actividad reciente"""
+    return DashboardAPIController.get_actividad_reciente()
+
+@routes_bp.route("/api/dashboard/admin/personal")
+@login_required
+@rol_required(['1'])
+def api_dashboard_personal():
+    """API endpoint para obtener personal activo"""
+    return DashboardAPIController.get_personal_activo()
+
+@routes_bp.route("/api/empleados/todos")
+@login_required
+@rol_required(['1'])
+def api_empleados_todos():
+    """API endpoint para obtener todos los empleados"""
+    return DashboardAPIController.get_todos_empleados()
+
+# ============================================
+#  API NOTIFICACIONES
+# ============================================
+
+# Obtener datos del usuario para Socket.IO
+@routes_bp.route('/api/me', methods=['GET'])
+@login_required
+def api_me():
+    """Endpoint para obtener datos del usuario autenticado y token de socket"""
+    return NotificacionController.get_datos_socket()
+
+# Obtener todas las notificaciones
+@routes_bp.route('/api/notificaciones', methods=['GET'])
+@login_required
+def api_notificaciones():
+    """Obtiene todas las notificaciones del usuario"""
+    return NotificacionController.get_notificaciones()
+
+# Obtener solo notificaciones no leídas
+@routes_bp.route('/api/notificaciones/no-leidas', methods=['GET'])
+@login_required
+def api_notificaciones_no_leidas():
+    """Obtiene notificaciones no leídas"""
+    return NotificacionController.get_notificaciones_no_leidas()
+
+# Contador de notificaciones no leídas
+@routes_bp.route('/api/notificaciones/contador', methods=['GET'])
+@login_required
+def api_notificaciones_contador():
+    """Obtiene el número de notificaciones no leídas"""
+    return NotificacionController.get_contador()
+
+# Marcar una notificación como leída
+@routes_bp.route('/api/notificaciones/<id_notificacion>/leida', methods=['PUT'])
+@login_required
+def api_notificacion_leida(id_notificacion):
+    """Marca una notificación específica como leída"""
+    return NotificacionController.marcar_leida(id_notificacion)
+
+# Marcar todas como leídas
+@routes_bp.route('/api/notificaciones/marcar-todas-leidas', methods=['POST'])
+@login_required
+def api_marcar_todas_leidas():
+    """Marca todas las notificaciones del usuario como leídas"""
+    return NotificacionController.marcar_todas_leidas()
+
+# Eliminar notificación
+@routes_bp.route('/api/notificaciones/<id_notificacion>', methods=['DELETE'])
+@login_required
+def api_eliminar_notificacion(id_notificacion):
+    """Elimina una notificación específica"""
+    return NotificacionController.eliminar_notificacion(id_notificacion)
 
 # ============================================
 #  PANEL DE ADMINISTRACIÓN (Rol 1)
@@ -59,24 +154,6 @@ def admin_empleados_crear():
 def admin_reportes():
     return DashboardController.reportes()
 
-@routes_bp.route("/api/dashboard/admin/stats")
-@login_required
-@rol_required(['1'])
-def api_dashboard_stats():
-    return DashboardAPIController.get_stats()
-
-@routes_bp.route("/api/dashboard/admin/actividad")
-@login_required
-@rol_required(['1'])
-def api_dashboard_actividad():
-    return DashboardAPIController.get_actividad_reciente()
-
-@routes_bp.route("/api/dashboard/admin/personal")
-@login_required
-@rol_required(['1'])
-def api_dashboard_personal():
-    return DashboardAPIController.get_personal_activo()
-
 # ============================================
 # 🍽️ PANEL DE MESERO (Rol 2)
 # ============================================
@@ -85,83 +162,159 @@ def api_dashboard_personal():
 @login_required
 @rol_required(['2'])
 def dashboard_mesero():
-    """Dashboard principal del mesero"""
     return DashboardController.mesero()
 
 @routes_bp.route("/mesero/mesas")
 @login_required
 @rol_required(['2'])
 def mesero_mesas():
-    """Vista de mesas asignadas"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    perfil_mesero = session.get("perfil_mesero", {})
+
     stats = {
         "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
         "comandas_activas": 0,
         "propinas_dia": perfil_mesero.get("propinas", {}).get("acumulada_dia", 0)
     }
-    
-    return render_template("mesero/dashboard.html",
-                         perfil=perfil_mesero,
-                         stats=stats)
+
+    return render_template(
+        "mesero/dashboard.html",
+        perfil=perfil_mesero,
+        stats=stats
+    )
 
 @routes_bp.route("/mesero/comandas")
 @login_required
 @rol_required(['2'])
 def mesero_comandas():
-    """Vista de comandas activas"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    perfil_mesero = session.get("perfil_mesero", {})
-    stats = {
-        "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
-    }
-    
-    return render_template("mesero/comandas.html",
-                         perfil=perfil_mesero,
-                         stats=stats)
+
+    return render_template(
+        "mesero/comandas.html",
+        perfil=perfil_mesero,
+        stats={"mesas_asignadas": perfil_mesero.get("mesas_asignadas", [])}
+    )
+
 
 @routes_bp.route("/mesero/menu")
 @login_required
 @rol_required(['2'])
 def mesero_menu():
-    """Vista del menú para tomar pedidos"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    perfil_mesero = session.get("perfil_mesero", {})
-    stats = {
-        "mesas_asignadas": perfil_mesero.get("mesas_asignadas", []),
-    }
-    
-    return render_template("mesero/menu.html",
-                         perfil=perfil_mesero,
-                         stats=stats)
+
+    return render_template(
+        "mesero/mesero_menu.html",
+        perfil=perfil_mesero,
+        stats={"mesas_asignadas": perfil_mesero.get("mesas_asignadas", [])}
+    )
+
 
 @routes_bp.route("/mesero/propinas")
 @login_required
 @rol_required(['2'])
 def mesero_propinas():
-    """Vista de propinas del día"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    # Placeholder: implementar lógica de propinas
-    return render_template("mesero/dashboard.html")
+
+    return render_template("mesero/mesero_propinas.html", perfil=perfil_mesero)
+
+@routes_bp.route("/api/mesero/propinas/hoy", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_propinas_hoy():
+    return PropinasController.propinas_hoy()
 
 @routes_bp.route("/mesero/historial")
 @login_required
 @rol_required(['2'])
 def mesero_historial():
-    """Vista de historial de comandas"""
-    if "usuario_rol" not in session or str(session["usuario_rol"]) != "2":
+    perfil_mesero = session.get("perfil_mesero")
+    if not perfil_mesero:
         return redirect(url_for("routes.login"))
-    
-    # Placeholder: implementar lógica de historial
-    return render_template("mesero/comandas.html")
+
+    return render_template("mesero/mesero_historial.html", perfil=perfil_mesero)
+
+@routes_bp.route("/api/mesero/historial", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_historial():
+    return HistorialController.historial_mesero()
+
+# =========================
+# API GENERALES
+# =========================
+
+@routes_bp.route("/api/menu", methods=["GET"])
+@login_required
+@rol_required(['1', '2'])
+def api_get_menu():
+    productos = Producto.obtener_todo()
+    return jsonify({"success": True, "menu": productos})
+
+
+@routes_bp.route("/api/mesero/estadisticas/dia", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_estadisticas_dia():
+    return ComandaController.estadisticas_dia_mesero()
+
+
+# =========================
+# API MESAS
+# =========================
+
+@routes_bp.route("/api/mesero/mesas/estado", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_mesas_estado():
+    return MesaController.estado_mesas_mesero()
+
+
+@routes_bp.route("/api/mesero/mesa/<numero>", methods=["GET"])
+@login_required
+def api_mesero_mesa_detalle(numero):
+    return MesaController.detalle_mesa(numero)
+
+# =========================
+# API COMANDAS
+# =========================
+
+@routes_bp.route("/api/mesero/comandas/activas", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_mesero_comandas_activas():
+    return ComandaController.comandas_activas()
+
+@routes_bp.route("/api/mesero/cuenta/abrir", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_abrir_cuenta():
+    return ComandaController.abrir_cuenta()
+
+@routes_bp.route("/api/mesero/comanda/<cuenta_id>/items", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_guardar_items_comanda(cuenta_id):
+    return ComandaController.guardar_items(cuenta_id)
+
+@routes_bp.route("/api/mesero/cuenta/<cuenta_id>/cerrar", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_cerrar_cuenta(cuenta_id):
+    return ComandaController.cerrar_cuenta(cuenta_id)
+
+@routes_bp.route("/api/mesero/comandas/cerradas", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_comandas_cerradas():
+    return ComandaController.comandas_cerradas()
+
 
 # ============================================
 # 👨‍🍳 PANEL DE COCINA (Rol 3)
@@ -219,6 +372,63 @@ def cocina_inventario():
     
     # Placeholder: implementar vista de inventario
     return render_template("cocina/dashboard.html")
+
+
+# API: Obtener pedidos pendientes
+@routes_bp.route("/api/cocina/pedidos/pendientes", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])  # Admin y Cocina
+def api_cocina_pedidos_pendientes():
+    """Obtiene todos los pedidos pendientes de preparación"""
+    return CocinaController.obtener_pedidos_pendientes()
+
+# API: Obtener pedidos en proceso
+@routes_bp.route("/api/cocina/pedidos/en-proceso", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_pedidos_en_proceso():
+    """Obtiene pedidos que están siendo preparados"""
+    return CocinaController.obtener_pedidos_en_proceso()
+
+# API: Obtener pedidos listos
+@routes_bp.route("/api/cocina/pedidos/listos", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_pedidos_listos():
+    """Obtiene pedidos listos para servir"""
+    return CocinaController.obtener_pedidos_listos()
+
+# API: Iniciar preparación de pedido
+@routes_bp.route("/api/cocina/pedido/iniciar", methods=["POST"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_iniciar_preparacion():
+    """Marca items como en preparación"""
+    return CocinaController.iniciar_preparacion()
+
+# API: Marcar pedido como listo
+@routes_bp.route("/api/cocina/pedido/listo", methods=["POST"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_marcar_listo():
+    """Marca items como listos para servir"""
+    return CocinaController.marcar_como_listo()
+
+# API: Marcar pedido como entregado (desde mesero)
+@routes_bp.route("/api/cocina/pedido/entregado", methods=["POST"])
+@login_required
+@rol_required(['1', '2', '3'])  # Admin, Mesero y Cocina
+def api_cocina_marcar_entregado():
+    """Marca items como entregados"""
+    return CocinaController.marcar_como_entregado()
+
+# API: Estadísticas de cocina
+@routes_bp.route("/api/cocina/estadisticas", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_estadisticas():
+    """Obtiene estadísticas de rendimiento de cocina"""
+    return CocinaController.obtener_estadisticas_cocina()
 
 # ============================================
 # 📦 PANEL DE INVENTARIO (Rol 4)
@@ -303,138 +513,40 @@ def inventario_reportes():
     return InventarioController.reportes()
 
 # ============================================
-# 👨‍🍳 API DE COCINA (Endpoints JSON)
+# 🔒 MÓDULO DE SEGURIDAD Y BACKUP
 # ============================================
 
-# --- Pedidos API ---
-@routes_bp.route("/api/cocina/pedidos", methods=['GET'])
+# Gestión Principal de Respaldos
+@routes_bp.route('/admin/backup', methods=['GET'])
 @login_required
-@rol_required(['3'])
-def api_obtener_pedidos():
-    """Obtiene todos los pedidos pendientes"""
-    pedidos = PedidosController.obtener_todos_pedidos()
-    return jsonify({'success': True, 'pedidos': pedidos})
+@rol_required(['1'])
+def admin_backup_view():
+    return BackupController.index()
 
-@routes_bp.route("/api/cocina/pedidos/preparacion", methods=['GET'])
+# Creación de Respaldo
+@routes_bp.route('/admin/backup/create', methods=['POST'])
 @login_required
-@rol_required(['3'])
-def api_obtener_pedidos_preparacion():
-    """Obtiene todos los pedidos en preparación"""
-    pedidos = PedidosController.obtener_pedidos_preparacion()
-    return jsonify({'success': True, 'pedidos': pedidos})
-
-@routes_bp.route("/api/cocina/pedidos/listos", methods=['GET'])
-@login_required
-@rol_required(['3'])
-def api_obtener_pedidos_listos():
-    """Obtiene todos los pedidos listos"""
-    pedidos = PedidosController.obtener_pedidos_listos()
-    return jsonify({'success': True, 'pedidos': pedidos})
-
-@routes_bp.route("/api/cocina/pedidos/<int:pedido_id>", methods=['GET'])
-@login_required
-@rol_required(['3'])
-def api_obtener_detalle_pedido(pedido_id):
-    """Obtiene los detalles de un pedido específico"""
-    detalle = PedidosController.obtener_detalle_pedido(pedido_id)
-    if not detalle:
-        return jsonify({'success': False, 'error': 'Pedido no encontrado'}), 404
-    return jsonify({'success': True, 'pedido': detalle})
-
-@routes_bp.route("/api/cocina/pedidos", methods=['POST'])
-@login_required
-@rol_required(['3'])
-def api_crear_pedido():
-    """Crea un nuevo pedido"""
-    data = request.get_json()
-    resultado = PedidosController.crear_pedido(data)
-    status_code = 201 if resultado['success'] else 400
-    return jsonify(resultado), status_code
-
-@routes_bp.route("/api/cocina/pedidos/<int:pedido_id>/iniciar-preparacion", methods=['PUT'])
-@login_required
-@rol_required(['3'])
-def api_iniciar_preparacion(pedido_id):
-    """Inicia la preparación de un pedido"""
-    resultado = PedidosController.iniciar_preparacion(pedido_id)
-    status_code = 200 if resultado['success'] else 400
-    return jsonify(resultado), status_code
-
-@routes_bp.route("/api/cocina/pedidos/<int:pedido_id>/marcar-listo", methods=['PUT'])
-@login_required
-@rol_required(['3'])
-def api_marcar_pedido_listo(pedido_id):
-    """Marca un pedido como listo para entregar"""
-    resultado = PedidosController.marcar_pedido_listo(pedido_id)
-    status_code = 200 if resultado['success'] else 400
-    return jsonify(resultado), status_code
-
-@routes_bp.route("/api/cocina/detalles/<int:detalle_id>/estado", methods=['PUT'])
-@login_required
-@rol_required(['3'])
-def api_actualizar_estado_platillo(detalle_id):
-    """Actualiza el estado de un platillo"""
-    data = request.get_json()
-    nuevo_estado = data.get('estado')  # no_iniciado, preparando, listo
-    resultado = PedidosController.actualizar_estado_platillo(detalle_id, nuevo_estado)
-    status_code = 200 if resultado['success'] else 400
-    return jsonify(resultado), status_code
-
-# --- Platillos No Disponibles API ---
-@routes_bp.route("/api/cocina/platillos-no-disponibles", methods=['GET'])
-@login_required
-@rol_required(['3'])
-def api_obtener_platillos_no_disponibles():
-    """Obtiene lista de platillos no disponibles"""
-    no_disponibles = PlatillosNoDisponiblesController.obtener_no_disponibles()
-    return jsonify({'success': True, 'platillos': no_disponibles})
-
-@routes_bp.route("/api/cocina/platillos-no-disponibles", methods=['POST'])
-@login_required
-@rol_required(['3'])
-def api_marcar_platillo_no_disponible():
-    """Marca un platillo como no disponible"""
-    data = request.get_json()
-    resultado = PlatillosNoDisponiblesController.marcar_no_disponible(data)
-    status_code = 201 if resultado['success'] else 400
-    return jsonify(resultado), status_code
-
-@routes_bp.route("/api/cocina/platillos/<int:platillo_id>/reactivar", methods=['PUT'])
-@login_required
-@rol_required(['3'])
-def api_reactivar_platillo(platillo_id):
-    """Reactiva un platillo no disponible"""
-    resultado = PlatillosNoDisponiblesController.reactivar_platillo(platillo_id)
-    status_code = 200 if resultado['success'] else 400
-    return jsonify(resultado), status_code
-
-# ============================================
-#  UTILIDADES
-# ============================================
-
-@routes_bp.route('/toggle/theme')
-@login_required
-def toggle_theme():
-    from controllers.dashboard.dashboard_controller import toggle_theme as toggle_theme_func
-    return toggle_theme_func()
-
-# ============================================
-#  SEGURIDAD Y BACKUP
-# ============================================
-
-# Gestión Principal de Respaldos (Listar y Panel)
-routes_bp.add_url_rule("/admin/backup", view_func=BackupController.index, endpoint="admin_backup_view")
-
-# Creación de Respaldo (POST)
-routes_bp.add_url_rule("/admin/backup/create", view_func=BackupController.create, methods=["POST"], endpoint="admin_backup_create")
+@rol_required(['1'])
+def admin_backup_create():
+    return BackupController.create()
 
 # Eliminación de Archivo Físico
-routes_bp.add_url_rule("/admin/backup/delete/<filename>", view_func=BackupController.delete_file, endpoint="admin_backup_delete")
+@routes_bp.route('/admin/backup/delete/<filename>', methods=['GET'])
+@login_required
+@rol_required(['1'])
+def admin_backup_delete(filename):
+    return BackupController.delete_file(filename)
 
 # Restauración
-# Vista de Restauración (Historial y Carga)
-routes_bp.add_url_rule("/admin/restore", view_func=BackupController.restore_view, endpoint="admin_backup_restore_view")
-routes_bp.add_url_rule("/admin/backup/restore", view_func=BackupController.restore, methods=["POST"], endpoint="admin_backup_restore")
+@routes_bp.route('/admin/backup/restore', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def admin_backup_restore():
+    return BackupController.restore()
 
-# Acción de Restaurar (POST - Procesa archivos del servidor y subidos)
-routes_bp.add_url_rule("/admin/backup/restore", view_func=BackupController.restore, methods=["POST"], endpoint="admin_backup_restore")
+# Configuración de Backup Automático
+@routes_bp.route('/admin/backup/configure', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def admin_backup_configure():
+    return BackupController.configure_auto_backup()
