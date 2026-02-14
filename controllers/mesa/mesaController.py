@@ -1,6 +1,17 @@
 from flask import jsonify, session
 from config.db import db
 from bson.objectid import ObjectId
+def limpiar_objectid(obj):
+    from bson import ObjectId
+
+    if isinstance(obj, list):
+        return [limpiar_objectid(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: limpiar_objectid(v) for k, v in obj.items()}
+    elif isinstance(obj, ObjectId):
+        return str(obj)
+    else:
+        return obj
 
 class MesaController:
 
@@ -48,7 +59,7 @@ class MesaController:
                 comanda_data = {
                     "folio": comanda.get("folio"),
                     "total": float(comanda.get("total", 0)),
-                    "items": comanda.get("items", []),
+                    "items": limpiar_objectid(comanda.get("items", [])),
                     "num_comensales": int(comanda.get("num_comensales", mesa.get("comensales", 0)))
                 }
 

@@ -304,11 +304,20 @@ let mesasData = {};
 let comandasActivas = [];
 const API_BASE = '/api/mesero';
 
+// 🔥 CACHE Y OPTIMIZACIÓN
+let menuCache = null;
+let menuCargando = false;
+let carrito = [];
+let cuentaActivaId = null;
+
 // ===================================
 // INICIALIZACIÓN
 // ===================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard Mesero inicializado');
+    
+    // 🔥 PRECARGAR MENÚ EN SEGUNDO PLANO
+    precargarMenu();
     
     // Cargar datos iniciales
     cargarEstadoMesas();
@@ -322,6 +331,27 @@ document.addEventListener('DOMContentLoaded', function() {
         cargarEstadisticasDia();
     }, 30000);
 });
+
+// ===================================
+// 🔥 PRECARGA DE MENÚ
+// ===================================
+async function precargarMenu() {
+    if (menuCache || menuCargando) return;
+    menuCargando = true;
+    
+    try {
+        const res = await fetch('/api/menu');
+        const data = await res.json();
+        if (data.success && data.menu) {
+            menuCache = data.menu;
+            console.log('✅ Menú precargado:', menuCache.length, 'productos');
+        }
+    } catch (e) {
+        console.error('⚠️ Error al precargar menú:', e);
+    } finally {
+        menuCargando = false;
+    }
+}
 
 // ===================================
 // CARGA DE DATOS DESDE LA API
@@ -372,7 +402,7 @@ async function actualizarComandas() {
             comandasActivas = data.comandas;
             renderizarComandas();
             
-            // Actualizar número en el card superior (Comandas Activas: 2)
+            // Actualizar número en el card superior
             const statComandas = document.getElementById('stat-comandas');
             if (statComandas) statComandas.textContent = data.total;
             
@@ -409,7 +439,6 @@ function actualizarVisualizacionMesas() {
         icon.classList.remove('text-red-600', 'text-green-600', 'text-gray-600', 'text-blue-600');
 
         if (mesaInfo) {
-            // Normalizamos el estado a minúsculas para comparar siempre igual
             const estado = (mesaInfo.estado || "").toLowerCase().trim();
 
             if (estado === 'ocupada') {
@@ -432,7 +461,6 @@ function actualizarVisualizacionMesas() {
                 icon.classList.add('text-blue-600');
 
             } else {
-                // TRATAR COMO DISPONIBLE/LIBRE
                 statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700';
                 statusSpan.textContent = 'LIBRE';
                 comensalesP.textContent = 'SIN CLIENTES';
@@ -443,7 +471,6 @@ function actualizarVisualizacionMesas() {
                 icon.classList.add('text-green-600');
             }
         } else {
-            // Si sigue saliendo SIN DATOS, imprimimos en consola para rastrear por qué
             console.error(`Error: No hay data para la mesa ${numeroMesa}`, mesasData);
             statusSpan.textContent = 'N/A';
             comensalesP.textContent = 'SIN DATOS';
@@ -458,6 +485,7 @@ function actualizarVisualizacionMesas() {
     if (mesasOcupadasElement) mesasOcupadasElement.textContent = ocupadas;
     if (mesasLibresElement) mesasLibresElement.textContent = totalMesas - ocupadas;
 }
+
 // ===================================
 // RENDERIZADO DE COMANDAS
 // ===================================
@@ -483,7 +511,6 @@ function renderizarComandas() {
     
     comandasActivas.forEach(comanda => {
         const tiempoTranscurrido = calcularTiempoTranscurrido(comanda.fecha_apertura);
-        console.log("COMANDA RENDER:", comanda.id, typeof comanda.id);
         html += `
             <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 hover:shadow-md transition">
                 <div class="flex items-center justify-between mb-3">
@@ -531,23 +558,39 @@ function renderizarComandas() {
 }
 
 // ===================================
-// GESTIÓN DE MESAS
+// 🔥 GESTIÓN DE MESAS (OPTIMIZADO)
 // ===================================
 async function verMesa(numeroMesa) {
+    const modal = document.getElementById('modalMesa');
+    const content = document.getElementById('modal-mesa-content');
+    
+    // 🔥 MOSTRAR MODAL INMEDIATAMENTE CON LOADING
+    document.getElementById('modal-mesa-numero').textContent = numeroMesa;
+    content.innerHTML = `
+        <div class="text-center py-12">
+            <div class="animate-spin inline-block w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
+            <p class="text-gray-500 font-medium">Cargando información...</p>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+    
+    // 🔥 CARGAR DATOS EN SEGUNDO PLANO
     try {
         const response = await fetch(`${API_BASE}/mesa/${numeroMesa}`);
         const data = await response.json();
         
         if (!data.success) {
-            Swal.fire('Error', data.error || 'No se pudo cargar la mesa', 'error');
+            content.innerHTML = `
+                <div class="text-center py-8 text-red-500">
+                    <i class="bi bi-exclamation-triangle text-5xl mb-3"></i>
+                    <p>${data.error || 'Error al cargar mesa'}</p>
+                </div>
+            `;
             return;
         }
         
         const mesa = data.mesa;
-        const comanda = data.comanda; // Info real que viene del backend
-        const modal = document.getElementById('modalMesa');
-        const content = document.getElementById('modal-mesa-content');
-        document.getElementById('modal-mesa-numero').textContent = numeroMesa;
+        const comanda = data.comanda;
         
         if (mesa.estado === 'libre' || mesa.estado === 'disponible') {
             content.innerHTML = `
@@ -563,15 +606,10 @@ async function verMesa(numeroMesa) {
                     </div>
                 </div>`;
         } else {
-            // USAMOS LA INFO DE LA COMANDA QUE TRAE EL BACKEND
             const total = comanda ? Number(comanda.total).toFixed(2) : "0.00";
             const folio = comanda ? comanda.folio : 'Generando...';
-            const personas =
-            comanda?.num_comensales ??
-            comanda?.comensales ??
-            mesa?.num_comensales ??
-            0;
-            console.log("COMANDA DETALLE:", comanda);
+            const personas = comanda?.num_comensales ?? comanda?.comensales ?? mesa?.num_comensales ?? 0;
+            
             content.innerHTML = `
                 <div class="space-y-4">
                     <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">
@@ -598,21 +636,26 @@ async function verMesa(numeroMesa) {
                             <i class="bi bi-plus-circle-fill text-xl"></i>
                             AGREGAR PRODUCTOS AL PEDIDO
                         </button>
+                        <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="bi bi-cash-coin"></i>
+                            CERRAR CUENTA
+                        </button>
                         <button onclick="cerrarModalMesa()" 
                                 class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
                             Cerrar Detalle
                         </button>
-                            <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
-        class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
-        <i class="bi bi-cash-coin"></i>
-        CERRAR CUENTA
-    </button>
                     </div>
                 </div>`;
         }
-        modal.classList.remove('hidden');
     } catch (error) {
         console.error('Error al cargar mesa:', error);
+        content.innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                <i class="bi bi-wifi-off text-5xl mb-3"></i>
+                <p>Error de conexión</p>
+            </div>
+        `;
     }
 }
 
@@ -620,46 +663,85 @@ function cerrarModalMesa() {
     document.getElementById('modalMesa').classList.add('hidden');
 }
 
+// ===================================
+// 🔥 MODAL DE MENÚ (OPTIMIZADO)
+// ===================================
 async function abrirModalMenu(numMesa, idCuenta, cargarItemsExistentes = false) {
-    cuentaActivaId = idCuenta;
     const modal = document.getElementById('modalMenu');
     const labelMesa = document.getElementById('menu-mesa-num');
     const grid = document.getElementById('lista-productos-grid');
     
-    if (!modal || !grid) return console.error("No se encontró el modal de menú en el HTML");
+    if (!modal || !grid) {
+        console.error("No se encontró el modal de menú");
+        return;
+    }
 
+    // 🔥 MOSTRAR MODAL INMEDIATAMENTE
     labelMesa.textContent = numMesa;
     modal.classList.remove('hidden');
     
-    // 🔥 CAMBIO IMPORTANTE: Solo resetear si NO es para agregar items
+    // Configurar carrito
+    cuentaActivaId = idCuenta;
+    
     if (cargarItemsExistentes && cuentaActivaId) {
         await cargarItemsExistentesEnCarrito(cuentaActivaId);
     } else {
-        carrito = []; // Solo resetear si es cuenta nueva
+        carrito = [];
     }
-    
     renderizarCarrito();
-
-    try {
-        const res = await fetch('/api/menu');
-        const data = await res.json();
+    
+    // 🔥 USAR CACHE O CARGAR
+    if (menuCache && menuCache.length > 0) {
+        console.log('✅ Usando menú en cache');
+        renderizarProductos(menuCache, grid);
+    } else {
+        console.log('⏳ Cargando menú desde servidor...');
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <div class="animate-spin inline-block w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
+                <p class="text-gray-500 font-medium">Cargando productos...</p>
+            </div>
+        `;
         
-        grid.innerHTML = '';
-        data.menu.forEach(p => {
-            grid.innerHTML += `
-                <div onclick="agregarAlCarrito('${p._id}', '${p.nombre}', ${p.precio})" 
-                     class="p-4 border rounded-xl hover:bg-orange-50 cursor-pointer transition flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-gray-800">${p.nombre}</p>
-                        <p class="text-sm text-orange-600 font-bold">$${p.precio.toFixed(2)}</p>
-                    </div>
-                    <i class="bi bi-plus-circle-fill text-orange-400 text-xl"></i>
-                </div>`;
-        });
-    } catch (e) {
-        grid.innerHTML = '<p class="text-red-500">Error al cargar productos</p>';
+        try {
+            const res = await fetch('/api/menu');
+            const data = await res.json();
+            
+            if (data.success && data.menu) {
+                menuCache = data.menu;
+                renderizarProductos(menuCache, grid);
+            } else {
+                grid.innerHTML = '<p class="text-red-500 col-span-full text-center py-8">Error al cargar el menú</p>';
+            }
+        } catch (e) {
+            console.error('Error al cargar menú:', e);
+            grid.innerHTML = '<p class="text-red-500 col-span-full text-center py-8">Error de conexión</p>';
+        }
     }
 }
+
+// 🔥 RENDERIZADO OPTIMIZADO CON DOCUMENTFRAGMENT
+function renderizarProductos(productos, grid) {
+    const fragment = document.createDocumentFragment();
+    
+    productos.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded-xl hover:bg-orange-50 cursor-pointer transition flex justify-between items-center';
+        div.onclick = () => agregarAlCarrito(p._id, p.nombre, p.precio);
+        div.innerHTML = `
+            <div>
+                <p class="font-bold text-gray-800">${p.nombre}</p>
+                <p class="text-sm text-orange-600 font-bold">$${p.precio.toFixed(2)}</p>
+            </div>
+            <i class="bi bi-plus-circle-fill text-orange-400 text-xl"></i>
+        `;
+        fragment.appendChild(div);
+    });
+    
+    grid.innerHTML = '';
+    grid.appendChild(fragment);
+}
+
 async function cargarItemsExistentesEnCarrito(cuentaId) {
     const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
     
@@ -668,7 +750,6 @@ async function cargarItemsExistentesEnCarrito(cuentaId) {
         return;
     }
     
-    // Cargar los items existentes en el carrito
     carrito = comanda.items.map(item => ({
         id: item.producto_id || item.id || item._id,
         nombre: item.nombre,
@@ -676,8 +757,9 @@ async function cargarItemsExistentesEnCarrito(cuentaId) {
         cantidad: item.cantidad
     }));
     
-    console.log('✅ Items existentes cargados en carrito:', carrito);
+    console.log('✅ Items existentes cargados:', carrito);
 }
+
 function agregarAlCarrito(id, nombre, precio) {
     const itemExistente = carrito.find(i => i.id === id);
     if (itemExistente) {
@@ -693,53 +775,80 @@ function renderizarCarrito() {
     const totalElement = document.getElementById('carrito-total');
     let total = 0;
     
-    container.innerHTML = '';
+    if (carrito.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-gray-400 py-10">
+                <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
+                <p class="text-xs">Selecciona un producto <br> de la izquierda</p>
+            </div>
+        `;
+        totalElement.textContent = '$0.00';
+        return;
+    }
+    
+    // 🔥 USAR FRAGMENT PARA MEJOR PERFORMANCE
+    const fragment = document.createDocumentFragment();
+    
     carrito.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
         total += subtotal;
-        container.innerHTML += `
-            <div class="flex justify-between items-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
-                <div class="flex-1">
-                    <p class="font-bold text-xs">${item.nombre}</p>
-                    <p class="text-[10px] text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidad}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="modificarCantidad(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">-</button>
-                    <span class="text-xs font-bold">${item.cantidad}</span>
-                    <button onclick="modificarCantidad(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">+</button>
-                </div>
-            </div>`;
+        
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center p-2 bg-white rounded-lg shadow-sm border border-gray-100';
+        div.innerHTML = `
+            <div class="flex-1">
+                <p class="font-bold text-xs">${item.nombre}</p>
+                <p class="text-[10px] text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidad}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="modificarCantidad(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">-</button>
+                <span class="text-xs font-bold">${item.cantidad}</span>
+                <button onclick="modificarCantidad(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">+</button>
+            </div>
+        `;
+        fragment.appendChild(div);
     });
+    
+    container.innerHTML = '';
+    container.appendChild(fragment);
     totalElement.textContent = `$${total.toFixed(2)}`;
 }
 
 function modificarCantidad(index, cambio) {
     carrito[index].cantidad += cambio;
-    if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
+    if (carrito[index].cantidad <= 0) {
+        carrito.splice(index, 1);
+    }
     renderizarCarrito();
 }
 
 async function confirmarPedidoCocina() {
-    console.log("Cuenta activa ID:", cuentaActivaId);
-    if (carrito.length === 0) return Swal.fire("Carrito vacío", "Agrega al menos un producto", "warning");
+    if (carrito.length === 0) {
+        return Swal.fire("Carrito vacío", "Agrega al menos un producto", "warning");
+    }
 
     showLoading("Enviando a cocina...");
+    
     try {
         const res = await fetch(`${API_BASE}/comanda/${cuentaActivaId}/items`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: carrito })
         });
+        
         const data = await res.json();
+        
         if (data.success) {
             showSuccess("¡Pedido enviado correctamente!");
             cerrarModalMenu();
-            actualizarComandas(); // Refrescar lista inferior
+            actualizarComandas();
+            cargarEstadisticasDia();
         } else {
-            showError(data.error);
+            showError(data.error || 'Error al enviar pedido');
         }
     } catch (e) {
-        showError("Error al enviar pedido");
+        console.error('Error:', e);
+        showError("Error de conexión");
     }
 }
 
@@ -747,6 +856,7 @@ function cerrarModalMenu() {
     document.getElementById('modalMenu').classList.add('hidden');
     cuentaActivaId = null;
 }
+
 // ===================================
 // GESTIÓN DE CUENTAS
 // ===================================
@@ -765,6 +875,7 @@ async function abrirCuenta(numeroMesa) {
     if (numComensales) {
         try {
             showLoading('Iniciando comanda...');
+            
             const response = await fetch(`${API_BASE}/cuenta/abrir`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -778,10 +889,8 @@ async function abrirCuenta(numeroMesa) {
             hideLoading();
 
             if (data.success) {
-                // 1. Guardar el ID globalmente
-                cuentaActivaId = data.cuenta_id; 
+                cuentaActivaId = data.cuenta_id;
 
-                // 2. Notificar al usuario
                 Swal.fire({
                     title: '¡Éxito!',
                     text: 'Cuenta abierta correctamente',
@@ -790,28 +899,25 @@ async function abrirCuenta(numeroMesa) {
                     showConfirmButton: false
                 });
 
-                // 3. Cerrar modales previos y refrescar Dashboard
                 cerrarModalMesa();
-                await cargarEstadoMesas();   // Actualiza colores de cuadritos
-                actualizarComandas();        // ¡Aquí es donde aparece en la lista inferior!
-                cargarEstadisticasDia();     // Actualiza contadores superiores
+                await cargarEstadoMesas();
+                actualizarComandas();
+                cargarEstadisticasDia();
 
-                // 4. Abrir el menú pasando el ID de la cuenta recién creada
-                // Pasamos tanto el número de mesa como el ID de la cuenta
                 abrirModalMenu(numeroMesa, data.cuenta_id);
 
             } else {
-                showError(data.error);
+                showError(data.error || 'Error al abrir cuenta');
             }
         } catch (error) {
             hideLoading();
-            showError('Error de conexión al abrir cuenta');
+            showError('Error de conexión');
             console.error(error);
         }
     }
 }
+
 function mostrarSeleccionMesa() {
-    // Filtrar mesas disponibles
     const mesasDisponibles = Object.values(mesasData).filter(m => m.estado === 'disponible');
     
     if (mesasDisponibles.length === 0) {
@@ -823,7 +929,6 @@ function mostrarSeleccionMesa() {
         return;
     }
     
-    // Crear opciones para el select
     const opciones = {};
     mesasDisponibles.forEach(mesa => {
         opciones[mesa.numero] = `Mesa ${mesa.numero} (${mesa.capacidad} personas)`;
@@ -896,14 +1001,12 @@ async function verDetalleComanda(cuentaId) {
             popup: 'rounded-[28px] overflow-hidden relative'
         },
         html: `
-            <!-- BOTÓN CERRAR FLOTANTE -->
             <button 
                 onclick="Swal.close()"
                 class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 transition flex items-center justify-center text-2xl z-50">
                 &times;
             </button>
 
-            <!-- HEADER -->
             <div class="bg-orange-600 text-white px-6 pt-8 pb-6 rounded-t-[28px]">
                 <h3 class="text-2xl font-black">${comanda.folio}</h3>
                 <p class="text-sm opacity-90">
@@ -912,12 +1015,10 @@ async function verDetalleComanda(cuentaId) {
                 </p>
             </div>
 
-            <!-- BODY -->
             <div class="p-6 bg-gray-50 max-h-[55vh] overflow-y-auto space-y-3">
                 ${itemsHtml}
             </div>
 
-            <!-- FOOTER -->
             <div class="p-6 bg-white border-t flex justify-between items-center">
                 <div>
                     <p class="text-xs font-bold text-gray-500 uppercase">Total</p>
@@ -937,60 +1038,6 @@ async function verDetalleComanda(cuentaId) {
     });
 }
 
-
-function verDetalleMesa(numero) {
-    fetch(`/api/mesero/mesa/${numero}`)
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                const mesa = data.mesa;
-                const comanda = data.comanda;
-                const infoDiv = document.getElementById('detalle-mesa-info');
-
-                document.getElementById('detalle-mesa-num').textContent = mesa.numero;
-                
-                if(mesa.estado === 'ocupada' && comanda) {
-                    // Generar lista de items si existen
-                    let itemsHtml = '';
-                    if (comanda.items && comanda.items.length > 0) {
-                        itemsHtml = `
-                            <div class="mt-4 border-t pt-2">
-                                <p class="text-xs font-bold text-gray-400 uppercase">Consumo actual:</p>
-                                <ul class="divide-y divide-gray-100 max-h-40 overflow-y-auto">
-                                    ${comanda.items.map(item => `
-                                        <li class="py-1 flex justify-between text-sm">
-                                            <span>${item.cantidad}x ${item.nombre}</span>
-                                            <span class="font-medium">$${(item.precio * item.cantidad).toFixed(2)}</span>
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            </div>`;
-                    }
-
-                    infoDiv.innerHTML = `
-                        <p class="text-orange-600 font-bold">
-                        Mesa Ocupada - ${comanda.num_comensales ?? comanda.comensales ?? 0} personas</p>
-                        <p class="text-xs text-gray-500">Folio: <span class="font-mono">${comanda.folio}</span></p>
-                        <p class="text-2xl font-black text-gray-800">$${comanda.total.toFixed(2)}</p>
-                        ${itemsHtml}
-                    `;
-                    
-                    document.getElementById('btn-abrir-cuenta').classList.add('hidden');
-                    document.getElementById('btn-agregar-pedido').classList.remove('hidden');
-                    
-                    // IMPORTANTE: Guardar el ID de la cuenta en el botón para saber a cuál agregar
-                    document.getElementById('btn-agregar-pedido').onclick = () => abrirModalMenu(comanda.folio, mesa.numero, data.mesa.cuenta_activa_id);
-
-                } else {
-                    infoDiv.innerHTML = `<p class="text-green-600 font-bold text-lg py-4">Mesa Disponible</p>`;
-                    document.getElementById('btn-abrir-cuenta').classList.remove('hidden');
-                    document.getElementById('btn-agregar-pedido').classList.add('hidden');
-                }
-                
-                document.getElementById('modalDetalleMesa').classList.remove('hidden');
-            }
-        });
-}
 function agregarItemsComanda(cuentaId) {
     const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
     
@@ -998,7 +1045,7 @@ function agregarItemsComanda(cuentaId) {
         showError('No se encontró la comanda');
         return;
     }
-    // 🔥 TRUE indica que debe cargar items existentes
+    
     abrirModalMenu(comanda.mesa_numero, cuentaId, true);
 }
 
@@ -1095,23 +1142,7 @@ function cerrarCuenta(cuentaId, numeroMesa) {
             actualizarComandas();
             cargarEstadisticasDia();
         } else {
-            showError(data.error);
-        }
-    });
-}
-
-function solicitarAyuda() {
-    Swal.fire({
-        title: '¿Necesitas ayuda?',
-        text: 'Se notificará al supervisor',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, solicitar ayuda',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Aquí implementarías la notificación real
-            showSuccess('¡Ayuda solicitada! Un supervisor se acercará pronto');
+            showError(data.error || 'Error al cerrar cuenta');
         }
     });
 }
@@ -1124,7 +1155,7 @@ function calcularTiempoTranscurrido(fechaInicio) {
     
     const inicio = new Date(fechaInicio);
     const ahora = new Date();
-    const diff = Math.floor((ahora - inicio) / 60000); // minutos
+    const diff = Math.floor((ahora - inicio) / 60000);
     
     if (diff < 60) {
         return `${diff} min`;
@@ -1135,7 +1166,6 @@ function calcularTiempoTranscurrido(fechaInicio) {
     }
 }
 
-// Funciones de UI (asegúrate de tener SweetAlert2 incluido)
 function showLoading(message = 'Cargando...') {
     Swal.fire({
         title: message,
