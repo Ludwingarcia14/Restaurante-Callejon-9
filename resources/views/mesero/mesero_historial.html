@@ -31,126 +31,256 @@
 {% endblock %}
 
 {% block content %}
-<div class="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap items-center gap-4">
-    <div class="flex-1 min-w-[200px]">
-        <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Rango de Fecha</label>
-        <div class="flex items-center gap-2">
-            <input type="date" id="filtro-fecha" class="w-full border-gray-200 rounded-lg text-sm">
-            <button onclick="cargarHistorial()" class="bg-[#F2913D] text-white p-2 rounded-lg">
-                <i class="bi bi-search"></i>
-            </button>
+
+<!-- FILTROS Y RESUMEN -->
+<div class="bg-white p-4 rounded-xl shadow-md mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        
+        <!-- Filtro de Fecha -->
+        <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Fecha</label>
+            <div class="flex items-center gap-2">
+                <input type="date" id="filtro-fecha" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
+                <button onclick="cargarHistorial()" 
+                        class="bg-[#F2913D] hover:bg-[#F2A339] text-white px-4 py-2 rounded-lg transition">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button onclick="resetFecha()" 
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg transition"
+                        title="Hoy">
+                    <i class="bi bi-calendar-check"></i>
+                </button>
+            </div>
         </div>
+
+        <!-- Total de Ventas -->
+        <div class="bg-gradient-to-r from-green-50 to-green-100 px-4 py-3 rounded-lg border border-green-200">
+            <span class="text-[10px] font-bold text-green-700 uppercase block">Total del Día</span>
+            <span id="total-ventas-historial" class="text-2xl font-black text-green-800">$0.00</span>
+        </div>
+
+        <!-- Total de Propinas -->
+        <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-3 rounded-lg border border-orange-200">
+            <span class="text-[10px] font-bold text-orange-700 uppercase block">Propinas del Día</span>
+            <span id="total-propinas-historial" class="text-2xl font-black text-orange-800">$0.00</span>
+        </div>
+
     </div>
-    <div class="bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
-        <span class="text-[10px] font-bold text-gray-400 uppercase block">Total Turno</span>
-        <span id="total-ventas-historial" class="text-xl font-black text-[#0D0D0D]">$0.00</span>
+
+    <!-- Contador de registros -->
+    <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
+        <span class="text-gray-500">
+            <i class="bi bi-receipt"></i>
+            <span id="num-registros">0</span> cuenta(s) cerrada(s)
+        </span>
+        <span id="fecha-seleccionada" class="text-gray-400 font-mono"></span>
     </div>
 </div>
 
-<div id="contenedor-historial" class="space-y-4">
+<!-- LISTA DE CUENTAS -->
+<div id="contenedor-historial" class="space-y-3">
     <div class="text-center py-10 text-gray-400">
         <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
         <p class="mt-2 font-medium text-sm">Cargando registros...</p>
     </div>
 </div>
+
 {% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const inputFecha = document.getElementById('filtro-fecha');
-    inputFecha.valueAsDate = new Date();
+    resetFecha();
     cargarHistorial();
 });
+
+function resetFecha() {
+    const inputFecha = document.getElementById('filtro-fecha');
+    const hoy = new Date();
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate()).padStart(2, '0');
+    inputFecha.value = `${year}-${month}-${day}`;
+    
+    // Actualizar label de fecha seleccionada
+    document.getElementById('fecha-seleccionada').textContent = 
+        hoy.toLocaleDateString('es-MX', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+}
 
 async function cargarHistorial() {
     const fecha = document.getElementById('filtro-fecha').value;
     const contenedor = document.getElementById('contenedor-historial');
 
+    console.log('🔄 Cargando historial para fecha:', fecha);
+
     contenedor.innerHTML = `
         <div class="text-center py-10 text-gray-400">
-            <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
-            <p class="mt-2 font-medium text-sm">Cargando registros...</p>
+            <div class="animate-spin inline-block w-12 h-12 border-4 border-gray-200 border-t-[#F2913D] rounded-full mb-4"></div>
+            <p class="font-medium text-sm">Cargando registros...</p>
         </div>
     `;
 
     try {
-        const response = await fetch(`/api/mesero/historial?fecha=${fecha}`);
+        // 🔥 CONVERTIR FECHA A RANGO COMPLETO DEL DÍA
+        const fechaInicio = new Date(fecha + 'T00:00:00');
+        const fechaFin = new Date(fecha + 'T23:59:59');
+        
+        const url = `/api/mesero/historial?fecha_inicio=${fechaInicio.toISOString()}&fecha_fin=${fechaFin.toISOString()}`;
+        
+        console.log('📡 URL de petición:', url);
+        
+        const response = await fetch(url);
 
-        if (!response.ok) throw new Error("Error servidor");
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status}`);
+        }
 
         const data = await response.json();
+        
+        console.log('📊 Datos recibidos:', data);
 
-        if (!data.success) throw new Error("Respuesta inválida");
+        if (!data.success) {
+            throw new Error(data.error || "Respuesta inválida");
+        }
 
         renderizarHistorial(data);
 
     } catch (error) {
-        console.error("❌ Error historial:", error);
+        console.error("❌ Error al cargar historial:", error);
         contenedor.innerHTML = `
             <div class="text-center py-10 text-red-500">
-                <i class="bi bi-exclamation-triangle text-3xl"></i>
-                <p class="mt-2 font-medium text-sm">No se pudo cargar el historial</p>
+                <i class="bi bi-exclamation-triangle text-4xl mb-3 opacity-30"></i>
+                <p class="font-medium">No se pudo cargar el historial</p>
+                <p class="text-xs mt-1 text-gray-400">${error.message}</p>
             </div>
         `;
         document.getElementById('total-ventas-historial').textContent = '$0.00';
+        document.getElementById('total-propinas-historial').textContent = '$0.00';
+        document.getElementById('num-registros').textContent = '0';
     }
 }
 
 function renderizarHistorial(data) {
-    document.getElementById('total-ventas-historial').textContent =
-        `$${data.total_dia.toFixed(2)}`;
+    const historial = data.historial || [];
+    
+    // 🔥 CALCULAR TOTALES
+    let totalVentas = 0;
+    let totalPropinas = 0;
+    
+    historial.forEach(reg => {
+        totalVentas += reg.total_final || 0;
+        totalPropinas += reg.propina || 0;
+    });
+    
+    console.log('💰 Totales calculados:');
+    console.log('   Ventas: $', totalVentas.toFixed(2));
+    console.log('   Propinas: $', totalPropinas.toFixed(2));
+    console.log('   Registros: ', historial.length);
+    
+    // 🔥 ACTUALIZAR CARDS
+    document.getElementById('total-ventas-historial').textContent = `$${totalVentas.toFixed(2)}`;
+    document.getElementById('total-propinas-historial').textContent = `$${totalPropinas.toFixed(2)}`;
+    document.getElementById('num-registros').textContent = historial.length;
 
     const contenedor = document.getElementById('contenedor-historial');
 
-    if (!data.registros.length) {
+    if (!historial.length) {
         contenedor.innerHTML = `
-            <div class="text-center py-10 text-gray-400">
-                <i class="bi bi-inbox text-3xl"></i>
-                <p class="mt-2 font-medium text-sm">Sin registros para esta fecha</p>
+            <div class="text-center py-12 text-gray-400">
+                <i class="bi bi-inbox text-5xl mb-4 opacity-20"></i>
+                <p class="font-medium">Sin registros para esta fecha</p>
+                <p class="text-xs mt-2">Las cuentas cerradas aparecerán aquí</p>
             </div>
         `;
         return;
     }
 
-    contenedor.innerHTML = data.registros.map(reg => {
-        const esCancelado = reg.estado === 'CANCELADO';
+    contenedor.innerHTML = historial.map(reg => {
+        const fecha = reg.fecha_cierre ? new Date(reg.fecha_cierre) : new Date();
+        const hora = fecha.toLocaleTimeString('es-MX', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        const metodo = (reg.metodo_pago || 'efectivo').toLowerCase();
+        let metodoBadge = '';
+        let metodoBadgeClass = '';
+        
+        if (metodo === 'mercadopago' || metodo === 'tarjeta') {
+            metodoBadge = 'TARJETA MP';
+            metodoBadgeClass = 'text-blue-600 bg-blue-50';
+        } else if (metodo === 'efectivo') {
+            metodoBadge = 'EFECTIVO';
+            metodoBadgeClass = 'text-orange-600 bg-orange-50';
+        } else if (metodo === 'transferencia') {
+            metodoBadge = 'TRANSFERENCIA';
+            metodoBadgeClass = 'text-purple-600 bg-purple-50';
+        } else {
+            metodoBadge = metodo.toUpperCase();
+            metodoBadgeClass = 'text-gray-600 bg-gray-50';
+        }
+
+        const totalFinal = reg.total_final || 0;
+        const propina = reg.propina || 0;
+        const items = reg.items || 0;
 
         return `
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition ${esCancelado ? 'opacity-60 bg-gray-50' : ''}">
-            <div class="flex justify-between items-start">
-                <div class="flex gap-3">
-                    <div class="w-10 h-10 ${esCancelado ? 'bg-red-50' : 'bg-gray-50'} rounded-lg flex items-center justify-center border border-gray-200">
-                        <i class="bi ${esCancelado ? 'bi-x-circle text-red-500' : 'bi-receipt text-gray-400'}"></i>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-[#F2913D] transition-all">
+            <div class="flex justify-between items-start mb-3">
+                
+                <!-- INFO IZQUIERDA -->
+                <div class="flex gap-3 flex-1">
+                    <div class="w-12 h-12 bg-gradient-to-br from-[#F2913D] to-[#F2A339] rounded-xl flex items-center justify-center shadow-sm">
+                        <i class="bi bi-receipt text-white text-lg"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-gray-800 text-sm">Mesa ${reg.mesa_numero}</h4>
-                        <p class="text-[10px] text-gray-400 uppercase font-semibold">
-                            ${reg.hora_cierre} • ${reg.estado}
+                        <h4 class="font-bold text-gray-800">Mesa ${reg.mesa}</h4>
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold flex items-center gap-2">
+                            <i class="bi bi-clock"></i>
+                            ${hora}
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            ${reg.folio || 'N/A'}
                         </p>
                     </div>
                 </div>
+                
+                <!-- INFO DERECHA -->
                 <div class="text-right">
-                    <p class="font-black ${esCancelado ? 'text-gray-400 line-through' : 'text-gray-800'}">
-                        $${reg.total.toFixed(2)}
+                    <p class="text-2xl font-black text-gray-800">
+                        $${totalFinal.toFixed(2)}
                     </p>
-                    ${!esCancelado ? `
-                        <span class="text-[9px] font-bold ${
-                            reg.metodo_pago === 'TARJETA'
-                                ? 'text-blue-600 bg-blue-50'
-                                : 'text-orange-600 bg-orange-50'
-                        } px-2 py-0.5 rounded uppercase">
-                            ${reg.metodo_pago}
-                        </span>
-                    ` : `
-                        <span class="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded uppercase">
-                            CANCELADO
-                        </span>
-                    `}
+                    <span class="text-[9px] font-bold ${metodoBadgeClass} px-2 py-1 rounded-full uppercase inline-block mt-1">
+                        ${metodoBadge}
+                    </span>
+                </div>
+            </div>
+
+            <!-- DETALLES -->
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-xs">
+                <div class="text-center">
+                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Comensales</p>
+                    <p class="font-bold text-gray-700">${reg.num_comensales || 0}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Items</p>
+                    <p class="font-bold text-gray-700">${items}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Propina</p>
+                    <p class="font-bold text-green-600">+$${propina.toFixed(2)}</p>
                 </div>
             </div>
         </div>
         `;
     }).join('');
+    
+    console.log('✅ Historial renderizado');
 }
 </script>
 {% endblock %}

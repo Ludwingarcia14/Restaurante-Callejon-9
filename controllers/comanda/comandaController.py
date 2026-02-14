@@ -16,8 +16,9 @@ class ComandaController:
 
         mesero_oid = ObjectId(mesero_id)
 
+        # 🔥 EXCLUIR TANTO "pagada" COMO "cerrada"
         cursor = db.comandas.find({
-            "estado": {"$ne": "pagada"},
+            "estado": {"$nin": ["pagada", "cerrada"]},  # 🔥 Cambiado de $ne a $nin
             "mesero_id": mesero_oid
         }).sort("fecha_apertura", -1)
 
@@ -194,66 +195,157 @@ class ComandaController:
 
     @staticmethod
     def cerrar_cuenta(cuenta_id):
+        """
+        🔥 CIERRE DE CUENTA PARA EFECTIVO Y TRANSFERENCIA
+        (Mercado Pago se maneja por separado en MercadoPagoController)
+        """
         data = request.json or {}
 
         metodo_pago = data.get("metodo_pago", "efectivo")
         tipo_propina = data.get("tipo_propina", "sin")
         custom_porcentaje = data.get("custom_porcentaje")
 
-        comanda = db.comandas.find_one({"_id": ObjectId(cuenta_id)})
-        if not comanda:
-            return jsonify({"success": False, "error": "Comanda no encontrada"}), 404
+        try:
+            comanda = db.comandas.find_one({"_id": ObjectId(cuenta_id)})
+            if not comanda:
+                return jsonify({"success": False, "error": "Comanda no encontrada"}), 404
 
-        total = float(comanda.get("total", 0))
+            # Verificar que no esté ya cerrada
+            if comanda.get("estado") in ["cerrada", "pagada"]:
+                return jsonify({
+                    "success": False,
+                    "error": "Esta cuenta ya fue cerrada"
+                }), 400
 
-        # ==========================
-        # 🧮 CALCULAR PROPINA
-        # ==========================
-        porcentaje = 0
+            total = float(comanda.get("total", 0))
 
-        if tipo_propina == "custom":
-            porcentaje = float(custom_porcentaje or 0)
-        elif tipo_propina.isdigit():
-            porcentaje = float(tipo_propina)
+            # ==========================
+            # 🧮 CALCULAR PROPINA
+            # ==========================
+            porcentaje = 0
 
-        propina = round(total * (porcentaje / 100), 2)
-        total_final = round(total + propina, 2)
+            if tipo_propina == "custom":
+                porcentaje = float(custom_porcentaje or 0)
+            elif tipo_propina.isdigit():
+                porcentaje = float(tipo_propina)
 
-        # ==========================
-        # 💾 GUARDAR COMANDA
-        # ==========================
-        db.comandas.update_one(
-            {"_id": ObjectId(cuenta_id)},
-            {"$set": {
-                "estado": "pagada",
-                "metodo_pago": metodo_pago,
+            propina = round(total * (porcentaje / 100), 2)
+            total_final = round(total + propina, 2)
+
+            # 🔥 USAR HORA LOCAL (NO UTC)
+            fecha_actual = datetime.now()
+            
+            print(f"\n{'='*60}")
+            print(f"💵 CERRANDO CUENTA - {metodo_pago.upper()}")
+            print(f"{'='*60}")
+            print(f"Cuenta ID: {cuenta_id}")
+            print(f"Total: ${total_final:.2f}")
+            print(f"Propina: ${propina:.2f}")
+            print(f"Fecha cierre: {fecha_actual}")
+            print(f"{'='*60}\n")
+
+            # ==========================
+            # 💾 GUARDAR COMANDA
+            # ==========================
+            db.comandas.update_one(
+                {"_id": ObjectId(cuenta_id)},
+                {
+                    "$set": {
+                        "estado": "pagada",
+                        "metodo_pago": metodo_pago,
+                        "propina": propina,
+                        "porcentaje_propina": porcentaje,
+                        "total_final": total_final,
+                        "fecha_cierre": fecha_actual
+                    }
+                }
+            )
+
+            # ==========================
+            # 🪑 LIBERAR MESA
+            # ==========================
+            mesa_numero = comanda.get("mesa_numero")
+            db.mesas.update_one(
+                {"numero": mesa_numero},
+                {
+                    "$set": {
+                        "estado": "disponible",
+                        "cuenta_activa_id": None,
+                        "num_comensales": 0,
+                        "ultima_actualizacion": fecha_actual
+                    }
+                }
+            )
+
+            # ==========================
+            # 💰 REGISTRAR PROPINA
+            # ==========================
+            if propina > 0 and comanda.get("mesero_id"):
+                db.propinas.insert_one({
+                    "mesero_id": comanda.get("mesero_id"),
+                    "comanda_id": ObjectId(cuenta_id),
+                    "mesa_numero": mesa_numero,
+                    "monto": propina,
+                    "porcentaje": porcentaje,
+                    "fecha": fecha_actual,
+                    "metodo_pago": metodo_pago
+                })
+
+            return jsonify({
+                "success": True,
+                "total": total,
                 "propina": propina,
                 "porcentaje_propina": porcentaje,
                 "total_final": total_final,
-                "fecha_cierre": datetime.utcnow()
-            }}
-        )
+                "message": "Cuenta cerrada correctamente"
+            })
 
-        # ==========================
-        # 🪑 LIBERAR MESA
-        # ==========================
-        db.mesas.update_one(
-            {"cuenta_activa_id": ObjectId(cuenta_id)},
-            {"$set": {
-                "estado": "libre",
-                "cuenta_activa_id": None,
-                "comensales": 0
-            }}
-        )
+        except InvalidId:
+            return jsonify({"success": False, "error": "ID de cuenta inválido"}), 400
+        except Exception as e:
+            print(f"❌ Error al cerrar cuenta: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Error al cerrar cuenta: {str(e)}"
+            }), 500
 
+    @staticmethod
+    def verificar_estado_pago(cuenta_id):
+        """
+        🔥 ENDPOINT PARA VERIFICAR SI UN PAGO FUE PROCESADO
+        Se usa para polling desde el frontend
+        """
+        try:
+            cuenta_oid = ObjectId(cuenta_id)
+        except:
+            return jsonify({
+                "success": False,
+                "error": "ID inválido"
+            }), 400
+        
+        comanda = db.comandas.find_one({"_id": cuenta_oid})
+        
+        if not comanda:
+            return jsonify({
+                "success": False,
+                "error": "Comanda no encontrada"
+            }), 404
+        
+        # Si está cerrada, el pago fue aprobado
+        if comanda.get("estado") in ["cerrada", "pagada"]:
+            return jsonify({
+                "success": True,
+                "status": "approved",
+                "total": float(comanda.get("total_final", comanda.get("total", 0))),
+                "propina": float(comanda.get("propina", 0)),
+                "metodo_pago": comanda.get("metodo_pago", "efectivo")
+            })
+        
+        # Si no está cerrada, sigue pendiente
         return jsonify({
             "success": True,
-            "total": total,
-            "propina": propina,
-            "porcentaje": porcentaje,
-            "total_final": total_final
+            "status": "pending"
         })
-
         
     @staticmethod
     def comandas_cerradas():
@@ -267,8 +359,9 @@ class ComandaController:
         except Exception:
             return jsonify({"success": True, "comandas": []})
 
+        # 🔥 Buscar tanto "pagada" como "cerrada"
         cursor = db.comandas.find({
-            "estado": "pagada",
+            "estado": {"$in": ["pagada", "cerrada"]},
             "mesero_id": mesero_oid
         }).sort("fecha_cierre", -1)
 
@@ -298,13 +391,22 @@ class ComandaController:
 
         mesero_oid = ObjectId(mesero_id)
 
-        inicio_dia = datetime.utcnow().replace(
+        # 🔥 USAR HORA LOCAL (NO UTC)
+        inicio_dia = datetime.now().replace(
             hour=0, minute=0, second=0, microsecond=0
         )
         fin_dia = inicio_dia + timedelta(days=1)
 
+        print(f"\n{'='*60}")
+        print(f"📊 ESTADÍSTICAS DEL DÍA - DEBUG")
+        print(f"{'='*60}")
+        print(f"Mesero ID: {mesero_id}")
+        print(f"Inicio día: {inicio_dia}")
+        print(f"Fin día: {fin_dia}")
+
+        # 🔥 BUSCAR COMANDAS CON ESTADO "pagada" O "cerrada"
         cursor = db.comandas.find({
-            "estado": "pagada",
+            "estado": {"$in": ["pagada", "cerrada"]},
             "mesero_id": mesero_oid,
             "fecha_cierre": {
                 "$gte": inicio_dia,
@@ -316,10 +418,20 @@ class ComandaController:
         propinas = 0
         ordenes = 0
 
-        for c in cursor:
+        comandas_del_dia = list(cursor)
+        print(f"\n📅 Comandas del día encontradas: {len(comandas_del_dia)}")
+
+        for c in comandas_del_dia:
             venta += float(c.get("total_final", 0))
             propinas += float(c.get("propina", 0))
             ordenes += 1
+            print(f"   ✅ Folio: {c.get('folio')}, Total: ${c.get('total_final', 0):.2f}, Fecha: {c.get('fecha_cierre')}")
+
+        print(f"\n💰 RESULTADOS:")
+        print(f"   Venta total: ${venta:.2f}")
+        print(f"   Propinas: ${propinas:.2f}")
+        print(f"   Órdenes: {ordenes}")
+        print(f"{'='*60}\n")
 
         return jsonify({
             "success": True,
@@ -329,7 +441,6 @@ class ComandaController:
                 "num_ordenes": ordenes
             }
         })
-
 
 # ============================================
 # 🔔 FUNCIONES AUXILIARES - NOTIFICACIONES

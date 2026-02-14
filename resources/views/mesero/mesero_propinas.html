@@ -41,14 +41,20 @@
             <h3 id="total-propinas-dia" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-piggy-bank text-4xl text-green-500 opacity-20"></i>
         </div>
+        <p class="text-xs text-gray-400 mt-2">
+            <span id="num-servicios">0</span> servicio(s)
+        </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
-        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Por Tarjeta</p>
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Por Tarjeta (MP)</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="propinas-tarjeta" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-credit-card text-4xl text-blue-500 opacity-20"></i>
         </div>
+        <p class="text-xs text-gray-400 mt-2">
+            <span id="num-tarjeta">0</span> pago(s)
+        </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-orange-500">
@@ -57,6 +63,9 @@
             <h3 id="propinas-efectivo" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-cash-stack text-4xl text-orange-500 opacity-20"></i>
         </div>
+        <p class="text-xs text-gray-400 mt-2">
+            <span id="num-efectivo">0</span> pago(s)
+        </p>
     </div>
 
 </div>
@@ -77,7 +86,7 @@
                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase font-bold">
                     <th class="p-4">Hora</th>
                     <th class="p-4">Mesa</th>
-                    <th class="p-4">Total Cuenta</th>
+                    <th class="p-4">Porcentaje</th>
                     <th class="p-4">Método</th>
                     <th class="p-4 text-right">Propina</th>
                 </tr>
@@ -99,65 +108,152 @@ document.addEventListener('DOMContentLoaded', () => {
         hoy.toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' });
 
     cargarPropinas();
+    
+    // 🔥 Actualizar cada 30 segundos
+    setInterval(cargarPropinas, 30000);
 });
 
 async function cargarPropinas() {
     try {
+        console.log('🔄 Cargando propinas del día...');
+        
         const res = await fetch('/api/mesero/propinas/hoy');
         const data = await res.json();
 
-        if (!data.success) throw new Error('API error');
+        console.log('📊 Respuesta de propinas:', data);
+
+        if (!data.success) {
+            throw new Error(data.error || 'Error al cargar propinas');
+        }
 
         renderizarPropinas(data);
+        
     } catch (err) {
-        console.error(err);
+        console.error('❌ Error al cargar propinas:', err);
+        
+        // Mostrar datos vacíos en caso de error
         renderizarPropinas({
+            success: true,
             total: 0,
-            tarjeta: 0,
-            efectivo: 0,
-            lista: []
+            propinas: [],
+            count: 0
         });
     }
 }
 
 function renderizarPropinas(data) {
-    document.getElementById('total-propinas-dia').textContent = `$${data.total.toFixed(2)}`;
-    document.getElementById('propinas-tarjeta').textContent = `$${data.tarjeta.toFixed(2)}`;
-    document.getElementById('propinas-efectivo').textContent = `$${data.efectivo.toFixed(2)}`;
+    const propinas = data.propinas || [];
+    const total = data.total || 0;
+    
+    // 🔥 CALCULAR TOTALES POR MÉTODO DE PAGO
+    let totalTarjeta = 0;
+    let totalEfectivo = 0;
+    let totalTransferencia = 0;
+    let numTarjeta = 0;
+    let numEfectivo = 0;
+    let numTransferencia = 0;
+    
+    propinas.forEach(p => {
+        const metodo = (p.metodo_pago || 'efectivo').toLowerCase();
+        const monto = p.monto || 0;
+        
+        if (metodo === 'mercadopago' || metodo === 'tarjeta') {
+            totalTarjeta += monto;
+            numTarjeta++;
+        } else if (metodo === 'efectivo') {
+            totalEfectivo += monto;
+            numEfectivo++;
+        } else if (metodo === 'transferencia') {
+            totalTransferencia += monto;
+            numTransferencia++;
+        }
+    });
+    
+    console.log('💰 Totales calculados:');
+    console.log('   Total: $', total.toFixed(2));
+    console.log('   Tarjeta: $', totalTarjeta.toFixed(2), '(', numTarjeta, 'pagos)');
+    console.log('   Efectivo: $', totalEfectivo.toFixed(2), '(', numEfectivo, 'pagos)');
+    console.log('   Transferencia: $', totalTransferencia.toFixed(2), '(', numTransferencia, 'pagos)');
+    
+    // 🔥 ACTUALIZAR CARDS DE RESUMEN
+    document.getElementById('total-propinas-dia').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('num-servicios').textContent = propinas.length;
+    
+    document.getElementById('propinas-tarjeta').textContent = `$${totalTarjeta.toFixed(2)}`;
+    document.getElementById('num-tarjeta').textContent = numTarjeta;
+    
+    // Efectivo + Transferencia
+    const totalEfectivoTotal = totalEfectivo + totalTransferencia;
+    const numEfectivoTotal = numEfectivo + numTransferencia;
+    document.getElementById('propinas-efectivo').textContent = `$${totalEfectivoTotal.toFixed(2)}`;
+    document.getElementById('num-efectivo').textContent = numEfectivoTotal;
 
+    // 🔥 RENDERIZAR TABLA
     const body = document.getElementById('tabla-propinas-body');
 
-    if (!data.lista.length) {
+    if (!propinas.length) {
         body.innerHTML = `
             <tr>
-                <td colspan="5" class="p-6 text-center text-gray-400">
-                    <i class="bi bi-emoji-neutral text-2xl block mb-2"></i>
-                    Aún no hay propinas registradas hoy
+                <td colspan="5" class="p-8 text-center text-gray-400">
+                    <i class="bi bi-emoji-neutral text-4xl block mb-3 opacity-30"></i>
+                    <p class="font-medium">Aún no hay propinas registradas hoy</p>
+                    <p class="text-xs mt-1">Las propinas aparecerán aquí cuando cierres cuentas</p>
                 </td>
             </tr>
         `;
         return;
     }
 
-    body.innerHTML = data.lista.map(item => `
-        <tr class="hover:bg-gray-50 transition">
-            <td class="p-4 text-xs text-gray-500">${item.hora}</td>
-            <td class="p-4 font-bold text-gray-700">Mesa ${item.mesa}</td>
-            <td class="p-4 text-gray-600">$${item.total_cuenta.toFixed(2)}</td>
-            <td class="p-4">
-                <span class="px-2 py-1 ${
-                    item.metodo === 'TARJETA'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-orange-100 text-orange-700'
-                } rounded-full text-[10px] font-bold">
-                    ${item.metodo}
-                </span>
-            </td>
-            <td class="p-4 text-right font-bold text-green-600">
-                +$${item.monto.toFixed(2)}
-            </td>
-        </tr>
-    `).join('');
+    body.innerHTML = propinas.map(item => {
+        const fecha = item.fecha ? new Date(item.fecha) : new Date();
+        const hora = fecha.toLocaleTimeString('es-MX', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        });
+        
+        const metodo = (item.metodo_pago || 'efectivo').toLowerCase();
+        let metodoBadge = '';
+        let metodoBadgeClass = '';
+        
+        if (metodo === 'mercadopago' || metodo === 'tarjeta') {
+            metodoBadge = 'TARJETA MP';
+            metodoBadgeClass = 'bg-blue-100 text-blue-700';
+        } else if (metodo === 'efectivo') {
+            metodoBadge = 'EFECTIVO';
+            metodoBadgeClass = 'bg-orange-100 text-orange-700';
+        } else if (metodo === 'transferencia') {
+            metodoBadge = 'TRANSFERENCIA';
+            metodoBadgeClass = 'bg-purple-100 text-purple-700';
+        } else {
+            metodoBadge = metodo.toUpperCase();
+            metodoBadgeClass = 'bg-gray-100 text-gray-700';
+        }
+        
+        const porcentaje = item.porcentaje || 0;
+        
+        return `
+            <tr class="hover:bg-gray-50 transition">
+                <td class="p-4 text-xs text-gray-500 font-mono">${hora}</td>
+                <td class="p-4 font-bold text-gray-700">Mesa ${item.mesa}</td>
+                <td class="p-4 text-gray-600">
+                    <span class="bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-bold">
+                        ${porcentaje.toFixed(0)}%
+                    </span>
+                </td>
+                <td class="p-4">
+                    <span class="px-2 py-1 ${metodoBadgeClass} rounded-full text-[10px] font-bold">
+                        ${metodoBadge}
+                    </span>
+                </td>
+                <td class="p-4 text-right font-bold text-green-600">
+                    +$${item.monto.toFixed(2)}
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    console.log('✅ Tabla de propinas renderizada');
 }
 </script>
 {% endblock %}

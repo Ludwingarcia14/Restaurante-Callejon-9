@@ -20,6 +20,7 @@ from models.mesa_model import Mesa
 from models.comanda_model import Comanda
 from models.producto_model import Producto
 from config.db import db
+from controllers.pago.mercadoPagoController import MercadoPagoController
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -550,3 +551,51 @@ def admin_backup_restore():
 @rol_required(['1'])
 def admin_backup_configure():
     return BackupController.configure_auto_backup()
+# ============================================
+# 💳 MERCADO PAGO - PAGOS EN LÍNEA
+# ============================================
+
+@routes_bp.route("/api/pago/crear/<cuenta_id>", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def crear_pago(cuenta_id):
+    """Crea una preferencia de pago en Mercado Pago"""
+    from bson import ObjectId
+    return MercadoPagoController.crear_preferencia(ObjectId(cuenta_id))
+
+# 🔥 RUTAS DE RESPUESTA DE MERCADO PAGO
+@routes_bp.route("/pago/exitoso")
+def pago_exitoso():
+    """Procesa el pago exitoso y cierra la cuenta"""
+    return MercadoPagoController.procesar_pago_exitoso()
+
+@routes_bp.route("/pago/fallido")
+def pago_fallido():
+    """Procesa un pago fallido"""
+    return MercadoPagoController.procesar_pago_fallido()
+
+@routes_bp.route("/pago/pendiente")
+def pago_pendiente():
+    """Procesa un pago pendiente"""
+    return MercadoPagoController.procesar_pago_pendiente()
+
+# 🔥 WEBHOOK DE MERCADO PAGO (IPN)
+@routes_bp.route("/api/webhook/mercadopago", methods=["POST"])
+def webhook_mercadopago():
+    """Recibe notificaciones de estado de pagos de Mercado Pago"""
+    return MercadoPagoController.webhook()
+
+@routes_bp.route("/api/pago/verificar", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def verificar_pago():
+    """Verifica el estado de un pago consultando Mercado Pago"""
+    cuenta_id = request.args.get("cuenta_id")
+    
+    if not cuenta_id:
+        return jsonify({
+            "success": False,
+            "error": "Falta cuenta_id"
+        }), 400
+    
+    return MercadoPagoController.verificar_pago_mercadopago(cuenta_id)
