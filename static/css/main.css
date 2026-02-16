@@ -74,8 +74,27 @@ body {
    =================================== */
 
 .app-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: 280px 1fr;
     min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Overlay para móviles cuando el sidebar está abierto */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sidebar-overlay.active {
+    display: block;
 }
 
 /* ===================================
@@ -86,8 +105,7 @@ body {
     width: 280px;
     background: linear-gradient(180deg, var(--color-dark) 0%, #1a1a1a 100%);
     color: white;
-    position: fixed;
-    left: 0;
+    position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
@@ -96,6 +114,8 @@ body {
     z-index: 1000;
     box-shadow: var(--shadow-xl);
     transition: transform var(--transition-base);
+    grid-column: 1;
+    grid-row: 1;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -222,9 +242,13 @@ body {
    =================================== */
 
 .main-content {
-    flex: 1;
-    margin-left: 280px;
+    width: 100%;
     min-height: 100vh;
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .page-header {
@@ -251,6 +275,8 @@ body {
 
 .page-content {
     padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* ===================================
@@ -397,16 +423,25 @@ body {
    =================================== */
 
 @media (max-width: 1024px) {
+    .app-container {
+        grid-template-columns: 0 1fr;
+    }
+    
+    .app-container.sidebar-active {
+        grid-template-columns: 280px 1fr;
+    }
+    
     .sidebar {
+        position: fixed;
         transform: translateX(-100%);
+        left: 0;
+        top: 0;
+        z-index: 1000;
     }
     
-    .sidebar.active {
+    .sidebar.active,
+    .app-container.sidebar-active .sidebar {
         transform: translateX(0);
-    }
-    
-    .main-content {
-        margin-left: 0;
     }
 }
 

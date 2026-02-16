@@ -1,0 +1,412 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Resumen Ejecutivo - Restaurante Callejón 9{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <div class="page-header">
+        <a href="{{ url_for('reports.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
+        <h1><i class="bi bi-file-earmark-text"></i> Resumen Ejecutivo</h1>
+        <p class="subtitle">Panorama general del restaurante</p>
+    </div>
+
+    <!-- Filtro de datos -->
+    <div class="filter-section">
+        <form id="dateFilterForm" class="filter-form">
+            <div class="filter-group">
+                <label for="fecha_inicio">Fecha Inicio:</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}">
+            </div>
+            <div class="filter-group">
+                <label for="fecha_fin">Fecha Fin:</label>
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
+            </div>
+            <button type="button" onclick="reloadData()" class="btn btn-primary">Actualizar</button>
+            <div class="export-group">
+                <button type="button" onclick="exportPDF()" class="btn btn-export"><i class="bi bi-filetype-pdf"></i> Exportar PDF</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumen -->
+    <div class="summary-section">
+        <div class="summary-card main">
+            <h2><i class="bi bi-clipboard-data"></i> Resumen del Período</h2>
+            <p class="date-range">{{ fecha_inicio }} al {{ fecha_fin }}</p>
+        </div>
+    </div>
+
+    <!-- Finanzas -->
+    <div class="section">
+        <h3><i class="bi bi-currency-dollar"></i> Resumen Financiero</h3>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Total Ventas</span>
+                    <span class="kpi-value" id="total-ventas">$0.00</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Utilidad Bruta</span>
+                    <span class="kpi-value" id="utilidad-bruta">$0.00</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-pie-chart"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Margen Bruto</span>
+                    <span class="kpi-value" id="margen-bruto">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3><i class="bi bi-trophy"></i> Mejores Performers</h3>
+        <div class="performers-grid">
+            <!-- Top Platillos -->
+            <div class="performer-card">
+                <h4><i class="bi bi-fire"></i> Platillos Más Vendidos</h4>
+                <ol class="top-list" id="top-platillos">
+                    <li>Cargando...</li>
+                </ol>
+            </div>
+            
+            <!-- Top Empleados -->
+            <div class="performer-card">
+                <h4><i class="bi bi-person-badge"></i> Mejores Empleados</h4>
+                <ol class="top-list" id="top-empleados">
+                    <li>Cargando...</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metodo de pago -->
+    <div class="section">
+        <h3><i class="bi bi-credit-card"></i> Métodos de Pago</h3>
+        <div class="chart-container-small">
+            <canvas id="paymentMethodsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="section">
+        <h3><i class="bi bi-exclamation-triangle"></i> Puntos de Atención</h3>
+        <div class="alerts-list" id="alerts-list">
+            <p class="loading">Analizando datos...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadResumenData();
+});
+
+function reloadData() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    window.location.href = `/reportes/resumen-ejecutivo?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`;
+}
+
+function loadResumenData() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    // Load financial data
+    fetch(`/reportes/api/utilidad-bruta?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-ventas').textContent = formatCurrency(data.data.total_ventas);
+                document.getElementById('utilidad-bruta').textContent = formatCurrency(data.data.utilidad_bruta);
+                document.getElementById('margen-bruto').textContent = data.data.margen_bruto + '%';
+            }
+        });
+    
+    // Load top platillos
+    fetch(`/reportes/api/platillos-mas-vendidos?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}&limite=5`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderTopPlatillos(data.data);
+            }
+        });
+    
+    // Load top empleados
+    fetch(`/reportes/api/rendimiento-empleado?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderTopEmpleados(data.data.slice(0, 5));
+            }
+        });
+    
+    // Load payment methods
+    fetch(`/reportes/api/grafico-metodos-pago?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderPaymentChart(data.data);
+            }
+        });
+    
+    // Load alerts
+    loadAlerts(fecha_inicio, fecha_fin);
+}
+
+function renderTopPlatillos(data) {
+    const list = document.getElementById('top-platillos');
+    if (data.length === 0) {
+        list.innerHTML = '<li>No hay datos disponibles</li>';
+        return;
+    }
+    
+    list.innerHTML = data.map((d, i) => `
+        <li>
+            <span class="rank">#${i + 1}</span>
+            <span class="name">${d.nombre}</span>
+            <span class="value">${d.cantidad_vendida} vendidas</span>
+        </li>
+    `).join('');
+}
+
+function renderTopEmpleados(data) {
+    const list = document.getElementById('top-empleados');
+    if (data.length === 0) {
+        list.innerHTML = '<li>No hay datos disponibles</li>';
+        return;
+    }
+    
+    list.innerHTML = data.map((d, i) => `
+        <li>
+            <span class="rank">#${i + 1}</span>
+            <span class="name">${d.nombre_mesero || 'N/A'}</span>
+            <span class="value">${formatCurrency(d.total_ventas)}</span>
+        </li>
+    `).join('');
+}
+
+function renderPaymentChart(data) {
+    const ctx = document.getElementById('paymentMethodsChart').getContext('2d');
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: data.map(d => d._id || 'Otro'),
+            datasets: [{
+                data: data.map(d => d.total),
+                backgroundColor: colors.slice(0, data.length)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadAlerts(fecha_inicio, fecha_fin) {
+    Promise.all([
+        fetch(`/reportes/api/platillos-menos-rentables?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}&limite=3`).then(r => r.json()),
+        fetch(`/reportes/api/merma-acumulada?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`).then(r => r.json())
+    ]).then(([rentables, mermas]) => {
+        const alerts = [];
+        
+        if (rentables.success && rentables.data.length > 0) {
+            rentables.data.forEach(d => {
+                if (d.margen < 20) {
+                    alerts.push({
+                        type: 'warning',
+                        icon: 'bi-arrow-down-circle',
+                        title: 'Bajo Margen',
+                        message: `${d.nombre} tiene un margen del ${d.margen.toFixed(1)}%`
+                    });
+                }
+            });
+        }
+        
+        if (mermas.success && mermas.data.length > 0) {
+            const totalMerma = mermas.data.reduce((sum, d) => sum + (d.costo_perdido || 0), 0);
+            if (totalMerma > 1000) {
+                alerts.push({
+                    type: 'danger',
+                    icon: 'bi-trash3',
+                    title: 'Merma Elevada',
+                    message: `Total de mermas: ${formatCurrency(totalMerma)}`
+                });
+            }
+        }
+        
+        renderAlerts(alerts);
+    });
+}
+
+function renderAlerts(alerts) {
+    const container = document.getElementById('alerts-list');
+    
+    if (alerts.length === 0) {
+        container.innerHTML = '<p class="success"><i class="bi bi-check-circle"></i> No hay alertas pendientes. Todo está en orden.</p>';
+        return;
+    }
+    
+    container.innerHTML = alerts.map(a => `
+        <div class="alert alert-${a.type}">
+            <span class="alert-icon"><i class="bi ${a.icon}"></i></span>
+            <div class="alert-content">
+                <strong>${a.title}</strong>
+                <p>${a.message}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function exportPDF() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    window.open(`/reportes/exportar/pdf?reporte=ventas&fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`, '_blank');
+}
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value || 0);
+}
+</script>
+
+<style>
+.reports-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.page-header { margin-bottom: 30px; }
+.back-link { color: #3498db; text-decoration: none; font-size: 0.9em; }
+.page-header h1 { color: #2c3e50; margin: 10px 0; }
+.subtitle { color: #7f8c8d; }
+
+.filter-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.filter-form { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+.filter-group { display: flex; flex-direction: column; }
+.filter-group label { font-weight: 600; margin-bottom: 5px; color: #34495e; }
+.filter-group input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+
+.export-group { margin-left: auto; }
+
+.btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s; }
+.btn-primary { background: #3498db; color: white; }
+.btn-export { background: #e74c3c; color: white; }
+.btn:hover { opacity: 0.9; }
+
+.summary-section { margin-bottom: 30px; }
+.summary-card {
+    background: linear-gradient(135deg, #3498db, #2c3e50);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.summary-card h2 { margin-bottom: 10px; }
+.summary-card .date-range { opacity: 0.8; }
+
+.section { margin-bottom: 40px; }
+.section h3 { color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #3498db; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.kpi-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.kpi-icon { font-size: 2.5em; }
+.kpi-content { display: flex; flex-direction: column; }
+.kpi-label { font-size: 0.9em; color: #7f8c8d; }
+.kpi-value { font-size: 1.8em; font-weight: bold; color: #2c3e50; }
+
+.performers-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.performer-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.performer-card h4 { color: #2c3e50; margin-bottom: 15px; }
+
+.top-list { list-style: none; counter-reset: rank; }
+.top-list li {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    counter-increment: rank;
+}
+
+.top-list li::before {
+    content: counter(rank);
+    width: 30px;
+    height: 30px;
+    background: #3498db;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.top-list .rank { font-weight: bold; color: #3498db; }
+.top-list .name { flex: 1; margin-left: 15px; }
+.top-list .value { color: #7f8c8d; font-size: 0.9em; }
+
+.chart-container-small {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 400px;
+}
+
+.alerts-list { display: flex; flex-direction: column; gap: 15px; }
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.alert-warning { background: #fff3cd; border-left: 4px solid #f39c12; }
+.alert-danger { background: #f8d7da; border-left: 4px solid #e74c3c; }
+.alert-success { background: #d4edda; border-left: 4px solid #27ae60; }
+
+.alert-icon { font-size: 1.5em; }
+.alert-content strong { display: block; margin-bottom: 5px; }
+.alert-content p { margin: 0; color: #34495e; }
+
+.loading { text-align: center; color: #7f8c8d; }
+.success { color: #27ae60; }
+
+@media (max-width: 768px) {
+    .kpi-grid, .performers-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}

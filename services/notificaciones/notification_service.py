@@ -6,12 +6,18 @@ Versión simplificada con modo local para desarrollo
 import os
 import logging
 from datetime import datetime
+from pytz import timezone
 
 # Configuración
 USE_LOCAL = os.getenv("USE_LOCAL_SOCKET", "true").lower() == "true"
 NODE_NOTIFICATIONS_URL = os.getenv("NODE_NOTIFICATIONS_URL", "http://localhost:8000")
 
-logging.basicConfig(level=logging.INFO)
+# Zona horaria de Mexico City (CST/CDT)
+Mexico_TZ = timezone('America/Mexico_City')
+
+def get_mexico_datetime():
+    """Obtiene la fecha y hora actual en zona horaria de Mexico"""
+    return datetime.now(Mexico_TZ)
 
 
 def notificar_usuario(user_id, evento, mensaje, datos_extra=None):
@@ -52,7 +58,7 @@ def notificar_usuario(user_id, evento, mensaje, datos_extra=None):
             "evento": evento,
             "mensaje": mensaje,
             "datos_extra": datos_extra or {},
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": get_mexico_datetime().isoformat()
         }
         
         # Timeout de 30 segundos (suficiente para despertar servidor en Render)

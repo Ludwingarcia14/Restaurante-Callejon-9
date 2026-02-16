@@ -1,5 +1,5 @@
 # application/commands/admin/update_user_command.py
-from models.user_model import Usuario
+from models.empleado_model import Usuario
 from services.security.password_service import PasswordService
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -19,7 +19,6 @@ class UpdateUserCommand:
         if not Usuario.find_by_id(obj_id):
             return False, "Usuario no encontrado."
 
-        # Validaciones de campos (ej. email único, formato de rol_id, etc.)
         if "rol_id" in self.data:
             try:
                 ObjectId(self.data["rol_id"])
@@ -51,7 +50,7 @@ class UpdateUserCommand:
         # 3. Actualizar el usuario en la DB (función de modelo asumida)
         try:
             # Asume que 'update_one' es un método que actualiza por ObjectId
-            success = Usuario.update_one(ObjectId(self.user_id), update_data)
+            success = Usuario.update(ObjectId(self.user_id), update_data)
             if success:
                 return True, None
             else:

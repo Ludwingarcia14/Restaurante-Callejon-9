@@ -37,7 +37,7 @@ class DashboardController:
         if endpoint:
             return redirect(url_for(f"routes.{endpoint}"))
         else:
-            print(f"❌ Rol no reconocido: {rol}")
+            print(f" Rol no reconocido: {rol}")
             return "⚠ Rol no reconocido", 403
 
     # ==========================================
@@ -116,7 +116,7 @@ class DashboardController:
     
         return InventarioController.dashboard()
     # ==========================================
-    # GESTIÓN DE EMPLEADOS (SOLO ADMIN)
+    # GESTIÓN DE EMPLEADOS
     # ==========================================
 
     @staticmethod
@@ -156,7 +156,6 @@ class DashboardController:
                         "message": "Ya existe un empleado con este correo"
                     }), 400
                 
-                # ✅ CORRECCIÓN: Agregado rol "4" (inventario) a la validación
                 if data["rol"] not in ["1", "2", "3", "4"]:
                     return jsonify({
                         "success": False,
@@ -182,7 +181,6 @@ class DashboardController:
                     "updated_at": datetime.utcnow()
                 }
                 
-                # Campos específicos por rol
                 if data["rol"] == "2":  # Mesero
                     nuevo_empleado.update({
                         "mesero_numero": data.get("numero_empleado", ""),

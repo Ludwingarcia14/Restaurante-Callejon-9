@@ -1,6 +1,14 @@
 from config.db import db
 from datetime import datetime
 from bson.objectid import ObjectId
+from pytz import timezone
+
+# Zona horaria de Mexico City (CST/CDT)
+Mexico_TZ = timezone('America/Mexico_City')
+
+def get_mexico_datetime():
+    """Obtiene la fecha y hora actual en zona horaria de Mexico"""
+    return datetime.now(Mexico_TZ)
 
 class Notificacion:
     collection = db["notificaciones"]
@@ -13,9 +21,9 @@ class Notificacion:
         self.mensaje = mensaje
         self.id_usuario = ObjectId(id_usuario) if id_usuario else None
         self.leida = leida
-        self.fecha = fecha or datetime.utcnow()
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+        self.fecha = fecha or get_mexico_datetime()
+        self.created_at = created_at or get_mexico_datetime()
+        self.updated_at = updated_at or get_mexico_datetime()
 
     # -----------------------------------------
     # Convertir a diccionario (MongoDB)
@@ -47,15 +55,15 @@ class Notificacion:
 
     @classmethod
     def create(cls, data):
-        data["fecha"] = datetime.utcnow()
-        data["created_at"] = datetime.utcnow()
-        data["updated_at"] = datetime.utcnow()
+        data["fecha"] = get_mexico_datetime()
+        data["created_at"] = get_mexico_datetime()
+        data["updated_at"] = get_mexico_datetime()
 
         return cls.collection.insert_one(data)
 
     @classmethod
     def update(cls, id, data):
-        data["updated_at"] = datetime.utcnow()
+        data["updated_at"] = get_mexico_datetime()
 
         return cls.collection.update_one(
             {"_id": ObjectId(id)},
@@ -66,7 +74,7 @@ class Notificacion:
     def marcar_todas_leidas(cls, id_usuario):
         return cls.collection.update_many(
             {"id_usuario": ObjectId(id_usuario)},
-            {"$set": {"leida": True, "updated_at": datetime.utcnow()}}
+            {"$set": {"leida": True, "updated_at": get_mexico_datetime()}}
         )
 
     @classmethod

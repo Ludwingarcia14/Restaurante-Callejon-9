@@ -1,0 +1,622 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Reportes Financieros - Restaurante Callejón 9{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <div class="page-header">
+        <a href="{{ url_for('reports.index') }}" class="back-link"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
+        <h1><i class="bi bi-currency-dollar"></i> Reportes Financieros</h1>
+        <p class="subtitle">Análisis detallado de ingresos y ganancias</p>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="filter-section">
+        <form id="dateFilterForm" class="filter-form">
+            <div class="filter-group">
+                <label for="fecha_inicio">Fecha Inicio:</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio">
+            </div>
+            <div class="filter-group">
+                <label for="fecha_fin">Fecha Fin:</label>
+                <input type="date" id="fecha_fin" name="fecha_fin">
+            </div>
+            <button type="button" onclick="loadAllReports()" class="btn btn-primary">Generar Reporte</button>
+            <div class="export-group">
+                <label>Exportar:</label>
+                <button type="button" onclick="exportReport('csv', 'ventas')" class="btn btn-sm">CSV</button>
+                <button type="button" onclick="exportReport('excel', 'ventas')" class="btn btn-sm">Excel</button>
+                <button type="button" onclick="exportReport('pdf', 'ventas')" class="btn btn-sm">PDF</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Total Ventas</span>
+                <span class="kpi-value" id="kpi-ventas">$0.00</span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Utilidad Bruta</span>
+                <span class="kpi-value" id="kpi-utilidad">$0.00</span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="bi bi-pie-chart"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Margen Bruto</span>
+                <span class="kpi-value" id="kpi-margen">0%</span>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Ingresos vs Gastos</span>
+                <span class="kpi-value" id="kpi-ratio">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3><i class="bi bi-bar-chart-line"></i> Ventas por Día</h3>
+            <div class="chart-controls">
+                <select id="granularidad" onchange="loadSalesByPeriod()">
+                    <option value="dia">Por Día</option>
+                    <option value="semana">Por Semana</option>
+                    <option value="mes">Por Mes</option>
+                </select>
+            </div>
+            <canvas id="salesChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3><i class="bi bi-credit-card"></i> Métodos de Pago</h3>
+            <canvas id="paymentMethodsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Data Tables -->
+    <div class="tables-section">
+        <!-- Ventas por Período -->
+        <div class="table-card">
+            <h3><i class="bi bi-calendar3"></i> Ventas por Período</h3>
+            <div class="table-container">
+                <table class="data-table" id="ventas-table">
+                    <thead>
+                        <tr>
+                            <th>Período</th>
+                            <th>Total Ventas</th>
+                            <th>Número Pedidos</th>
+                            <th>Total Propinas</th>
+                            <th>Promedio por Pedido</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" class="loading">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Margen por Producto -->
+        <div class="table-card">
+            <h3><i class="bi bi-pie-chart-fill"></i> Margen por Producto</h3>
+            <div class="table-container">
+                <table class="data-table" id="margen-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Ventas Totales</th>
+                            <th>Costo Total</th>
+                            <th>Utilidad</th>
+                            <th>Margen (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" class="loading">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Flujo de Caja -->
+        <div class="table-card">
+            <h3><i class="bi bi-water"></i> Flujo de Caja</h3>
+            <div class="table-container">
+                <table class="data-table" id="flujo-caja-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Entradas</th>
+                            <th>Salidas</th>
+                            <th>Flujo Neto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="4" class="loading">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ingresos vs Gastos -->
+        <div class="table-card">
+            <h3><i class="bi bi-file-earmark-spreadsheet"></i> Ingresos vs Gastos</h3>
+            <div class="summary-box" id="ingresos-gastos-summary">
+                <div class="summary-row">
+                    <span>Total Ingresos:</span>
+                    <span id="total-ingresos">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total Gastos:</span>
+                    <span id="total-gastos">$0.00</span>
+                </div>
+                <div class="summary-row highlight">
+                    <span>Diferencia:</span>
+                    <span id="diferencia">$0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    document.getElementById('fecha_inicio').value = thirtyDaysAgo.toISOString().split('T')[0];
+    document.getElementById('fecha_fin').value = today.toISOString().split('T')[0];
+    
+    loadAllReports();
+});
+
+function loadAllReports() {
+    loadKPI();
+    loadSalesByPeriod();
+    loadPaymentMethods();
+    loadMargenPorProducto();
+    loadFlujoCaja();
+    loadIngresosVsGastos();
+}
+
+function loadKPI() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    // Utilidad Bruta
+    fetch(`/reportes/api/utilidad-bruta?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('kpi-ventas').textContent = formatCurrency(data.data.total_ventas);
+                document.getElementById('kpi-utilidad').textContent = formatCurrency(data.data.utilidad_bruta);
+                document.getElementById('kpi-margen').textContent = data.data.margen_bruto + '%';
+            }
+        });
+    
+    // Ingresos vs Gastos
+    fetch(`/reportes/api/ingresos-vs-gastos?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('kpi-ratio').textContent = data.data.ratio;
+            }
+        });
+}
+
+function loadSalesByPeriod() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    const granularidad = document.getElementById('granularidad').value;
+    
+    fetch(`/reportes/api/ventas-por-periodo?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}&granularidad=${granularidad}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderSalesTable(data.data);
+                renderSalesChart(data.data);
+            }
+        });
+}
+
+function renderSalesTable(data) {
+    const tbody = document.querySelector('#ventas-table tbody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">No hay datos para el período seleccionado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = data.map(d => `
+        <tr>
+            <td>${d._id}</td>
+            <td>${formatCurrency(d.total_ventas)}</td>
+            <td>${d.num_pedidos}</td>
+            <td>${formatCurrency(d.total_propinas)}</td>
+            <td>${formatCurrency(d.promedio_por_pedido)}</td>
+        </tr>
+    `).join('');
+}
+
+function renderSalesChart(data) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    // Destroy existing chart if exists
+    if (window.salesChartInstance) {
+        window.salesChartInstance.destroy();
+    }
+    
+    window.salesChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d._id),
+            datasets: [{
+                label: 'Ventas',
+                data: data.map(d => d.total_ventas),
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function loadPaymentMethods() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    fetch(`/reportes/api/grafico-metodos-pago?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderPaymentChart(data.data);
+            }
+        });
+}
+
+function renderPaymentChart(data) {
+    const ctx = document.getElementById('paymentMethodsChart').getContext('2d');
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+    
+    if (window.paymentChartInstance) {
+        window.paymentChartInstance.destroy();
+    }
+    
+    window.paymentChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(d => d._id || 'Otro'),
+            datasets: [{
+                data: data.map(d => d.total),
+                backgroundColor: colors.slice(0, data.length)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadMargenPorProducto() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    fetch(`/reportes/api/margen-por-producto?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderMargenTable(data.data.slice(0, 20));
+            }
+        });
+}
+
+function renderMargenTable(data) {
+    const tbody = document.querySelector('#margen-table tbody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">No hay datos para el período seleccionado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = data.map(d => `
+        <tr>
+            <td>${d.nombre}</td>
+            <td>${formatCurrency(d.ventas_totales)}</td>
+            <td>${formatCurrency(d.costo_total)}</td>
+            <td class="${d.utilidad >= 0 ? 'positive' : 'negative'}">${formatCurrency(d.utilidad)}</td>
+            <td>${d.margen.toFixed(2)}%</td>
+        </tr>
+    `).join('');
+}
+
+function loadFlujoCaja() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    fetch(`/reportes/api/flujo-caja?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                renderFlujoCajaTable(data.data);
+            }
+        });
+}
+
+function renderFlujoCajaTable(data) {
+    const tbody = document.querySelector('#flujo-caja-table tbody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">No hay datos para el período seleccionado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = data.map(d => `
+        <tr>
+            <td>${d.fecha}</td>
+            <td>${formatCurrency(d.entradas)}</td>
+            <td>${formatCurrency(d.salidas)}</td>
+            <td class="${d.flujo_neto >= 0 ? 'positive' : 'negative'}">${formatCurrency(d.flujo_neto)}</td>
+        </tr>
+    `).join('');
+}
+
+function loadIngresosVsGastos() {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    fetch(`/reportes/api/ingresos-vs-gastos?fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-ingresos').textContent = formatCurrency(data.data.ingresos);
+                document.getElementById('total-gastos').textContent = formatCurrency(data.data.gastos);
+                document.getElementById('diferencia').textContent = formatCurrency(data.data.diferencia);
+            }
+        });
+}
+
+function exportReport(format, type) {
+    const fecha_inicio = document.getElementById('fecha_inicio').value;
+    const fecha_fin = document.getElementById('fecha_fin').value;
+    
+    let url = `/reportes/exportar/${format}?reporte=${type}&fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`;
+    window.open(url, '_blank');
+}
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value || 0);
+}
+</script>
+
+<style>
+.reports-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.back-link {
+    color: #3498db;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.page-header h1 {
+    color: #2c3e50;
+    margin: 10px 0;
+}
+
+.subtitle {
+    color: #7f8c8d;
+}
+
+.filter-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.filter-form {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #34495e;
+}
+
+.filter-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.export-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-primary { background: #3498db; color: white; }
+.btn-sm { padding: 8px 15px; background: #ecf0f1; color: #34495e; }
+.btn:hover { opacity: 0.9; }
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.kpi-icon {
+    font-size: 2em;
+}
+
+.kpi-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-label {
+    font-size: 0.85em;
+    color: #7f8c8d;
+}
+
+.kpi-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.chart-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.chart-card h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.chart-controls {
+    margin-bottom: 15px;
+}
+
+.chart-controls select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.tables-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.table-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table-card h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #34495e;
+}
+
+.positive { color: #27ae60; font-weight: 600; }
+.negative { color: #e74c3c; font-weight: 600; }
+.loading { text-align: center; color: #7f8c8d; }
+
+.summary-box {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-row.highlight {
+    font-weight: bold;
+    color: #27ae60;
+    border-bottom: none;
+}
+
+@media (max-width: 1024px) {
+    .charts-row, .tables-section {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

@@ -6,12 +6,21 @@ Maneja las API endpoints para notificaciones en tiempo real
 from flask import jsonify, session, request
 from functools import wraps
 from bson import ObjectId
+from datetime import datetime, timedelta
+from pytz import timezone
 from cqrs.queries.handlers.notificacion_query_handler import NotificacionQueryHandler
 from cqrs.commands.handlers.notificacion_handler import (
     NotificacionCommandHandler,
     NotificacionSistemaHandler
 )
 from models.notificacion import Notificacion
+
+# Zona horaria de Mexico City (CST/CDT)
+Mexico_TZ = timezone('America/Mexico_City')
+
+def get_mexico_datetime():
+    """Obtiene la fecha y hora actual en zona horaria de Mexico"""
+    return datetime.now(Mexico_TZ)
 
 
 def login_required_api(f):
@@ -203,7 +212,7 @@ class NotificacionController:
                 "usuario_id": usuario_id,
                 "nombre": usuario_nombre,
                 "rol": usuario_rol,
-                "exp": datetime.utcnow() + timedelta(hours=24)
+                "exp": get_mexico_datetime() + timedelta(hours=24)
             }
             
             socket_token = jwt.encode(payload, secret_key, algorithm="HS256")

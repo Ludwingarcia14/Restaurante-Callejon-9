@@ -1,6 +1,6 @@
 # application/commands/admin/create_admin_command.py
-from models.user_model import Usuario  # Asume que tienes un modelo Usuario
-from services.security.password_service import PasswordService # Asume un servicio para hashear
+from models.empleado_model import Usuario
+from services.security.password_service import PasswordService
 from bson.objectid import ObjectId
 import re
 import uuid

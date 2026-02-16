@@ -1,5 +1,5 @@
 # application/commands/admin/delete_user_command.py
-from models.user_model import Usuario
+from models.empleado_model import Usuario
 from bson.objectid import ObjectId
 
 class DeleteUserCommand:

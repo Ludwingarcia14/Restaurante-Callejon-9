@@ -1,9 +1,11 @@
 """
 Modelo de Usuario - Sistema de Roles para Restaurante
 """
+
 from config.db import db
 from datetime import datetime
 from bson.objectid import ObjectId
+
 
 class Usuario:
     collection = db["usuarios"]
@@ -13,47 +15,34 @@ class Usuario:
         self.data = kwargs
 
     def to_dict(self):
-        """Convierte el objeto a dict para MongoDB"""
         return self.data
 
-    # ==========================================
-    # MÉTODOS DE CONSULTA (Queries)
-    # ==========================================
-    
+    # Metodos de consulta
     @classmethod
     def find_by_email(cls, email):
-        """Busca un usuario por email"""
         return cls.collection.find_one({"usuario_email": email})
 
     @classmethod
     def find_by_id(cls, id):
-        """Busca un usuario por ID"""
         return cls.collection.find_one({"_id": ObjectId(id)})
     
     @classmethod
     def find_by_rol(cls, rol):
-        """Obtiene todos los usuarios de un rol específico"""
         return list(cls.collection.find({"usuario_rol": str(rol)}))
     
     @classmethod
     def find_activos(cls):
-        """Obtiene todos los usuarios activos"""
         return list(cls.collection.find({"usuario_status": 1}))
 
-    # ==========================================
-    # MÉTODOS DE COMANDO (Commands)
-    # ==========================================
-    
+    # Metodos de comando
     @classmethod
     def create(cls, data):
-        """Crea un nuevo usuario"""
         data["created_at"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         data["updated_at"] = datetime.utcnow()
         return cls.collection.insert_one(data)
 
     @classmethod
     def update(cls, id, data):
-        """Actualiza un usuario existente"""
         data["updated_at"] = datetime.utcnow()
         return cls.collection.update_one(
             {"_id": ObjectId(id)}, 
@@ -62,7 +51,6 @@ class Usuario:
 
     @classmethod
     def delete(cls, id):
-        """Elimina un usuario (soft delete)"""
         return cls.collection.update_one(
             {"_id": ObjectId(id)},
             {"$set": {
@@ -70,10 +58,20 @@ class Usuario:
                 "updated_at": datetime.utcnow()
             }}
         )
+    
+    @classmethod
+    def delete_one(cls, id):
+        result = cls.collection.delete_one({"_id": ObjectId(id)})
+        return result.deleted_count
+    
+    @classmethod
+    def delete_many(cls, ids):
+        object_ids = [ObjectId(id) for id in ids]
+        result = cls.collection.delete_many({"_id": {"$in": object_ids}})
+        return result.deleted_count
 
     @classmethod
     def update_session_token(cls, user_id, token, status):
-        """Actualiza el token de sesión y status al hacer login/logout"""
         return cls.collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
@@ -85,7 +83,6 @@ class Usuario:
 
     @classmethod
     def update_2fa_status(cls, user_id, is_enabled, tipo=None, secret=None, telefono=None):
-        """Actualiza el estado de 2FA"""
         return cls.collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
@@ -97,13 +94,9 @@ class Usuario:
             }}
         )
 
-    # ==========================================
-    # HELPERS PARA PERFILES ESPECÍFICOS
-    # ==========================================
-    
+    # Helpers para perfiles especificos
     @staticmethod
     def get_perfil_mesero(usuario_doc):
-        """Extrae el perfil de mesero del documento"""
         if not usuario_doc or usuario_doc.get("usuario_rol") != "2":
             return None
         
@@ -125,7 +118,6 @@ class Usuario:
     
     @staticmethod
     def get_perfil_cocina(usuario_doc):
-        """Extrae el perfil de cocina del documento"""
         if not usuario_doc or usuario_doc.get("usuario_rol") != "3":
             return None
         
@@ -139,9 +131,9 @@ class Usuario:
             "puede_ver_recetas_completas": usuario_doc.get("cocina_puede_ver_recetas_completas", False),
             "certificaciones": usuario_doc.get("cocina_certificaciones", [])
         }
+    
     @staticmethod
     def get_perfil_inventario(usuario_doc):
-        """Extrae el perfil de inventario del documento"""
         if not usuario_doc or usuario_doc.get("usuario_rol") != "4":
             return None
         
@@ -155,18 +147,27 @@ class Usuario:
             "gestiona_proveedores": usuario_doc.get("inventario_gestiona_proveedores", False),
             "recibe_alertas_stock": usuario_doc.get("inventario_recibe_alertas_stock", True)
         }
+    
+    @classmethod
+    def _from_mongo_doc(cls, doc):
+        if not doc:
+            return None
+        
+        kwargs = {}
+        for key, value in doc.items():
+            if key.startswith('2fa_'):
+                python_key = 'two_factor_' + key[4:]
+                kwargs[python_key] = value
+            else:
+                kwargs[key] = value
+        
+        return cls(**kwargs)
 
-
-# ==========================================
-# CLASE HELPER PARA PERMISOS
-# ==========================================
 
 class RolPermisos:
-    """
-    Define los permisos y accesos por defecto para cada rol
-    """
+    """Define los permisos y accesos por defecto para cada rol"""
     PERMISOS = {
-        "1": {  # Administración
+        "1": {
             "nombre": "Administrador",
             "modulos": ["dashboard", "menu", "inventario", "ventas", "reportes", "empleados", "configuracion"],
             "puede_crear": True,
@@ -176,7 +177,7 @@ class RolPermisos:
             "acceso_finanzas": True,
             "autoriza_descuentos": True
         },
-        "2": {  # Mesero
+        "2": {
             "nombre": "Mesero",
             "modulos": ["dashboard", "comandas", "mesas", "clientes"],
             "puede_crear": True,
@@ -186,7 +187,7 @@ class RolPermisos:
             "puede_cerrar_cuenta": True,
             "gestiona_propinas": True
         },
-        "3": {  # Cocina
+        "3": {
             "nombre": "Cocina",
             "modulos": ["dashboard", "comandas", "inventario_consulta"],
             "puede_crear": False,
@@ -196,8 +197,7 @@ class RolPermisos:
             "puede_modificar_menu": False,
             "ver_comandas_activas": True
         },
-    
-        "4": {  # Inventario/Almacén
+        "4": {
             "nombre": "Encargado de Inventario",
             "modulos": ["dashboard", "inventario", "proveedores", "reportes_inventario"],
             "puede_crear": True,
@@ -211,27 +211,23 @@ class RolPermisos:
             "ver_costos": True,
             "recibe_alertas_stock": True
         }
-}
+    }
     
     @classmethod
     def get_permisos(cls, rol):
-        """Obtiene los permisos de un rol"""
         return cls.PERMISOS.get(str(rol), {})
     
     @classmethod
     def tiene_permiso(cls, rol, permiso):
-        """Verifica si un rol tiene un permiso específico"""
         permisos_rol = cls.get_permisos(str(rol))
         return permisos_rol.get(permiso, False)
     
     @classmethod
     def puede_acceder_modulo(cls, rol, modulo):
-        """Verifica si un rol puede acceder a un módulo"""
         permisos_rol = cls.get_permisos(str(rol))
         return modulo in permisos_rol.get("modulos", [])
     
     @classmethod
     def get_nombre_rol(cls, rol):
-        """Obtiene el nombre legible del rol"""
         permisos_rol = cls.get_permisos(str(rol))
         return permisos_rol.get("nombre", "Desconocido")

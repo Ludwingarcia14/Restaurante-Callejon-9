@@ -1,0 +1,502 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+    .tab-btn.active {
+        border-bottom: 2px solid #F2913D;
+        color: #F2913D;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Configuración de Cuenta{% endblock %}
+{% block page_subtitle %}Gestiona tu perfil y seguridad{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <!-- Tabs de Navegación -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button onclick="showTab('perfil')" class="tab-btn active px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="perfil">
+            <i class="bi bi-person mr-2"></i>Perfil
+        </button>
+        <button onclick="showTab('seguridad')" class="tab-btn px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="seguridad">
+            <i class="bi bi-shield-lock mr-2"></i>Seguridad
+        </button>
+        <button onclick="showTab('preferencias')" class="tab-btn px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="preferencias">
+            <i class="bi bi-gear mr-2"></i>Preferencias
+        </button>
+    </div>
+
+    <!-- ============================================
+         TAB: PERFIL
+         ============================================ -->
+    <div id="tab-perfil" class="tab-content active">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="bi bi-person mr-2"></i>Información Personal
+                </h3>
+                <p class="text-sm text-gray-500">Actualiza tus datos de perfil</p>
+            </div>
+            
+            <form id="perfilForm" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nombre -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                        <input type="text" name="nombre" value="{{ session.usuario_nombre }}" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                    
+                    <!-- Apellidos -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Apellidos</label>
+                        <input type="text" name="apellidos" value="{{ session.usuario_apellidos }}" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                    
+                    <!-- Email (solo lectura) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" value="{{ session.usuario_email }}" readonly 
+                               class="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed">
+                        <p class="text-xs text-gray-400 mt-1"><i class="bi bi-info-circle mr-1"></i>El email no puede ser modificado</p>
+                    </div>
+                    
+                    <!-- Teléfono -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                        <input type="tel" name="telefono" id="telefonoInput" 
+                               placeholder="+52 1 ..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition">
+                        <i class="bi bi-save mr-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================
+         TAB: SEGURIDAD (2FA)
+         ============================================ -->
+    <div id="tab-seguridad" class="tab-content">
+        <!-- Estado actual de 2FA -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">
+                        <i class="bi bi-shield-check mr-2"></i>Autenticación de Dos Factores (2FA)
+                    </h3>
+                    <p class="text-sm text-gray-500">Protege tu cuenta con una capa adicional de seguridad</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="2faStatusBadge" class="px-3 py-1 rounded-full text-sm font-medium {% if is_2fa_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                        {% if is_2fa_active %}
+                        <i class="bi bi-check-circle mr-1"></i>Activo
+                        {% else %}
+                        <i class="bi bi-x-circle mr-1"></i>Inactivo
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                {% if is_2fa_active %}
+                <!-- 2FA Activado - Opción de desactivar -->
+                <div class="text-center py-4">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-shield-check text-3xl text-green-600"></i>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-800 mb-2">2FA está Activado</h4>
+                    <p class="text-gray-500 mb-6">Tu cuenta está protegida con autenticación de dos factores.</p>
+                    
+                    <button onclick="disable2FA()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition">
+                        <i class="bi bi-shield-x mr-2"></i>Desactivar 2FA
+                    </button>
+                </div>
+                {% else %}
+                <!-- 2FA Desactivado - Opciones para activar -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Opción App -->
+                    <button onclick="setup2FA('app')" class="p-4 border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-qr-code text-2xl text-blue-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800">App Authenticator</h4>
+                        <p class="text-sm text-gray-500 mt-1">Google Auth, Authy, etc.</p>
+                    </button>
+                    
+                    <!-- Opción Email -->
+                    <button onclick="setup2FA('email')" class="p-4 border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-envelope text-2xl text-purple-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800">Código por Email</h4>
+                        <p class="text-sm text-gray-500 mt-1">Recibe el código por email</p>
+                    </button>
+                    
+                    <!-- Opción SMS -->
+                    <button onclick="setup2FA('sms')" class="p-4 border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition text-center opacity-50 cursor-not-allowed">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="bi bi-phone text-2xl text-green-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800">SMS</h4>
+                        <p class="text-sm text-gray-500 mt-1">Próximamente</p>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Historial de Sesiones -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="bi bi-clock-history mr-2"></i>Sesiones Recientes
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="bi bi-laptop text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">Esta sesión</p>
+                        <p class="text-sm text-gray-500">Activa ahora • {{ session.usuario_email }}</p>
+                    </div>
+                    <span class="px-2 py-1 bg-green-200 text-green-700 text-xs rounded-full">Actual</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         TAB: PREFERENCIAS
+         ============================================ -->
+    <div id="tab-preferencias" class="tab-content">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="bi bi-gear mr-2"></i>Preferencias del Sistema
+                </h3>
+                <p class="text-sm text-gray-500">Personaliza tu experiencia</p>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Tema Oscuro -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                            <i class="bi bi-moon-stars text-gray-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Modo Oscuro</p>
+                            <p class="text-sm text-gray-500">Activa el tema oscuro del sistema</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="themeToggle" class="sr-only peer" onchange="toggleUserTheme()">
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                    </label>
+                </div>
+                
+                <!-- Notificaciones -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="bi bi-bell text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Notificaciones</p>
+                            <p class="text-sm text-gray-500">Recibir alertas del sistema</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal para Setup 2FA -->
+<div id="2faModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="px-6 py-4 bg-orange-500 text-white flex items-center justify-between">
+            <h3 class="text-lg font-semibold" id="modalTitle">Configurar 2FA</h3>
+            <button onclick="close2FAModal()" class="text-white hover:text-gray-200">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        
+        <div id="modalContent" class="p-6">
+            <!-- Contenido dinámico -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Cambiar tabs
+    function showTab(tabName) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Mostrar tab seleccionado
+        document.getElementById('tab-' + tabName).classList.add('active');
+        document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+    }
+    
+    // Cargar teléfono del usuario
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/usuario/telefono')
+            .then(r => r.json())
+            .then(data => {
+                if (data.telefono) {
+                    document.getElementById('telefonoInput').value = data.telefono;
+                }
+            });
+    });
+    
+    // Guardar perfil
+    document.getElementById('perfilForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        try {
+            const response = await fetch('/api/usuario/actualizar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Perfil Actualizado!',
+                    text: 'Tus datos han sido guardados correctamente.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message || 'No se pudo guardar'
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error de conexión'
+            });
+        }
+    });
+    
+    // Setup 2FA
+    async function setup2FA(tipo) {
+        const modal = document.getElementById('2faModal');
+        const content = document.getElementById('modalContent');
+        
+        if (tipo === 'app') {
+            content.innerHTML = '<div class="text-center"><p class="text-gray-600 mb-4">Generando código QR...</p></div>';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            try {
+                const response = await fetch('/api/2fa/setup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tipo: 'app'})
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    content.innerHTML = `
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 mb-4">Escanea este código con tu aplicación autenticadora:</p>
+                            <img src="${result.qr_image}" alt="QR Code" class="mx-auto mb-4 rounded-lg border border-gray-200" style="max-width: 200px;">
+                            <p class="text-xs text-gray-500 mb-2">O ingresa este código manualmente:</p>
+                            <code class="block bg-gray-100 p-2 rounded text-sm font-mono mb-4">${result.secret_key}</code>
+                            
+                            <div class="mt-4">
+                                <input type="text" id="otpCode" placeholder="Ingresa el código de 6 dígitos" 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg text-center text-lg tracking-widest" maxlength="6">
+                            </div>
+                            
+                            <button onclick="verifyAndEnable2FA('app')" class="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium w-full">
+                                Verificar y Activar
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `<p class="text-red-600 text-center">${result.message}</p>`;
+                }
+            } catch (error) {
+                content.innerHTML = `<p class="text-red-600 text-center">Error al generar QR</p>`;
+            }
+        } else if (tipo === 'email') {
+            content.innerHTML = '<div class="text-center"><p class="text-gray-600 mb-4">Enviando código...</p></div>';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            try {
+                const response = await fetch('/api/2fa/setup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tipo: 'email'})
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    content.innerHTML = `
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="bi bi-envelope-check text-3xl text-purple-600"></i>
+                            </div>
+                            <p class="text-gray-600 mb-4">${result.message}</p>
+                            
+                            <input type="text" id="otpCode" placeholder="Ingresa el código" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg text-center text-lg tracking-widest" maxlength="6">
+                            
+                            <button onclick="verifyAndEnable2FA('email')" class="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium w-full">
+                                Verificar y Activar
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `<p class="text-red-600 text-center">${result.message}</p>`;
+                }
+            } catch (error) {
+                content.innerHTML = `<p class="text-red-600 text-center">Error al enviar código</p>`;
+            }
+        }
+    }
+    
+    // Verificar y activar 2FA
+    async function verifyAndEnable2FA(tipo) {
+        const otpCode = document.getElementById('otpCode').value;
+        
+        if (!otpCode || otpCode.length !== 6) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Código inválido',
+                text: 'Debes ingresar un código de 6 dígitos'
+            });
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/2fa/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({otp_code: otpCode})
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                close2FAModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡2FA Activado!',
+                    text: 'Tu cuenta ahora está protegida con autenticación de dos factores',
+                    timer: 3000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Código incorrecto',
+                    text: result.message || 'El código no es válido'
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error al verificar el código'
+            });
+        }
+    }
+    
+    // Desactivar 2FA
+    function disable2FA() {
+        Swal.fire({
+            title: '¿Desactivar 2FA?',
+            text: 'Tu cuenta quedará menos segura sin autenticación de dos factores',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, desactivar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch('/api/2fa/disable', {
+                        method: 'POST'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '2FA Desactivado',
+                            text: 'La autenticación de dos factores ha sido desactivada',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo desactivar 2FA'
+                    });
+                }
+            }
+        });
+    }
+    
+    // Cerrar modal
+    function close2FAModal() {
+        const modal = document.getElementById('2faModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
+{% endblock %}

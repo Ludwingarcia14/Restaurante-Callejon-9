@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Restaurante Callejón 9</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .meta-info span {
+            color: #34495e;
+            font-size: 0.9em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #ecf0f1;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .positive {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .total-row {
+            background: #2c3e50 !important;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .total-row td {
+            border-color: #2c3e50;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.85em;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        @media print {
+            body {
+                padding: 20px;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <p class="subtitle">Restaurante Callejón 9</p>
+    </div>
+    
+    <div class="meta-info">
+        <span><strong>Fecha Inicio:</strong> {{ fecha_inicio }}</span>
+        <span><strong>Fecha Fin:</strong> {{ fecha_fin }}</span>
+        <span><strong>Generado:</strong> {{ generated_at }}</span>
+    </div>
+    
+    {% if data %}
+    <table>
+        <thead>
+            <tr>
+                {% for key in data[0].keys() %}
+                <th>{{ key }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                {% for value in row.values() %}
+                <td>
+                    {% if value is number %}
+                        {% if value > 1000 %}
+                            {{ "{:,.2f}".format(value) }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    {% else %}
+                        {{ value }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #7f8c8d; padding: 40px;">
+        No hay datos disponibles para el período seleccionado.
+    </p>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Reporte generado automáticamente por el Sistema de Restaurante Callejón 9</p>
+        <p>Este documento es confidencial y está destinado únicamente para uso interno.</p>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            window.print();
+        };
+    </script>
+</body>
+</html>

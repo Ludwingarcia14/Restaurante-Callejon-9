@@ -1,0 +1,3177 @@
+{
+    "mesas": [
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09b"
+            },
+            "numero": 6,
+            "capacidad": 4,
+            "estado": "disponible",
+            "tipo": "interior",
+            "seccion": "A",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09c"
+            },
+            "numero": 7,
+            "capacidad": 2,
+            "estado": "disponible",
+            "tipo": "interior",
+            "seccion": "B",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf097"
+            },
+            "numero": 2,
+            "capacidad": 4,
+            "estado": "ocupada",
+            "tipo": "interior",
+            "seccion": "A",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 2,
+            "cuenta_activa_id": {
+                "$oid": "698aa9dbaeb3ad18523e33e0"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf098"
+            },
+            "numero": 3,
+            "capacidad": 4,
+            "estado": "ocupada",
+            "tipo": "interior",
+            "seccion": "B",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 2,
+            "cuenta_activa_id": {
+                "$oid": "698bd5ceb72a1019c59f5d3c"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09d"
+            },
+            "numero": 8,
+            "capacidad": 6,
+            "estado": "disponible",
+            "tipo": "terraza",
+            "seccion": "C",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf096"
+            },
+            "numero": 1,
+            "capacidad": 4,
+            "estado": "ocupada",
+            "tipo": "interior",
+            "seccion": "A",
+            "mesero_id": "69771fe45faa0869e04b5616",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 2,
+            "cuenta_activa_id": {
+                "$oid": "69895b99f0d7c4f21b37dcd0"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf09a"
+            },
+            "numero": 5,
+            "capacidad": 8,
+            "estado": "disponible",
+            "tipo": "terraza",
+            "seccion": "C",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 1,
+            "cuenta_activa_id": {
+                "$oid": "69880ea8d2f43c29dac0b876"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69825ea201b45ca60bfaf099"
+            },
+            "numero": 4,
+            "capacidad": 4,
+            "estado": "disponible",
+            "tipo": "terraza",
+            "seccion": "C",
+            "activa": true,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            },
+            "comensales": 1,
+            "cuenta_activa_id": {
+                "$oid": "69881a4ed8c2aeb2fdd37178"
+            }
+        }
+    ],
+    "pedidos/comandas": [],
+    "inventario": [],
+    "proveedores": [
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "nombre": "Comercializadora de Carnes del Valle",
+            "razon_social": "Comercializadora de Carnes del Valle S.A. de C.V.",
+            "rfc": "CCV123456789",
+            "telefono": "7221111111",
+            "email": "ventas@carnesvalle.com",
+            "direccion": "Av. Principal 123, Valle de Bravo",
+            "contacto_nombre": "Juan Pérez",
+            "contacto_telefono": "7221111112",
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b6"
+            },
+            "nombre": "Verduras Frescas del Sur",
+            "razon_social": "Verduras Frescas del Sur S.A.",
+            "rfc": "VFS987654321",
+            "telefono": "7222222222",
+            "email": "pedidos@verdurasfrescas.com",
+            "direccion": "Carretera Sur Km 5, Valle de Bravo",
+            "contacto_nombre": "María González",
+            "contacto_telefono": "7222222223",
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b7"
+            },
+            "nombre": "Lácteos y Derivados La Granja",
+            "razon_social": "Lácteos La Granja S.C.",
+            "rfc": "LGR456789123",
+            "telefono": "7223333333",
+            "email": "contacto@lacteoslagranja.com",
+            "direccion": "Camino Real 45, Valle de Bravo",
+            "contacto_nombre": "Carlos Ramírez",
+            "contacto_telefono": "7223333334",
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:26.985Z"
+            }
+        }
+    ],
+    "insumos": [
+        {
+            "_id": {
+                "$oid": "697d54df13aad3c73f5824b8"
+            },
+            "nombre": "Carne de Res (Bistec)",
+            "categoria": "carnes",
+            "unidad_medida": "kg",
+            "stock_actual": 15.5,
+            "stock_minimo": 10.0,
+            "costo_unitario": 180.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824b9"
+            },
+            "nombre": "Pechuga de Pollo",
+            "categoria": "carnes",
+            "unidad_medida": "kg",
+            "stock_actual": 8.0,
+            "stock_minimo": 12.0,
+            "costo_unitario": 95.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824ba"
+            },
+            "nombre": "Lechuga Romana",
+            "categoria": "verduras",
+            "unidad_medida": "pza",
+            "stock_actual": 25,
+            "stock_minimo": 20,
+            "costo_unitario": 15.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b6"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824bb"
+            },
+            "nombre": "Tomate Bola",
+            "categoria": "verduras",
+            "unidad_medida": "kg",
+            "stock_actual": 5.0,
+            "stock_minimo": 8.0,
+            "costo_unitario": 22.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b6"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824bc"
+            },
+            "nombre": "Queso Manchego",
+            "categoria": "lacteos",
+            "unidad_medida": "kg",
+            "stock_actual": 3.5,
+            "stock_minimo": 5.0,
+            "costo_unitario": 180.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b7"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e013aad3c73f5824bd"
+            },
+            "nombre": "Leche Entera",
+            "categoria": "lacteos",
+            "unidad_medida": "lt",
+            "stock_actual": 20.0,
+            "stock_minimo": 15.0,
+            "costo_unitario": 18.5,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b7"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e113aad3c73f5824be"
+            },
+            "nombre": "Sal de Grano",
+            "categoria": "condimentos",
+            "unidad_medida": "kg",
+            "stock_actual": 8.0,
+            "stock_minimo": 5.0,
+            "costo_unitario": 12.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e113aad3c73f5824bf"
+            },
+            "nombre": "Aceite Vegetal",
+            "categoria": "condimentos",
+            "unidad_medida": "lt",
+            "stock_actual": 2.0,
+            "stock_minimo": 5.0,
+            "costo_unitario": 45.0,
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "activo": true,
+            "created_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            },
+            "updated_at": {
+                "$date": "2026-01-31T01:03:27.761Z"
+            }
+        }
+    ],
+    "movimientos_inventario": [
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c4"
+            },
+            "tipo": "entrada",
+            "insumo_id": {
+                "$oid": "697d54df13aad3c73f5824b8"
+            },
+            "insumo_nombre": "Carne de Res (Bistec)",
+            "cantidad": 10.0,
+            "unidad_medida": "kg",
+            "stock_anterior": 5.5,
+            "stock_nuevo": 15.5,
+            "costo_unitario": 180.0,
+            "costo_total": 1800.0,
+            "usuario_id": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "proveedor_id": {
+                "$oid": "697d54df13aad3c73f5824b5"
+            },
+            "motivo": "Compra semanal",
+            "referencia": "FAC-2025-001",
+            "fecha": {
+                "$date": "2026-01-31T01:03:30.829Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d54e313aad3c73f5824c5"
+            },
+            "tipo": "salida",
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824ba"
+            },
+            "insumo_nombre": "Lechuga Romana",
+            "cantidad": 5.0,
+            "unidad_medida": "pza",
+            "stock_anterior": 30,
+            "stock_nuevo": 25,
+            "costo_unitario": 15.0,
+            "costo_total": 75.0,
+            "usuario_id": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "proveedor_id": null,
+            "motivo": "Consumo cocina",
+            "referencia": "",
+            "fecha": {
+                "$date": "2026-01-31T01:03:30.829Z"
+            }
+        }
+    ],
+    "menu": [],
+    "notificaciones": [
+        {
+            "_id": {
+                "$oid": "69846f58b55a7659dc6a97c0"
+            },
+            "tipo": "BACKUP_CREADO",
+            "mensaje": "Backup crear: backup_callejon9_20260205_20260205_042213.zip",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T10:22:16.317Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T10:22:16.317Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "archivo": "backup_callejon9_20260205_20260205_042213.zip",
+                "timestamp": "2026-02-05T10:22:16.317979"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6985226ec2f59dc6dfe81a26"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:06:22.645Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:06:22.645Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:06:22.645175"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698524b6ef5915176b9e58fa"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:16:06.165Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:16:06.165Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:16:06.165171"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69852520ef5915176b9e58fb"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:17:52.470Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:17:52.470Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:17:52.470621"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6985252aef5915176b9e58fc"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "joari ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "6984523da558b535977fe753"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-05T23:18:02.514Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:18:02.514Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:18:02.514Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-05T23:18:02.514103"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69852537ef5915176b9e58fd"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "joari ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "6984523da558b535977fe753"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-05T23:18:15.039Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:18:15.039Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-05T23:18:15.039Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-05T23:18:15.039263"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6985253aef5915176b9e58fe"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:18:18.409Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:18:18.409Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:18:18.409684"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69852686ef5915176b9e58ff"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-05T23:23:50.801Z"
+            },
+            "created_at": {
+                "$date": "2026-02-05T23:23:50.801Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-05T23:23:50.801180"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853a38ef5915176b9e5900"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T00:47:52.522Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:47:52.522Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T00:47:52.522135"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853bc8ef5915176b9e5901"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T00:54:32.457Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:54:32.457Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T00:54:32.457435"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853ca9ef5915176b9e5902"
+            },
+            "tipo": "BACKUP_CREADO",
+            "mensaje": "Backup crear: backup_callejon9_20260206_20260205_185814.json",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T00:58:17.810Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:58:17.810Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "archivo": "backup_callejon9_20260206_20260205_185814.json",
+                "timestamp": "2026-02-06T00:58:17.810386"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853cfdef5915176b9e5903"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T00:59:41.282Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:59:41.282Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T00:59:41.282942"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853d01ef5915176b9e5904"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Valeria ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-06T00:59:45.762Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T00:59:45.762Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-06T00:59:45.762Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-06T00:59:45.762626"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69853d25ef5915176b9e5905"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T01:00:21.766Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T01:00:21.766Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-06T01:00:21.766124"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69854012ef5915176b9e5906"
+            },
+            "tipo": "BACKUP_CREADO",
+            "mensaje": "Backup crear: backup_callejon9_20260206_20260205_191248.json",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T01:12:50.201Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T01:12:50.201Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "archivo": "backup_callejon9_20260206_20260205_191248.json",
+                "timestamp": "2026-02-06T01:12:50.201760"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69862c454134ec2d879a7536"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Octavio ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-06T18:00:37.638Z"
+            },
+            "created_at": {
+                "$date": "2026-02-06T18:00:37.638Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-09T03:54:23.195Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-06T18:00:37.638944"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698774a8ef5915176b9e5907"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-07T17:21:44.481Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:21:44.481Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-07T17:21:44.481927"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698774aeef5915176b9e5908"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-07T17:21:50.001Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:21:50.001Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-07T17:21:50.001619"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69877891ef5915176b9e5909"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-07T17:38:25.380Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:38:25.380Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-07T17:38:25.380650"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69877897ef5915176b9e590a"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Valeria ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-07T17:38:31.257Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:38:31.257Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-07T17:38:31.257Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-07T17:38:31.257969"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6987789fef5915176b9e590b"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Valeria ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-07T17:38:39.240Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:38:39.240Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-07T17:38:39.240Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-07T17:38:39.240733"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698778a4ef5915176b9e590c"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Valeria ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-07T17:38:44.724Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:38:44.724Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-07T17:38:44.724Z"
+            },
+            "datos_extra": {
+                "rol": "4",
+                "timestamp": "2026-02-07T17:38:44.724392"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698778a9ef5915176b9e590d"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-07T17:38:49.263Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:38:49.263Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-07T17:38:49.263145"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69877d0def5915176b9e590e"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-07T17:57:33.387Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:57:33.387Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-07T17:57:33.387733"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "69877d11ef5915176b9e590f"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-07T17:57:37.590Z"
+            },
+            "created_at": {
+                "$date": "2026-02-07T17:57:37.590Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-07T17:57:37.590232"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698822b0b1ce4f5aff939023"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Octavio ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-08T05:44:16.760Z"
+            },
+            "created_at": {
+                "$date": "2026-02-08T05:44:16.760Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-09T03:54:23.195Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-08T05:44:16.760595"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698c34af9e21101cd51dc5df"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T07:50:07.547Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T07:50:07.547Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T07:50:07.547538"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698c375de688730f4596b8bf"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T08:01:33.652Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T08:01:33.652Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T08:01:33.652989"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cd752653023768549f755"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Regina ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T19:24:02.841Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T19:24:02.841Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:13:33.351Z"
+            },
+            "datos_extra": {
+                "rol": "3",
+                "timestamp": "2026-02-11T19:24:02.841791"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cd87d653023768549f756"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Regina ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T19:29:01.524Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T19:29:01.524Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:13:33.351Z"
+            },
+            "datos_extra": {
+                "rol": "3",
+                "timestamp": "2026-02-11T19:29:01.524453"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cd8a0653023768549f757"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Regina ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T19:29:36.945Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T19:29:36.945Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:13:33.351Z"
+            },
+            "datos_extra": {
+                "rol": "3",
+                "timestamp": "2026-02-11T19:29:36.944746"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cd8c0653023768549f758"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Octavio ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-11T19:30:08.799Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T19:30:08.799Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T19:30:08.799Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-11T19:30:08.797857"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698ce89dfdf51d8b47201a61"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T20:37:49.459Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T20:37:49.459Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T20:37:49.459085"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698ce8a0fdf51d8b47201a62"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T20:37:52.828Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T20:37:52.828Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T20:37:52.828730"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cec2b80cb09fc4724a54f"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T20:52:59.066Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T20:52:59.066Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T20:52:59.066553"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cec2d80cb09fc4724a550"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T20:53:01.957Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T20:53:01.957Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T20:53:01.957731"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf0dbb6f03e449b15899b"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:12:59.197Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:12:59.197Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:12:59.197494"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf0deb6f03e449b15899c"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:13:02.612Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:13:02.612Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:13:02.612493"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf0e9b6f03e449b15899d"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:13:13.095Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:13:13.095Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:13:13.095121"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf0eeb6f03e449b15899e"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Regina ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:13:18.198Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:13:18.198Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:13:33.351Z"
+            },
+            "datos_extra": {
+                "rol": "3",
+                "timestamp": "2026-02-11T21:13:18.198474"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf0feb6f03e449b15899f"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Regina ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-11T21:13:34.835Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:13:34.835Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:13:34.835Z"
+            },
+            "datos_extra": {
+                "rol": "3",
+                "timestamp": "2026-02-11T21:13:34.835200"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf102b6f03e449b1589a0"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:13:38.385Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:13:38.385Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:13:38.385770"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf1dbe4dd0c33fa0794c2"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:17:15.039Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:17:15.039Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:17:15.039769"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf276e4dd0c33fa0794c3"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Octavio ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-11T21:19:50.319Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:19:50.319Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:19:50.319Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-11T21:19:50.319068"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf27ce4dd0c33fa0794c4"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Octavio ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-11T21:19:56.215Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:19:56.215Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T21:19:56.215Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-11T21:19:56.215866"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf5d00d8657e93be58af3"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:34:08.432Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:34:08.432Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:34:08.432159"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf7917041e3b30ce20a1b"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:41:37.627Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:41:37.627Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:41:37.627490"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf7e77041e3b30ce20a1c"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:43:03.236Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:43:03.236Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:43:03.236474"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf8157041e3b30ce20a1d"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:43:49.653Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:43:49.653Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:43:49.653282"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf921ba1693d95a874d0f"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:48:17.816Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:48:17.816Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:48:17.816879"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cf955ba1693d95a874d10"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:49:09.147Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:49:09.147Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:49:09.147892"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfac3457470287f4113dd"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:55:15.346Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:55:15.346Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:55:15.346632"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfacc457470287f4113de"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:55:24.731Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:55:24.731Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:55:24.731296"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfad6457470287f4113df"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:55:34.231Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:55:34.231Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:55:34.231557"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfb75861bc088f85f1d24"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:58:13.612Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:58:13.612Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:58:13.612367"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfb7d861bc088f85f1d25"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:58:21.946Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:58:21.946Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:58:21.946351"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfb8c861bc088f85f1d26"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T21:58:36.599Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T21:58:36.599Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T21:58:36.599840"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698cfedf31afcccbbc2a64d1"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T22:12:47.350Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:12:47.350Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T22:12:47.348982"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d0712c466196a7a774dae"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T22:47:46.501Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:47:46.501Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T22:47:46.501941"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d0716c466196a7a774daf"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T22:47:50.457Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:47:50.457Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T22:47:50.457750"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d09484a4fa8cd0c7ceb44"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Ludwin ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T22:57:12.068Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:57:12.068Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T16:57:12.068267-06:00"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d094c4a4fa8cd0c7ceb45"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Octavio ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-11T22:57:16.062Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:57:16.062Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T22:57:16.062Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-11T16:57:16.062604-06:00"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d09554a4fa8cd0c7ceb46"
+            },
+            "tipo": "LOGOUT",
+            "mensaje": "Octavio ha cerrado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "leida": false,
+            "fecha": {
+                "$date": "2026-02-11T22:57:25.104Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:57:25.104Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T22:57:25.104Z"
+            },
+            "datos_extra": {
+                "rol": "2",
+                "timestamp": "2026-02-11T16:57:25.104161-06:00"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d09574a4fa8cd0c7ceb47"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T22:57:27.924Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T22:57:27.924Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "timestamp": "2026-02-11T16:57:27.924162-06:00"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d0a72ccb9ca2164d85740"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "🔐 Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T23:02:10.580Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T23:02:10.580Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "usuario_id": "69771fe45faa0869e04b5615",
+                "nombre_usuario": "Ludwin",
+                "timestamp": "2026-02-11T17:02:10.580615-06:00"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698d0b2accb9ca2164d85741"
+            },
+            "tipo": "LOGIN",
+            "mensaje": "🔐 Ludwin ha iniciado sesión",
+            "id_usuario": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "leida": true,
+            "fecha": {
+                "$date": "2026-02-11T23:05:14.296Z"
+            },
+            "created_at": {
+                "$date": "2026-02-11T23:05:14.296Z"
+            },
+            "updated_at": {
+                "$date": "2026-02-11T23:20:41.046Z"
+            },
+            "datos_extra": {
+                "rol": "1",
+                "usuario_id": "69771fe45faa0869e04b5615",
+                "nombre_usuario": "Ludwin",
+                "timestamp": "2026-02-11T17:05:14.296403-06:00"
+            }
+        }
+    ],
+    "platillos": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2261"
+            },
+            "nombre": "Quesadilla de Champiñones",
+            "descripcion": "Con queso Oaxaca",
+            "categoria": "tacos",
+            "precio": 35,
+            "disponible": true,
+            "ingredientes": [
+                "tortilla",
+                "queso oaxaca",
+                "champiñones"
+            ],
+            "tiempo_preparacion": 8,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2260"
+            },
+            "nombre": "Tacos al Pastor",
+            "descripcion": "3 tacos con piña y cilantro",
+            "categoria": "tacos",
+            "precio": 45,
+            "disponible": true,
+            "ingredientes": [
+                "tortilla",
+                "carne pastor",
+                "piña",
+                "cilantro",
+                "cebolla"
+            ],
+            "tiempo_preparacion": 10,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2264"
+            },
+            "nombre": "Guacamole",
+            "descripcion": "Preparado al momento",
+            "categoria": "entradas",
+            "precio": 45,
+            "disponible": true,
+            "ingredientes": [
+                "aguacate",
+                "tomate",
+                "cebolla",
+                "cilantro",
+                "limón"
+            ],
+            "tiempo_preparacion": 5,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2266"
+            },
+            "nombre": "Flan Napolitano",
+            "descripcion": "Casero",
+            "categoria": "postres",
+            "precio": 30,
+            "disponible": true,
+            "ingredientes": [
+                "leche",
+                "huevo",
+                "azúcar",
+                "vainilla"
+            ],
+            "tiempo_preparacion": 3,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2263"
+            },
+            "nombre": "Sopes de Pollo",
+            "descripcion": "Con frijoles y lechuga",
+            "categoria": "principales",
+            "precio": 50,
+            "disponible": true,
+            "ingredientes": [
+                "masa",
+                "frijol",
+                "pollo",
+                "lechuga",
+                "queso",
+                "crema"
+            ],
+            "tiempo_preparacion": 12,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2265"
+            },
+            "nombre": "Agua de Horchata",
+            "descripcion": "Jarra 1L",
+            "categoria": "bebidas",
+            "precio": 20,
+            "disponible": true,
+            "ingredientes": [
+                "arroz",
+                "canela",
+                "azúcar"
+            ],
+            "tiempo_preparacion": 2,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2262"
+            },
+            "nombre": "Enchiladas Suizas",
+            "descripcion": "Bañadas en salsa verde con crema",
+            "categoria": "principales",
+            "precio": 55,
+            "disponible": true,
+            "ingredientes": [
+                "tortilla",
+                "pollo",
+                "salsa verde",
+                "queso",
+                "crema"
+            ],
+            "tiempo_preparacion": 15,
+            "imagen": null,
+            "created_at": {
+                "$date": "2026-01-15T10:00:00Z"
+            }
+        }
+    ],
+    "alertas_stock": [
+        {
+            "_id": {
+                "$oid": "697d54e113aad3c73f5824c0"
+            },
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824b9"
+            },
+            "insumo_nombre": "Pechuga de Pollo",
+            "stock_actual": 8.0,
+            "stock_minimo": 12.0,
+            "diferencia": 4.0,
+            "nivel_criticidad": "media",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:29.857Z"
+            },
+            "fecha_resolucion": null
+        },
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c1"
+            },
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824bb"
+            },
+            "insumo_nombre": "Tomate Bola",
+            "stock_actual": 5.0,
+            "stock_minimo": 8.0,
+            "diferencia": 3.0,
+            "nivel_criticidad": "media",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:30.116Z"
+            },
+            "fecha_resolucion": null
+        },
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c2"
+            },
+            "insumo_id": {
+                "$oid": "697d54e013aad3c73f5824bc"
+            },
+            "insumo_nombre": "Queso Manchego",
+            "stock_actual": 3.5,
+            "stock_minimo": 5.0,
+            "diferencia": 1.5,
+            "nivel_criticidad": "media",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:30.321Z"
+            },
+            "fecha_resolucion": null
+        },
+        {
+            "_id": {
+                "$oid": "697d54e213aad3c73f5824c3"
+            },
+            "insumo_id": {
+                "$oid": "697d54e113aad3c73f5824bf"
+            },
+            "insumo_nombre": "Aceite Vegetal",
+            "stock_actual": 2.0,
+            "stock_minimo": 5.0,
+            "diferencia": 3.0,
+            "nivel_criticidad": "alta",
+            "resuelta": false,
+            "fecha_generacion": {
+                "$date": "2026-01-31T01:03:30.628Z"
+            },
+            "fecha_resolucion": null
+        }
+    ],
+    "comandas": [
+        {
+            "_id": {
+                "$oid": "6989464f94ea0aeb95990b9f"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 3,
+            "mesero_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "estado": "pagada",
+            "items": [
+                {
+                    "id": "698933d3c9ccf08eae1f580e",
+                    "nombre": "Tacos de Asada (5)",
+                    "precio": 110,
+                    "cantidad": 2
+                },
+                {
+                    "id": "698933d3c9ccf08eae1f5812",
+                    "nombre": "Chilaquiles con Pollo",
+                    "precio": 130,
+                    "cantidad": 2
+                },
+                {
+                    "id": "698933d3c9ccf08eae1f5816",
+                    "nombre": "Huarache",
+                    "precio": 85,
+                    "cantidad": 2
+                },
+                {
+                    "id": "698933d3c9ccf08eae1f581a",
+                    "nombre": "Agua de Horchata 1L",
+                    "precio": 30,
+                    "cantidad": 2
+                },
+                {
+                    "id": "698933d3c9ccf08eae1f581e",
+                    "nombre": "Flan Napolitano",
+                    "precio": 45,
+                    "cantidad": 2
+                }
+            ],
+            "total": 800.0,
+            "fecha_apertura": {
+                "$date": "2026-02-09T02:28:31.999Z"
+            },
+            "folio": "COM-260208202831",
+            "fecha_cierre": {
+                "$date": "2026-02-09T02:28:57.085Z"
+            },
+            "metodo_pago": "tarjeta",
+            "propina": 1.0,
+            "total_final": 801.0
+        },
+        {
+            "_id": {
+                "$oid": "698947bc29c3ab975eb9e47c"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 2,
+            "mesero_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "estado": "pagada",
+            "items": [
+                {
+                    "id": "698933d3c9ccf08eae1f580e",
+                    "nombre": "Tacos de Asada (5)",
+                    "precio": 110,
+                    "cantidad": 1
+                },
+                {
+                    "id": "698933d3c9ccf08eae1f5812",
+                    "nombre": "Chilaquiles con Pollo",
+                    "precio": 130,
+                    "cantidad": 2
+                },
+                {
+                    "id": "698933d3c9ccf08eae1f5816",
+                    "nombre": "Huarache",
+                    "precio": 85,
+                    "cantidad": 2
+                }
+            ],
+            "total": 540.0,
+            "fecha_apertura": {
+                "$date": "2026-02-09T02:34:36.401Z"
+            },
+            "folio": "COM-260208203436",
+            "fecha_cierre": {
+                "$date": "2026-02-09T02:40:30.502Z"
+            },
+            "metodo_pago": "efectivo",
+            "porcentaje_propina": 15.0,
+            "propina": 81.0,
+            "total_final": 621.0
+        },
+        {
+            "_id": {
+                "$oid": "698952b59bbf33a5efc9b248"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 3,
+            "mesero_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "estado": "pagada",
+            "items": [
+                {
+                    "id": "698933d3c9ccf08eae1f5818",
+                    "nombre": "Nachos con Queso",
+                    "precio": 80,
+                    "cantidad": 3
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f5810",
+                    "id": "698933d3c9ccf08eae1f5810",
+                    "nombre": "Enchiladas Verdes",
+                    "precio": 120,
+                    "cantidad": 3
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f5814",
+                    "id": "698933d3c9ccf08eae1f5814",
+                    "nombre": "Quesadilla de Champiñones",
+                    "precio": 55,
+                    "cantidad": 1
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f5813",
+                    "id": "698933d3c9ccf08eae1f5813",
+                    "nombre": "Quesadilla de Queso",
+                    "precio": 45,
+                    "cantidad": 1
+                }
+            ],
+            "total": 700.0,
+            "fecha_apertura": {
+                "$date": "2026-02-09T03:21:25.492Z"
+            },
+            "folio": "COM-260208212125",
+            "fecha_actualizacion": {
+                "$date": "2026-02-09T03:40:51.467Z"
+            },
+            "fecha_cierre": {
+                "$date": "2026-02-09T03:41:28.418Z"
+            },
+            "metodo_pago": "tarjeta",
+            "porcentaje_propina": 15.0,
+            "propina": 105.0,
+            "total_final": 805.0
+        },
+        {
+            "_id": {
+                "$oid": "69895b99f0d7c4f21b37dcd0"
+            },
+            "mesa_numero": 1,
+            "num_comensales": 2,
+            "mesero_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "estado": "nueva",
+            "items": [
+                {
+                    "producto_id": "698933d3c9ccf08eae1f581c",
+                    "id": "698933d3c9ccf08eae1f581c",
+                    "nombre": "Refresco",
+                    "precio": 35,
+                    "cantidad": 6
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f5820",
+                    "id": "698933d3c9ccf08eae1f5820",
+                    "nombre": "Café Americano",
+                    "precio": 30,
+                    "cantidad": 1
+                }
+            ],
+            "total": 240.0,
+            "fecha_apertura": {
+                "$date": "2026-02-09T03:59:21.787Z"
+            },
+            "folio": "COM-260208215921",
+            "fecha_actualizacion": {
+                "$date": "2026-02-09T03:59:35.228Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698aa9dbaeb3ad18523e33e0"
+            },
+            "mesa_numero": 2,
+            "num_comensales": 2,
+            "mesero_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "mesero_nombre": "Octavio",
+            "estado": "enviada",
+            "items": [
+                {
+                    "producto_id": "698933d3c9ccf08eae1f580e",
+                    "id": "698933d3c9ccf08eae1f580e",
+                    "nombre": "Tacos de Asada (5)",
+                    "precio": 110,
+                    "cantidad": 14,
+                    "estado_cocina": "pendiente",
+                    "fecha_pedido": {
+                        "$date": "2026-02-10T03:45:38.671Z"
+                    }
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f580f",
+                    "id": "698933d3c9ccf08eae1f580f",
+                    "nombre": "Tacos de Chorizo (5)",
+                    "precio": 100,
+                    "cantidad": 1,
+                    "estado_cocina": "pendiente",
+                    "fecha_pedido": {
+                        "$date": "2026-02-10T03:59:35.127Z"
+                    }
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f5818",
+                    "id": "698933d3c9ccf08eae1f5818",
+                    "nombre": "Nachos con Queso",
+                    "precio": 80,
+                    "cantidad": 1,
+                    "estado_cocina": "pendiente",
+                    "fecha_pedido": {
+                        "$date": "2026-02-10T03:59:35.127Z"
+                    }
+                }
+            ],
+            "total": 1720.0,
+            "fecha_apertura": {
+                "$date": "2026-02-10T03:45:31.548Z"
+            },
+            "folio": "COM-260209214531",
+            "fecha_actualizacion": {
+                "$date": "2026-02-10T03:59:35.127Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698bd5ceb72a1019c59f5d3c"
+            },
+            "mesa_numero": 3,
+            "num_comensales": 2,
+            "mesero_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "mesero_nombre": "Octavio",
+            "estado": "enviada",
+            "items": [
+                {
+                    "producto_id": "698933d3c9ccf08eae1f580d",
+                    "id": "698933d3c9ccf08eae1f580d",
+                    "nombre": "Tacos al Pastor (5)",
+                    "precio": 95,
+                    "cantidad": 3,
+                    "estado_cocina": "pendiente",
+                    "fecha_pedido": {
+                        "$date": "2026-02-11T01:05:44.822Z"
+                    }
+                },
+                {
+                    "producto_id": "698933d3c9ccf08eae1f5811",
+                    "id": "698933d3c9ccf08eae1f5811",
+                    "nombre": "Enchiladas Rojas",
+                    "precio": 120,
+                    "cantidad": 1,
+                    "estado_cocina": "pendiente",
+                    "fecha_pedido": {
+                        "$date": "2026-02-11T01:05:44.822Z"
+                    }
+                }
+            ],
+            "total": 405.0,
+            "fecha_apertura": {
+                "$date": "2026-02-11T01:05:18.831Z"
+            },
+            "folio": "COM-260210190518",
+            "fecha_actualizacion": {
+                "$date": "2026-02-11T01:05:44.822Z"
+            }
+        }
+    ],
+    "ventas": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2245"
+            },
+            "numero_venta": 502,
+            "mesa_numero": 4,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2251"
+            },
+            "mesero_nombre": "María López",
+            "comensales": 3,
+            "platillos": [
+                {
+                    "nombre": "Quesadilla de Champiñones",
+                    "cantidad": 3,
+                    "precio_unitario": 35,
+                    "subtotal": 105
+                },
+                {
+                    "nombre": "Agua de Horchata",
+                    "cantidad": 3,
+                    "precio_unitario": 20,
+                    "subtotal": 60
+                }
+            ],
+            "subtotal": 165,
+            "propina": 16.5,
+            "total": 181.5,
+            "metodo_pago": "tarjeta",
+            "fecha": {
+                "$date": "2026-01-31T11:15:00Z"
+            },
+            "created_at": {
+                "$date": "2026-01-31T11:15:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2244"
+            },
+            "numero_venta": 501,
+            "mesa_numero": 1,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "mesero_nombre": "Juan Pérez",
+            "comensales": 2,
+            "platillos": [
+                {
+                    "nombre": "Guacamole",
+                    "cantidad": 1,
+                    "precio_unitario": 45,
+                    "subtotal": 45
+                },
+                {
+                    "nombre": "Tacos al Pastor",
+                    "cantidad": 4,
+                    "precio_unitario": 45,
+                    "subtotal": 180
+                }
+            ],
+            "subtotal": 225,
+            "propina": 22.5,
+            "total": 247.5,
+            "metodo_pago": "efectivo",
+            "fecha": {
+                "$date": "2026-01-31T12:30:00Z"
+            },
+            "created_at": {
+                "$date": "2026-01-31T12:30:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2246"
+            },
+            "numero_venta": 503,
+            "mesa_numero": 2,
+            "mesero_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "mesero_nombre": "Juan Pérez",
+            "comensales": 4,
+            "platillos": [
+                {
+                    "nombre": "Enchiladas Suizas",
+                    "cantidad": 4,
+                    "precio_unitario": 55,
+                    "subtotal": 220
+                },
+                {
+                    "nombre": "Flan Napolitano",
+                    "cantidad": 2,
+                    "precio_unitario": 30,
+                    "subtotal": 60
+                }
+            ],
+            "subtotal": 280,
+            "propina": 28,
+            "total": 308,
+            "metodo_pago": "efectivo",
+            "fecha": {
+                "$date": "2026-01-31T13:00:00Z"
+            },
+            "created_at": {
+                "$date": "2026-01-31T13:00:00Z"
+            }
+        }
+    ],
+    "usuarios": [
+        {
+            "_id": {
+                "$oid": "69771fe45faa0869e04b5616"
+            },
+            "usuario_nombre": "Octavio",
+            "usuario_apellidos": "Duarte Villavicencio",
+            "usuario_email": "octavio@admin.com",
+            "usuario_clave": "mesero123",
+            "usuario_rol": "2",
+            "usuario_telefono": "7229876543",
+            "usuario_foto": null,
+            "usuario_status": 0,
+            "usuario_tokensession": null,
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "mesero_numero": "M001",
+            "mesero_turno": "matutino",
+            "mesero_mesas": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+            ],
+            "mesero_puede_cerrar_cuenta": true,
+            "mesero_puede_aplicar_descuento": false,
+            "mesero_propina_sugerida": 10,
+            "mesero_propina_acumulada_dia": 0,
+            "mesero_ventas_promedio_dia": 0,
+            "mesero_calificacion_cliente": 0,
+            "created_at": "2026-01-26 08:03:31",
+            "updated_at": {
+                "$date": "2026-02-11T23:02:06.640Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "6984523da558b535977fe753"
+            },
+            "usuario_nombre": "joari",
+            "usuario_apellidos": "ocampo",
+            "usuario_email": "joa@gmail.com",
+            "usuario_clave": "123456",
+            "usuario_rol": "4",
+            "usuario_telefono": "123456",
+            "usuario_foto": null,
+            "usuario_status": 0,
+            "usuario_tokensession": null,
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "created_at": "2026-02-05 08:18:05",
+            "updated_at": {
+                "$date": "2026-02-05T23:18:14.872Z"
+            },
+            "inventario_numero": "1",
+            "inventario_area": "",
+            "inventario_turno": "noche",
+            "inventario_puede_gestionar_proveedores": false,
+            "inventario_puede_realizar_auditorias": false
+        },
+        {
+            "_id": {
+                "$oid": "69771fe55faa0869e04b5617"
+            },
+            "usuario_nombre": "Regina",
+            "usuario_apellidos": "Ibarra Alba",
+            "usuario_email": "regi@admin.com",
+            "usuario_clave": "cocina123",
+            "usuario_rol": "3",
+            "usuario_telefono": "7225551234",
+            "usuario_foto": null,
+            "usuario_status": 0,
+            "usuario_tokensession": null,
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "cocina_numero": "C001",
+            "cocina_puesto": "cocinero",
+            "cocina_area": "parrilla",
+            "cocina_turno": "matutino",
+            "cocina_especialidad": [
+                "carnes",
+                "asados"
+            ],
+            "cocina_puede_modificar_menu": false,
+            "cocina_puede_ver_recetas_completas": true,
+            "cocina_certificaciones": [
+                "manejo_higiénico",
+                "cortes_carne"
+            ],
+            "created_at": "2026-01-26 08:03:31",
+            "updated_at": {
+                "$date": "2026-02-11T23:04:41.664Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "698022fe9b12104ab7a73e2e"
+            },
+            "usuario_nombre": "Luwin",
+            "usuario_apellidos": "gaga",
+            "usuario_email": "luwi@gmail.com",
+            "usuario_clave": "123456789",
+            "usuario_rol": "3",
+            "usuario_telefono": "7294986016",
+            "usuario_foto": null,
+            "usuario_status": 0,
+            "usuario_tokensession": null,
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "created_at": "2026-02-02 04:07:26",
+            "updated_at": {
+                "$date": "2026-02-02T04:08:18.061Z"
+            },
+            "cocina_numero": "2",
+            "cocina_puesto": "chef",
+            "cocina_area": "general",
+            "cocina_turno": "mañana",
+            "cocina_especialidad": [],
+            "cocina_puede_modificar_menu": false,
+            "cocina_puede_ver_recetas_completas": false,
+            "cocina_certificaciones": []
+        },
+        {
+            "_id": {
+                "$oid": "69771fe45faa0869e04b5615"
+            },
+            "usuario_nombre": "Ludwin",
+            "usuario_apellidos": "Garcia Gaytan",
+            "usuario_email": "lud.dev@gmail.com",
+            "usuario_clave": "admin123",
+            "usuario_rol": "1",
+            "usuario_telefono": "7221234567",
+            "usuario_foto": null,
+            "usuario_status": 1,
+            "usuario_tokensession": "6gRxPnJ_zIhmXRMy17Y3grIsNf1EEhj2I69uoFWX_1I",
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "created_at": "2026-01-26 08:03:31",
+            "updated_at": {
+                "$date": "2026-02-11T23:05:52.498Z"
+            },
+            "telefono": "7294986006"
+        },
+        {
+            "_id": {
+                "$oid": "697d54de13aad3c73f5824b4"
+            },
+            "usuario_nombre": "Valeria",
+            "usuario_apellidos": "Mercado Cerrano",
+            "usuario_email": "vale@admin.com",
+            "usuario_clave": "inventario123",
+            "usuario_rol": "4",
+            "usuario_telefono": "7221234567",
+            "usuario_foto": null,
+            "usuario_status": 1,
+            "usuario_tokensession": "dFUy5oSiYarOK9xG5L6WiOu67C16j3sbvA7vX4-i6hk",
+            "2fa_enabled": false,
+            "2fa_tipo": null,
+            "2fa_secret": null,
+            "2fa_telefono": null,
+            "inventario_numero": "INV-001",
+            "inventario_turno": "matutino",
+            "inventario_area_responsabilidad": "almacen_general",
+            "inventario_puede_autorizar_mermas": true,
+            "inventario_limite_ajustes": 1000,
+            "created_at": "2026-01-31 01:03:26",
+            "updated_at": {
+                "$date": "2026-02-11T23:04:47.957Z"
+            }
+        }
+    ],
+    "productos": [
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f580d"
+            },
+            "nombre": "Tacos al Pastor (5)",
+            "precio": 95,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f580e"
+            },
+            "nombre": "Tacos de Asada (5)",
+            "precio": 110,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f580f"
+            },
+            "nombre": "Tacos de Chorizo (5)",
+            "precio": 100,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5810"
+            },
+            "nombre": "Enchiladas Verdes",
+            "precio": 120,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5811"
+            },
+            "nombre": "Enchiladas Rojas",
+            "precio": 120,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5812"
+            },
+            "nombre": "Chilaquiles con Pollo",
+            "precio": 130,
+            "categoria": "Platillos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5813"
+            },
+            "nombre": "Quesadilla de Queso",
+            "precio": 45,
+            "categoria": "Antojitos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5814"
+            },
+            "nombre": "Quesadilla de Champiñones",
+            "precio": 55,
+            "categoria": "Antojitos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5815"
+            },
+            "nombre": "Sopes de Pollo",
+            "precio": 60,
+            "categoria": "Antojitos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5816"
+            },
+            "nombre": "Huarache",
+            "precio": 85,
+            "categoria": "Antojitos",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5817"
+            },
+            "nombre": "Guacamole",
+            "precio": 70,
+            "categoria": "Entradas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5818"
+            },
+            "nombre": "Nachos con Queso",
+            "precio": 80,
+            "categoria": "Entradas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5819"
+            },
+            "nombre": "Frijoles Charros",
+            "precio": 50,
+            "categoria": "Entradas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f581a"
+            },
+            "nombre": "Agua de Horchata 1L",
+            "precio": 30,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f581b"
+            },
+            "nombre": "Agua de Jamaica 1L",
+            "precio": 30,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f581c"
+            },
+            "nombre": "Refresco",
+            "precio": 35,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f581d"
+            },
+            "nombre": "Cerveza",
+            "precio": 55,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f581e"
+            },
+            "nombre": "Flan Napolitano",
+            "precio": 45,
+            "categoria": "Postres",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f581f"
+            },
+            "nombre": "Arroz con Leche",
+            "precio": 40,
+            "categoria": "Postres",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5820"
+            },
+            "nombre": "Café Americano",
+            "precio": 30,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        },
+        {
+            "_id": {
+                "$oid": "698933d3c9ccf08eae1f5821"
+            },
+            "nombre": "Café de Olla",
+            "precio": 35,
+            "categoria": "Bebidas",
+            "estado": "activo"
+        }
+    ],
+    "configuracion_sistema": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2291"
+            },
+            "clave": "modo_mantenimiento",
+            "valor": false,
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2292"
+            },
+            "clave": "aceptar_reservas",
+            "valor": true,
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2290"
+            },
+            "clave": "backup_automatico",
+            "valor": {
+                "enabled": false,
+                "frequency": "diaria",
+                "hora": "02:00",
+                "retener_dias": 30
+            },
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        }
+    ],
+    "clientes": [],
+    "tickets": [],
+    "estadisticas_diarias": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2280"
+            },
+            "fecha": {
+                "$date": "2026-01-31T00:00:00Z"
+            },
+            "ventas_totales": 12450,
+            "numero_ventas": 45,
+            "ticket_promedio": 276.67,
+            "propinas_totales": 1245,
+            "mesas_atendidas": 38,
+            "platillos_vendidos": {
+                "Tacos al Pastor": 32,
+                "Quesadilla de Champiñones": 25,
+                "Enchiladas Suizas": 18,
+                "Guacamole": 15
+            },
+            "metodos_pago": {
+                "efectivo": 7200,
+                "tarjeta": 4500,
+                "transferencia": 750
+            },
+            "ventas_por_hora": [
+                {
+                    "hora": 11,
+                    "ventas": 850
+                },
+                {
+                    "hora": 12,
+                    "ventas": 1200
+                },
+                {
+                    "hora": 13,
+                    "ventas": 2100
+                },
+                {
+                    "hora": 14,
+                    "ventas": 3200
+                },
+                {
+                    "hora": 15,
+                    "ventas": 2500
+                },
+                {
+                    "hora": 16,
+                    "ventas": 1800
+                },
+                {
+                    "hora": 17,
+                    "ventas": 800
+                }
+            ],
+            "updated_at": {
+                "$date": "2026-01-31T14:30:00Z"
+            }
+        }
+    ],
+    "actividad_reciente": [
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2271"
+            },
+            "tipo": "comanda_nueva",
+            "descripcion": "Nueva comanda en Mesa 12",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2251"
+            },
+            "usuario_nombre": "María López",
+            "mesa_numero": 12,
+            "timestamp": {
+                "$date": "2026-01-31T14:25:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2270"
+            },
+            "tipo": "venta_completada",
+            "descripcion": "Mesa 5 cerrada por Juan Pérez",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "usuario_nombre": "Juan Pérez",
+            "mesa_numero": 5,
+            "monto": 850,
+            "timestamp": {
+                "$date": "2026-01-31T14:28:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2272"
+            },
+            "tipo": "comanda_cocina",
+            "descripcion": "Pedido enviado a cocina",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "usuario_nombre": "Juan Pérez",
+            "comanda_id": {
+                "$oid": "697d82ff2a0a1055937a2242"
+            },
+            "timestamp": {
+                "$date": "2026-01-31T14:22:00Z"
+            }
+        },
+        {
+            "_id": {
+                "$oid": "697d82ff2a0a1055937a2273"
+            },
+            "tipo": "pago_recibido",
+            "descripcion": "Pago recibido: $850 (Tarjeta)",
+            "usuario_id": {
+                "$oid": "697d82ff2a0a1055937a2250"
+            },
+            "usuario_nombre": "Juan Pérez",
+            "monto": 850,
+            "metodo_pago": "tarjeta",
+            "timestamp": {
+                "$date": "2026-01-31T14:20:00Z"
+            }
+        }
+    ]
+}

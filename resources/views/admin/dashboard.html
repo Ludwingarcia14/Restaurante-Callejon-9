@@ -62,38 +62,6 @@
 </style>
 {% endblock %}
 
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
-    <i class="bi bi-speedometer2 text-lg"></i>
-    <span>Centro de Control</span>
-</a>
-
-<a href="{{ url_for('routes.admin_empleados_lista') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-people text-lg"></i>
-    <span>Empleados</span>
-</a>
-
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-journal-text text-lg"></i>
-    <span>Menú</span>
-</a>
-
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-box-seam text-lg"></i>
-    <span>Inventario</span>
-</a>
-
-<a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-cash-stack text-lg"></i>
-    <span>Ventas</span>
-</a>
-
-<a href="{{ url_for('routes.admin_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-graph-up text-lg"></i>
-    <span>Reportes</span>
-</a>
-{% endblock %}
-
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
 

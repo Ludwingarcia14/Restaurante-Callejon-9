@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <title>{% block title %}Callejón 19{% endblock %} - Sistema de Restaurante</title>
+    <title>{% block title %}Callejon 19{% endblock %} - Sistema de Restaurante</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/callejon9') }}" type="image/x-icon">
@@ -18,11 +18,17 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- CSS Principal -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -31,7 +37,6 @@
     {% block extra_css %}{% endblock %}
     
     <style>
-        /* Configuración de Tailwind */
         @layer base {
             * {
                 @apply box-border;
@@ -41,153 +46,193 @@
                 @apply antialiased;
             }
         }
+        
+        /* Animaciones para notificaciones */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        #notification-dropdown {
+            width: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .notification-item:hover {
+            background-color: #f9fafb;
+        }
+        
+        .notification-item.unread {
+            background-color: #eff6ff;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        #notification-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #notification-dropdown::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        #notification-dropdown::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        /* ESTILOS PARA EL SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-user {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+        
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: #6b7280;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        
+        .nav-link.active {
+            background: #eff6ff;
+            color: #2563eb;
+            border-right: 3px solid #2563eb;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #f9fafb;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
+    
+    <!-- Overlay para móviles -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <!-- Container Principal -->
     <div class="app-container">
         
         <!-- ===================================
-             SIDEBAR DE NAVEGACIÓN
+             SIDEBAR DE NAVEGACION
              =================================== -->
         <aside class="sidebar" id="sidebar">
             
             <!-- Header del Sidebar -->
             <div class="sidebar-header">
                 <img src="/static/img/callejon9.jpeg" 
-                     alt="Callejón 9" 
+                     alt="Callejon 9" 
                      class="sidebar-logo">
-                <h2 class="sidebar-title">Callejón 19</h2>
+                <h2 class="sidebar-title">Callejon 19</h2>
                 <p class="sidebar-subtitle">Sistema de Restaurante</p>
-                <!-- 
-Widget de Notificaciones - Restaurante Callejón 9
-Incluir este código en tu layout base (layout_base.html, layout_mesero.html, etc.)
-Colocar dentro del navbar o header
--->
-
-<div class="relative">
-    <!-- Botón de Notificaciones con Contador -->
-    <button id="btnNotificaciones" 
-            class="relative p-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors"
-            aria-label="Notificaciones">
-        <!-- Icono de campana -->
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
-            </path>
-        </svg>
-        
-        <!-- Contador (Badge) -->
-        <span id="contador-notificaciones" 
-              class="absolute -top-1 -right-1 hidden bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-            0
-        </span>
-    </button>
-
-    <!-- Dropdown de Notificaciones -->
-    <div id="listaNotificaciones" 
-         class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
-        
-        <!-- Header del dropdown -->
-        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-700">Notificaciones</h3>
-            <button onclick="marcarTodasLeidas()" 
-                    class="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                    title="Marcar todas como leídas">
-                Limpiar todo
-            </button>
-        </div>
-
-        <!-- Lista de Notificaciones -->
-        <div class="overflow-y-auto max-h-80">
-            <ul id="lista-items-notificaciones" class="divide-y divide-gray-100">
-                <!-- Las notificaciones se insertarán aquí dinámicamente -->
-            </ul>
-
-            <!-- Mensaje cuando no hay notificaciones -->
-            <div id="sin-notificaciones" class="px-4 py-8 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
-                    </path>
-                </svg>
-                <p class="mt-2 text-sm text-gray-500">No hay notificaciones nuevas</p>
-            </div>
-        </div>
-
-        <!-- Footer (opcional) -->
-        <div class="bg-gray-50 px-4 py-2 border-t border-gray-200 text-center">
-            <a href="#" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                Ver todas
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- CSS Adicional (Agregar a tu archivo CSS o en un <style> tag) -->
-<style>
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes slideOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(20px);
-        }
-    }
-
-    /* Animación de pulso personalizada para el contador */
-    @keyframes pulse-custom {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.1);
-        }
-    }
-
-    #contador-notificaciones {
-        animation: pulse-custom 2s infinite;
-    }
-
-    /* Scroll personalizado para la lista */
-    #listaNotificaciones::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    #listaNotificaciones::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-
-    #listaNotificaciones::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 3px;
-    }
-
-    #listaNotificaciones::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-</style>
-
-<!-- Scripts necesarios -->
-<!-- Socket.IO -->
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
-<!-- Script de notificaciones -->
-<script src="{{ url_for('static', filename='js/notificaciones_restaurante.js') }}"></script>
             </div>
             
             <!-- Info del Usuario -->
@@ -226,31 +271,63 @@ Colocar dentro del navbar o header
                 </div>
             </div>
             
-            <!-- Navegación -->
+            <!-- Navegacion Principal -->
             <nav class="sidebar-nav">
-                {% block navigation %}
-                <!-- Las rutas específicas se insertan aquí desde las plantillas hijas -->
-                {% endblock %}
+                <!-- Dashboard -->
+                <a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link" id="nav-dashboard">
+                    <i class="bi bi-speedometer2 text-lg"></i>
+                    <span>Centro de Control</span>
+                </a>
                 
-                <!--  MENÚ DE ADMINISTRACIÓN (Solo para Rol 1) -->
+                <!-- Menu (pendiente de implementar) -->
+                <a href="#" class="nav-link" id="nav-menu">
+                    <i class="bi bi-journal-text text-lg"></i>
+                    <span>Menu</span>
+                </a>
+                
+                <!-- Inventario -->
+                <a href="{{ url_for('routes.dashboard_inventario') }}" class="nav-link" id="nav-inventario">
+                    <i class="bi bi-box-seam text-lg"></i>
+                    <span>Inventario</span>
+                </a>
+                
+                <!-- Ventas (pendiente de implementar) -->
+                <a href="#" class="nav-link" id="nav-ventas">
+                    <i class="bi bi-cash-stack text-lg"></i>
+                    <span>Ventas</span>
+                </a>
+                
+                <!-- Reportes -->
+                <a href="{{ url_for('reports.index') }}" class="nav-link" id="nav-reportes">
+                    <i class="bi bi-graph-up text-lg"></i>
+                    <span>Reportes</span>
+                </a>
+                
+                <!-- Configuracion -->
+                <a href="{{ url_for('routes.settings') }}" class="nav-link" id="nav-settings">
+                    <i class="bi bi-gear text-lg"></i>
+                    <span>Configuracion</span>
+                </a>
+                
+                {% block navigation %}{% endblock %}
+                
+                <!--  ADMINISTRACION (Solo para Rol 1) -->
                 {% if session.usuario_rol == '1' %}
                 <div class="mt-4 pt-4 border-t border-gray-200">
                     <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                        Administración
+                        Administracion
                     </p>
                     
                     <a href="{{ url_for('routes.admin_backup_view') }}" 
-                       class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition
-                              {% if request.endpoint == 'routes.admin_backup_view' %}bg-blue-100 text-blue-700{% endif %}">
+                       class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
                         <i class="bi bi-shield-lock text-lg"></i>
                         <span>Respaldos y Seguridad</span>
                     </a>
                     
                     <a href="{{ url_for('routes.admin_empleados_lista') }}" 
-                       class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition
-                              {% if request.endpoint == 'routes.admin_empleados_lista' %}bg-blue-100 text-blue-700{% endif %}">
+                       class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
                         <i class="bi bi-people text-lg"></i>
-                        <span>Gestión de Empleados</span>
+                        <span>Gestion de Empleados</span>
                     </a>
                 </div>
                 {% endif %}
@@ -261,14 +338,8 @@ Colocar dentro del navbar o header
                 <a href="{{ url_for('routes.logout') }}" 
                    class="btn btn-error w-full flex items-center justify-center gap-2">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar Sesión</span>
+                    <span>Cerrar Sesion</span>
                 </a>
-                
-                <!-- Toggle Theme (opcional) -->
-                <button onclick="toggleTheme()" 
-                        class="mt-3 text-sm text-gray-600 hover:text-gray-800 transition">
-                    <i class="bi bi-moon-stars"></i> Cambiar tema
-                </button>
             </div>
             
         </aside>
@@ -278,7 +349,7 @@ Colocar dentro del navbar o header
              =================================== -->
         <main class="main-content" id="mainContent">
             
-            <!-- Header de la Página -->
+            <!-- Header de la Pagina -->
             <header class="page-header">
                 <div class="flex items-center justify-between">
                     <div>
@@ -288,17 +359,40 @@ Colocar dentro del navbar o header
                     
                     <!-- Controles del Header -->
                     <div class="flex items-center gap-4">
-                        <!-- Botón de Menú Móvil -->
+                        <!-- Boton de Menu Movil -->
                         <button id="sidebarToggle" 
                                 class="lg:hidden p-2 rounded-lg hover:bg-gray-200 transition">
                             <i class="bi bi-list text-2xl"></i>
                         </button>
                         
-                        <!-- Notificaciones (opcional) -->
-                        <button class="p-2 rounded-lg hover:bg-gray-200 transition relative">
-                            <i class="bi bi-bell text-xl"></i>
-                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <!-- Notificaciones -->
+                        <div class="relative">
+                            <a class="navbar-link is-arrowless p-2 rounded-lg hover:bg-gray-200 transition cursor-pointer" id="notification-trigger">
+                                <span class="icon has-text-white">
+                                    <i class="fas fa-bell fa-lg text-gray-600"></i>
+                                </span>
+                                <span class="tag is-danger is-rounded notification-badge hidden" id="notification-count">
+                                    0
+                                </span>
+                            </a>
+                            <div class="navbar-dropdown is-right hidden absolute right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50" id="notification-dropdown">
+                                <!-- Header -->
+                                <div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between rounded-t-lg">
+                                    <h3 class="text-sm font-semibold text-gray-700">Notificaciones</h3>
+                                    <button onclick="marcarTodasLeidas()" 
+                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                        Limpiar todo
+                                    </button>
+                                </div>
+                                <!-- Lista -->
+                                <div id="notification-list">
+                                    <div class="px-4 py-8 text-center" id="no-notifications">
+                                        <i class="fas fa-bell-slash text-gray-300 text-3xl mb-2"></i>
+                                        <p class="text-sm text-gray-500">No hay notificaciones nuevas</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Avatar del Usuario -->
                         <div class="flex items-center gap-3">
@@ -319,10 +413,9 @@ Colocar dentro del navbar o header
                 </div>
             </header>
             
-            <!-- Contenido de la Página -->
+            <!-- Contenido de la Pagina -->
             <div class="page-content fade-in">
                 {% block content %}
-                <!-- El contenido específico de cada página se inserta aquí -->
                 {% endblock %}
             </div>
             
@@ -334,22 +427,39 @@ Colocar dentro del navbar o header
          SCRIPTS
          =================================== -->
     
-    <!-- jQuery (si es necesario) -->
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Script de notificaciones -->
+    <script src="{{ url_for('static', filename='js/notificaciones_header.js') }}"></script>
     
     <!-- Scripts Principales -->
     <script>
-        // Toggle Sidebar en móvil
-        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+        // Toggle Sidebar en movil
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const appContainer = document.querySelector('.app-container');
+        
+        function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('active');
-        });
+            appContainer.classList.toggle('sidebar-active');
+            sidebarOverlay.classList.toggle('active');
+        }
         
-        // Cerrar sidebar al hacer clic fuera en móvil
+        sidebarToggle?.addEventListener('click', toggleSidebar);
+        sidebarOverlay?.addEventListener('click', toggleSidebar);
+        
+        // Cerrar sidebar al hacer clic fuera en movil
         document.getElementById('mainContent')?.addEventListener('click', function() {
             if (window.innerWidth < 1024) {
                 const sidebar = document.getElementById('sidebar');
                 sidebar.classList.remove('active');
+                appContainer.classList.remove('sidebar-active');
+                sidebarOverlay.classList.remove('active');
             }
         });
         
@@ -373,19 +483,41 @@ Colocar dentro del navbar o header
             document.documentElement.setAttribute('data-theme', savedTheme);
         });
         
-        // Marcar link activo en navegación
+        // Marcar link activo en navegacion
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.nav-link');
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
             
             navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
+                const href = link.getAttribute('href');
+                
+                if (href === '#') return;
+                
+                if (href === currentPath || currentPath.startsWith(href + '/') || currentPath === href + '.html') {
+                    navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                 }
             });
+            
+            // Also check for specific page paths
+            const pathMap = {
+                '/admin/dashboard': 'nav-dashboard',
+                '/admin/reportes': 'nav-reportes',
+                '/settings': 'nav-settings'
+            };
+            
+            for (const [path, id] of Object.entries(pathMap)) {
+                if (currentPath.includes(path)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        el.classList.add('active');
+                    }
+                }
+            }
         });
         
-        // Función global para mostrar notificaciones
+        // Funcion global para mostrar notificaciones
         function showNotification(message, type = 'success') {
             const icon = type === 'success' ? 'success' : 
                         type === 'error' ? 'error' : 
@@ -402,16 +534,16 @@ Colocar dentro del navbar o header
             });
         }
         
-        // Confirmación de acciones
+        // Confirmacion de acciones
         function confirmAction(message, callback) {
             Swal.fire({
-                title: '¿Estás seguro?',
+                title: 'Estas seguro?',
                 text: message,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#667eea',
                 cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Sí, continuar',
+                confirmButtonText: 'Si, continuar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed && callback) {

@@ -381,7 +381,7 @@ input:focus {
 </head>
 <body>
 	<div class="login-wrapper">
-		<!-- Lado izquierdo - Formulario -->
+		<!-- Formulario -->
 		<div class="login-side">
 			<div class="login-container">
 				<div class="logo-section">
@@ -511,9 +511,9 @@ input:focus {
 				console.log("Respuesta del servidor:", result);
 
 				if (result.status === 'success') {
-					if (result.user && result.user.requires_2fa === true) {
+					if (result.requires_2fa === true) {
 						setFormLoading(false);
-						await show2FAModal(result.user.tipo, result.user.secret, result.dashboard);
+						await show2FAModal(result.tipo, result.secret, result.dashboard);
 					} else {
 						await Swal.fire({
 							icon: "success",
@@ -580,6 +580,7 @@ input:focus {
 				});
 
 				const data = await response.json();
+				console.log("Respuesta 2FA:", data);
 
 				if (data.status === 'success') {
 					await Swal.fire({
@@ -588,7 +589,9 @@ input:focus {
 						timer: 1500,
 						showConfirmButton: false
 					});
-					window.location.href = dashboardUrl;
+					// Usar el dashboard de la respuesta del servidor, no el cacheado
+					const redirectUrl = data.dashboard || dashboardUrl;
+					window.location.href = redirectUrl;
 				} else {
 					await Swal.fire({
 						icon: "error",

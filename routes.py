@@ -2,13 +2,14 @@
 Módulo de Rutas - Sistema de Restaurante Callejón 9
 Roles: 1=Admin, 2=Mesero, 3=Cocina, 4=Inventario
 """
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, request
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.admin.BackupController import BackupController
 from controllers.inventario.inventarioController import InventarioController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
 from controllers.notificaciones.notificacion_controller import NotificacionController
+from controllers.settings.settingsController import SettingsController
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -113,6 +114,54 @@ def api_eliminar_notificacion(id_notificacion):
     return NotificacionController.eliminar_notificacion(id_notificacion)
 
 # ============================================
+#  CONFIGURACIÓN DE CUENTA
+# ============================================
+
+# Página de configuración
+@routes_bp.route("/settings")
+@login_required
+def settings():
+    """Página de configuración de cuenta"""
+    return SettingsController.settings()
+
+# API: Obtener teléfono
+@routes_bp.route('/api/usuario/telefono', methods=['GET'])
+@login_required
+def api_usuario_telefono():
+    return SettingsController.get_telefono()
+
+# API: Actualizar perfil
+@routes_bp.route('/api/usuario/actualizar', methods=['POST'])
+@login_required
+def api_usuario_actualizar():
+    return SettingsController.actualizar_perfil()
+
+# API: Setup 2FA
+@routes_bp.route('/api/2fa/setup', methods=['POST'])
+@login_required
+def api_2fa_setup():
+    return SettingsController.generate_2fa_setup()
+
+# API: Verificar 2FA
+@routes_bp.route('/api/2fa/verify', methods=['POST'])
+@login_required
+def api_2fa_verify():
+    return SettingsController.verify_and_enable_2fa()
+
+# API: Desactivar 2FA
+@routes_bp.route('/api/2fa/disable', methods=['POST'])
+@login_required
+def api_2fa_disable():
+    return SettingsController.disable_2fa()
+
+# API: Recovery 2FA (emergencia)
+@routes_bp.route('/api/2fa/emergency-disable')
+def api_2fa_emergency_disable():
+    """Deshabilita 2FA para usuarios bloquados (sin login)"""
+    email = request.args.get('email', '')
+    return AuthController.emergency_disable_2fa(email)
+
+# ============================================
 #  PANEL DE ADMINISTRACIÓN (Rol 1)
 # ============================================
 
@@ -144,7 +193,7 @@ def admin_reportes():
     return DashboardController.reportes()
 
 # ============================================
-# 🍽️ PANEL DE MESERO (Rol 2)
+#  PANEL DE MESERO (Rol 2)
 # ============================================
 
 @routes_bp.route("/dashboard/mesero")
@@ -230,7 +279,7 @@ def mesero_historial():
     return render_template("mesero/comandas.html")
 
 # ============================================
-# 👨‍🍳 PANEL DE COCINA (Rol 3)
+# PANEL DE COCINA (Rol 3)
 # ============================================
 
 @routes_bp.route("/dashboard/cocina")
@@ -287,7 +336,7 @@ def cocina_inventario():
     return render_template("cocina/dashboard.html")
 
 # ============================================
-# 📦 PANEL DE INVENTARIO (Rol 4)
+#  PANEL DE INVENTARIO (Rol 4)
 # ============================================
 
 # Dashboard
@@ -369,7 +418,7 @@ def inventario_reportes():
     return InventarioController.reportes()
 
 # ============================================
-# 🔒 MÓDULO DE SEGURIDAD Y BACKUP
+#  MÓDULO DE SEGURIDAD Y BACKUP
 # ============================================
 
 # Gestión Principal de Respaldos
@@ -406,3 +455,17 @@ def admin_backup_restore():
 @rol_required(['1'])
 def admin_backup_configure():
     return BackupController.configure_auto_backup()
+
+# ============================================
+#  MÓDULO DE REPORTES
+# ============================================
+
+from controllers.reports.reports_controller import reports_bp
+
+def register_reports_routes(app):
+    """Registra las rutas de reportes en la aplicación"""
+    app.register_blueprint(reports_bp)
+
+# ============================================
+#  FIN DEL MÓDULO DE RUTAS
+# ============================================
