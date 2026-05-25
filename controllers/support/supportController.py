@@ -2,6 +2,9 @@ from flask import render_template, request, jsonify, session, redirect, url_for
 from config.db import db
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class supportController:
@@ -234,7 +237,7 @@ class supportController:
                 "evolucion": [],
                 "alertas": [],
                 "tickets": [],
-                "error": str(e)
+                "error": "Error interno del servidor"
             }), 200
 
 
@@ -297,8 +300,8 @@ class supportController:
             })
             
         except Exception as e:
-            print(f"Error en ProcesarPreguntaFAQ: {e}")
-            return jsonify({"error": str(e)}), 500
+            logger.error(f"Error en ProcesarPreguntaFAQ: {str(e)}")
+            return jsonify({"error": "Error interno del servidor"}), 500
 
 
     #   TICKETS ACTIVOS
@@ -333,10 +336,10 @@ class supportController:
             return render_template("support/tickets.html", tickets=tickets)
 
         except Exception as e:
-            print(f"Error al cargar tickets: {e}")
+            logger.error(f"Error al cargar tickets: {str(e)}")
             import traceback
             traceback.print_exc()
-            return render_template("support/tickets.html", tickets=[], error=str(e))
+            return render_template("support/tickets.html", tickets=[], error="Error interno del servidor")
 
 
     #   ALERTAS
@@ -386,10 +389,10 @@ class supportController:
             return render_template("support/alertas.html", alertas=alertas)
 
         except Exception as e:
-            print(f"Error en AlertasSoporte: {e}")
+            logger.error(f"Error en AlertasSoporte: {str(e)}")
             import traceback
             traceback.print_exc()
-            return render_template("support/alertas.html", alertas=[], error=str(e))
+            return render_template("support/alertas.html", alertas=[], error="Error interno del servidor")
 
 
     #   HISTORIAL
@@ -430,10 +433,10 @@ class supportController:
             return render_template("support/historial.html", historial=historial)
 
         except Exception as e:
-            print(f"Error en HistorialSoporte: {e}")
+            logger.error(f"Error en HistorialSoporte: {str(e)}")
             import traceback
             traceback.print_exc()
-            return render_template("support/historial.html", historial=[], error=str(e))
+            return render_template("support/historial.html", historial=[], error="Error interno del servidor")
 
 
     #   MÉTRICAS
@@ -462,8 +465,8 @@ class supportController:
             return render_template("support/metricas.html", datos=datos)
 
         except Exception as e:
-            print(f"Error en MetricasSoporte: {e}")
-            return render_template("support/metricas.html", error=str(e))
+            logger.error(f"Error en MetricasSoporte: {str(e)}")
+            return render_template("support/metricas.html", error="Error interno del servidor")
 
 
     #   GESTIÓN DE EQUIPO
@@ -529,10 +532,10 @@ class supportController:
             return render_template("support/gestion.html", tickets=tickets, asesores=asesores)
 
         except Exception as e:
-            print(f"Error en GestionEquipo: {e}")
+            logger.error(f"Error en GestionEquipo: {str(e)}")
             import traceback
             traceback.print_exc()
-            return render_template("support/gestion.html", tickets=[], asesores=[], error=str(e))
+            return render_template("support/gestion.html", tickets=[], asesores=[], error="Error interno del servidor")
 
 
     #   ACTUALIZAR TICKET
@@ -570,8 +573,8 @@ class supportController:
                 return jsonify({"success": False, "mensaje": "No se realizaron cambios"})
 
         except Exception as e:
-            print(f"Error en ActualizarTicket: {e}")
-            return jsonify({"error": str(e)}), 500
+            logger.error(f"Error en ActualizarTicket: {str(e)}")
+            return jsonify({"error": "Error interno del servidor"}), 500
 
 
     #   ALIAS (COMPATIBILIDAD)

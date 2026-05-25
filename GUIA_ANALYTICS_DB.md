@@ -73,7 +73,7 @@ def get_kpis():
 
 ---
 
-### 1.2 Top Platillos (MapReduce sobre arrays)
+### 1.2 Top Platillos MapReduce
 
 ```python
 @staticmethod

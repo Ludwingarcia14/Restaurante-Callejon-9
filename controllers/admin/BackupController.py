@@ -10,6 +10,9 @@ import threading
 import schedule
 import time
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Cargar variables de entorno
 load_dotenv()
@@ -176,15 +179,15 @@ class BackupController:
                 print(f"⚠️ Error al notificar backup: {notif_error}")
             
         except Exception as e:
-            print(f"❌ Error al generar respaldo: {str(e)}")
-            flash(f"❌ Error al generar respaldo: {str(e)}", "error")
+            logger.error(f"❌ Error al generar respaldo: {str(e)}")
+            flash("❌ Error al generar respaldo", "error")
             
             # NOTIFICAR ERROR
             try:
                 NotificacionSistemaController.notificar_error(
                     usuario_id=session.get("usuario_id"),
                     tipo_error="BACKUP_ERROR",
-                    descripcion=str(e)
+                    descripcion="Error al generar respaldo"
                 )
             except Exception as notif_error:
                 print(f"⚠️ Error al notificar error: {notif_error}")
@@ -202,8 +205,8 @@ class BackupController:
             else:
                 flash("❌ El archivo no existe.", "error")
         except Exception as e:
-            print(f"Error al eliminar: {str(e)}")
-            flash(f"❌ Error al eliminar: {str(e)}", "error")
+            logger.error(f"Error al eliminar: {str(e)}")
+            flash("❌ Error al eliminar", "error")
         return redirect(url_for('routes.admin_backup_view'))
     
     @staticmethod
@@ -246,9 +249,10 @@ class BackupController:
                 "message": f"Archivo '{filename}' eliminado correctamente"
             })
         except Exception as e:
+            logger.error(f"Error al eliminar: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": f"Error al eliminar: {str(e)}"
+                "message": "Error interno del servidor"
             })
     
     @staticmethod
@@ -386,8 +390,8 @@ class BackupController:
             flash(f"✅ Sistema restaurado con éxito. {restored_collections} colecciones restauradas.", "success")
             
         except Exception as e:
-            print(f"❌ Error en la restauración: {str(e)}")
-            flash(f"❌ Error en la restauración: {str(e)}", "error")
+            logger.error(f"❌ Error en la restauración: {str(e)}")
+            flash("❌ Error en la restauración", "error")
             
         return redirect(url_for('routes.admin_backup_view'))
     
@@ -430,10 +434,10 @@ class BackupController:
             })
             
         except Exception as e:
-            print(f"Error al configurar auto-backup: {e}")
+            logger.error(f"Error al configurar auto-backup: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": f"Error: {str(e)}"
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod

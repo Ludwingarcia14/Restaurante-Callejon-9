@@ -5,6 +5,21 @@ __pycache__/
 
 # Flask session
 flask_session/
+<<<<<<< HEAD
+.env
+.env.local
+*.pem
+*.key
+*.crt
+__pycache__/
+*.pyc
+.DS_Store
+static/backup/
+venv/
+.idea/
+.vscode/
+*.log
+=======
 
 # Entorno virtual
 venv/
@@ -17,3 +32,4 @@ env/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+>>>>>>> 7b34cd65bfb029aeef6a4af0c957ff2c9120f501

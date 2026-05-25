@@ -439,5 +439,5 @@ class DashboardController:
             print(f"Error: {e}")
             return jsonify({
                 "success": False,
-                "error": str(e)
+                "error": "Error interno del servidor"
             }), 500

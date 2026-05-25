@@ -56,8 +56,8 @@ class SettingsController:
                 'telefono': user.get('telefono', '') if user else ''
             })
         except Exception as e:
-            logging.error(f"Error al obtener telefono: {e}")
-            return jsonify({'status': 'error', 'message': str(e)}), 500
+            logging.error(f"Error al obtener telefono: {str(e)}")
+            return jsonify({'status': 'error', 'message': 'Error interno del servidor'}), 500
 
     @staticmethod
     def actualizar_perfil():
@@ -94,8 +94,8 @@ class SettingsController:
             else:
                 return jsonify({'status': 'error', 'message': 'No se pudo actualizar'}), 500
         except Exception as e:
-            logging.error(f"Error al actualizar perfil: {e}")
-            return jsonify({'status': 'error', 'message': str(e)}), 500
+            logging.error(f"Error al actualizar perfil: {str(e)}")
+            return jsonify({'status': 'error', 'message': 'Error interno del servidor'}), 500
 
     # ==========================================
     # API: 2FA

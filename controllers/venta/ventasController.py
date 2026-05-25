@@ -8,6 +8,9 @@ from models.menu_model import Platillo
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class VentasController:
     # ============================================
@@ -165,9 +168,10 @@ class VentasController:
                 "cuenta_id": cuenta_id
             })
         except Exception as e:
+            logger.error(f"Error en api_crear_venta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -191,9 +195,10 @@ class VentasController:
                     "message": "No se pudo actualizar la venta"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_get_cortes: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -217,9 +222,10 @@ class VentasController:
                     "message": "No se pudo completar la venta"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_completar_venta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -244,9 +250,10 @@ class VentasController:
                     "message": "No se pudo cancelar la venta"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_cancelar_venta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -269,9 +276,10 @@ class VentasController:
                     "message": "No se pudo eliminar la venta"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_eliminar_venta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -294,9 +302,10 @@ class VentasController:
                     "message": "Venta no encontrada"
                 }), 404
         except Exception as e:
+            logger.error(f"Error en api_get_venta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -326,9 +335,10 @@ class VentasController:
                 "ventas": ventas
             })
         except Exception as e:
+            logger.error(f"Error en api_get_ventas: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -345,9 +355,10 @@ class VentasController:
                 "stats": stats
             })
         except Exception as e:
+            logger.error(f"Error en api_get_estadisticas: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     # ============================================
@@ -382,9 +393,10 @@ class VentasController:
                     "message": "No se pudo cerrar la cuenta"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_cerrar_cuenta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -401,9 +413,10 @@ class VentasController:
                 "cuentas": cuentas
             })
         except Exception as e:
+            logger.error(f"Error en api_get_cuentas: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     # ============================================
@@ -451,9 +464,10 @@ class VentasController:
                 "corte_id": corte_id
             })
         except Exception as e:
+            logger.error(f"Error en api_generar_corte: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -470,7 +484,8 @@ class VentasController:
                 "cortes": cortes
             })
         except Exception as e:
+            logger.error(f"Error en api_crear_venta: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
