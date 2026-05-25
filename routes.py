@@ -2,33 +2,29 @@
 Módulo de Rutas - Sistema de Restaurante Callejón 9
 Roles: 1=Admin, 2=Mesero, 3=Cocina
 """
-from flask import Blueprint, render_template, session, redirect, url_for, request
-from flask import render_template, session, redirect, url_for, jsonify
+from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
 from controllers.auth.AuthController import AuthController, login_required, rol_required, permiso_required
 from controllers.dashboard.dashboard_controller import DashboardController
+from controllers.dashboard.dashboardApiController import DashboardAPIController
 from controllers.admin.BackupController import BackupController
 from controllers.historial.historialController import HistorialController
 from controllers.inventario.inventarioController import InventarioController
-from models.inventario_model import Insumo
-from flask import render_template
-from controllers.dashboard.dashboardApiController import DashboardAPIController
 from controllers.comanda.comandaController import ComandaController
 from controllers.mesa.mesaController import MesaController
-from flask import jsonify, request
 from controllers.notificaciones.notificacion_controller import NotificacionController
 from controllers.propina.propinasController import PropinasController
 from controllers.cocina.cocinaController import CocinaController
+from controllers.settings.settingsController import SettingsController
+from controllers.menu.menuController import MenuController
+from controllers.venta.ventasController import VentasController
+from controllers.analytics.analytics_controller import AnalyticsController
+from controllers.pago.mercadoPagoController import MercadoPagoController
+from models.inventario_model import Insumo
 from models.mesa_model import Mesa
 from models.comanda_model import Comanda
 from models.producto_model import Producto
 from config.db import db
-from controllers.settings.settingsController import SettingsController
-
-from controllers.menu.menuController import MenuController
-
-from controllers.venta.ventasController import VentasController
-from controllers.analytics.analytics_controller import AnalyticsController
-from controllers.pago.mercadoPagoController import MercadoPagoController
+from extensions import limiter
 
 routes_bp = Blueprint("routes", __name__)
 
@@ -41,8 +37,9 @@ routes_bp = Blueprint("routes", __name__)
 def home():
     return DashboardController.index()
 
-# Login y Logout
-routes_bp.add_url_rule("/login", view_func=AuthController.login, methods=["GET", "POST"], endpoint="login")
+# Login y Logout — máximo 10 intentos por minuto por IP
+_login_view = limiter.limit("10 per minute")(AuthController.login)
+routes_bp.add_url_rule("/login", view_func=_login_view, methods=["GET", "POST"], endpoint="login")
 routes_bp.add_url_rule("/logout", view_func=AuthController.logout, endpoint="logout")
 routes_bp.add_url_rule("/verify-2fa", view_func=AuthController.verify_2fa, methods=["POST"], endpoint="verify_2fa")
 
@@ -208,12 +205,6 @@ def api_2fa_verify():
 def api_2fa_disable():
     return SettingsController.disable_2fa()
 
-# API: Recovery 2FA (emergencia)
-@routes_bp.route('/api/2fa/emergency-disable')
-def api_2fa_emergency_disable():
-    """Deshabilita 2FA para usuarios bloquados (sin login)"""
-    email = request.args.get('email', '')
-    return AuthController.emergency_disable_2fa(email)
 
 # ============================================
 #  PANEL DE ADMINISTRACIÓN (Rol 1)
@@ -435,12 +426,6 @@ def api_mesero_historial():
 # API GENERALES
 # =========================
 
-@routes_bp.route("/api/menu", methods=["GET"])
-@login_required
-@rol_required(['1', '2'])
-def api_get_menu():
-    productos = Producto.obtener_todo()
-    return jsonify({"success": True, "menu": productos})
 
 
 @routes_bp.route("/api/mesero/estadisticas/dia", methods=["GET"])
@@ -614,9 +599,9 @@ def cocina_inventario():
 
 # --- Gestión de Insumos ---//
 @routes_bp.route("/inventario/insumos")
+@login_required
+@rol_required(['1', '3', '4'])
 def inventario_insumos():
-    
-   
     insumos = Insumo.obtener_todos()
     return render_template(
         "inventario/insumos.html",

@@ -292,7 +292,6 @@ class NotificacionController:
     """
 
     @staticmethod
-    @staticmethod
     @login_required_api
     def get_notificaciones():
         """
@@ -471,7 +470,9 @@ class NotificacionController:
             usuario_rol = session.get("usuario_rol")
             
             # Generar token JWT para Socket.IO
-            secret_key = os.getenv("JWT_SECRET_KEY", "tu_clave_secreta_super_segura")
+            secret_key = os.getenv("JWT_SECRET_KEY")
+            if not secret_key:
+                raise RuntimeError("JWT_SECRET_KEY no está definida en las variables de entorno.")
             
             payload = {
                 "usuario_id": usuario_id,

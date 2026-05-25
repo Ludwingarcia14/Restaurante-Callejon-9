@@ -7,11 +7,12 @@ Roles: 1=Admin, 2=Mesero, 3=Cocina, 4=Inventario
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from models.empleado_model import Usuario, RolPermisos
 from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
+from services.security.password_service import PasswordService
 import secrets
 import logging
 from functools import wraps
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class AuthController:
@@ -35,9 +36,7 @@ class AuthController:
             email = data.get("email", "").strip().lower()
             password = data.get("password", "")
 
-            print(f"\n🔐 Intento de login:")
-            print(f"   Email: {email}")
-            print(f"   Password: {'*' * len(password)}")
+            logger.info("Intento de login: %s", email)
 
             # 1. Validaciones básicas
             if not email or not password:
@@ -49,17 +48,12 @@ class AuthController:
             # 2. Buscar usuario por email
             try:
                 usuario_doc = Usuario.find_by_email(email)
-                print(f"   Usuario encontrado: {usuario_doc is not None}")
-
-                if usuario_doc:
-                    print(f"   Rol del usuario: {usuario_doc.get('usuario_rol')}")
-                    print(f"   Status: {usuario_doc.get('usuario_status')}")
 
             except Exception as e:
-                print(f"   ❌ Error al buscar usuario: {e}")
+                logger.error("Error al buscar usuario en login: %s", e)
                 return jsonify({
                     "status": "error",
-                    "message": f"Error de base de datos: {str(e)}"
+                    "message": "Error de base de datos"
                 })
 
             if not usuario_doc:
@@ -76,12 +70,26 @@ class AuthController:
                     "message": "No tienes permisos para acceder al sistema"
                 })
 
-            # 4. Validar contraseña (comparación directa)
+            # 4. Validar contraseña
             stored_password = usuario_doc.get("usuario_clave", "")
 
-            print(f"   ¿Coinciden?: {stored_password == password}")
+            # Compatibilidad: si la contraseña no está hasheada (legado), migrar al vuelo
+            if stored_password.startswith("$2b$") or stored_password.startswith("$2a$"):
+                password_ok = PasswordService.verify_password(password, stored_password)
+            else:
+                # Contraseña en texto plano (legado) — comparar y migrar a bcrypt
+                password_ok = (stored_password == password)
+                if password_ok:
+                    try:
+                        new_hash = PasswordService.hash_password(password)
+                        Usuario.collection.update_one(
+                            {"_id": usuario_doc["_id"]},
+                            {"$set": {"usuario_clave": new_hash}}
+                        )
+                    except Exception as e:
+                        logging.warning(f"No se pudo migrar contraseña a bcrypt: {e}")
 
-            if stored_password != password:
+            if not password_ok:
                 return jsonify({
                     "status": "error",
                     "message": "Credenciales incorrectas"
@@ -98,7 +106,7 @@ class AuthController:
             try:
                 Usuario.update_session_token(user_id, token_session, 1)
             except Exception as e:
-                print(f"⚠️ Error al actualizar token: {e}")
+                logger.warning("Error al actualizar token de sesión: %s", e)
 
             # Poblar sesión Flask
             session["usuario_id"] = user_id

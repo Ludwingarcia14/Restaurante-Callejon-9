@@ -386,13 +386,18 @@ def _notificar_mesero_pedido_listo(mesero_id, comanda_id, mesa_numero, item_ids)
     """Notifica al mesero que su pedido está listo"""
     try:
         from extensions import socketio
-        from cqrs.commands.handlers.notificacion_handler import NotificacionSistemaHandler
-        
+        from controllers.notificaciones.notificacion_controller import NotificacionCommandHandler
+
         # Crear notificación en BD
-        NotificacionSistemaHandler.notificar_pedido_listo(
-            mesero_id=mesero_id,
-            comanda_id=comanda_id,
-            mesa_numero=mesa_numero
+        NotificacionCommandHandler.crear_notificacion(
+            tipo="PEDIDO_LISTO",
+            mensaje=f"Pedido listo en mesa {mesa_numero}",
+            id_usuario=str(mesero_id),
+            datos_extra={
+                "comanda_id": comanda_id,
+                "mesa_numero": mesa_numero,
+                "item_ids": item_ids
+            }
         )
         
         # Emitir evento en tiempo real
