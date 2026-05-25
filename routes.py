@@ -623,6 +623,8 @@ def inventario_insumos():
         insumos=insumos
     )
 
+
+
 @routes_bp.route("/inventario/dashboard")
 @login_required
 @rol_required(['1', '3', '4'])

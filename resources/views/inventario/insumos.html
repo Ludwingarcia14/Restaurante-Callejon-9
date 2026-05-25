@@ -87,7 +87,48 @@ function toggleDropdown() {
             <i class="bi bi-plus-circle"></i> Nuevo Insumo
         </a>
     </div>
+<!-- =========================
+     CARDS DE CATEGORÍAS
+     ========================= -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
 
+    <a href="{{ url_for('routes.inventario_insumos') }}"
+       class="bg-gray-200 text-gray-800 p-9 rounded-xl shadow hover:scale-105 transition text-center">
+        <div class="text-4xl">📦</div>
+        <div class="text-sm font-semibold">Todos</div>
+    </a>
+
+    <a href="?categoria=lacteos"
+       class="bg-blue-500 text-white p-9 rounded-xl shadow hover:scale-105 transition text-center">
+        <div class="text-4xl">🥛</div>
+        <div class="text-sm font-semibold">Lácteos</div>
+    </a>
+
+    <a href="?categoria=carnes"
+       class="bg-red-500 text-white p-9 rounded-xl shadow hover:scale-105 transition text-center">
+        <div class="text-4xl">🍖</div>
+        <div class="text-sm font-semibold">Carnes</div>
+    </a>
+
+    <a href="?categoria=vegetales"
+       class="bg-green-500 text-white p-9 rounded-xl shadow hover:scale-105 transition text-center">
+        <div class="text-4xl">🥦</div>
+        <div class="text-sm font-semibold">Vegetales</div>
+    </a>
+
+    <a href="?categoria=condimentos"
+       class="bg-yellow-500 text-white p-9 rounded-xl shadow hover:scale-105 transition text-center">
+        <div class="text-4xl">🧂</div>
+        <div class="text-sm font-semibold">Condimentos</div>
+    </a>
+
+    <a href="?categoria=bebidas"
+       class="bg-purple-500 text-white p-9 rounded-xl shadow hover:scale-105 transition text-center">
+        <div class="text-4xl">🥤</div>
+        <div class="text-sm font-semibold">Bebidas</div>
+    </a>
+
+</div>
     {% if insumos %}
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
