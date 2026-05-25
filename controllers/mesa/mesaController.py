@@ -1,6 +1,7 @@
 from flask import jsonify, session
 from config.db import db
 from bson.objectid import ObjectId
+from models.mesa_model import Mesa
 def limpiar_objectid(obj):
     from bson import ObjectId
 
@@ -23,14 +24,7 @@ class MesaController:
 
         mesas_asignadas = perfil_mesero.get("mesas_asignadas", [])
 
-        mesas = {}
-        cursor = db.mesas.find({"numero": {"$in": mesas_asignadas}})
-
-        for m in cursor:
-            mesas[m["numero"]] = {
-                "estado": m.get("estado", "libre").lower(),
-                "comensales": m.get("comensales", 0)
-            }
+        mesas = Mesa.get_estado_mesas_mesero(lista_numeros=mesas_asignadas)
 
         return jsonify({
             "success": True,

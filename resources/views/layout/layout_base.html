@@ -273,6 +273,7 @@
             
             <!-- Navegacion Principal -->
             <nav class="sidebar-nav">
+                {% if session.usuario_rol == '1' %}
                 <!-- Dashboard -->
                 <a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link" id="nav-dashboard">
                     <i class="bi bi-speedometer2 text-lg"></i>
@@ -298,7 +299,6 @@
                 </a>
 
                 <!-- Analytics -->
-                {% if session.usuario_rol == '1' %}
                 <a href="{{ url_for('routes.analytics_index') }}" class="nav-link" id="nav-analytics">
                     <i class="bi bi-bar-chart-line text-lg"></i>
                     <span>Analytics</span>
@@ -312,7 +312,7 @@
                 </a>
 
                 {% block navigation %}{% endblock %}
-                
+
                 <!--  ADMINISTRACION (Solo para Rol 1) -->
                 {% if session.usuario_rol == '1' %}
                 <div class="mt-4 pt-4 border-t border-gray-200">
@@ -556,6 +556,9 @@
         }
     </script>
     
+    <!-- Modales (fuera de main-content para evitar stacking context) -->
+    {% block modals %}{% endblock %}
+
     <!-- Scripts Adicionales -->
     {% block extra_js %}{% endblock %}
     

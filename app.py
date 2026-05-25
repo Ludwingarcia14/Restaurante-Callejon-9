@@ -7,7 +7,8 @@ load_dotenv()
 from flask import Flask, request, session, redirect, url_for
 from flask_cors import CORS
 from flask_session import Session
-from flask_socketio import SocketIO, emit, join_room
+from flask_socketio import emit, join_room
+from extensions import socketio
 from datetime import datetime
 import os
 import sys
@@ -22,26 +23,50 @@ os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
 
 app = Flask(__name__, template_folder="resources/views", static_folder="static")
+from bson import ObjectId
+from flask.json.provider import DefaultJSONProvider
+from datetime import datetime
 
+class MongoJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+app.json_provider_class = MongoJSONProvider
+app.json = MongoJSONProvider(app)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 # Configuración de CORS
-lista_origenes = [
+_origenes_base = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
     "http://localhost:3000",
     "http://localhost:5000",
-    "http://127.0.0.1:5000"
+    "http://127.0.0.1:5000",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "https://restaurante-callejon-9-production.up.railway.app",
 ]
+_origenes_env = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", "").split(",")
+    if o.strip()
+]
+lista_origenes = list(set(_origenes_base + _origenes_env))
 
-CORS(app, supports_credentials=True, resources={r"/*": {"origins": lista_origenes}})
+CORS(app, supports_credentials=True, resources={
+    r"/*": {"origins": lista_origenes},
+})
 
 # ================================
 # SOCKET.IO
 # ================================
-socketio = SocketIO(
+socketio.init_app(
     app,
-    cors_allowed_origins=lista_origenes,
+    cors_allowed_origins="*",
     async_mode="threading",
     manage_session=False
 )
@@ -111,25 +136,53 @@ def inject_now():
 def log_request():
     if request.path.startswith("/static"):
         return
-    print(f"\n📡 {request.method} {request.path}")
-    print("🍪 Cookies:", request.cookies.keys())
+    print(f"\n[REQ] {request.method} {request.path}")
+    print("[COOKIES]:", request.cookies.keys())
 
 # ================================
 # SOCKET EVENTS
 # ================================
 @socketio.on("connect")
 def socket_connect(auth):
-    print("🔌 Socket conectado")
+    print("[SOCKET] Conectado")
     print("Auth:", auth)
 
 @socketio.on("disconnect")
 def socket_disconnect():
-    print("❌ Socket desconectado")
+    print("[SOCKET] Desconectado")
 
 @socketio.on("join_room")
 def on_join_room(room):
     join_room(room)
     print(f"📥 Cliente unido a sala: {room}")
+
+# ================================
+# API DOCS
+# ================================
+@app.route('/api/docs')
+def api_docs():
+    return """<!DOCTYPE html>
+<html>
+<head>
+  <title>Callejón 9 — API Docs</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+SwaggerUIBundle({
+  url: "/static/swagger.yaml",
+  dom_id: "#swagger-ui",
+  presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+  layout: "BaseLayout",
+  deepLinking: true
+});
+</script>
+</body>
+</html>"""
 
 # ================================
 # ERRORES
@@ -163,10 +216,10 @@ if __name__ == "__main__":
     print(f" Auto-reload: {'Activado' if reloader_config else 'Desactivado (Windows)'}")
     print("=" * 60 + "\n")
     
-    app.run(
+    socketio.run(
+        app,
         debug=True,
         use_reloader=reloader_config,
         host='0.0.0.0',
-        port=5000,
-        threaded=True  
+        port=5000
     )

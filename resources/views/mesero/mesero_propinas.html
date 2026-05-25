@@ -1,32 +1,56 @@
-{% extends "layout/layout_base.html" %}
+{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Mis Propinas{% endblock %}
 {% block page_title %}Control de Propinas{% endblock %}
 
 {% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const linksAdmin = ['nav-dashboard', 'nav-menu', 'nav-ventas', 'nav-reportes', 'nav-analytics'];
+    linksAdmin.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const adminSection = document.querySelector('.sidebar-nav .border-t');
+    if (adminSection) adminSection.style.display = 'none';
+});
+</script>
+
 <a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
-    <i class="bi bi-house-door"></i>
+    <i class="bi bi-house-door text-lg"></i>
     <span>Inicio</span>
 </a>
-<a href="{{ url_for('routes.mesero_mesas') }}" class="nav-link">
-    <i class="bi bi-grid-3x3"></i>
-    <span>Mis Mesas</span>
-</a>
 <a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt"></i>
+    <i class="bi bi-receipt text-lg"></i>
     <span>Comandas Activas</span>
 </a>
 <a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text"></i>
+    <i class="bi bi-journal-text text-lg"></i>
     <span>Menú</span>
 </a>
-<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link active">
-    <i class="bi bi-cash-coin"></i>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin text-lg"></i>
     <span>Propinas del Día</span>
 </a>
 <a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
-    <i class="bi bi-clock-history"></i>
+    <i class="bi bi-clock-history text-lg"></i>
     <span>Historial</span>
+</a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i>
+    <span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
+    <i class="bi bi-tree text-lg"></i>
+    <span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
+    <i class="bi bi-clipboard-data text-lg"></i>
+    <span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
+    <i class="bi bi-book text-lg"></i>
+    <span>Metodología</span>
 </a>
 {% endblock %}
 
@@ -34,40 +58,179 @@
 
 <!-- RESUMEN -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-green-500">
         <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Total Acumulado</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="total-propinas-dia" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-piggy-bank text-4xl text-green-500 opacity-20"></i>
         </div>
-        <p class="text-xs text-gray-400 mt-2">
-            <span id="num-servicios">0</span> servicio(s)
-        </p>
+        <p class="text-xs text-gray-400 mt-2"><span id="num-servicios">0</span> servicio(s)</p>
     </div>
-
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
         <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Por Tarjeta (MP)</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="propinas-tarjeta" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-credit-card text-4xl text-blue-500 opacity-20"></i>
         </div>
-        <p class="text-xs text-gray-400 mt-2">
-            <span id="num-tarjeta">0</span> pago(s)
-        </p>
+        <p class="text-xs text-gray-400 mt-2"><span id="num-tarjeta">0</span> pago(s)</p>
     </div>
-
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-orange-500">
         <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Efectivo</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="propinas-efectivo" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-cash-stack text-4xl text-orange-500 opacity-20"></i>
         </div>
-        <p class="text-xs text-gray-400 mt-2">
-            <span id="num-efectivo">0</span> pago(s)
-        </p>
+        <p class="text-xs text-gray-400 mt-2"><span id="num-efectivo">0</span> pago(s)</p>
+    </div>
+</div>
+
+<!-- ===== GRÁFICAS ===== -->
+<div class="mb-8">
+    <h3 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <i class="bi bi-bar-chart-fill text-[#F2913D]"></i>
+        Análisis de Propinas
+    </h3>
+
+    <!-- Mini-stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Propina Promedio</p>
+            <p id="stat-propina-avg" class="text-xl font-black text-gray-800">$0.00</p>
+            <p class="text-[10px] text-gray-400 mt-1">por servicio</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Mejor Propina</p>
+            <p id="stat-propina-max" class="text-xl font-black text-gray-800">$0.00</p>
+            <p class="text-[10px] text-gray-400 mt-1">en un servicio</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">% Promedio</p>
+            <p id="stat-pct-avg" class="text-xl font-black text-gray-800">0%</p>
+            <p class="text-[10px] text-gray-400 mt-1">porcentaje del día</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Sin Propina</p>
+            <p id="stat-sin-propina" class="text-xl font-black text-gray-800">0</p>
+            <p class="text-[10px] text-gray-400 mt-1">servicios</p>
+        </div>
     </div>
 
+    <!-- Gráficas -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Propinas por hora -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-graph-up text-green-500"></i>
+                    Propinas por Hora
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Línea</span>
+            </div>
+            <div class="relative" style="height:220px;">
+                <canvas id="grafica-propinas-linea"></canvas>
+                <div id="empty-propinas-linea" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                    <div class="text-center">
+                        <i class="bi bi-graph-up text-4xl block mb-2"></i>
+                        <p class="text-xs">Sin datos aún</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por método de pago -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-pie-chart text-blue-500"></i>
+                    Por Método de Pago
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Dona</span>
+            </div>
+            <div class="flex gap-6 items-center justify-center" style="height:220px;">
+                <div class="relative flex-shrink-0" style="width:160px; height:160px;">
+                    <canvas id="grafica-metodos"></canvas>
+                    <div id="empty-metodos" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                        <div class="text-center">
+                            <i class="bi bi-pie-chart text-3xl block mb-1"></i>
+                            <p class="text-xs">Sin datos</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="leyenda-metodos" class="space-y-3 text-xs"></div>
+            </div>
+        </div>
+
+        <!-- Propina por mesa -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
+                    Propina por Mesa
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Barras</span>
+            </div>
+            <div class="relative" style="height:220px;">
+                <canvas id="grafica-propina-mesa"></canvas>
+                <div id="empty-propina-mesa" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                    <div class="text-center">
+                        <i class="bi bi-grid-3x3 text-4xl block mb-2"></i>
+                        <p class="text-xs">Sin datos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Propinas en el Tiempo: Día / Semana / Mes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-calendar-range text-orange-500"></i>
+                    Propinas en el Tiempo
+                </h4>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Selector de mes (solo en modo mes) -->
+                    <div id="selector-mes-container" class="hidden">
+                        <input type="month" id="selector-mes"
+                            class="text-[10px] border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-orange-400 cursor-pointer">
+                    </div>
+                    <!-- Tabs Día / Semana / Mes -->
+                    <div class="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
+                        <button onclick="cambiarRango('dia')" id="btn-dia"
+                            class="rango-btn px-3 py-1.5 rounded-md text-[10px] font-bold transition-all text-gray-500 hover:text-gray-700">
+                            Día
+                        </button>
+                        <button onclick="cambiarRango('semana')" id="btn-semana"
+                            class="rango-btn px-3 py-1.5 rounded-md text-[10px] font-bold transition-all bg-white text-orange-600 shadow-sm">
+                            Semana
+                        </button>
+                        <button onclick="cambiarRango('mes')" id="btn-mes"
+                            class="rango-btn px-3 py-1.5 rounded-md text-[10px] font-bold transition-all text-gray-500 hover:text-gray-700">
+                            Mes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total del período -->
+            <div class="flex items-center gap-2 mb-3 px-1">
+                <span class="text-[10px] text-gray-400 uppercase font-bold">Total del período:</span>
+                <span id="total-rango" class="text-sm font-black text-orange-600">$0.00</span>
+                <span id="label-rango" class="text-[10px] text-gray-300 font-medium"></span>
+            </div>
+
+            <div class="relative" style="height:195px;">
+                <canvas id="grafica-rango"></canvas>
+                <div id="empty-rango" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                    <div class="text-center">
+                        <i class="bi bi-calendar-x text-4xl block mb-2"></i>
+                        <p class="text-xs">Sin propinas en este período</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <!-- TABLA -->
@@ -79,7 +242,6 @@
         </h2>
         <span id="fecha-actual" class="text-xs font-bold text-gray-400 uppercase"></span>
     </div>
-
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
@@ -91,9 +253,7 @@
                     <th class="p-4 text-right">Propina</th>
                 </tr>
             </thead>
-            <tbody id="tabla-propinas-body" class="divide-y divide-gray-100 text-sm">
-                <!-- JS -->
-            </tbody>
+            <tbody id="tabla-propinas-body" class="divide-y divide-gray-100 text-sm"></tbody>
         </table>
     </div>
 </div>
@@ -101,94 +261,337 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+let chartPropinasLinea = null;
+let chartMetodos       = null;
+let chartPropinaMesa   = null;
+let chartRango         = null;
+let rangoActivo        = 'semana';
+
+Chart.defaults.font.family = "'Inter', sans-serif";
+
+// ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
     const hoy = new Date();
     document.getElementById('fecha-actual').textContent =
         hoy.toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' });
 
+    // Setear mes actual en el input
+    const inputMes = document.getElementById('selector-mes');
+    inputMes.value = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+    inputMes.addEventListener('change', () => graficaRango('mes'));
+
     cargarPropinas();
-    
-    // 🔥 Actualizar cada 30 segundos
     setInterval(cargarPropinas, 30000);
 });
 
+// ===== CARGA PRINCIPAL =====
 async function cargarPropinas() {
     try {
-        console.log('🔄 Cargando propinas del día...');
-        
-        const res = await fetch('/api/mesero/propinas/hoy');
+        const res  = await fetch('/api/mesero/propinas/hoy');
         const data = await res.json();
-
-        console.log('📊 Respuesta de propinas:', data);
-
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar propinas');
-        }
-
+        if (!data.success) throw new Error(data.error || 'Error al cargar propinas');
         renderizarPropinas(data);
-        
+        graficaRango(rangoActivo);
     } catch (err) {
-        console.error('❌ Error al cargar propinas:', err);
-        
-        // Mostrar datos vacíos en caso de error
-        renderizarPropinas({
-            success: true,
-            total: 0,
-            propinas: [],
-            count: 0
-        });
+        console.error('Error al cargar propinas:', err);
+        renderizarPropinas({ success: true, total: 0, propinas: [], count: 0 });
     }
 }
 
+// ===== RENDERIZADO GENERAL =====
 function renderizarPropinas(data) {
     const propinas = data.propinas || [];
-    const total = data.total || 0;
-    
-    // 🔥 CALCULAR TOTALES POR MÉTODO DE PAGO
-    let totalTarjeta = 0;
-    let totalEfectivo = 0;
-    let totalTransferencia = 0;
-    let numTarjeta = 0;
-    let numEfectivo = 0;
-    let numTransferencia = 0;
-    
+    const total    = data.total || 0;
+
+    let totalTarjeta = 0, totalEfectivo = 0, totalTransferencia = 0;
+    let numTarjeta = 0, numEfectivo = 0, numTransferencia = 0;
+
     propinas.forEach(p => {
         const metodo = (p.metodo_pago || 'efectivo').toLowerCase();
-        const monto = p.monto || 0;
-        
-        if (metodo === 'mercadopago' || metodo === 'tarjeta') {
-            totalTarjeta += monto;
-            numTarjeta++;
-        } else if (metodo === 'efectivo') {
-            totalEfectivo += monto;
-            numEfectivo++;
-        } else if (metodo === 'transferencia') {
-            totalTransferencia += monto;
-            numTransferencia++;
+        const monto  = p.monto || 0;
+        if (metodo === 'mercadopago' || metodo === 'tarjeta') { totalTarjeta += monto; numTarjeta++; }
+        else if (metodo === 'efectivo')      { totalEfectivo += monto;      numEfectivo++; }
+        else if (metodo === 'transferencia') { totalTransferencia += monto; numTransferencia++; }
+    });
+
+    document.getElementById('total-propinas-dia').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('num-servicios').textContent      = propinas.length;
+    document.getElementById('propinas-tarjeta').textContent   = `$${totalTarjeta.toFixed(2)}`;
+    document.getElementById('num-tarjeta').textContent        = numTarjeta;
+    document.getElementById('propinas-efectivo').textContent  = `$${(totalEfectivo + totalTransferencia).toFixed(2)}`;
+    document.getElementById('num-efectivo').textContent       = numEfectivo + numTransferencia;
+
+    calcularMiniStats(propinas);
+    graficaPropinasLinea(propinas);
+    graficaMetodos(propinas, totalEfectivo, totalTarjeta, totalTransferencia);
+    graficaPropinaMesa(propinas);
+    renderizarTabla(propinas);
+}
+
+// ===== MINI STATS =====
+function calcularMiniStats(propinas) {
+    if (!propinas.length) {
+        ['stat-propina-avg','stat-propina-max'].forEach(id => document.getElementById(id).textContent = '$0.00');
+        document.getElementById('stat-pct-avg').textContent     = '0%';
+        document.getElementById('stat-sin-propina').textContent = '0';
+        return;
+    }
+    const montos     = propinas.map(p => p.monto || 0);
+    const avg        = montos.reduce((s, v) => s + v, 0) / montos.length;
+    const max        = Math.max(...montos);
+    const conPct     = propinas.filter(p => p.porcentaje > 0);
+    const pctAvg     = conPct.length ? conPct.reduce((s, p) => s + (p.porcentaje || 0), 0) / conPct.length : 0;
+    const sinPropina = propinas.filter(p => (p.monto || 0) === 0).length;
+
+    document.getElementById('stat-propina-avg').textContent = `$${avg.toFixed(2)}`;
+    document.getElementById('stat-propina-max').textContent = `$${max.toFixed(2)}`;
+    document.getElementById('stat-pct-avg').textContent     = `${pctAvg.toFixed(0)}%`;
+    document.getElementById('stat-sin-propina').textContent = sinPropina;
+}
+
+// ===== GRÁFICA LÍNEA POR HORA =====
+function graficaPropinasLinea(propinas) {
+    const ctx   = document.getElementById('grafica-propinas-linea');
+    const empty = document.getElementById('empty-propinas-linea');
+    if (chartPropinasLinea) { chartPropinasLinea.destroy(); chartPropinasLinea = null; }
+
+    const horas  = Array.from({length: 17}, (_, i) => i + 7);
+    const montos = horas.map(h => propinas
+        .filter(p => p.fecha && new Date(p.fecha).getHours() === h)
+        .reduce((s, p) => s + (p.monto || 0), 0)
+    );
+    let acum = 0;
+    const acumulado = montos.map(v => { acum += v; return acum; });
+
+    if (!montos.some(v => v > 0)) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    chartPropinasLinea = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: horas.map(h => `${String(h).padStart(2,'0')}:00`),
+            datasets: [
+                { label: 'Por hora',  data: montos,    borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#16a34a', fill: true,  tension: 0.4 },
+                { label: 'Acumulado', data: acumulado, borderColor: '#F2913D', backgroundColor: 'transparent',          borderWidth: 2, borderDash: [5,4], pointRadius: 3, pointBackgroundColor: '#F2913D', tension: 0.4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 10 }, padding: 10 }},
+                tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` }}
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 }}},
+                y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, callback: v => `$${v}` }}
+            }
         }
     });
-    
-    console.log('💰 Totales calculados:');
-    console.log('   Total: $', total.toFixed(2));
-    console.log('   Tarjeta: $', totalTarjeta.toFixed(2), '(', numTarjeta, 'pagos)');
-    console.log('   Efectivo: $', totalEfectivo.toFixed(2), '(', numEfectivo, 'pagos)');
-    console.log('   Transferencia: $', totalTransferencia.toFixed(2), '(', numTransferencia, 'pagos)');
-    
-    // 🔥 ACTUALIZAR CARDS DE RESUMEN
-    document.getElementById('total-propinas-dia').textContent = `$${total.toFixed(2)}`;
-    document.getElementById('num-servicios').textContent = propinas.length;
-    
-    document.getElementById('propinas-tarjeta').textContent = `$${totalTarjeta.toFixed(2)}`;
-    document.getElementById('num-tarjeta').textContent = numTarjeta;
-    
-    // Efectivo + Transferencia
-    const totalEfectivoTotal = totalEfectivo + totalTransferencia;
-    const numEfectivoTotal = numEfectivo + numTransferencia;
-    document.getElementById('propinas-efectivo').textContent = `$${totalEfectivoTotal.toFixed(2)}`;
-    document.getElementById('num-efectivo').textContent = numEfectivoTotal;
+}
 
-    // 🔥 RENDERIZAR TABLA
+// ===== GRÁFICA DONA MÉTODOS =====
+function graficaMetodos(propinas, totalEfectivo, totalTarjeta, totalTransferencia) {
+    const ctx     = document.getElementById('grafica-metodos');
+    const empty   = document.getElementById('empty-metodos');
+    const leyenda = document.getElementById('leyenda-metodos');
+    if (chartMetodos) { chartMetodos.destroy(); chartMetodos = null; }
+
+    const datos = [
+        { label: 'Efectivo',      valor: totalEfectivo,      color: '#F2913D' },
+        { label: 'Tarjeta MP',    valor: totalTarjeta,        color: '#3b82f6' },
+        { label: 'Transferencia', valor: totalTransferencia,  color: '#8b5cf6' }
+    ].filter(d => d.valor > 0);
+
+    if (!datos.length) { empty.classList.remove('hidden'); leyenda.innerHTML = ''; return; }
+    empty.classList.add('hidden');
+
+    chartMetodos = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: datos.map(d => d.label),
+            datasets: [{ data: datos.map(d => d.valor), backgroundColor: datos.map(d => d.color), borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '68%',
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` }}}
+        }
+    });
+
+    const total = datos.reduce((s, d) => s + d.valor, 0);
+    leyenda.innerHTML = datos.map(d => `
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${d.color}"></span>
+            <span class="text-gray-700 flex-1">${d.label}</span>
+            <span class="font-bold text-gray-800">$${d.valor.toFixed(2)}</span>
+            <span class="text-gray-400">${Math.round(d.valor/total*100)}%</span>
+        </div>
+    `).join('');
+}
+
+// ===== GRÁFICA BARRAS MESA =====
+function graficaPropinaMesa(propinas) {
+    const ctx   = document.getElementById('grafica-propina-mesa');
+    const empty = document.getElementById('empty-propina-mesa');
+    if (chartPropinaMesa) { chartPropinaMesa.destroy(); chartPropinaMesa = null; }
+
+    const porMesa = {};
+    propinas.forEach(p => {
+        const m = `Mesa ${p.mesa || 'N/A'}`;
+        porMesa[m] = (porMesa[m] || 0) + (p.monto || 0);
+    });
+
+    const sorted = Object.entries(porMesa).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (!sorted.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    chartPropinaMesa = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sorted.map(e => e[0]),
+            datasets: [{
+                label: 'Propina', data: sorted.map(e => e[1]),
+                backgroundColor: sorted.map((_, i) => i === 0 ? 'rgba(22,163,74,0.85)' : 'rgba(22,163,74,0.25)'),
+                borderColor: '#16a34a', borderWidth: 1.5, borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` }}},
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 }}},
+                y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, callback: v => `$${v}` }}
+            }
+        }
+    });
+}
+
+// ===== CONTROL DE RANGO =====
+function cambiarRango(rango) {
+    rangoActivo = rango;
+
+    document.querySelectorAll('.rango-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-orange-600', 'shadow-sm');
+        btn.classList.add('text-gray-500');
+    });
+    const btnActivo = document.getElementById(`btn-${rango}`);
+    if (btnActivo) {
+        btnActivo.classList.add('bg-white', 'text-orange-600', 'shadow-sm');
+        btnActivo.classList.remove('text-gray-500');
+    }
+
+    const selectorMes = document.getElementById('selector-mes-container');
+    rango === 'mes' ? selectorMes.classList.remove('hidden') : selectorMes.classList.add('hidden');
+
+    graficaRango(rango);
+}
+
+// ===== GRÁFICA DÍA / SEMANA / MES =====
+async function graficaRango(rango) {
+    const ctx   = document.getElementById('grafica-rango');
+    const empty = document.getElementById('empty-rango');
+    if (chartRango) { chartRango.destroy(); chartRango = null; }
+
+    try {
+        let url = `/api/mesero/propinas/rango?rango=${rango}`;
+        if (rango === 'mes') {
+            const mesVal = document.getElementById('selector-mes').value;
+            if (mesVal) url += `&mes=${mesVal}`;
+        }
+
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const dias     = data.dias || [];
+        const hayDatos = dias.some(d => d.total > 0);
+
+        document.getElementById('total-rango').textContent = `$${(data.total || 0).toFixed(2)}`;
+        const labels_rango = { dia: 'hoy', semana: 'últimos 7 días', mes: 'este mes' };
+        document.getElementById('label-rango').textContent = labels_rango[rango] || '';
+
+        if (!hayDatos) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+
+        const hoy = (() => {
+            const h = new Date();
+            return `${h.getFullYear()}-${String(h.getMonth()+1).padStart(2,'0')}-${String(h.getDate()).padStart(2,'0')}`;
+        })();
+
+        const etiquetas = dias.map(d => {
+            const f = new Date(d.fecha + 'T12:00:00');
+            if (rango === 'dia')    return f.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            if (rango === 'semana') return f.toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit' });
+            return f.toLocaleDateString('es-MX', { day: '2-digit' }); // mes
+        });
+
+        const valores      = dias.map(d => d.total);
+        const bgColors     = dias.map(d => d.fecha === hoy ? '#F2913D' : '#3b82f6');
+        const borderColors = dias.map(d => d.fecha === hoy ? '#c2410c' : '#1d4ed8');
+        const esLinea      = rango === 'dia';
+
+        chartRango = new Chart(ctx, {
+            type: esLinea ? 'line' : 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: 'Propinas',
+                    data: valores,
+                    backgroundColor: esLinea ? 'rgba(59,130,246,0.1)' : bgColors,
+                    borderColor:     esLinea ? '#3b82f6'              : borderColors,
+                    borderWidth:     esLinea ? 2 : 1.5,
+                    borderRadius:    esLinea ? 0 : 5,
+                    pointBackgroundColor: '#F2913D',
+                    pointRadius: esLinea ? 4 : 0,
+                    fill:    esLinea,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: items => {
+                                const dia = dias[items[0].dataIndex];
+                                if (dia.fecha === hoy) return '📅 Hoy';
+                                const f = new Date(dia.fecha + 'T12:00:00');
+                                return f.toLocaleDateString('es-MX', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+                            },
+                            label: ctx => ` $${ctx.raw.toFixed(2)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: rango === 'mes' ? 9 : 10 },
+                            maxRotation: rango === 'mes' ? 45 : 0,
+                            autoSkip: rango === 'mes',
+                            maxTicksLimit: rango === 'mes' ? 15 : undefined
+                        }
+                    },
+                    y: {
+                        grid: { color: '#f3f4f6' },
+                        ticks: { font: { size: 10 }, callback: v => `$${v}` },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    } catch (e) {
+        console.error('Error graficaRango:', e);
+        empty.classList.remove('hidden');
+    }
+}
+
+// ===== TABLA =====
+function renderizarTabla(propinas) {
     const body = document.getElementById('tabla-propinas-body');
 
     if (!propinas.length) {
@@ -206,39 +609,27 @@ function renderizarPropinas(data) {
 
     body.innerHTML = propinas.map(item => {
         const fecha = item.fecha ? new Date(item.fecha) : new Date();
-        const hora = fecha.toLocaleTimeString('es-MX', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-        });
-        
+        const hora  = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+
         const metodo = (item.metodo_pago || 'efectivo').toLowerCase();
-        let metodoBadge = '';
-        let metodoBadgeClass = '';
-        
+        let metodoBadge = '', metodoBadgeClass = '';
         if (metodo === 'mercadopago' || metodo === 'tarjeta') {
-            metodoBadge = 'TARJETA MP';
-            metodoBadgeClass = 'bg-blue-100 text-blue-700';
+            metodoBadge = 'TARJETA MP'; metodoBadgeClass = 'bg-blue-100 text-blue-700';
         } else if (metodo === 'efectivo') {
-            metodoBadge = 'EFECTIVO';
-            metodoBadgeClass = 'bg-orange-100 text-orange-700';
+            metodoBadge = 'EFECTIVO'; metodoBadgeClass = 'bg-orange-100 text-orange-700';
         } else if (metodo === 'transferencia') {
-            metodoBadge = 'TRANSFERENCIA';
-            metodoBadgeClass = 'bg-purple-100 text-purple-700';
+            metodoBadge = 'TRANSFERENCIA'; metodoBadgeClass = 'bg-purple-100 text-purple-700';
         } else {
-            metodoBadge = metodo.toUpperCase();
-            metodoBadgeClass = 'bg-gray-100 text-gray-700';
+            metodoBadge = metodo.toUpperCase(); metodoBadgeClass = 'bg-gray-100 text-gray-700';
         }
-        
-        const porcentaje = item.porcentaje || 0;
-        
+
         return `
             <tr class="hover:bg-gray-50 transition">
                 <td class="p-4 text-xs text-gray-500 font-mono">${hora}</td>
                 <td class="p-4 font-bold text-gray-700">Mesa ${item.mesa}</td>
                 <td class="p-4 text-gray-600">
                     <span class="bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-bold">
-                        ${porcentaje.toFixed(0)}%
+                        ${(item.porcentaje || 0).toFixed(0)}%
                     </span>
                 </td>
                 <td class="p-4">
@@ -247,13 +638,11 @@ function renderizarPropinas(data) {
                     </span>
                 </td>
                 <td class="p-4 text-right font-bold text-green-600">
-                    +$${item.monto.toFixed(2)}
+                    +$${(item.monto || 0).toFixed(2)}
                 </td>
             </tr>
         `;
     }).join('');
-    
-    console.log('✅ Tabla de propinas renderizada');
 }
 </script>
 {% endblock %}

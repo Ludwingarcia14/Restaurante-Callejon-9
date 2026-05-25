@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 Módulo de Rutas - Sistema de Restaurante Callejón 9
 Roles: 1=Admin, 2=Mesero, 3=Cocina
@@ -1000,3 +1001,8 @@ def verificar_pago():
         }), 400
     
     return MercadoPagoController.verificar_pago_mercadopago(cuenta_id)
+=======
+# Este archivo fue reemplazado por el paquete routes/
+# Python importa desde routes/__init__.py automáticamente.
+# No borrar: conservado como referencia histórica.
+>>>>>>> e18a1ec59386e715ee95d43b35b5eefa9233a185

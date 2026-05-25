@@ -1,0 +1,698 @@
+{% extends "layout/layout_mesero.html" %}
+
+{% block title %}Metodología CRISP-DM{% endblock %}
+{% block page_title %}Metodología{% endblock %}
+{% block page_subtitle %}CRISP-DM — Cómo funciona el sistema de análisis paso a paso{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
+</a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
+    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
+</a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
+</a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
+</a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
+    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
+    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link active">
+    <i class="bi bi-book text-lg"></i><span>Metodología</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- CABECERA -->
+<div class="mb-8 p-6 rounded-2xl text-white"
+     style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+    <div class="flex items-start gap-4">
+        <div class="w-14 h-14 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-cpu text-3xl"></i>
+        </div>
+        <div>
+            <h2 class="text-xl font-bold mb-1">CRISP-DM aplicado al Restaurante Callejón 9</h2>
+            <p class="text-sm opacity-85">
+                <strong>Cross-Industry Standard Process for Data Mining</strong> es la metodología
+                estándar de la industria para proyectos de ciencia de datos. Define 6 fases iterativas
+                que guían desde el problema de negocio hasta el modelo en producción.
+                Este sistema las implementa todas sobre las comandas del restaurante.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- MAPA DE FASES -->
+<div class="flex items-center gap-1 mb-8 overflow-x-auto pb-2">
+    {% set fases = [
+        ('#6366f1', 'bi-briefcase',      '1', 'Negocio'),
+        ('#3b82f6', 'bi-database',       '2', 'Datos'),
+        ('#0ea5e9', 'bi-funnel',         '3', 'Preparación'),
+        ('#10b981', 'bi-gear',           '4', 'Modelado'),
+        ('#f59e0b', 'bi-speedometer2',   '5', 'Evaluación'),
+        ('#ef4444', 'bi-rocket-takeoff', '6', 'Despliegue'),
+    ] %}
+    {% for color, icon, num, nombre in fases %}
+    <div class="flex items-center gap-1 flex-shrink-0">
+        <div class="flex flex-col items-center">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                 style="background:{{ color }};">{{ num }}</div>
+            <span class="text-xs text-gray-500 mt-1">{{ nombre }}</span>
+        </div>
+        {% if not loop.last %}
+        <div class="w-8 h-0.5 bg-gray-200 mb-4 flex-shrink-0"></div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- FASE 1 -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#6366f1;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-briefcase text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-indigo-200 uppercase tracking-wider font-semibold">Fase 1</p>
+            <h3 class="text-white font-bold text-base">Entendimiento del Negocio</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">¿Qué problema resolvemos?</h4>
+                <p class="text-sm text-gray-600">
+                    No todas las mesas son iguales. Algunas generan la mayor parte del ingreso del restaurante;
+                    otras rara vez se usan. Sin datos, el mesero trata todas las mesas igual y pierde
+                    oportunidades de mejorar el servicio donde más importa.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Objetivo del sistema</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li class="flex items-start gap-2"><i class="bi bi-check-circle text-indigo-400 mt-0.5"></i> Clasificar cada mesa en un segmento (VIP, Regular, Ocasional)</li>
+                    <li class="flex items-start gap-2"><i class="bi bi-check-circle text-indigo-400 mt-0.5"></i> Identificar qué variables definen cada segmento</li>
+                    <li class="flex items-start gap-2"><i class="bi bi-check-circle text-indigo-400 mt-0.5"></i> Generar recomendaciones accionables por segmento</li>
+                </ul>
+            </div>
+        </div>
+        <div class="mt-4 p-3 rounded-lg text-sm" style="background:#eef2ff; border:1px solid #c7d2fe;">
+            <strong class="text-indigo-700">Criterio de éxito:</strong>
+            <span class="text-indigo-600"> clusters bien separados (Silhouette Score &gt; 0.4) y reglas interpretables que el mesero pueda entender y aplicar.</span>
+        </div>
+    </div>
+</div>
+
+<!-- FASE 2 -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#3b82f6;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-database text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-blue-200 uppercase tracking-wider font-semibold">Fase 2</p>
+            <h3 class="text-white font-bold text-base">Entendimiento de los Datos</h3>
+        </div>
+        <a href="{{ url_for('routes.mesero_diagnostico') }}"
+           class="ml-auto text-xs text-white bg-white bg-opacity-20 px-3 py-1 rounded-full hover:bg-opacity-30 transition">
+            Ver Diagnóstico <i class="bi bi-arrow-right ml-1"></i>
+        </a>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-4">
+            Antes de modelar, exploramos la calidad y distribución de los datos.
+            Los datos provienen de la colección <code class="bg-gray-100 px-1 rounded">comandas</code>
+            en MongoDB — una comanda por cada servicio cerrado.
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="rounded-lg p-3 text-center bg-blue-50 border border-blue-100">
+                <p class="text-xs text-blue-500 font-semibold mb-1">Fuente</p>
+                <p class="text-sm font-bold text-gray-800">db.comandas</p>
+            </div>
+            <div class="rounded-lg p-3 text-center bg-blue-50 border border-blue-100">
+                <p class="text-xs text-blue-500 font-semibold mb-1">Ventana</p>
+                <p class="text-sm font-bold text-gray-800">90 días</p>
+            </div>
+            <div class="rounded-lg p-3 text-center bg-blue-50 border border-blue-100">
+                <p class="text-xs text-blue-500 font-semibold mb-1">Unidad</p>
+                <p class="text-sm font-bold text-gray-800">Por mesa</p>
+            </div>
+            <div class="rounded-lg p-3 text-center bg-blue-50 border border-blue-100">
+                <p class="text-xs text-blue-500 font-semibold mb-1">Filtro</p>
+                <p class="text-sm font-bold text-gray-800">estado: pagada/cerrada</p>
+            </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">Variables exploradas</h4>
+        <div class="overflow-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                        <th class="px-3 py-2 text-left border border-gray-100">Variable</th>
+                        <th class="px-3 py-2 text-left border border-gray-100">Campo MongoDB</th>
+                        <th class="px-3 py-2 text-left border border-gray-100">Cálculo</th>
+                        <th class="px-3 py-2 text-left border border-gray-100">Uso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border border-gray-100">
+                        <td class="px-3 py-2 font-medium text-gray-800">Frecuencia</td>
+                        <td class="px-3 py-2 font-mono text-xs text-gray-600">mesa_numero</td>
+                        <td class="px-3 py-2 text-gray-600"><code class="bg-gray-100 px-1 rounded">$sum: 1</code> por mesa</td>
+                        <td class="px-3 py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">K-Means + RF</span></td>
+                    </tr>
+                    <tr class="border border-gray-100 bg-gray-50">
+                        <td class="px-3 py-2 font-medium text-gray-800">Ticket Promedio</td>
+                        <td class="px-3 py-2 font-mono text-xs text-gray-600">total</td>
+                        <td class="px-3 py-2 text-gray-600"><code class="bg-gray-100 px-1 rounded">$avg: "$total"</code></td>
+                        <td class="px-3 py-2"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">K-Means + RF</span></td>
+                    </tr>
+                    <tr class="border border-gray-100">
+                        <td class="px-3 py-2 font-medium text-gray-800">Variabilidad</td>
+                        <td class="px-3 py-2 font-mono text-xs text-gray-600">total</td>
+                        <td class="px-3 py-2 text-gray-600"><code class="bg-gray-100 px-1 rounded">$stdDevPop: "$total"</code></td>
+                        <td class="px-3 py-2"><span class="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">Solo RF</span></td>
+                    </tr>
+                    <tr class="border border-gray-100 bg-gray-50">
+                        <td class="px-3 py-2 font-medium text-gray-800">Propina Promedio</td>
+                        <td class="px-3 py-2 font-mono text-xs text-gray-600">propina</td>
+                        <td class="px-3 py-2 text-gray-600"><code class="bg-gray-100 px-1 rounded">$avg: "$propina"</code></td>
+                        <td class="px-3 py-2"><span class="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">Diagnóstico</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- FASE 3 -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#0ea5e9;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-funnel text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-sky-200 uppercase tracking-wider font-semibold">Fase 3</p>
+            <h3 class="text-white font-bold text-base">Preparación de los Datos</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-5">
+            Los datos crudos no pueden entrar directamente al modelo — las variables tienen escalas muy distintas
+            (frecuencia en centenas, ticket en cientos de pesos). Sin normalización, el K-Means daría más peso
+            a las variables con valores más grandes.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">1</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700">Agregación</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Pipeline MongoDB agrupa todas las comandas por <code class="bg-white px-1 rounded">mesa_numero</code>
+                    y calcula el resumen estadístico de cada mesa.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">2</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700">Construcción de features</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Se construye una matriz <code class="bg-white px-1 rounded">X</code> de forma
+                    <code class="bg-white px-1 rounded">n_mesas × 2</code> para K-Means
+                    y <code class="bg-white px-1 rounded">n_mesas × 3</code> para el Random Forest.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">3</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700">Normalización</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    <code class="bg-white px-1 rounded">StandardScaler</code> transforma cada variable a
+                    media=0 y std=1. Así frecuencia y ticket tienen el mismo peso en el clustering.
+                </p>
+            </div>
+        </div>
+
+        <div class="rounded-xl p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.8;">
+            <span style="color:#94a3b8;"># Pipeline MongoDB — Fase 3</span><br>
+            pipeline = [<br>
+            &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$match"</span>: { <span style="color:#38bdf8;">"mesero_id"</span>: mesero_oid, <span style="color:#38bdf8;">"estado"</span>: { <span style="color:#38bdf8;">"$in"</span>: [<span style="color:#86efac;">"pagada"</span>, <span style="color:#86efac;">"cerrada"</span>] } } },<br>
+            &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$group"</span>: {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"_id"</span>: <span style="color:#86efac;">"$mesa_numero"</span>,<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"num_visitas"</span>:     { <span style="color:#38bdf8;">"$sum"</span>: 1 },<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"ticket_promedio"</span>: { <span style="color:#38bdf8;">"$avg"</span>: <span style="color:#86efac;">"$total"</span> },<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"ticket_std"</span>:      { <span style="color:#38bdf8;">"$stdDevPop"</span>: <span style="color:#86efac;">"$total"</span> }<br>
+            &nbsp;&nbsp;} },<br>
+            ]<br>
+            <br>
+            <span style="color:#94a3b8;"># Normalización — StandardScaler (sklearn)</span><br>
+            scaler = StandardScaler()<br>
+            X_scaled = scaler.fit_transform(X_kmeans)  <span style="color:#94a3b8;"># 2 features</span>
+        </div>
+
+        <!-- FRAGMENTOS DE CÓDIGO -->
+        <h4 class="text-sm font-semibold text-gray-700 mt-7 mb-4 flex items-center gap-2">
+            <i class="bi bi-code-square text-sky-500"></i> Fragmentos de código — dónde ocurre cada paso
+        </h4>
+        <div class="space-y-5">
+
+            <!-- 1. Limpieza -->
+            <div class="rounded-xl overflow-hidden border border-gray-100">
+                <div class="flex items-center justify-between px-4 py-2 bg-red-50 border-b border-red-100">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-trash3 text-red-500 text-sm"></i>
+                        <span class="text-sm font-semibold text-gray-700">Limpieza de datos</span>
+                        <span class="text-xs text-gray-500">— se descartan comandas que no están finalizadas</span>
+                    </div>
+                    <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 46</code>
+                </div>
+                <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                    <span style="color:#94a3b8;"># Solo comandas finalizadas en los últimos 90 días</span><br>
+                    { <span style="color:#38bdf8;">"$match"</span>: {<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"mesero_id"</span>: mesero_oid,<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"estado"</span>: { <span style="color:#38bdf8;">"$in"</span>: [<span style="color:#86efac;">"pagada"</span>, <span style="color:#86efac;">"cerrada"</span>] },<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"fecha_cierre"</span>: { <span style="color:#38bdf8;">"$gte"</span>: hace_n_dias }<br>
+                    } }
+                </div>
+                <div class="px-4 py-2 bg-red-50 text-xs text-gray-600">
+                    Elimina comandas con estado <code class="bg-white px-1 rounded border border-red-100">abierta</code>,
+                    <code class="bg-white px-1 rounded border border-red-100">cancelada</code> o sin <code class="bg-white px-1 rounded border border-red-100">fecha_cierre</code>.
+                    Solo entran al modelo los servicios completamente cerrados dentro de la ventana de 90 días.
+                </div>
+            </div>
+
+            <!-- 2. Eliminación de duplicados -->
+            <div class="rounded-xl overflow-hidden border border-gray-100">
+                <div class="flex items-center justify-between px-4 py-2 bg-orange-50 border-b border-orange-100">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-layers text-orange-500 text-sm"></i>
+                        <span class="text-sm font-semibold text-gray-700">Eliminación de duplicados</span>
+                        <span class="text-xs text-gray-500">— una fila por mesa, sin importar cuántas comandas tenga</span>
+                    </div>
+                    <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 52</code>
+                </div>
+                <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                    <span style="color:#94a3b8;"># $group colapsa N comandas de la misma mesa en 1 sola fila</span><br>
+                    { <span style="color:#38bdf8;">"$group"</span>: {<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"_id"</span>: <span style="color:#86efac;">"$mesa_numero"</span>,   <span style="color:#94a3b8;"># clave de agrupación</span><br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"num_visitas"</span>:      { <span style="color:#38bdf8;">"$sum"</span>: 1 },<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"ticket_promedio"</span>:  { <span style="color:#38bdf8;">"$avg"</span>: <span style="color:#86efac;">"$total"</span> },<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"ticket_std"</span>:       { <span style="color:#38bdf8;">"$stdDevPop"</span>: <span style="color:#86efac;">"$total"</span> },<br>
+                    &nbsp;&nbsp;<span style="color:#38bdf8;">"ingreso_total"</span>:    { <span style="color:#38bdf8;">"$sum"</span>: <span style="color:#86efac;">"$total"</span> }<br>
+                    } },<br>
+                    <span style="color:#94a3b8;"># Mesas con al menos 1 visita (descarta mesas sin historial)</span><br>
+                    { <span style="color:#38bdf8;">"$match"</span>: { <span style="color:#38bdf8;">"num_visitas"</span>: { <span style="color:#38bdf8;">"$gte"</span>: 1 } } }
+                </div>
+                <div class="px-4 py-2 bg-orange-50 text-xs text-gray-600">
+                    El operador <code class="bg-white px-1 rounded border border-orange-100">$group</code> de MongoDB hace la consolidación implícitamente —
+                    si Mesa 3 tiene 45 comandas, produce exactamente 1 fila con sus estadísticas agregadas.
+                </div>
+            </div>
+
+            <!-- 3. Corrección de errores -->
+            <div class="rounded-xl overflow-hidden border border-gray-100">
+                <div class="flex items-center justify-between px-4 py-2 bg-yellow-50 border-b border-yellow-100">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-bandaid text-yellow-600 text-sm"></i>
+                        <span class="text-sm font-semibold text-gray-700">Corrección de errores y valores nulos</span>
+                        <span class="text-xs text-gray-500">— <code>stdDevPop</code> devuelve null cuando solo hay 1 registro</span>
+                    </div>
+                    <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 82</code>
+                </div>
+                <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                    <span style="color:#94a3b8;"># ticket_std es None cuando la mesa solo tiene 1 comanda</span><br>
+                    X_arbol = np.array([<br>
+                    &nbsp;&nbsp;[<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;float(m[<span style="color:#86efac;">"num_visitas"</span>]),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;float(m[<span style="color:#86efac;">"ticket_promedio"</span>]),<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;float(m.get(<span style="color:#86efac;">"ticket_std"</span>) <span style="color:#fb923c;">or</span> <span style="color:#f472b6;">0</span>),  <span style="color:#94a3b8;"># None → 0</span><br>
+                    &nbsp;&nbsp;]<br>
+                    &nbsp;&nbsp;<span style="color:#fb923c;">for</span> m <span style="color:#fb923c;">in</span> mesas_raw<br>
+                    ])<br>
+                    <br>
+                    <span style="color:#94a3b8;"># Guardia: K-Means necesita al menos 3 mesas distintas</span><br>
+                    <span style="color:#fb923c;">if</span> len(mesas_raw) &lt; <span style="color:#f472b6;">3</span>:<br>
+                    &nbsp;&nbsp;<span style="color:#fb923c;">return</span> { <span style="color:#86efac;">"puntos"</span>: [], <span style="color:#86efac;">"aviso"</span>: <span style="color:#86efac;">"Se necesitan al menos 3 mesas..."</span> }
+                </div>
+                <div class="px-4 py-2 bg-yellow-50 text-xs text-gray-600">
+                    <code class="bg-white px-1 rounded border border-yellow-100">m.get("ticket_std") or 0</code>: si
+                    <code class="bg-white px-1 rounded border border-yellow-100">$stdDevPop</code> devuelve
+                    <code class="bg-white px-1 rounded border border-yellow-100">None</code> o <code class="bg-white px-1 rounded border border-yellow-100">0.0</code>,
+                    el resultado es <code class="bg-white px-1 rounded border border-yellow-100">0</code> — variabilidad nula, comanda única.
+                </div>
+            </div>
+
+            <!-- 4. Transformación de formatos -->
+            <div class="rounded-xl overflow-hidden border border-gray-100">
+                <div class="flex items-center justify-between px-4 py-2 bg-sky-50 border-b border-sky-100">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-arrow-left-right text-sky-500 text-sm"></i>
+                        <span class="text-sm font-semibold text-gray-700">Transformación de formatos</span>
+                        <span class="text-xs text-gray-500">— de documentos MongoDB a matrices NumPy</span>
+                    </div>
+                    <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 74</code>
+                </div>
+                <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                    <span style="color:#94a3b8;"># Formato entrada: lista de dicts MongoDB</span><br>
+                    <span style="color:#94a3b8;"># mesas_raw = [{"_id": 3, "num_visitas": 45, "ticket_promedio": 162.5, ...}, ...]</span><br>
+                    <br>
+                    <span style="color:#94a3b8;"># Formato K-Means: matriz 2D  →  shape (n_mesas, 2)</span><br>
+                    X_kmeans = np.array([<br>
+                    &nbsp;&nbsp;[float(m[<span style="color:#86efac;">"num_visitas"</span>]), float(m[<span style="color:#86efac;">"ticket_promedio"</span>])]<br>
+                    &nbsp;&nbsp;<span style="color:#fb923c;">for</span> m <span style="color:#fb923c;">in</span> mesas_raw<br>
+                    ])<br>
+                    <br>
+                    <span style="color:#94a3b8;"># Formato Random Forest: matriz 3D  →  shape (n_mesas, 3)</span><br>
+                    X_arbol = np.array([<br>
+                    &nbsp;&nbsp;[float(m[<span style="color:#86efac;">"num_visitas"</span>]), float(m[<span style="color:#86efac;">"ticket_promedio"</span>]), float(m.get(<span style="color:#86efac;">"ticket_std"</span>) <span style="color:#fb923c;">or</span> <span style="color:#f472b6;">0</span>)]<br>
+                    &nbsp;&nbsp;<span style="color:#fb923c;">for</span> m <span style="color:#fb923c;">in</span> mesas_raw<br>
+                    ])
+                </div>
+                <div class="px-4 py-2 bg-sky-50 text-xs text-gray-600">
+                    Los documentos BSON de MongoDB se convierten a <code class="bg-white px-1 rounded border border-sky-100">float</code> explícitamente
+                    para evitar errores de tipo con <code class="bg-white px-1 rounded border border-sky-100">Decimal128</code> o campos
+                    <code class="bg-white px-1 rounded border border-sky-100">int</code> de MongoDB que NumPy no acepta directamente.
+                </div>
+            </div>
+
+            <!-- 5. Transformación de fases (normalización + reordenamiento) -->
+            <div class="rounded-xl overflow-hidden border border-gray-100">
+                <div class="flex items-center justify-between px-4 py-2 bg-emerald-50 border-b border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-arrow-repeat text-emerald-600 text-sm"></i>
+                        <span class="text-sm font-semibold text-gray-700">Transformación de los datos</span>
+                        <span class="text-xs text-gray-500">— normalización y reordenamiento de etiquetas</span>
+                    </div>
+                    <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 88</code>
+                </div>
+                <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                    <span style="color:#94a3b8;"># Paso A — Z-score: media=0, desviación=1 por columna</span><br>
+                    scaler  = StandardScaler()<br>
+                    X_scaled = scaler.fit_transform(X_kmeans)<br>
+                    <span style="color:#94a3b8;"># Antes: Frecuencia=[2..80], Ticket=[120..480]</span><br>
+                    <span style="color:#94a3b8;"># Después: ambas variables en escala [-2, +2] aprox.</span><br>
+                    <br>
+                    <span style="color:#94a3b8;"># Paso B — Reordenar clusters para que 0=VIP, 1=Regular, 2=Ocasional</span><br>
+                    <span style="color:#94a3b8;"># (K-Means asigna números de cluster aleatoriamente en cada ejecución)</span><br>
+                    centroids_orig = scaler.inverse_transform(km.cluster_centers_)<br>
+                    orden   = np.argsort(centroids_orig[:, <span style="color:#f472b6;">0</span>] + centroids_orig[:, <span style="color:#f472b6;">1</span>])[::-<span style="color:#f472b6;">1</span>]<br>
+                    remap   = { old: new <span style="color:#fb923c;">for</span> new, old <span style="color:#fb923c;">in</span> enumerate(orden) }<br>
+                    labels_remap = np.array([remap[l] <span style="color:#fb923c;">for</span> l <span style="color:#fb923c;">in</span> km.labels_])
+                </div>
+                <div class="px-4 py-2 bg-emerald-50 text-xs text-gray-600">
+                    <strong>Paso A:</strong> sin normalización, Ticket (ej. 350 MXN) dominaría sobre Frecuencia (ej. 8 visitas) solo por ser un número más grande.
+                    <strong>Paso B:</strong> K-Means no garantiza que el cluster 0 siempre sea VIP —
+                    se reordenan los labels por <code class="bg-white px-1 rounded border border-emerald-100">visitas + ticket</code> descendente para mantener la nomenclatura consistente entre ejecuciones.
+                </div>
+            </div>
+
+        </div><!-- /space-y-5 -->
+    </div>
+</div>
+
+<!-- FASE 4 -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#10b981;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-gear text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-emerald-200 uppercase tracking-wider font-semibold">Fase 4</p>
+            <h3 class="text-white font-bold text-base">Modelado — K-Means + Random Forest</h3>
+        </div>
+    </div>
+    <div class="p-6">
+
+        <!-- K-Means -->
+        <div class="mb-6">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="bi bi-diagram-3 text-emerald-500"></i> Paso 1 — K-Means (no supervisado)
+                <a href="{{ url_for('routes.mesero_kmeans') }}"
+                   class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full hover:bg-emerald-100 transition ml-auto">
+                    Ver segmentación
+                </a>
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-sm text-gray-600 space-y-2">
+                    <p>K-Means agrupa los datos en <strong>k=3 clusters</strong> minimizando la distancia
+                    de cada punto a su centroide (punto central del grupo).</p>
+                    <p>El algoritmo repite dos pasos hasta converger:</p>
+                    <ol class="list-decimal list-inside space-y-1 pl-2 text-xs">
+                        <li><strong>Asignación:</strong> cada mesa se asigna al centroide más cercano</li>
+                        <li><strong>Actualización:</strong> el centroide se mueve al promedio de su grupo</li>
+                    </ol>
+                    <p class="text-xs text-gray-400">Parámetros: <code class="bg-gray-100 px-1 rounded">n_clusters=3, n_init=10, random_state=42</code></p>
+                </div>
+                <div class="rounded-xl p-4 bg-emerald-50 border border-emerald-100 text-xs space-y-2">
+                    <p class="font-semibold text-gray-700">¿Por qué k=3?</p>
+                    <p class="text-gray-600">El <strong>método del codo</strong> grafica la inercia (suma de distancias
+                    al centroide) para k=1,2,3,4,5. En k=3 la curva forma un "codo" — agregar más clusters
+                    reduce poco la inercia pero aumenta la complejidad.</p>
+                    <p class="font-semibold text-gray-700 mt-2">Orden de clusters</p>
+                    <p class="text-gray-600">Después del clustering, los clusters se reordenan por
+                    <code class="bg-white px-1 rounded">visitas + ticket</code> descendente,
+                    así el cluster 0 siempre es VIP y el 2 siempre Ocasional.</p>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-gray-100 my-5">
+
+        <!-- Random Forest -->
+        <div>
+            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="bi bi-tree text-emerald-500"></i> Paso 2 — Random Forest (supervisado)
+                <a href="{{ url_for('routes.mesero_arbol') }}"
+                   class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full hover:bg-emerald-100 transition ml-auto">
+                    Ver Random Forest
+                </a>
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-sm text-gray-600 space-y-2">
+                    <p>Los labels generados por K-Means se usan como variable objetivo para entrenar
+                    un <strong>Random Forest de 200 árboles</strong>.</p>
+                    <p>Cada árbol se entrena sobre un subconjunto aleatorio de los datos
+                    (<em>bootstrap sampling</em>) con 3 features. Al promediar 200 árboles:</p>
+                    <ul class="list-disc list-inside space-y-1 pl-2 text-xs">
+                        <li>Se reduce la varianza (menos sensible a datos atípicos)</li>
+                        <li>La importancia de features se distribuye entre todas las variables</li>
+                        <li>Se evita el sobreajuste típico de un árbol único</li>
+                    </ul>
+                    <p class="text-xs text-gray-400">Parámetros: <code class="bg-gray-100 px-1 rounded">n_estimators=200, max_depth=3, oob_score=True</code></p>
+                </div>
+                <div class="rounded-xl p-4 bg-emerald-50 border border-emerald-100 text-xs space-y-2">
+                    <p class="font-semibold text-gray-700">¿Por qué 3 features en el RF y 2 en K-Means?</p>
+                    <p class="text-gray-600">K-Means usa <strong>Frecuencia + Ticket</strong> (2D) para crear
+                    clusters interpretables en el scatter plot.</p>
+                    <p class="text-gray-600">El RF usa además <strong>Variabilidad</strong> (stdDevPop del ticket)
+                    para intentar distinguir VIP (gasto irregular alto) de Regular (gasto estable medio)
+                    dentro del grupo de alta frecuencia.</p>
+                    <p class="font-semibold text-gray-700 mt-2">Árbol representativo</p>
+                    <p class="text-gray-600">Para visualizar las reglas, se muestra el árbol individual del bosque
+                    cuyas importancias de features más se acercan al promedio de los 200.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FASE 5 -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#f59e0b;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-speedometer2 text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-amber-100 uppercase tracking-wider font-semibold">Fase 5</p>
+            <h3 class="text-white font-bold text-base">Evaluación</h3>
+        </div>
+        <a href="{{ url_for('routes.mesero_kmeans') }}"
+           class="ml-auto text-xs text-white bg-white bg-opacity-20 px-3 py-1 rounded-full hover:bg-opacity-30 transition">
+            Ver métricas
+        </a>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            <div class="rounded-xl p-4 bg-amber-50 border border-amber-100">
+                <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <i class="bi bi-rulers text-amber-500"></i> Silhouette Score
+                </h4>
+                <p class="text-xs text-gray-600 mb-2">
+                    Mide qué tan bien separados están los clusters.
+                    Para cada punto calcula la distancia promedio a su propio cluster (<em>a</em>)
+                    y al cluster más cercano (<em>b</em>).
+                </p>
+                <div class="rounded-lg p-2 bg-white text-xs font-mono text-center text-gray-700 border border-amber-200">
+                    score = (b − a) / max(a, b)
+                </div>
+                <div class="mt-2 space-y-1 text-xs">
+                    <div class="flex justify-between"><span class="text-gray-500">Cercano a 1</span><span class="text-green-600 font-medium">Clusters muy separados</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Cercano a 0</span><span class="text-yellow-600 font-medium">Clusters solapados</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Negativo</span><span class="text-red-600 font-medium">Asignación incorrecta</span></div>
+                </div>
+            </div>
+
+            <div class="rounded-xl p-4 bg-amber-50 border border-amber-100">
+                <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <i class="bi bi-graph-down-arrow text-amber-500"></i> Inercia (Elbow)
+                </h4>
+                <p class="text-xs text-gray-600 mb-2">
+                    Suma de las distancias al cuadrado de cada punto a su centroide.
+                    A más clusters, menor inercia — pero el objetivo es encontrar el
+                    punto donde reducir más clusters ya no vale la pena.
+                </p>
+                <p class="text-xs text-gray-600">
+                    El "codo" en la gráfica marca ese punto óptimo.
+                    Para este restaurante el codo aparece en <strong>k=3</strong>.
+                </p>
+            </div>
+
+            <div class="rounded-xl p-4 bg-amber-50 border border-amber-100">
+                <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <i class="bi bi-bag-check text-amber-500"></i> OOB Score (Random Forest)
+                </h4>
+                <p class="text-xs text-gray-600 mb-2">
+                    <em>Out-of-Bag Score</em> — cada árbol se entrena dejando fuera ~37% de los datos
+                    (los que no entraron en su bootstrap). Esos datos se usan para validar el árbol
+                    sin necesitar un conjunto de prueba separado.
+                </p>
+                <p class="text-xs text-gray-600">
+                    Un OOB Score de <strong>0.75</strong> significa que el bosque clasifica
+                    correctamente el 75% de las mesas que no vio durante su entrenamiento.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FASE 6 -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#ef4444;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-rocket-takeoff text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-red-200 uppercase tracking-wider font-semibold">Fase 6</p>
+            <h3 class="text-white font-bold text-base">Despliegue</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-5">
+            El modelo corre en producción dentro del servidor Flask. No requiere reentrenamiento manual —
+            cada vez que el mesero abre la página de Segmentación, el sistema recalcula los clusters
+            con las últimas comandas de los 90 días anteriores.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Flujo de una petición</h4>
+                <ol class="space-y-2">
+                    {% for paso in [
+                        ('Mesero abre /mesero/kmeans', 'El navegador carga la página HTML'),
+                        ('JavaScript hace GET /api/mesero/kmeans', 'Petición autenticada con sesión Flask'),
+                        ('MeseroKMeansService.segmentar_mesas()', 'Ejecuta pipeline MongoDB → K-Means → RF'),
+                        ('JSON de respuesta', 'puntos, resumen, evaluación, árbol representativo'),
+                        ('Chart.js renderiza el scatter', 'El mesero ve su mapa de clusters actualizado'),
+                    ] %}
+                    <li class="flex items-start gap-3 text-sm">
+                        <span class="w-6 h-6 rounded-full bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{{ loop.index }}</span>
+                        <div>
+                            <p class="font-medium text-gray-800">{{ paso[0] }}</p>
+                            <p class="text-xs text-gray-500">{{ paso[1] }}</p>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ol>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Endpoints disponibles</h4>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                        <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+                        <span class="text-gray-700">/api/mesero/kmeans</span>
+                        <span class="text-gray-400 font-sans ml-auto">K-Means + RF</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                        <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+                        <span class="text-gray-700">/api/mesero/kmeans/diagnostico</span>
+                        <span class="text-gray-400 font-sans ml-auto">Fase 2</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+                        <span class="text-gray-700">/mesero/kmeans</span>
+                        <span class="text-gray-400 font-sans ml-auto">Vista segmentación</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+                        <span class="text-gray-700">/mesero/arbol</span>
+                        <span class="text-gray-400 font-sans ml-auto">Vista Random Forest</span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+                        <span class="text-gray-700">/mesero/diagnostico</span>
+                        <span class="text-gray-400 font-sans ml-auto">Vista diagnóstico</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ARQUITECTURA SIMPLIFICADA -->
+<div class="bg-white rounded-2xl shadow-sm p-6">
+    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <i class="bi bi-diagram-2 text-gray-500"></i> Arquitectura del Pipeline
+    </h3>
+    <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
+        {% for bloque in [
+            ('#dbeafe', '#3b82f6', 'bi-database', 'MongoDB\ncomandas'),
+            ('#f0fdf4', '#10b981', 'bi-funnel', 'Agregación\nStandardScaler'),
+            ('#fef3c7', '#f59e0b', 'bi-diagram-3', 'K-Means\nk=3 (2D)'),
+            ('#f5f3ff', '#8b5cf6', 'bi-tree', 'Random Forest\n200 árboles (3D)'),
+            ('#fff7ed', '#ef4444', 'bi-bar-chart', 'Dashboard\nJSON + Chart.js'),
+        ] %}
+        <div class="rounded-xl px-4 py-3 text-center min-w-24"
+             style="background:{{ bloque[0] }}; border:1px solid {{ bloque[1] }}40;">
+            <i class="bi {{ bloque[2] }} text-lg mb-1 block" style="color:{{ bloque[1] }};"></i>
+            <p class="text-xs font-medium text-gray-700" style="white-space:pre-line;">{{ bloque[3] }}</p>
+        </div>
+        {% if not loop.last %}
+        <i class="bi bi-arrow-right text-gray-300 text-xl"></i>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

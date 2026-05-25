@@ -1,0 +1,244 @@
+{% extends "layout/layout_mesero.html" %}
+
+{% block title %}Random Forest{% endblock %}
+{% block page_title %}Random Forest{% endblock %}
+{% block page_subtitle %}CRISP-DM · Fase 4 — 200 árboles entrenados sobre clusters K-Means{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
+</a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
+    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
+</a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
+</a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
+</a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link active">
+    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
+    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
+    <i class="bi bi-book text-lg"></i><span>Metodología</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
+     style="background:rgba(16,185,129,0.08); border:1px solid #6ee7b7; color:#065f46;">
+    <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-emerald-500"></i>
+    <div>
+        <strong>Enfoque híbrido — K-Means + Random Forest</strong><br>
+        K-Means segmenta las mesas (no supervisado); el <strong>Random Forest</strong>
+        aprende esas etiquetas entrenando <strong>200 árboles</strong> y promediando sus resultados.
+        A diferencia de un árbol único, distribuye la importancia entre todos los features
+        y muestra cuánto contribuye cada variable <em>en promedio ± su variabilidad entre árboles</em>.
+    </div>
+</div>
+
+<!-- Loading -->
+<div id="arbol-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando Random Forest (200 árboles)…
+</div>
+
+<!-- Contenido principal -->
+<div id="arbol-content" style="display:none;">
+
+    <!-- Importancia de variables -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+            <i class="bi bi-bar-chart-horizontal text-emerald-500"></i> Importancia de Variables
+        </h3>
+        <p class="text-xs text-gray-400 mb-5">¿Qué variable influye más en la clasificación de las mesas?</p>
+
+        <div class="w-full mb-6" style="max-height:200px;">
+            <canvas id="chartImportancias"></canvas>
+        </div>
+        <div id="importancias-detalle" class="space-y-5"></div>
+    </div>
+
+    <!-- Métricas del modelo -->
+    <div id="rf-metricas" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"></div>
+
+    <!-- Árbol representativo -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+            <i class="bi bi-code-slash text-emerald-500"></i> Árbol Representativo del Bosque
+        </h3>
+        <p class="text-xs text-gray-400 mb-4">
+            El árbol individual cuyas importancias más se acercan al promedio del bosque
+            (<code class="bg-gray-100 px-1 rounded">max_depth=3</code>).
+        </p>
+        <pre id="arbol-reglas"
+             class="text-sm p-5 rounded-xl overflow-x-auto leading-7"
+             style="background:#0f172a; color:#e2e8f0; font-family:'Courier New', monospace;"></pre>
+    </div>
+
+</div>
+
+<style>
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.animate-spin { animation: spin 1s linear infinite; }
+</style>
+
+<script>
+let chartImportancias;
+const COLORS = ['#f59e0b','#3b82f6','#94a3b8'];
+const BG     = ['#fef3c7','#dbeafe','#f1f5f9'];
+
+function pct(v) { return `${(v*100).toFixed(1)}%`; }
+
+async function cargar() {
+    try {
+        const r = await fetch('/api/mesero/kmeans');
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Error desconocido');
+
+        if (!d.arbol) {
+            document.getElementById('arbol-loading').innerHTML =
+                '<span class="text-yellow-500 text-sm"><i class="bi bi-exclamation-triangle"></i> No hay datos suficientes para el árbol.</span>';
+            return;
+        }
+
+        document.getElementById('arbol-loading').style.display = 'none';
+        document.getElementById('arbol-content').style.display = '';
+
+        renderMetricas(d.arbol);
+        renderImportancias(d.arbol.feature_importances);
+        renderReglas(d.arbol.reglas, d.arbol.clases);
+
+    } catch(e) {
+        document.getElementById('arbol-loading').innerHTML =
+            `<span class="text-red-400 text-sm"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+    }
+}
+
+function renderMetricas(arbol) {
+    const oob = arbol.oob_score !== undefined ? (arbol.oob_score * 100).toFixed(1) + '%' : 'N/A';
+    document.getElementById('rf-metricas').innerHTML = `
+        <div class="rounded-lg p-4 text-center" style="background:#f0fdf4; border:1px solid #86efac;">
+            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Árboles entrenados</p>
+            <p class="text-3xl font-bold text-green-700">${arbol.n_estimators}</p>
+            <p class="text-xs text-gray-400 mt-1">Random Forest (max_depth=3)</p>
+        </div>
+        <div class="rounded-lg p-4 text-center" style="background:#f5f3ff; border:1px solid #c4b5fd;">
+            <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">OOB Score</p>
+            <p class="text-3xl font-bold text-purple-700">${oob}</p>
+            <p class="text-xs text-gray-400 mt-1">Precisión estimada fuera de bolsa</p>
+        </div>
+        <div class="rounded-lg p-4 text-center" style="background:#fff7ed; border:1px solid #fed7aa;">
+            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Features</p>
+            <p class="text-3xl font-bold text-orange-600">${arbol.feature_importances.length}</p>
+            <p class="text-xs text-gray-400 mt-1">Variables con importancia distribuida</p>
+        </div>
+    `;
+}
+
+function renderImportancias(imp) {
+    const maxImp = Math.max(...imp.map(f => f.importancia), 0.001);
+
+    if (chartImportancias) chartImportancias.destroy();
+    chartImportancias = new Chart(document.getElementById('chartImportancias'), {
+        type: 'bar',
+        data: {
+            labels: imp.map(f => f.feature),
+            datasets: [{
+                label: 'Importancia',
+                data: imp.map(f => f.importancia),
+                backgroundColor: ['#10b981cc','#3b82f6cc','#f59e0bcc'],
+                borderColor:     ['#10b981','#3b82f6','#f59e0b'],
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    max: 1,
+                    ticks: { callback: v => pct(v) },
+                    title: { display: true, text: 'Importancia relativa', font: { size: 10 } }
+                },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    document.getElementById('importancias-detalle').innerHTML = imp.map(f => `
+        <div>
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">${f.feature}</span>
+                <span class="text-sm font-bold text-gray-800">
+                    ${pct(f.importancia)}
+                    <span class="text-xs font-normal text-gray-400 ml-1">± ${pct(f.std || 0)}</span>
+                </span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2.5 relative">
+                <div class="h-2.5 rounded-full bg-emerald-500 transition-all"
+                     style="width:${(f.importancia/maxImp*100).toFixed(1)}%;"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">${descripcionFeature(f.feature)}</p>
+        </div>
+    `).join('');
+}
+
+function descripcionFeature(nombre) {
+    const map = {
+        'Frecuencia':      'Número de comandas cerradas en los últimos 90 días.',
+        'Ticket Promedio': 'Promedio del total facturado por comanda.',
+        'Variabilidad':    'Desviación estándar del ticket — qué tan irregular es el gasto.',
+    };
+    return map[nombre] || '';
+}
+
+function renderReglas(reglas, clases) {
+    const colores = ['#f59e0b','#3b82f6','#94a3b8'];
+    let html = reglas;
+
+    // Reemplazar "class: N" con el nombre del cluster coloreado
+    (clases || []).forEach((cls, i) => {
+        const color = colores[i] || '#64748b';
+        html = html.replace(
+            new RegExp(`class: ${i}`, 'g'),
+            `<span style="color:${color}; font-weight:700;">→ ${cls}</span>`
+        );
+    });
+
+    // Colorear los operadores de comparación
+    html = html
+        .replace(/(&lt;=|<=)/g, '<span style="color:#38bdf8;">$1</span>')
+        .replace(/(&gt;|>)/g,   '<span style="color:#fb923c;">$1</span>');
+
+    document.getElementById('arbol-reglas').innerHTML = html;
+}
+
+
+cargar();
+</script>
+{% endblock %}

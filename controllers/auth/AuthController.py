@@ -1,12 +1,12 @@
 """
 Controlador de Autenticación - Sistema Restaurante Callejón 9
-Versión simplificada sin 2FA y sin bcrypt para desarrollo local
 Roles: 1=Admin, 2=Mesero, 3=Cocina, 4=Inventario
 """
 
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from models.empleado_model import Usuario, RolPermisos
 from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
+from services.security.two_factor_service import TwoFactorService
 import secrets
 import logging
 from functools import wraps
@@ -88,47 +88,33 @@ class AuthController:
                 })
 
             # =====================================================
-            # LOGIN EXITOSO
+            # LOGIN EXITOSO — verificar si requiere 2FA
             # =====================================================
 
-            token_session = secrets.token_urlsafe(32)
             user_id = str(usuario_doc["_id"])
+            tiene_2fa = usuario_doc.get("2fa_enabled", False)
 
-            # Actualizar token en BD
-            try:
-                Usuario.update_session_token(user_id, token_session, 1)
-            except Exception as e:
-                print(f"⚠️ Error al actualizar token: {e}")
+            if tiene_2fa:
+                # Guardar datos pendientes en sesión temporal
+                session["pending_login"] = {
+                    "user_id":          user_id,
+                    "usuario_nombre":   usuario_doc.get("usuario_nombre", ""),
+                    "usuario_apellidos":usuario_doc.get("usuario_apellidos", ""),
+                    "usuario_email":    usuario_doc.get("usuario_email", ""),
+                    "usuario_rol":      rol,
+                    "usuario_foto":     usuario_doc.get("usuario_foto", ""),
+                    "2fa_secret":       usuario_doc.get("2fa_secret"),
+                    "2fa_tipo":         usuario_doc.get("2fa_tipo", "app"),
+                }
+                logging.info(f"🔐 2FA requerido para: {email}")
+                return jsonify({
+                    "status":       "success",
+                    "requires_2fa": True,
+                    "tipo":         usuario_doc.get("2fa_tipo", "app"),
+                })
 
-            # Poblar sesión Flask
-            session["usuario_id"] = user_id
-            session["usuario_nombre"] = usuario_doc.get("usuario_nombre", "")
-            session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos", "")
-            session["usuario_email"] = usuario_doc.get("usuario_email", "")
-            session["usuario_rol"] = rol
-            session["usuario_foto"] = usuario_doc.get("usuario_foto", "")
-            session["token_session"] = token_session
-            session["theme"] = "light"
-
-            # Permisos
-            permisos = RolPermisos.get_permisos(rol)
-            session["permisos"] = permisos
-
-            # Perfiles específicos
-            if rol == "2":
-                session["perfil_mesero"] = Usuario.get_perfil_mesero(usuario_doc)
-            elif rol == "3":
-                session["perfil_cocina"] = Usuario.get_perfil_cocina(usuario_doc)
-
-            # ✨ Notificar Login
-            try:
-                NotificacionSistemaController.notificar_login(
-                    usuario_id=user_id,
-                    nombre_usuario=usuario_doc.get("usuario_nombre"),
-                    rol=rol
-                )
-            except Exception as e:
-                logging.warning(f"Error notificando login: {e}")
+            # Sin 2FA → completar login directamente
+            AuthController._completar_login(usuario_doc, rol, user_id)
 
             # Dashboards por rol
             rol_endpoints = {
@@ -137,12 +123,10 @@ class AuthController:
                 "3": "dashboard_cocina",
                 "4": "dashboard_inventario"
             }
-
             endpoint = rol_endpoints.get(rol)
 
             if endpoint:
                 logging.info(f"✅ Login exitoso: {email} | Rol: {RolPermisos.get_nombre_rol(rol)}")
-
                 return jsonify({
                     "status": "success",
                     "dashboard": url_for(f"routes.{endpoint}"),
@@ -152,10 +136,7 @@ class AuthController:
                     }
                 })
             else:
-                return jsonify({
-                    "status": "error",
-                    "message": "Rol no reconocido"
-                })
+                return jsonify({"status": "error", "message": "Rol no reconocido"})
 
         # GET → mostrar login
         return render_template("login.html")
@@ -187,14 +168,134 @@ class AuthController:
         return redirect(url_for("routes.login"))
 
     # =====================================================
-    # 2FA (Deshabilitado)
+    # HELPERS INTERNOS
+    # =====================================================
+    @staticmethod
+    def _completar_login(usuario_doc, rol, user_id):
+        """Puebla la sesión Flask y registra el token tras login exitoso."""
+        token_session = secrets.token_urlsafe(32)
+
+        try:
+            Usuario.update_session_token(user_id, token_session, 1)
+        except Exception as e:
+            logging.warning(f"⚠️ Error al actualizar token: {e}")
+
+        session["usuario_id"]        = user_id
+        session["usuario_nombre"]    = usuario_doc.get("usuario_nombre", "")
+        session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos", "")
+        session["usuario_email"]     = usuario_doc.get("usuario_email", "")
+        session["usuario_rol"]       = rol
+        session["usuario_foto"]      = usuario_doc.get("usuario_foto", "")
+        session["token_session"]     = token_session
+        session["theme"]             = "light"
+        session["permisos"]          = RolPermisos.get_permisos(rol)
+
+        if rol == "2":
+            session["perfil_mesero"] = Usuario.get_perfil_mesero(usuario_doc)
+        elif rol == "3":
+            session["perfil_cocina"] = Usuario.get_perfil_cocina(usuario_doc)
+
+        try:
+            NotificacionSistemaController.notificar_login(
+                usuario_id=user_id,
+                nombre_usuario=usuario_doc.get("usuario_nombre"),
+                rol=rol
+            )
+        except Exception as e:
+            logging.warning(f"Error notificando login: {e}")
+
+    # =====================================================
+    # 2FA — verificación en login
     # =====================================================
     @staticmethod
     def verify_2fa():
-        return jsonify({
-            "status": "error",
-            "message": "2FA no implementado en esta versión"
-        }), 400
+        """Verifica el OTP ingresado y completa el login si es correcto."""
+        data = request.get_json() or {}
+        otp_code = str(data.get("otp_code", "")).strip()
+
+        pending = session.get("pending_login")
+        if not pending:
+            return jsonify({"status": "error", "message": "Sesión expirada. Inicia sesión de nuevo."}), 401
+
+        secret = pending.get("2fa_secret")
+        tipo   = pending.get("2fa_tipo", "app")
+
+        if not secret or not otp_code:
+            return jsonify({"status": "error", "message": "Datos incompletos"}), 400
+
+        # Verificar código
+        if tipo == "app":
+            valido = TwoFactorService.verificar_totp(secret, otp_code)
+        else:
+            valido = TwoFactorService.verificar_codigo_temporal(pending["user_id"], otp_code)
+
+        if not valido:
+            logging.warning(f"❌ Código 2FA incorrecto para usuario {pending.get('usuario_email')}")
+            return jsonify({"status": "error", "message": "Código incorrecto o expirado"}), 401
+
+        # Código válido → completar login
+        rol     = pending["usuario_rol"]
+        user_id = pending["user_id"]
+
+        # Reconstruir un dict mínimo compatible con _completar_login
+        usuario_doc = {
+            "_id":               user_id,
+            "usuario_nombre":    pending["usuario_nombre"],
+            "usuario_apellidos": pending["usuario_apellidos"],
+            "usuario_email":     pending["usuario_email"],
+            "usuario_foto":      pending["usuario_foto"],
+        }
+
+        # Obtener doc completo para perfiles de mesero/cocina
+        try:
+            usuario_doc_full = Usuario.find_by_id(user_id)
+            if usuario_doc_full:
+                usuario_doc = usuario_doc_full
+        except Exception:
+            pass
+
+        session.pop("pending_login", None)
+        AuthController._completar_login(usuario_doc, rol, user_id)
+
+        rol_endpoints = {
+            "1": "dashboard_admin",
+            "2": "dashboard_mesero",
+            "3": "dashboard_cocina",
+            "4": "dashboard_inventario"
+        }
+        endpoint = rol_endpoints.get(rol, "dashboard_admin")
+        dashboard_url = url_for(f"routes.{endpoint}")
+
+        logging.info(f"✅ 2FA verificado para {pending.get('usuario_email')}")
+        return jsonify({"status": "success", "dashboard": dashboard_url})
+
+    # =====================================================
+    # 2FA — desactivación de emergencia (sin login)
+    # =====================================================
+    @staticmethod
+    def emergency_disable_2fa(email):
+        """Desactiva el 2FA de un usuario por email (para recuperación de acceso)."""
+        if not email:
+            return jsonify({"status": "error", "message": "Email requerido"}), 400
+
+        try:
+            usuario = Usuario.find_by_email(email.strip().lower())
+            if not usuario:
+                return jsonify({"status": "error", "message": "Usuario no encontrado"}), 404
+
+            Usuario.update_2fa_status(
+                user_id=str(usuario["_id"]),
+                is_enabled=False,
+                tipo=None,
+                secret=None,
+                telefono=None
+            )
+            logging.warning(f"⚠️ 2FA desactivado por emergencia para: {email}")
+            return jsonify({"status": "success", "message": f"2FA desactivado para {email}"})
+
+        except Exception as e:
+            logging.error(f"Error en emergency_disable_2fa: {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500
 
 
 # ==========================================================

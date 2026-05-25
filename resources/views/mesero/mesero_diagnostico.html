@@ -1,0 +1,233 @@
+{% extends "layout/layout_mesero.html" %}
+
+{% block title %}Diagnóstico de Datos{% endblock %}
+{% block page_title %}Diagnóstico de Datos{% endblock %}
+{% block page_subtitle %}CRISP-DM · Fase 2 — Entendimiento estadístico de las comandas · últimos 90 días{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
+</a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
+    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
+</a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
+</a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
+</a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
+    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link active">
+    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
+    <i class="bi bi-book text-lg"></i><span>Metodología</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
+     style="background:rgba(99,102,241,0.08); border:1px solid #c7d2fe; color:#3730a3;">
+    <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-indigo-500"></i>
+    <div>
+        <strong>CRISP-DM · Fase 2 — Entendimiento de los Datos</strong><br>
+        Perfil estadístico de las comandas de los últimos 90 días: volumen por mesa,
+        distribución de tickets, propinas promedio y métodos de pago.
+        Esta información es la base del modelado K-Means.
+    </div>
+</div>
+
+<!-- Loading -->
+<div id="diag-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Cargando diagnóstico…
+</div>
+
+<!-- Contenido -->
+<div id="diag-content" style="display:none;">
+
+    <!-- KPIs globales -->
+    <div id="diag-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+
+    <!-- Perfil por mesa -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 overflow-auto">
+        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+            <i class="bi bi-table text-indigo-500"></i> Perfil Estadístico por Mesa
+        </h3>
+        <p class="text-xs text-gray-400 mb-4">
+            Mín., máx., promedio y desviación estándar del ticket. A mayor desviación, más variabilidad en el gasto.
+        </p>
+        <div id="diag-tabla-mesas"></div>
+    </div>
+
+    <!-- Métodos de pago -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <i class="bi bi-pie-chart text-indigo-500"></i> Distribución de Métodos de Pago
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
+            <div class="flex justify-center">
+                <canvas id="chartMetodos" style="max-height:240px; max-width:240px;"></canvas>
+            </div>
+            <div id="diag-metodos-lista" class="space-y-3"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.animate-spin { animation: spin 1s linear infinite; }
+</style>
+
+<script>
+let chartMetodos;
+
+function fmt(v) {
+    return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);
+}
+
+async function cargar() {
+    try {
+        const r = await fetch('/api/mesero/kmeans/diagnostico');
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Error');
+
+        document.getElementById('diag-loading').style.display = 'none';
+        document.getElementById('diag-content').style.display = '';
+
+        renderKpis(d);
+        renderTabla(d.por_mesa);
+        renderMetodos(d.metodos_pago);
+
+    } catch(e) {
+        document.getElementById('diag-loading').innerHTML =
+            `<span class="text-red-400 text-sm"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+    }
+}
+
+function renderKpis(d) {
+    document.getElementById('diag-kpis').innerHTML = `
+        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-indigo-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Comandas analizadas</p>
+            <p class="text-3xl font-bold text-gray-800">${d.total_comandas.toLocaleString('es-MX')}</p>
+            <p class="text-xs text-gray-400 mt-1">${d.periodo_dias} días</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-emerald-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Ticket promedio global</p>
+            <p class="text-3xl font-bold text-gray-800">${fmt(d.ticket_global_avg)}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-orange-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Desviación estándar</p>
+            <p class="text-3xl font-bold text-gray-800">${fmt(d.ticket_global_std)}</p>
+            <p class="text-xs text-gray-400 mt-1">variabilidad global del ticket</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-blue-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Periodo</p>
+            <p class="text-lg font-bold text-gray-800">${d.fecha_inicio || '—'}</p>
+            <p class="text-xs text-gray-400">al ${d.fecha_fin || '—'}</p>
+        </div>
+    `;
+}
+
+function renderTabla(porMesa) {
+    document.getElementById('diag-tabla-mesas').innerHTML = `
+        <table class="w-full text-sm border-collapse">
+            <thead>
+                <tr class="border-b-2 border-gray-200 text-xs text-gray-500 uppercase tracking-wide bg-gray-50">
+                    <th class="px-4 py-3 text-left">Mesa</th>
+                    <th class="px-4 py-3 text-right">Registros</th>
+                    <th class="px-4 py-3 text-right">Ticket Mín.</th>
+                    <th class="px-4 py-3 text-right">Ticket Máx.</th>
+                    <th class="px-4 py-3 text-right">Ticket Prom.</th>
+                    <th class="px-4 py-3 text-right">Desv. Est.</th>
+                    <th class="px-4 py-3 text-right">Propina prom.</th>
+                    <th class="px-4 py-3 text-right">Comensales prom.</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${porMesa.map(m => `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                        <td class="px-4 py-3 font-semibold text-gray-800">Mesa ${m.mesa}</td>
+                        <td class="px-4 py-3 text-right text-gray-600">${m.registros}</td>
+                        <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_min)}</td>
+                        <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_max)}</td>
+                        <td class="px-4 py-3 text-right font-semibold text-gray-800">${fmt(m.ticket_avg)}</td>
+                        <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_std)}</td>
+                        <td class="px-4 py-3 text-right text-gray-600">${m.propina_pct_avg}%</td>
+                        <td class="px-4 py-3 text-right text-gray-600">${m.comensales_avg}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderMetodos(metodos) {
+    if (!metodos || metodos.length === 0) return;
+    const total = metodos.reduce((s, m) => s + m.count, 0);
+    const colores = ['#3b82f6','#10b981','#f59e0b','#94a3b8'];
+
+    if (chartMetodos) chartMetodos.destroy();
+    chartMetodos = new Chart(document.getElementById('chartMetodos'), {
+        type: 'doughnut',
+        data: {
+            labels: metodos.map(m => m.metodo),
+            datasets: [{
+                data: metodos.map(m => m.count),
+                backgroundColor: colores.slice(0, metodos.length),
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.raw} (${(ctx.raw/total*100).toFixed(1)}%)`
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+
+    document.getElementById('diag-metodos-lista').innerHTML = metodos.map((m, i) => `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${colores[i]};"></span>
+                <span class="capitalize text-sm text-gray-700">${m.metodo}</span>
+            </div>
+            <div class="text-right">
+                <span class="text-sm font-bold text-gray-800">${m.count}</span>
+                <span class="text-xs text-gray-400 ml-1">(${(m.count/total*100).toFixed(1)}%)</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+cargar();
+</script>
+{% endblock %}

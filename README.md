@@ -1,139 +1,191 @@
-# 🍽️ Callejón 9 – Sistema Integral de Gestión para Restaurantes
+# Callejón 9 — Sistema Integral de Gestión para Restaurantes
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11-green.svg)
-![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![Flask](https://img.shields.io/badge/backend-Flask-black.svg)
 ![MongoDB](https://img.shields.io/badge/database-MongoDB-47A248.svg)
-![Apache Spark](https://img.shields.io/badge/analytics-Apache%20Spark-E25A1C.svg)
+![scikit-learn](https://img.shields.io/badge/analytics-scikit--learn-F7931E.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Callejón 9** es una plataforma modular de alto rendimiento diseñada para centralizar la operación gastronómica. Su arquitectura orientada a servicios permite una gestión eficiente desde la toma de pedidos hasta el análisis de datos masivos mediante Spark.
-
----
-
-## 🏗️ Arquitectura del Sistema
-
-El proyecto sigue un flujo de datos estructurado para garantizar que la lógica de negocio esté separada de la analítica pesada.
-
-Datos en MongoDB
-        │
-        ▼
-Extracción y Conversión
-        │
-        ▼
-Cargas a Spark DF
-        │
-        ▼
-Limpieza y Formateo de Campos
-        │
-        ▼
-Cálculos y Métricas
-        │
-        ▼
-Reporte final en JSON
-
-## 🌟 Características Principales
-
-### 📋 Gestión de Menú
-* **Control Total:** Registro y edición de platillos con gestión de recetas.
-* **Organización:** Administración por categorías y subcategorías.
-* **Ingredientes:** Vinculación directa con el módulo de inventarios.
-
-### 📦 Inventarios
-* **Unidades de Medida:** Control preciso de insumos (kg, lts, piezas).
-* **Trazabilidad:** Registro automático de entradas y salidas.
-* **Stock Crítico:** Alertas automáticas cuando los insumos bajan de los mínimos establecidos.
-
-### 💳 Ventas y Comandas
-* **Agilidad:** Captura de pedidos optimizada para dispositivos táctiles.
-* **Integración:** Comunicación inmediata con el área de cocina.
-* **Finanzas:** Cálculo automático de totales y gestión de múltiples métodos de pago.
-
-### 🔐 Seguridad y Roles
-* **RBAC (Role-Based Access Control):** Permisos específicos para Administrador, Mesero y Cocina.
-* **Autenticación:** Sistema basado en tokens JWT (JSON Web Tokens).
+Sistema web para la gestión operativa de un restaurante: comandas, inventario, cocina, pagos y analítica con machine learning (CRISP-DM · K-Means + Random Forest).
 
 ---
 
-## 📈 Módulo de Analítica (Spark)
-> **Ubicación:** `app/services/analytics/`
-
-Este módulo transforma los datos crudos de MongoDB en **inteligencia de negocios** mediante el motor de procesamiento distribuido Apache Spark.
-
-
-
-**Métricas Clave Generadas:**
-* 💰 **Volumen de Ventas:** Análisis diario, semanal y mensual.
-* 🎫 **Promedio de Ticket:** Valor promedio de consumo por mesa.
-* 🔥 **Platillos Estrella:** Identificación de los productos más vendidos.
-* 📉 **Picos Operativos:** Detección de horas de mayor carga de trabajo.
-
----
-
-## 🛠️ Stack Tecnológico
+## Stack tecnológico
 
 | Componente | Tecnología |
-| :--- | :--- |
-| **Lenguaje** | `Python 3.11` |
-| **Backend Framework** | `FastAPI` |
-| **Base de Datos** | `MongoDB` |
-| **Motor de Analítica** | `Apache Spark` |
-| **Frontend** | `React / Next.js` |
-| **Entorno** | `Conda / Docker` |
+|---|---|
+| Backend | Flask 3.1 |
+| Base de datos | MongoDB Atlas (pymongo) |
+| Plantillas | Jinja2 |
+| Analítica ML | scikit-learn, NumPy |
+| Pagos | MercadoPago |
+| Tiempo real | Flask-SocketIO |
+| Frontend | TailwindCSS + Chart.js + Bootstrap Icons |
 
 ---
 
-## 📁 Estructura del Proyecto
+## Requisitos previos
 
-```text
-├── app/
-│   ├── api/           # Rutas y Controladores de FastAPI
-│   ├── services/      # Lógica de Negocio (Menú, Ventas, Inventarios)
-│   ├── analytics/     # Motor Spark y Procesamiento de Datos
-│   ├── models/        # Esquemas de Datos
-│   └── database/      # Configuración de MongoDB
-├── config/            # Variables de entorno y ajustes
-├── docs/              # Documentación técnica adicional
-├── frontend/          # Interfaz de usuario (React/Next.js)
-├── app.py             # Punto de entrada de la aplicación
-└── requirements.txt   # Dependencias del sistema
+- Python 3.11
+- Cuenta en [MongoDB Atlas](https://www.mongodb.com/atlas) (o instancia local)
+- Git
 
-🚀 Instalación y Despliegue
-Sigue estos pasos para configurar tu entorno local con Conda:
+---
 
-Clonar el repositorio:
+## Instalación
 
-git clone [https://github.com/Ludwingarcia14/Restaurante-Callejon-9.git]
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/Ludwingarcia14/Restaurante-Callejon-9.git
 cd Restaurante-Callejon-9
+```
 
-Configurar el entorno virtual:
-conda create -n Callejon9 python=3.11 -y
-conda activate Callejon9
+### 2. Crear y activar entorno virtual
 
-Instalar dependencias:
+```bash
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+```
+
+### 3. Instalar dependencias
+
+```bash
 pip install -r requirements.txt
+```
 
-Configurar variables de entorno:
+### 4. Configurar variables de entorno
+
+```bash
 cp .env.example .env
-# Edita el archivo .env con tus credenciales de MongoDB
+```
 
-Ejecutar la aplicación:
+Edita `.env` con tus credenciales:
+
+```env
+# MongoDB
+MONGO_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/callejon9?retryWrites=true&w=majority
+MONGO_DB_NAME=callejon9
+
+# Flask
+SECRET_KEY=tu_clave_secreta
+PORT=5000
+
+# MercadoPago (opcional)
+MP_ACCESS_TOKEN=tu_access_token
+MP_PUBLIC_KEY=tu_public_key
+```
+
+### 5. Ejecutar la aplicación
+
+```bash
 python app.py
+```
 
-👥 Equipo de Desarrollo
+La app queda disponible en `http://localhost:5000`.
 
-🏛️ Dirección y Liderazgo Técnico
-Ludwin Garcia Gaytan
+---
 
-Rol: Arquitectura, Coordinación y Supervisión General.
+## Datos de prueba (seed)
 
-👨‍💻 Contributors
-Duarte Villavicencio Octavio - Developer
+Para poblar la base de datos con comandas de prueba y validar la analítica:
 
-Mercado Cerrano Valeria - Developer
+```bash
+# Insertar 2000 registros
+python scripts/seed_data.py
 
-Ibarra Alba Regina - Developer
+# Especificar cantidad
+python scripts/seed_data.py --n 500
 
-📄 Licencia
-Este proyecto está bajo la licencia MIT. Para más detalles, consulta el archivo LICENSE.
+# Limpiar datos anteriores y reinsertar
+python scripts/seed_data.py --limpiar
+```
 
-Callejón 9 – Optimizando el sabor a través de los datos.
+El script genera comandas distribuidas en 3 clusters:
+
+| Cluster | Mesas | Ticket promedio |
+|---|---|---|
+| VIP | 1–2 | ~$400–480 MXN |
+| Regular | 3–5 | ~$150–165 MXN (alta frecuencia) |
+| Ocasional | 6–8 | ~$140–160 MXN (baja frecuencia) |
+
+> Requiere que existan meseros con `usuario_rol: "2"` y platillos disponibles en la base de datos.
+
+---
+
+## Roles del sistema
+
+| Rol | Acceso |
+|---|---|
+| `1` — Administrador | Dashboard, menú, ventas, reportes, analytics |
+| `2` — Mesero | Comandas, menú, propinas, historial, segmentación ML |
+| `3` — Cocina | Cola de pedidos en tiempo real |
+| `4` — Inventario | Control de insumos y stock |
+
+---
+
+## Analítica CRISP-DM (rol Mesero)
+
+El módulo de machine learning implementa las 6 fases de CRISP-DM sobre las comandas de los últimos 90 días:
+
+| Página | Ruta | Descripción |
+|---|---|---|
+| Segmentación | `/mesero/kmeans` | K-Means k=3, scatter plot, recomendaciones |
+| Random Forest | `/mesero/arbol` | 200 árboles, importancia de features, OOB score |
+| Diagnóstico | `/mesero/diagnostico` | Estadísticas por mesa, métodos de pago |
+| Metodología | `/mesero/metodologia` | Documentación completa de las 6 fases |
+
+Ver `METODOLOGIA_CRISP_DM.md` para la explicación técnica detallada con fragmentos de código.
+
+---
+
+## Estructura del proyecto
+
+```
+├── app.py                             # Punto de entrada Flask
+├── config/
+│   └── db.py                          # Conexión MongoDB
+├── controllers/
+│   ├── admin/                         # Controladores administrador
+│   ├── mesero/                        # kmeans, randomforest, diagnostico, metodologia
+│   ├── auth/                          # Autenticación y roles
+│   └── ...
+├── services/
+│   ├── mesero_kmeans_service.py       # K-Means clustering
+│   ├── mesero_randomforest_service.py # Random Forest
+│   ├── mesero_diagnostico_service.py  # Diagnóstico estadístico
+│   └── ...
+├── routes/
+│   ├── mesero_routes.py
+│   ├── admin_routes.py
+│   └── ...
+├── resources/views/                   # Plantillas Jinja2
+├── static/                            # CSS, JS, imágenes
+├── scripts/
+│   └── seed_data.py                   # Generador de datos de prueba
+├── requirements.txt
+├── .env.example
+└── METODOLOGIA_CRISP_DM.md            # Documentación técnica ML
+```
+
+---
+
+## Equipo
+
+| Nombre | Rol |
+|---|---|
+| Ludwin Garcia Gaytan | Arquitectura y coordinación |
+| Octavio Duarte Villavicencio | Developer |
+| Valeria Mercado Serrano | Developer |
+| Regina Ibarra Alba | Developer |
+
+---
+
+## Licencia
+
+MIT — consulta el archivo `LICENSE` para más detalles.

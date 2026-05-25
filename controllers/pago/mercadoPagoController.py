@@ -5,12 +5,12 @@ from config.db import db
 from bson import ObjectId
 from datetime import datetime
 from dotenv import load_dotenv
+from models.ticket_model import Ticket
 
 load_dotenv()
 
 # Inicializa SDK
 sdk = mercadopago.SDK(os.getenv("MP_ACCESS_TOKEN"))
-NGROK_URL = os.getenv("NGROK_URL", "http://localhost:5000")
 
 class MercadoPagoController:
 
@@ -246,9 +246,19 @@ class MercadoPagoController:
                             {"preference_id": preference_id},
                             {"$set": {"status": "approved"}}
                         )
-                        
+
+                        Ticket.create(
+                            comanda=comanda,
+                            metodo_pago="mercadopago",
+                            propina=propina,
+                            porcentaje_propina=porcentaje_propina,
+                            total_final=total_final,
+                            fecha_cierre=fecha_actual,
+                            payment_id=payment_id,
+                        )
+
                         print(f"✅ Cuenta {cuenta_id} cerrada por pago aprobado")
-                        
+
                         return jsonify({
                             "success": True,
                             "status": "approved",

@@ -1,73 +1,94 @@
-{% extends "layout/layout_base.html" %}
+{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Mi Historial{% endblock %}
 {% block page_title %}Historial de Cuentas{% endblock %}
 
 {% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const linksAdmin = ['nav-dashboard', 'nav-menu', 'nav-ventas', 'nav-reportes', 'nav-analytics'];
+    linksAdmin.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const adminSection = document.querySelector('.sidebar-nav .border-t');
+    if (adminSection) adminSection.style.display = 'none';
+});
+</script>
+
 <a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
-    <i class="bi bi-house-door"></i>
+    <i class="bi bi-house-door text-lg"></i>
     <span>Inicio</span>
 </a>
-<a href="{{ url_for('routes.mesero_mesas') }}" class="nav-link">
-    <i class="bi bi-grid-3x3"></i>
-    <span>Mis Mesas</span>
-</a>
 <a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt"></i>
+    <i class="bi bi-receipt text-lg"></i>
     <span>Comandas Activas</span>
 </a>
 <a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text"></i>
+    <i class="bi bi-journal-text text-lg"></i>
     <span>Menú</span>
 </a>
 <a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
-    <i class="bi bi-cash-coin"></i>
+    <i class="bi bi-cash-coin text-lg"></i>
     <span>Propinas del Día</span>
 </a>
-<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link active">
-    <i class="bi bi-clock-history"></i>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history text-lg"></i>
     <span>Historial</span>
 </a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i>
+    <span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
+    <i class="bi bi-tree text-lg"></i>
+    <span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
+    <i class="bi bi-clipboard-data text-lg"></i>
+    <span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
+    <i class="bi bi-book text-lg"></i>
+    <span>Metodología</span>
+</a>
 {% endblock %}
+
 
 {% block content %}
 
 <!-- FILTROS Y RESUMEN -->
 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-        
-        <!-- Filtro de Fecha -->
         <div>
-            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Fecha</label>
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Período</label>
             <div class="flex items-center gap-2">
-                <input type="date" id="filtro-fecha" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
-                <button onclick="cargarHistorial()" 
+                <input type="date" id="filtro-inicio" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
+                <span class="text-gray-400 text-xs">–</span>
+                <input type="date" id="filtro-fin" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
+                <button onclick="cargarHistorial()"
                         class="bg-[#F2913D] hover:bg-[#F2A339] text-white px-4 py-2 rounded-lg transition">
                     <i class="bi bi-search"></i>
                 </button>
-                <button onclick="resetFecha()" 
+                <button onclick="resetFecha()"
                         class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg transition"
-                        title="Hoy">
-                    <i class="bi bi-calendar-check"></i>
+                        title="Últimos 30 días">
+                    <i class="bi bi-calendar-range"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Total de Ventas -->
         <div class="bg-gradient-to-r from-green-50 to-green-100 px-4 py-3 rounded-lg border border-green-200">
             <span class="text-[10px] font-bold text-green-700 uppercase block">Total del Día</span>
             <span id="total-ventas-historial" class="text-2xl font-black text-green-800">$0.00</span>
         </div>
 
-        <!-- Total de Propinas -->
         <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-3 rounded-lg border border-orange-200">
             <span class="text-[10px] font-bold text-orange-700 uppercase block">Propinas del Día</span>
             <span id="total-propinas-historial" class="text-2xl font-black text-orange-800">$0.00</span>
         </div>
-
     </div>
 
-    <!-- Contador de registros -->
     <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
         <span class="text-gray-500">
             <i class="bi bi-receipt"></i>
@@ -77,7 +98,131 @@
     </div>
 </div>
 
+<!-- ===== GRÁFICAS ===== -->
+<div class="mb-6">
+    <h3 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <i class="bi bi-bar-chart-fill text-[#F2913D]"></i>
+        Análisis del Día
+    </h3>
+
+    <!-- Tarjetas mini-stat -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Ticket Promedio</p>
+            <p id="stat-ticket-promedio" class="text-xl font-black text-gray-800">$0.00</p>
+            <p class="text-[10px] text-gray-400 mt-1">por cuenta</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Hora Pico</p>
+            <p id="stat-hora-pico" class="text-xl font-black text-gray-800">--:--</p>
+            <p class="text-[10px] text-gray-400 mt-1">más ventas</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Mesa Top</p>
+            <p id="stat-mesa-top" class="text-xl font-black text-gray-800">--</p>
+            <p class="text-[10px] text-gray-400 mt-1">más activa</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">% Propina Prom.</p>
+            <p id="stat-propina-prom" class="text-xl font-black text-gray-800">0%</p>
+            <p class="text-[10px] text-gray-400 mt-1">promedio del día</p>
+        </div>
+    </div>
+
+    <!-- Gráficas principales -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <!-- Ventas por hora (línea) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-graph-up text-[#F2913D]"></i>
+                    Ventas por Día
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Línea</span>
+            </div>
+            <div class="relative" style="height:220px;">
+                <canvas id="grafica-ventas-hora"></canvas>
+                <div id="empty-ventas-hora" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                    <div class="text-center">
+                        <i class="bi bi-graph-up text-4xl block mb-2"></i>
+                        <p class="text-xs">Sin datos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mesas más activas (barras) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
+                    Mesas Más Activas
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Barras</span>
+            </div>
+            <div class="relative" style="height:220px;">
+                <canvas id="grafica-mesas"></canvas>
+                <div id="empty-mesas" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                    <div class="text-center">
+                        <i class="bi bi-grid-3x3 text-4xl block mb-2"></i>
+                        <p class="text-xs">Sin datos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos más pedidos (dona) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-pie-chart text-[#F2913D]"></i>
+                    Productos Más Pedidos
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Dona</span>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="relative flex-shrink-0" style="width:160px; height:160px;">
+                    <canvas id="grafica-productos"></canvas>
+                    <div id="empty-productos" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                        <div class="text-center">
+                            <i class="bi bi-pie-chart text-3xl block mb-1"></i>
+                            <p class="text-xs">Sin datos</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="leyenda-productos" class="flex-1 space-y-2 text-xs"></div>
+            </div>
+        </div>
+
+        <!-- Propinas acumuladas por hora (barras apiladas) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-cash-coin text-[#F2913D]"></i>
+                    Propinas por Día
+                </h4>
+                <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Barras</span>
+            </div>
+            <div class="relative" style="height:220px;">
+                <canvas id="grafica-propinas-hora"></canvas>
+                <div id="empty-propinas-hora" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
+                    <div class="text-center">
+                        <i class="bi bi-cash-coin text-4xl block mb-2"></i>
+                        <p class="text-xs">Sin datos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <!-- LISTA DE CUENTAS -->
+<h3 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+    <i class="bi bi-receipt text-[#F2913D]"></i>
+    Detalle de Cuentas
+</h3>
 <div id="contenedor-historial" class="space-y-3">
     <div class="text-center py-10 text-gray-400">
         <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
@@ -88,35 +233,41 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+// ===== INSTANCIAS DE GRÁFICAS =====
+let chartVentasHora = null;
+let chartMesas = null;
+let chartProductos = null;
+let chartPropinasHora = null;
+
+const COLORES = [
+    '#F2913D', '#F2A339', '#F2CA99',
+    '#0D0D0D', '#16a34a', '#3b82f6',
+    '#8b5cf6', '#ef4444', '#06b6d4', '#f59e0b'
+];
+
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.plugins.legend.display = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     resetFecha();
     cargarHistorial();
 });
 
 function resetFecha() {
-    const inputFecha = document.getElementById('filtro-fecha');
     const hoy = new Date();
-    const year = hoy.getFullYear();
-    const month = String(hoy.getMonth() + 1).padStart(2, '0');
-    const day = String(hoy.getDate()).padStart(2, '0');
-    inputFecha.value = `${year}-${month}-${day}`;
-    
-    // Actualizar label de fecha seleccionada
-    document.getElementById('fecha-seleccionada').textContent = 
-        hoy.toLocaleDateString('es-MX', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
+    const fmt = d => d.toISOString().split('T')[0];
+    const hace30 = new Date(hoy); hace30.setDate(hoy.getDate() - 30);
+    document.getElementById('filtro-inicio').value = fmt(hace30);
+    document.getElementById('filtro-fin').value = fmt(hoy);
+    document.getElementById('fecha-seleccionada').textContent = 'Últimos 30 días';
 }
 
 async function cargarHistorial() {
-    const fecha = document.getElementById('filtro-fecha').value;
+    const inicio = document.getElementById('filtro-inicio').value;
+    const fin    = document.getElementById('filtro-fin').value;
     const contenedor = document.getElementById('contenedor-historial');
-
-    console.log('🔄 Cargando historial para fecha:', fecha);
 
     contenedor.innerHTML = `
         <div class="text-center py-10 text-gray-400">
@@ -125,33 +276,23 @@ async function cargarHistorial() {
         </div>
     `;
 
+    const inicioObj = new Date(inicio + 'T00:00:00');
+    const finObj    = new Date(fin    + 'T23:59:59');
+    document.getElementById('fecha-seleccionada').textContent =
+        `${inicioObj.toLocaleDateString('es-MX', {day:'2-digit', month:'short'})} — ${finObj.toLocaleDateString('es-MX', {day:'2-digit', month:'short', year:'numeric'})}`;
+
     try {
-        // 🔥 CONVERTIR FECHA A RANGO COMPLETO DEL DÍA
-        const fechaInicio = new Date(fecha + 'T00:00:00');
-        const fechaFin = new Date(fecha + 'T23:59:59');
-        
-        const url = `/api/mesero/historial?fecha_inicio=${fechaInicio.toISOString()}&fecha_fin=${fechaFin.toISOString()}`;
-        
-        console.log('📡 URL de petición:', url);
-        
+        const url = `/api/mesero/historial?fecha_inicio=${inicioObj.toISOString()}&fecha_fin=${finObj.toISOString()}`;
         const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
         const data = await response.json();
-        
-        console.log('📊 Datos recibidos:', data);
-
-        if (!data.success) {
-            throw new Error(data.error || "Respuesta inválida");
-        }
+        if (!data.success) throw new Error(data.error || "Respuesta inválida");
 
         renderizarHistorial(data);
+        renderizarGraficas(data.historial || []);
 
     } catch (error) {
-        console.error("❌ Error al cargar historial:", error);
+        console.error("Error al cargar historial:", error);
         contenedor.innerHTML = `
             <div class="text-center py-10 text-red-500">
                 <i class="bi bi-exclamation-triangle text-4xl mb-3 opacity-30"></i>
@@ -162,27 +303,295 @@ async function cargarHistorial() {
         document.getElementById('total-ventas-historial').textContent = '$0.00';
         document.getElementById('total-propinas-historial').textContent = '$0.00';
         document.getElementById('num-registros').textContent = '0';
+        renderizarGraficas([]);
     }
 }
 
+// ===== RENDERIZADO DE GRÁFICAS =====
+function renderizarGraficas(historial) {
+    calcularMiniStats(historial);
+    graficaVentasPorHora(historial);
+    graficaMesasActivas(historial);
+    graficaProductos(historial);
+    graficaPropinasHora(historial);
+}
+
+function calcularMiniStats(historial) {
+    if (!historial.length) {
+        document.getElementById('stat-ticket-promedio').textContent = '$0.00';
+        document.getElementById('stat-hora-pico').textContent = '--:--';
+        document.getElementById('stat-mesa-top').textContent = '--';
+        document.getElementById('stat-propina-prom').textContent = '0%';
+        return;
+    }
+
+    // Ticket promedio
+    const totalVentas = historial.reduce((s, r) => s + (r.total_final || 0), 0);
+    document.getElementById('stat-ticket-promedio').textContent =
+        `$${(totalVentas / historial.length).toFixed(2)}`;
+
+    // Hora pico
+    const ventasPorHora = {};
+    historial.forEach(r => {
+        if (!r.fecha_cierre) return;
+        const h = new Date(r.fecha_cierre).getHours();
+        ventasPorHora[h] = (ventasPorHora[h] || 0) + (r.total_final || 0);
+    });
+    const horaPico = Object.entries(ventasPorHora).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('stat-hora-pico').textContent =
+        horaPico ? `${String(horaPico[0]).padStart(2,'0')}:00` : '--:--';
+
+    // Mesa top
+    const ventasPorMesa = {};
+    historial.forEach(r => {
+        const m = r.mesa || 'N/A';
+        ventasPorMesa[m] = (ventasPorMesa[m] || 0) + (r.total_final || 0);
+    });
+    const mesaTop = Object.entries(ventasPorMesa).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('stat-mesa-top').textContent =
+        mesaTop ? `Mesa ${mesaTop[0]}` : '--';
+
+    // Propina promedio
+    const conPropina = historial.filter(r => r.propina > 0);
+    if (conPropina.length) {
+        const promPct = conPropina.reduce((s, r) => {
+            const subtotal = (r.total_final || 0) - (r.propina || 0);
+            return s + (subtotal > 0 ? (r.propina / subtotal) * 100 : 0);
+        }, 0) / conPropina.length;
+        document.getElementById('stat-propina-prom').textContent = `${promPct.toFixed(0)}%`;
+    } else {
+        document.getElementById('stat-propina-prom').textContent = '0%';
+    }
+}
+
+function graficaVentasPorHora(historial) {
+    const ctx = document.getElementById('grafica-ventas-hora');
+    const empty = document.getElementById('empty-ventas-hora');
+
+    if (chartVentasHora) { chartVentasHora.destroy(); chartVentasHora = null; }
+
+    // Agrupar por día dd/mm
+    const porDia = {};
+    historial.forEach(r => {
+        if (!r.fecha_cierre) return;
+        const d = new Date(r.fecha_cierre);
+        const key = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        porDia[key] = (porDia[key] || 0) + (r.total_final || 0);
+    });
+
+    const dias  = Object.keys(porDia).sort((a, b) => {
+        const [da, ma] = a.split('/').map(Number);
+        const [db, mb] = b.split('/').map(Number);
+        return ma !== mb ? ma - mb : da - db;
+    });
+    const ventas = dias.map(d => porDia[d]);
+
+    const hayDatos = ventas.some(v => v > 0);
+    if (!hayDatos) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    chartVentasHora = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dias,
+            datasets: [{
+                label: 'Ventas',
+                data: ventas,
+                borderColor: '#F2913D',
+                backgroundColor: 'rgba(242,145,61,0.1)',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#F2913D',
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` }
+            }},
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
+                y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, callback: v => `$${v}` }}
+            }
+        }
+    });
+}
+
+function graficaMesasActivas(historial) {
+    const ctx = document.getElementById('grafica-mesas');
+    const empty = document.getElementById('empty-mesas');
+
+    if (chartMesas) { chartMesas.destroy(); chartMesas = null; }
+
+    const porMesa = {};
+    historial.forEach(r => {
+        const m = `Mesa ${r.mesa || 'N/A'}`;
+        porMesa[m] = (porMesa[m] || 0) + (r.total_final || 0);
+    });
+
+    const sorted = Object.entries(porMesa).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (!sorted.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    chartMesas = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sorted.map(e => e[0]),
+            datasets: [{
+                label: 'Ventas',
+                data: sorted.map(e => e[1]),
+                backgroundColor: sorted.map((_, i) =>
+                    i === 0 ? '#F2913D' : 'rgba(242,145,61,0.25)'
+                ),
+                borderColor: '#F2913D',
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` }
+            }},
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                y: { grid: { color: '#f3f4f6' }, ticks: {
+                    font: { size: 10 },
+                    callback: v => `$${v}`
+                }}
+            }
+        }
+    });
+}
+
+function graficaProductos(historial) {
+    const ctx = document.getElementById('grafica-productos');
+    const empty = document.getElementById('empty-productos');
+    const leyenda = document.getElementById('leyenda-productos');
+
+    if (chartProductos) { chartProductos.destroy(); chartProductos = null; }
+
+    const porProducto = {};
+    historial.forEach(r => {
+        // items puede ser número (conteo) o array — solo procesar si es array
+        if (!Array.isArray(r.items)) return;
+        r.items.forEach(item => {
+            const nombre = item.nombre || 'Sin nombre';
+            porProducto[nombre] = (porProducto[nombre] || 0) + (item.cantidad || 1);
+        });
+    });
+
+    const sorted = Object.entries(porProducto).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    if (!sorted.length) {
+        empty.classList.remove('hidden');
+        leyenda.innerHTML = '<p class="text-xs text-gray-400">Los productos aparecerán cuando el historial incluya detalle de items</p>';
+        return;
+    }
+    empty.classList.add('hidden');
+
+    chartProductos = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: sorted.map(e => e[0]),
+            datasets: [{
+                data: sorted.map(e => e[1]),
+                backgroundColor: COLORES.slice(0, sorted.length),
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} pedido(s)` }}
+            }
+        }
+    });
+
+    const total = sorted.reduce((s, e) => s + e[1], 0);
+    leyenda.innerHTML = sorted.map((e, i) => `
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${COLORES[i]}"></span>
+            <span class="truncate text-gray-700 flex-1" title="${e[0]}">${e[0]}</span>
+            <span class="font-bold text-gray-800 flex-shrink-0">${e[1]}</span>
+            <span class="text-gray-400 flex-shrink-0">${Math.round(e[1]/total*100)}%</span>
+        </div>
+    `).join('');
+}
+
+function graficaPropinasHora(historial) {
+    const ctx = document.getElementById('grafica-propinas-hora');
+    const empty = document.getElementById('empty-propinas-hora');
+
+    if (chartPropinasHora) { chartPropinasHora.destroy(); chartPropinasHora = null; }
+
+    // Agrupar por día dd/mm
+    const porDia = {};
+    historial.forEach(r => {
+        if (!r.fecha_cierre) return;
+        const d = new Date(r.fecha_cierre);
+        const key = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        porDia[key] = (porDia[key] || 0) + (r.propina || 0);
+    });
+
+    const dias = Object.keys(porDia).sort((a, b) => {
+        const [da, ma] = a.split('/').map(Number);
+        const [db, mb] = b.split('/').map(Number);
+        return ma !== mb ? ma - mb : da - db;
+    });
+    const propinas = dias.map(d => porDia[d]);
+
+    const hayDatos = propinas.some(v => v > 0);
+    if (!hayDatos) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    chartPropinasHora = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dias,
+            datasets: [{
+                label: 'Propinas',
+                data: propinas,
+                backgroundColor: 'rgba(22,163,74,0.75)',
+                borderColor: '#16a34a',
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ` $${ctx.raw.toFixed(2)}` }
+            }},
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
+                y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 }, callback: v => `$${v}` }}
+            }
+        }
+    });
+}
+
+// ===== RENDERIZADO DE LISTA =====
 function renderizarHistorial(data) {
     const historial = data.historial || [];
-    
-    // 🔥 CALCULAR TOTALES
+
     let totalVentas = 0;
     let totalPropinas = 0;
-    
     historial.forEach(reg => {
         totalVentas += reg.total_final || 0;
         totalPropinas += reg.propina || 0;
     });
-    
-    console.log('💰 Totales calculados:');
-    console.log('   Ventas: $', totalVentas.toFixed(2));
-    console.log('   Propinas: $', totalPropinas.toFixed(2));
-    console.log('   Registros: ', historial.length);
-    
-    // 🔥 ACTUALIZAR CARDS
+
     document.getElementById('total-ventas-historial').textContent = `$${totalVentas.toFixed(2)}`;
     document.getElementById('total-propinas-historial').textContent = `$${totalPropinas.toFixed(2)}`;
     document.getElementById('num-registros').textContent = historial.length;
@@ -202,39 +611,27 @@ function renderizarHistorial(data) {
 
     contenedor.innerHTML = historial.map(reg => {
         const fecha = reg.fecha_cierre ? new Date(reg.fecha_cierre) : new Date();
-        const hora = fecha.toLocaleTimeString('es-MX', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true
-        });
-        
+        const hora = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+
         const metodo = (reg.metodo_pago || 'efectivo').toLowerCase();
-        let metodoBadge = '';
-        let metodoBadgeClass = '';
-        
+        let metodoBadge = '', metodoBadgeClass = '';
         if (metodo === 'mercadopago' || metodo === 'tarjeta') {
-            metodoBadge = 'TARJETA MP';
-            metodoBadgeClass = 'text-blue-600 bg-blue-50';
+            metodoBadge = 'TARJETA MP'; metodoBadgeClass = 'text-blue-600 bg-blue-50';
         } else if (metodo === 'efectivo') {
-            metodoBadge = 'EFECTIVO';
-            metodoBadgeClass = 'text-orange-600 bg-orange-50';
+            metodoBadge = 'EFECTIVO'; metodoBadgeClass = 'text-orange-600 bg-orange-50';
         } else if (metodo === 'transferencia') {
-            metodoBadge = 'TRANSFERENCIA';
-            metodoBadgeClass = 'text-purple-600 bg-purple-50';
+            metodoBadge = 'TRANSFERENCIA'; metodoBadgeClass = 'text-purple-600 bg-purple-50';
         } else {
-            metodoBadge = metodo.toUpperCase();
-            metodoBadgeClass = 'text-gray-600 bg-gray-50';
+            metodoBadge = metodo.toUpperCase(); metodoBadgeClass = 'text-gray-600 bg-gray-50';
         }
 
         const totalFinal = reg.total_final || 0;
         const propina = reg.propina || 0;
-        const items = reg.items || 0;
+        const items = Array.isArray(reg.items) ? reg.items.length : (reg.items || 0);
 
         return `
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-[#F2913D] transition-all">
             <div class="flex justify-between items-start mb-3">
-                
-                <!-- INFO IZQUIERDA -->
                 <div class="flex gap-3 flex-1">
                     <div class="w-12 h-12 bg-gradient-to-br from-[#F2913D] to-[#F2A339] rounded-xl flex items-center justify-center shadow-sm">
                         <i class="bi bi-receipt text-white text-lg"></i>
@@ -249,19 +646,13 @@ function renderizarHistorial(data) {
                         </p>
                     </div>
                 </div>
-                
-                <!-- INFO DERECHA -->
                 <div class="text-right">
-                    <p class="text-2xl font-black text-gray-800">
-                        $${totalFinal.toFixed(2)}
-                    </p>
+                    <p class="text-2xl font-black text-gray-800">$${totalFinal.toFixed(2)}</p>
                     <span class="text-[9px] font-bold ${metodoBadgeClass} px-2 py-1 rounded-full uppercase inline-block mt-1">
                         ${metodoBadge}
                     </span>
                 </div>
             </div>
-
-            <!-- DETALLES -->
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-xs">
                 <div class="text-center">
                     <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Comensales</p>
@@ -279,8 +670,6 @@ function renderizarHistorial(data) {
         </div>
         `;
     }).join('');
-    
-    console.log('✅ Historial renderizado');
 }
 </script>
 {% endblock %}

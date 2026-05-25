@@ -122,6 +122,12 @@ plantilla = [
     ("Vasos Desechables",    "salida",  1,   3),
     ("Cloro",                "entrada", 2,   4),
     ("Jabón Líquido",        "entrada", 2,   4),
+    # ajustes de inventario (correcciones de conteo)
+    ("Carne de Res",         "ajuste",  1,   3),
+    ("Arroz",                "ajuste",  2,   5),
+    ("Frijol Negro",         "ajuste",  1,   3),
+    ("Aguacate",             "ajuste",  0.5, 2),
+    ("Queso Fresco",         "ajuste",  0.5, 2),
 ]
 
 movimientos = []

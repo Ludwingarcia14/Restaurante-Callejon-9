@@ -46,7 +46,14 @@ class HistorialController:
                     "metodo_pago": c.get("metodo_pago", "efectivo"),
                     "fecha_cierre": c.get("fecha_cierre").isoformat() if c.get("fecha_cierre") else None,
                     "num_comensales": c.get("num_comensales", 0),
-                    "items": len(c.get("items", []))
+                    "items": [
+                        {
+                            "nombre": item.get("nombre", "Sin nombre"),
+                            "cantidad": item.get("cantidad", 1),
+                            "precio": float(item.get("precio", 0))
+                        }
+                        for item in c.get("items", [])
+                        ],
                 })
             
             return jsonify({
