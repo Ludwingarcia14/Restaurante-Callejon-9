@@ -99,8 +99,10 @@ clean_old_sessions()
 # ================================
 # Importamos las rutas aquí para evitar importaciones circulares en el startup
 from routes import routes_bp, register_reports_routes
+from routes_v1 import api_v1_bp
 
 app.register_blueprint(routes_bp)
+app.register_blueprint(api_v1_bp)
 register_reports_routes(app)
 
 # ================================
@@ -140,10 +142,34 @@ def on_join_room(room):
 # ================================
 @app.errorhandler(404)
 def not_found(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Recurso no encontrado"}), 404
     return redirect(url_for("routes.login"))
 
 @app.errorhandler(403)
 def forbidden(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Sin permisos"}), 403
+    return redirect(url_for("routes.login"))
+
+@app.errorhandler(400)
+def bad_request(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Solicitud inválida"}), 400
+    return redirect(url_for("routes.login"))
+
+@app.errorhandler(401)
+def unauthorized(e):
+    return jsonify({"status": "error", "message": "No autorizado"}), 401
+
+@app.errorhandler(429)
+def too_many_requests(e):
+    return jsonify({"status": "error", "message": "Demasiados intentos, intenta más tarde"}), 429
+
+@app.errorhandler(500)
+def internal_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
     return redirect(url_for("routes.login"))
 
 # ================================

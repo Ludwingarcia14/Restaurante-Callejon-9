@@ -4,6 +4,7 @@ Maneja las API endpoints para notificaciones en tiempo real
 """
 
 from flask import jsonify, session, request
+from utils.pagination import get_pagination_params, paginate_response
 from functools import wraps
 from bson import ObjectId
 from datetime import datetime, timedelta
@@ -295,28 +296,33 @@ class NotificacionController:
     @login_required_api
     def get_notificaciones():
         """
-        GET /api/notificaciones
-        Obtiene todas las notificaciones del usuario autenticado
+        GET /api/notificaciones?page=1&limit=20
+        Obtiene las notificaciones del usuario autenticado con paginación.
         """
         try:
             usuario_id = session.get("usuario_id")
-            
-            notificaciones = list(Notificacion.collection.find(
-                {"id_usuario": ObjectId(usuario_id)}
-            ).sort("fecha", -1))
-            
+            query = {"id_usuario": ObjectId(usuario_id)}
+            limit, page, skip = get_pagination_params(default_limit=20, max_limit=100)
+
+            total = Notificacion.collection.count_documents(query)
+            notificaciones = list(
+                Notificacion.collection.find(query)
+                .sort("fecha", -1)
+                .skip(skip)
+                .limit(limit)
+            )
+
             for n in notificaciones:
                 n["_id"] = str(n["_id"])
                 n["id_usuario"] = str(n["id_usuario"])
                 if n.get("fecha"):
                     n["fecha"] = n["fecha"].isoformat()
-            
+
             return jsonify({
                 "success": True,
-                "notificaciones": notificaciones,
-                "total": len(notificaciones)
+                **paginate_response(notificaciones, total, page, limit),
             }), 200
-            
+
         except Exception as e:
             logger.error(f"Error en get_notificaciones: {str(e)}")
             return jsonify({
