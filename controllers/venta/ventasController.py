@@ -422,15 +422,12 @@ class VentasController:
                 "corte_id": corte_id
             })
         except Exception as e:
-<<<<<<< HEAD
             logger.error(f"Error en api_generar_corte: {str(e)}")
             return jsonify({
                 "success": False,
                 "message": "Error interno del servidor"
             }), 500
-=======
             return jsonify({"success": False, "message": str(e)}), 500
->>>>>>> e18a1ec59386e715ee95d43b35b5eefa9233a185
     
     @staticmethod
     def api_get_cortes():
