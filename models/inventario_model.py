@@ -6,6 +6,9 @@ from config.db import db
 from datetime import datetime
 from bson.objectid import ObjectId
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ==========================================
 # ENUMS PARA TIPOS DE MOVIMIENTO
@@ -233,8 +236,8 @@ class MovimientoInventario:
             }
             
         except Exception as e:
-            print(f"Error en registrar_movimiento: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Error en registrar_movimiento: {str(e)}")
+            return {"success": False, "error": "Error interno del servidor"}
     
     @classmethod
     def obtener_historial(cls, filtros=None, limit=100):

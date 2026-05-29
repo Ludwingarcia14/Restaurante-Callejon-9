@@ -84,14 +84,14 @@ def notificar_usuario(user_id, evento, mensaje, datos_extra=None):
             }
             
     except Exception as e:
-        logging.error(f"❌ Error de conexión: {e}")
+        logging.error(f"❌ Error de conexión: {str(e)}")
         
         # Fallback: registrar en logs
         logging.info(f"[FALLBACK] {evento} para user {user_id}: {mensaje}")
         
         return {
             "success": False, 
-            "error": str(e), 
+            "error": "Error interno del servidor", 
             "mode": "fallback"
         }
 

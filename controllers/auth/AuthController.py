@@ -7,11 +7,12 @@ from flask import render_template, request, redirect, url_for, session, flash, j
 from models.empleado_model import Usuario, RolPermisos
 from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 from services.security.two_factor_service import TwoFactorService
+from services.security.password_service import PasswordService
 import secrets
 import logging
 from functools import wraps
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class AuthController:
@@ -35,9 +36,7 @@ class AuthController:
             email = data.get("email", "").strip().lower()
             password = data.get("password", "")
 
-            print(f"\n🔐 Intento de login:")
-            print(f"   Email: {email}")
-            print(f"   Password: {'*' * len(password)}")
+            logger.info("Intento de login: %s", email)
 
             # 1. Validaciones básicas
             if not email or not password:
@@ -49,17 +48,12 @@ class AuthController:
             # 2. Buscar usuario por email
             try:
                 usuario_doc = Usuario.find_by_email(email)
-                print(f"   Usuario encontrado: {usuario_doc is not None}")
-
-                if usuario_doc:
-                    print(f"   Rol del usuario: {usuario_doc.get('usuario_rol')}")
-                    print(f"   Status: {usuario_doc.get('usuario_status')}")
 
             except Exception as e:
-                print(f"   ❌ Error al buscar usuario: {e}")
+                logger.error("Error al buscar usuario en login: %s", e)
                 return jsonify({
                     "status": "error",
-                    "message": f"Error de base de datos: {str(e)}"
+                    "message": "Error de base de datos"
                 })
 
             if not usuario_doc:
@@ -76,12 +70,26 @@ class AuthController:
                     "message": "No tienes permisos para acceder al sistema"
                 })
 
-            # 4. Validar contraseña (comparación directa)
+            # 4. Validar contraseña
             stored_password = usuario_doc.get("usuario_clave", "")
 
-            print(f"   ¿Coinciden?: {stored_password == password}")
+            # Compatibilidad: si la contraseña no está hasheada (legado), migrar al vuelo
+            if stored_password.startswith("$2b$") or stored_password.startswith("$2a$"):
+                password_ok = PasswordService.verify_password(password, stored_password)
+            else:
+                # Contraseña en texto plano (legado) — comparar y migrar a bcrypt
+                password_ok = (stored_password == password)
+                if password_ok:
+                    try:
+                        new_hash = PasswordService.hash_password(password)
+                        Usuario.collection.update_one(
+                            {"_id": usuario_doc["_id"]},
+                            {"$set": {"usuario_clave": new_hash}}
+                        )
+                    except Exception as e:
+                        logging.warning(f"No se pudo migrar contraseña a bcrypt: {e}")
 
-            if stored_password != password:
+            if not password_ok:
                 return jsonify({
                     "status": "error",
                     "message": "Credenciales incorrectas"
@@ -94,19 +102,24 @@ class AuthController:
             user_id = str(usuario_doc["_id"])
             tiene_2fa = usuario_doc.get("2fa_enabled", False)
 
+            # Actualizar token en BD
+            try:
+                Usuario.update_session_token(user_id, token_session, 1)
+            except Exception as e:
+                logger.warning("Error al actualizar token de sesión: %s", e)
+
             if tiene_2fa:
-                # Guardar datos pendientes en sesión temporal
                 session["pending_login"] = {
-                    "user_id":          user_id,
-                    "usuario_nombre":   usuario_doc.get("usuario_nombre", ""),
-                    "usuario_apellidos":usuario_doc.get("usuario_apellidos", ""),
-                    "usuario_email":    usuario_doc.get("usuario_email", ""),
-                    "usuario_rol":      rol,
-                    "usuario_foto":     usuario_doc.get("usuario_foto", ""),
-                    "2fa_secret":       usuario_doc.get("2fa_secret"),
-                    "2fa_tipo":         usuario_doc.get("2fa_tipo", "app"),
+                    "user_id":           user_id,
+                    "usuario_nombre":    usuario_doc.get("usuario_nombre", ""),
+                    "usuario_apellidos": usuario_doc.get("usuario_apellidos", ""),
+                    "usuario_email":     usuario_doc.get("usuario_email", ""),
+                    "usuario_rol":       rol,
+                    "usuario_foto":      usuario_doc.get("usuario_foto", ""),
+                    "2fa_secret":        usuario_doc.get("2fa_secret"),
+                    "2fa_tipo":          usuario_doc.get("2fa_tipo", "app"),
                 }
-                logging.info(f"🔐 2FA requerido para: {email}")
+                logger.info("2FA requerido para: %s", email)
                 return jsonify({
                     "status":       "success",
                     "requires_2fa": True,

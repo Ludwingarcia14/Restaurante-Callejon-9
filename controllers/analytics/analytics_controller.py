@@ -1,26 +1,3 @@
-"""
-Analytics Controller - Sistema de Restaurante Callejón 9
-Implementa consultas MapReduce sobre MongoDB para obtener métricas clave.
-
-Estructura de documentos en colección 'ventas':
-{
-  "_id": ObjectId,
-  "numero_venta": int,
-  "mesa_numero": int,
-  "mesero_id": ObjectId,
-  "mesero_nombre": str,
-  "comensales": int,
-  "platillos": [
-    { "nombre": str, "cantidad": int, "precio_unitario": float, "subtotal": float }
-  ],
-  "subtotal": float,
-  "propina": float,
-  "total": float,
-  "metodo_pago": str,
-  "fecha": datetime,
-  "created_at": datetime
-}
-"""
 from flask import jsonify, render_template, session
 from config.db import db
 from datetime import datetime, timedelta
@@ -29,9 +6,7 @@ from controllers.auth.AuthController import login_required, rol_required
 
 class AnalyticsController:
 
-    # ==============================
     # VISTA PRINCIPAL
-    # ==============================
 
     @staticmethod
     @login_required
@@ -45,9 +20,7 @@ class AnalyticsController:
         }
         return render_template("admin/analytics/analytics.html", usuario=usuario)
 
-    # ==============================
     # KPIs GENERALES
-    # ==============================
 
     @staticmethod
     def get_kpis():
@@ -62,19 +35,19 @@ class AnalyticsController:
 
             # Ventas de hoy
             ventas_hoy = list(db.ventas.aggregate([
-                {"$match": {"fecha": {"$gte": hoy}}},
+                {"$match": {"fecha_creacion": {"$gte": hoy}}},
                 {"$group": {"_id": None, "total": {"$sum": "$total"}, "count": {"$sum": 1}}}
             ]))
 
             # Ventas de la semana
             ventas_semana = list(db.ventas.aggregate([
-                {"$match": {"fecha": {"$gte": semana}}},
+                {"$match": {"fecha_creacion": {"$gte": semana}}},
                 {"$group": {"_id": None, "total": {"$sum": "$total"}, "count": {"$sum": 1}}}
             ]))
 
             # Ventas del mes
             ventas_mes = list(db.ventas.aggregate([
-                {"$match": {"fecha": {"$gte": mes}}},
+                {"$match": {"fecha_creacion": {"$gte": mes}}},
                 {"$group": {"_id": None, "total": {"$sum": "$total"}, "count": {"$sum": 1}}}
             ]))
 
@@ -87,7 +60,7 @@ class AnalyticsController:
 
             # Propinas del mes
             propinas_mes = list(db.ventas.aggregate([
-                {"$match": {"fecha": {"$gte": mes}}},
+                {"$match": {"fecha_creacion": {"$gte": mes}}},
                 {"$group": {"_id": None, "total_propinas": {"$sum": "$propina"}}}
             ]))
             total_propinas = float(propinas_mes[0]["total_propinas"]) if propinas_mes else 0
@@ -108,9 +81,7 @@ class AnalyticsController:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # ==============================
-    # TOP PLATILLOS (MapReduce sobre platillos[])
-    # ==============================
+    # TOP PLATILLOS
 
     @staticmethod
     def get_top_platillos():
@@ -126,16 +97,16 @@ class AnalyticsController:
             fecha_inicio = datetime.now() - timedelta(days=30)
 
             pipeline = [
-                {"$match": {"fecha": {"$gte": fecha_inicio}}},
-                # MAP: un documento por cada platillo vendido
-                {"$unwind": "$platillos"},
-                {"$match": {"platillos.nombre": {"$exists": True, "$ne": None}}},
-                # REDUCE: agrupar por nombre del platillo
+                {"$match": {"fecha_creacion": {"$gte": fecha_inicio}}},
+                # MAP: un documento por cada item vendido
+                {"$unwind": "$items"},
+                {"$match": {"items.nombre": {"$exists": True, "$ne": None}}},
+                # REDUCE: agrupar por nombre del item
                 {"$group": {
-                    "_id": "$platillos.nombre",
-                    "total_ingreso": {"$sum": "$platillos.subtotal"},
-                    "total_cantidad": {"$sum": "$platillos.cantidad"},
-                    "precio_unitario_prom": {"$avg": "$platillos.precio_unitario"},
+                    "_id": "$items.nombre",
+                    "total_ingreso": {"$sum": {"$multiply": ["$items.precio", "$items.cantidad"]}},
+                    "total_cantidad": {"$sum": "$items.cantidad"},
+                    "precio_unitario_prom": {"$avg": "$items.precio"},
                     "num_ventas": {"$sum": 1}
                 }},
                 {"$sort": {"total_ingreso": -1}},
@@ -156,9 +127,7 @@ class AnalyticsController:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # ==============================
-    # VENTAS POR DÍA (últimos 30 días)
-    # ==============================
+    # VENTAS POR DÍA 
 
     @staticmethod
     def get_ventas_por_dia():
@@ -170,16 +139,15 @@ class AnalyticsController:
             fecha_inicio = datetime.now() - timedelta(days=30)
 
             pipeline = [
-                {"$match": {"fecha": {"$gte": fecha_inicio}}},
+                {"$match": {"fecha_creacion": {"$gte": fecha_inicio}}},
                 {"$group": {
                     "_id": {
-                        "year": {"$year": "$fecha"},
-                        "month": {"$month": "$fecha"},
-                        "day": {"$dayOfMonth": "$fecha"}
+                        "year": {"$year": "$fecha_creacion"},
+                        "month": {"$month": "$fecha_creacion"},
+                        "day": {"$dayOfMonth": "$fecha_creacion"}
                     },
                     "total": {"$sum": "$total"},
                     "transacciones": {"$sum": 1},
-                    "comensales": {"$sum": "$comensales"}
                 }},
                 {"$sort": {"_id.year": 1, "_id.month": 1, "_id.day": 1}},
                 {"$project": {
@@ -197,7 +165,6 @@ class AnalyticsController:
                     },
                     "total": {"$round": ["$total", 2]},
                     "transacciones": 1,
-                    "comensales": 1,
                     "_id": 0
                 }}
             ]
@@ -208,9 +175,7 @@ class AnalyticsController:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # ==============================
     # VENTAS POR MÉTODO DE PAGO
-    # ==============================
 
     @staticmethod
     def get_ventas_por_metodo_pago():
@@ -222,7 +187,7 @@ class AnalyticsController:
             fecha_inicio = datetime.now() - timedelta(days=30)
 
             pipeline = [
-                {"$match": {"fecha": {"$gte": fecha_inicio}}},
+                {"$match": {"fecha_creacion": {"$gte": fecha_inicio}}},
                 {"$group": {
                     "_id": "$metodo_pago",
                     "total": {"$sum": "$total"},
@@ -257,9 +222,9 @@ class AnalyticsController:
             fecha_inicio = datetime.now() - timedelta(days=30)
 
             pipeline = [
-                {"$match": {"fecha": {"$gte": fecha_inicio}}},
+                {"$match": {"fecha_creacion": {"$gte": fecha_inicio}}},
                 {"$group": {
-                    "_id": {"$hour": "$fecha"},
+                    "_id": {"$hour": "$fecha_creacion"},
                     "total": {"$sum": "$total"},
                     "count": {"$sum": 1}
                 }},
@@ -278,9 +243,7 @@ class AnalyticsController:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # ==============================
     # RENDIMIENTO POR MESERO
-    # ==============================
 
     @staticmethod
     def get_rendimiento_meseros():
@@ -293,7 +256,7 @@ class AnalyticsController:
 
             pipeline = [
                 {"$match": {
-                    "fecha": {"$gte": fecha_inicio},
+                    "fecha_creacion": {"$gte": fecha_inicio},
                     "mesero_nombre": {"$exists": True, "$ne": ""}
                 }},
                 {"$group": {
@@ -301,7 +264,7 @@ class AnalyticsController:
                     "total_ventas": {"$sum": "$total"},
                     "num_ventas": {"$sum": 1},
                     "propinas": {"$sum": "$propina"},
-                    "comensales_atendidos": {"$sum": "$comensales"}
+                    "comensales_atendidos": {"$sum": 0}
                 }},
                 {"$sort": {"total_ventas": -1}},
                 {"$limit": 10},
@@ -324,9 +287,7 @@ class AnalyticsController:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # ==============================
     # PLATILLOS POR MESA (promedio de consumo)
-    # ==============================
 
     @staticmethod
     def get_ventas_por_mesa():
@@ -338,12 +299,12 @@ class AnalyticsController:
             fecha_inicio = datetime.now() - timedelta(days=30)
 
             pipeline = [
-                {"$match": {"fecha": {"$gte": fecha_inicio}}},
+                {"$match": {"fecha_creacion": {"$gte": fecha_inicio}}},
                 {"$group": {
                     "_id": "$mesa_numero",
                     "total_ventas": {"$sum": "$total"},
                     "num_visitas": {"$sum": 1},
-                    "comensales_total": {"$sum": "$comensales"},
+                    "comensales_total": {"$sum": 0},
                     "ticket_promedio": {"$avg": "$total"}
                 }},
                 {"$sort": {"total_ventas": -1}},

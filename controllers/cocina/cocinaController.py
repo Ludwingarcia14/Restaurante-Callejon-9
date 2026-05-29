@@ -88,3 +88,47 @@ class CocinaController:
             return jsonify({"success": True, **resultado})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ============================================
+# FUNCIONES AUXILIARES
+# ============================================
+
+def _calcular_tiempo_espera(fecha_inicio):
+    if not fecha_inicio:
+        return 0
+    delta = datetime.utcnow() - fecha_inicio
+    return int(delta.total_seconds() / 60)
+
+
+def _emitir_evento_cocina(comanda_id, evento, data):
+    try:
+        from extensions import socketio
+        socketio.emit(
+            evento,
+            {"comanda_id": comanda_id, "data": data, "timestamp": datetime.utcnow().isoformat()},
+            room="cocina",
+            namespace="/"
+        )
+    except Exception as e:
+        print(f"Error al emitir evento Socket.IO: {e}")
+
+
+def _notificar_mesero_pedido_listo(mesero_id, comanda_id, mesa_numero, item_ids):
+    try:
+        from extensions import socketio
+        from controllers.notificaciones.notificacion_controller import NotificacionCommandHandler
+        NotificacionCommandHandler.crear_notificacion(
+            tipo="PEDIDO_LISTO",
+            mensaje=f"Pedido listo en mesa {mesa_numero}",
+            id_usuario=str(mesero_id),
+            datos_extra={"comanda_id": comanda_id, "mesa_numero": mesa_numero, "item_ids": item_ids}
+        )
+        socketio.emit(
+            "pedido_listo",
+            {"comanda_id": comanda_id, "mesa": mesa_numero, "items": item_ids},
+            room=f"user_{mesero_id}",
+            namespace="/"
+        )
+    except Exception as e:
+        print(f"Error al notificar mesero: {e}")

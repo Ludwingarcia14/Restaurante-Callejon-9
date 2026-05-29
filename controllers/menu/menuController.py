@@ -6,6 +6,9 @@ from flask import render_template, session, redirect, url_for, request, jsonify
 from models.menu_model import Platillo, Categoria, Receta
 from bson.objectid import ObjectId
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MenuController:
     # ============================================
@@ -111,9 +114,10 @@ class MenuController:
                 "platillo_id": platillo_id
             })
         except Exception as e:
+            logger.error(f"Error en api_actualizar_categoria: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -154,9 +158,10 @@ class MenuController:
                     "message": "No se pudo actualizar el platillo"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_actualizar_platillo: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -179,9 +184,10 @@ class MenuController:
                     "message": "No se pudo eliminar el platillo"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_eliminar_platillo: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -199,9 +205,10 @@ class MenuController:
                 "platillos": platillos
             })
         except Exception as e:
+            logger.error(f"Error en api_crear_categoria: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -224,9 +231,10 @@ class MenuController:
                     "message": "Platillo no encontrado"
                 }), 404
         except Exception as e:
+            logger.error(f"Error en api_get_platillo: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -243,9 +251,10 @@ class MenuController:
                 "platillos": platillos
             })
         except Exception as e:
+            logger.error(f"Error en api_get_menu: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -268,9 +277,10 @@ class MenuController:
                     "message": "No se pudo actualizar"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_toggle_platillo: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     # ============================================
@@ -293,9 +303,10 @@ class MenuController:
                 "categoria_id": categoria_id
             })
         except Exception as e:
+            logger.error(f"Error en api_crear_categoria: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -319,9 +330,10 @@ class MenuController:
                     "message": "No se pudo actualizar la categoría"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_actualizar_categoria: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -344,9 +356,10 @@ class MenuController:
                     "message": "No se pudo eliminar la categoría"
                 }), 400
         except Exception as e:
+            logger.error(f"Error en api_eliminar_categoria: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod
@@ -363,7 +376,8 @@ class MenuController:
                 "categorias": categorias
             })
         except Exception as e:
+            logger.error(f"Error en api_get_categorias: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": str(e)
+                "message": "Error interno del servidor"
             }), 500

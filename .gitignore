@@ -1,19 +1,35 @@
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
-
-# Flask session
-flask_session/
 
 # Entorno virtual
 venv/
 .venv/
 env/
 
-# Variables de entorno
+# Variables de entorno — NUNCA commitear
 .env
+.env.local
+
+# Flask session
+flask_session/
+
+# Backups de base de datos
+static/backup/
+
+# Certificados y llaves
+*.pem
+*.key
+*.crt
 
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+
+# Logs
+*.log

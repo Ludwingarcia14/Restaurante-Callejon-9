@@ -10,6 +10,9 @@ import threading
 import schedule
 import time
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Cargar variables de entorno
 load_dotenv()
@@ -24,9 +27,20 @@ class BackupController:
         """Validar contraseña de administrador para operaciones sensibles"""
         admin_password = os.environ.get('ADMIN_RESTORE_PASSWORD')
         if not admin_password:
-            return True
+            logger.error("ADMIN_RESTORE_PASSWORD no está configurada — operación denegada.")
+            return False
         return password == admin_password
     
+    @staticmethod
+    def _safe_backup_path(filename):
+        """Devuelve la ruta absoluta sanitizada o None si es inválida (path traversal)."""
+        backup_dir = os.path.realpath(os.path.join(os.getcwd(), 'static', 'backup'))
+        safe_name = os.path.basename(filename)
+        resolved = os.path.realpath(os.path.join(backup_dir, safe_name))
+        if not resolved.startswith(backup_dir + os.sep) and resolved != backup_dir:
+            return None
+        return resolved
+
     @staticmethod
     def index():
         """Vista principal del módulo de backup con paginación"""
@@ -176,15 +190,15 @@ class BackupController:
                 print(f"⚠️ Error al notificar backup: {notif_error}")
             
         except Exception as e:
-            print(f"❌ Error al generar respaldo: {str(e)}")
-            flash(f"❌ Error al generar respaldo: {str(e)}", "error")
+            logger.error(f"❌ Error al generar respaldo: {str(e)}")
+            flash("❌ Error al generar respaldo", "error")
             
             # NOTIFICAR ERROR
             try:
                 NotificacionSistemaController.notificar_error(
                     usuario_id=session.get("usuario_id"),
                     tipo_error="BACKUP_ERROR",
-                    descripcion=str(e)
+                    descripcion="Error al generar respaldo"
                 )
             except Exception as notif_error:
                 print(f"⚠️ Error al notificar error: {notif_error}")
@@ -195,15 +209,18 @@ class BackupController:
     def delete_file(filename):
         """Eliminar archivo de respaldo"""
         try:
-            file_path = os.path.join('static', 'backup', filename)
+            file_path = BackupController._safe_backup_path(filename)
+            if file_path is None:
+                flash("❌ Nombre de archivo inválido.", "error")
+                return redirect(url_for('routes.admin_backup_view'))
             if os.path.exists(file_path):
                 os.remove(file_path)
                 flash(f"✅ Archivo '{filename}' eliminado correctamente.", "success")
             else:
                 flash("❌ El archivo no existe.", "error")
         except Exception as e:
-            print(f"Error al eliminar: {str(e)}")
-            flash(f"❌ Error al eliminar: {str(e)}", "error")
+            logger.error(f"Error al eliminar: {str(e)}")
+            flash("❌ Error al eliminar", "error")
         return redirect(url_for('routes.admin_backup_view'))
     
     @staticmethod
@@ -232,23 +249,26 @@ class BackupController:
             })
         
         # Validar que el archivo existe
-        file_path = os.path.join('static', 'backup', filename)
+        file_path = BackupController._safe_backup_path(filename)
+        if file_path is None:
+            return jsonify({"success": False, "message": "Nombre de archivo inválido"})
         if not os.path.exists(file_path):
             return jsonify({
                 "success": False,
                 "message": "El archivo no existe"
             })
-        
+
         try:
             os.remove(file_path)
             return jsonify({
                 "success": True,
-                "message": f"Archivo '{filename}' eliminado correctamente"
+                "message": f"Archivo eliminado correctamente"
             })
         except Exception as e:
+            logger.error(f"Error al eliminar: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": f"Error al eliminar: {str(e)}"
+                "message": "Error interno del servidor"
             })
     
     @staticmethod
@@ -277,7 +297,9 @@ class BackupController:
             })
         
         # Validar que el archivo existe
-        file_path = os.path.join('static', 'backup', filename)
+        file_path = BackupController._safe_backup_path(filename)
+        if file_path is None:
+            return jsonify({"success": False, "message": "Nombre de archivo inválido"})
         if not os.path.exists(file_path):
             return jsonify({
                 "success": False,
@@ -386,8 +408,8 @@ class BackupController:
             flash(f"✅ Sistema restaurado con éxito. {restored_collections} colecciones restauradas.", "success")
             
         except Exception as e:
-            print(f"❌ Error en la restauración: {str(e)}")
-            flash(f"❌ Error en la restauración: {str(e)}", "error")
+            logger.error(f"❌ Error en la restauración: {str(e)}")
+            flash("❌ Error en la restauración", "error")
             
         return redirect(url_for('routes.admin_backup_view'))
     
@@ -430,10 +452,10 @@ class BackupController:
             })
             
         except Exception as e:
-            print(f"Error al configurar auto-backup: {e}")
+            logger.error(f"Error al configurar auto-backup: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": f"Error: {str(e)}"
+                "message": "Error interno del servidor"
             }), 500
     
     @staticmethod

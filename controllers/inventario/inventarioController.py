@@ -137,8 +137,8 @@ class InventarioController:
             )
 
         except Exception as e:
-            logging.error(f"Error en dashboard: {e}")
-            return str(e), 500
+            logging.error(f"Error en dashboard de inventario: {str(e)}")
+            return "Error interno del servidor", 500
 
     # ==========================================
     # INSUMOS
@@ -180,9 +180,56 @@ class InventarioController:
             )
 
         except Exception as e:
-            logging.error(f"Error insumos: {e}")
-            return render_template("inventario/insumos/lista.html", error=str(e))
-
+            logging.error(f"Error al listar insumos: {str(e)}")
+            return render_template("inventario/insumos/lista.html", error="Error interno del servidor")
+    
+    @staticmethod
+    def crear_insumo():
+        """Formulario y procesamiento de creación de insumo"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
+            return redirect(url_for("routes.login"))
+        
+        if request.method == "POST":
+            try:
+                data = request.get_json()
+                
+                # Validaciones
+                required = ["nombre", "categoria", "unidad_medida", "stock_minimo"]
+                for field in required:
+                    if not data.get(field):
+                        return jsonify({
+                            "success": False,
+                            "message": f"El campo '{field}' es obligatorio"
+                        }), 400
+                
+                # Crear insumo
+                insumo_id = Insumo.crear_insumo(data)
+                
+                return jsonify({
+                    "success": True,
+                    "message": "Insumo creado exitosamente",
+                    "insumo_id": str(insumo_id)
+                })
+                
+            except Exception as e:
+                logging.error(f"Error al crear insumo: {e}")
+                return jsonify({
+                    "success": False,
+                    "message": "Error al crear insumo"
+                }), 500
+        
+        # GET - Mostrar formulario
+        proveedores = Proveedor.obtener_todos()
+        categorias = [cat.value for cat in CategoriaInsumo]
+        unidades = [u.value for u in UnidadMedida]
+        
+        return render_template(
+            "inventario/insumos/crear.html",
+            proveedores=proveedores,
+            categorias=categorias,
+            unidades=unidades
+        )
+    
     # ==========================================
     # MOVIMIENTOS
     # ==========================================
@@ -237,16 +284,40 @@ class InventarioController:
     def historial_movimientos():
         if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
             return redirect(url_for("routes.login"))
-
-        movimientos = MovimientoInventario.obtener_historial({}, limit=200)
-        insumos = Insumo.obtener_todos()
-
-        return render_template(
-            "inventario/movimientos.html",
-            movimientos=movimientos,
-            insumos=insumos
-        )
-
+        
+        try:
+            # Filtros
+            insumo_id = request.args.get("insumo_id")
+            tipo = request.args.get("tipo")
+            fecha_desde = request.args.get("fecha_desde")
+            fecha_hasta = request.args.get("fecha_hasta")
+            
+            filtros = {}
+            
+            if insumo_id:
+                filtros["insumo_id"] = ObjectId(insumo_id)
+            if tipo and tipo != "todos":
+                filtros["tipo"] = tipo
+            if fecha_desde:
+                filtros["fecha_desde"] = datetime.strptime(fecha_desde, "%Y-%m-%d")
+            if fecha_hasta:
+                filtros["fecha_hasta"] = datetime.strptime(fecha_hasta, "%Y-%m-%d")
+            
+            movimientos = MovimientoInventario.obtener_historial(filtros, limit=200)
+            insumos = Insumo.obtener_todos()
+            tipos_movimiento = [t.value for t in TipoMovimiento]
+            
+            return render_template(
+                "inventario/movimientos/historial.html",
+                movimientos=movimientos,
+                insumos=insumos,
+                tipos_movimiento=tipos_movimiento
+            )
+            
+        except Exception as e:
+            logging.error(f"Error al obtener historial: {str(e)}")
+            return render_template("inventario/movimientos/historial.html", error="Error interno del servidor")
+    
     # ==========================================
     # ALERTAS
     # ==========================================
@@ -254,14 +325,49 @@ class InventarioController:
     def alertas_stock():
         if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
             return redirect(url_for("routes.login"))
-
-        alertas = AlertaStock.obtener_alertas_activas()
-
-        return render_template(
-            "inventario/alertas.html",
-            alertas=alertas
-        )
-
+        
+        try:
+            alertas = AlertaStock.obtener_alertas_activas()
+            
+            return render_template(
+                "inventario/alertas.html",
+                alertas=alertas
+            )
+            
+        except Exception as e:
+            logging.error(f"Error al obtener alertas: {str(e)}")
+            return render_template("inventario/alertas.html", error="Error interno del servidor")
+    
+    @staticmethod
+    def resolver_alerta():
+        """Marca una alerta como resuelta"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
+            return jsonify({"success": False, "message": "No autorizado"}), 403
+        
+        try:
+            data = request.get_json()
+            alerta_id = data.get("alerta_id")
+            
+            if not alerta_id:
+                return jsonify({
+                    "success": False,
+                    "message": "ID de alerta requerido"
+                }), 400
+            
+            AlertaStock.resolver_alerta(alerta_id, session["usuario_id"])
+            
+            return jsonify({
+                "success": True,
+                "message": "Alerta resuelta"
+            })
+            
+        except Exception as e:
+            logging.error(f"Error al resolver alerta: {e}")
+            return jsonify({
+                "success": False,
+                "message": "Error al resolver alerta"
+            }), 500
+    
     # ==========================================
     # PROVEEDORES
     # ==========================================
@@ -269,14 +375,53 @@ class InventarioController:
     def lista_proveedores():
         if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
             return redirect(url_for("routes.login"))
-
-        proveedores = Proveedor.obtener_todos()
-
-        return render_template(
-            "inventario/proveedores/lista.html",
-            proveedores=proveedores
-        )
-
+        
+        try:
+            proveedores = Proveedor.obtener_todos()
+            
+            return render_template(
+                "inventario/proveedores/lista.html",
+                proveedores=proveedores
+            )
+            
+        except Exception as e:
+            logging.error(f"Error al listar proveedores: {str(e)}")
+            return render_template("inventario/proveedores/lista.html", error="Error interno del servidor")
+    
+    @staticmethod
+    def crear_proveedor():
+        """Crea un nuevo proveedor"""
+        if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
+            return redirect(url_for("routes.login"))
+        
+        if request.method == "POST":
+            try:
+                data = request.get_json()
+                
+                if not data.get("nombre"):
+                    return jsonify({
+                        "success": False,
+                        "message": "El nombre es obligatorio"
+                    }), 400
+                
+                proveedor_id = Proveedor.crear_proveedor(data)
+                
+                return jsonify({
+                    "success": True,
+                    "message": "Proveedor creado exitosamente",
+                    "proveedor_id": str(proveedor_id)
+                })
+                
+            except Exception as e:
+                logging.error(f"Error al crear proveedor: {e}")
+                return jsonify({
+                    "success": False,
+                    "message": "Error al crear proveedor"
+                }), 500
+        
+        # GET
+        return render_template("inventario/proveedores/crear.html")
+    
     # ==========================================
     # REPORTES
     # ==========================================
