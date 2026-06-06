@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <title>{% block title %}Callejon 19{% endblock %} - Sistema de Restaurante</title>
+    <title>{% block title %}Callejón 19{% endblock %} - Sistema de Restaurante</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/callejon9.jpeg') }}" type="image/x-icon">
@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Tailwind CSS -->
+    <script>window.tailwind && (tailwind.config = { darkMode: 'class' })</script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- SweetAlert2 -->
@@ -211,6 +212,35 @@
                 display: block;
             }
         }
+
+        /* ── Dark Mode ── */
+        html.dark body { background-color: #0f172a; color: #e2e8f0; }
+        html.dark .sidebar { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark .sidebar-header, html.dark .sidebar-user, html.dark .sidebar-footer { border-color: #334155 !important; }
+        html.dark .nav-link { color: #cbd5e1; }
+        html.dark .nav-link:hover { background: #334155; color: #f1f5f9; }
+        html.dark .nav-link.active { background: #1e3a5f; color: #60a5fa; border-color: #3b82f6; }
+        html.dark .sidebar-user-name { color: #f1f5f9; }
+        html.dark .page-header { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark .page-content { background: #0f172a; }
+        html.dark .bg-white { background-color: #1e293b !important; }
+        html.dark .bg-gray-50 { background-color: #1e293b !important; }
+        html.dark .bg-gray-100 { background-color: #0f172a !important; }
+        html.dark .bg-gray-200 { background-color: #334155 !important; }
+        html.dark .text-gray-800, html.dark .text-gray-900 { color: #f1f5f9 !important; }
+        html.dark .text-gray-700 { color: #e2e8f0 !important; }
+        html.dark .text-gray-600 { color: #cbd5e1 !important; }
+        html.dark .text-gray-500 { color: #94a3b8 !important; }
+        html.dark .text-gray-400 { color: #64748b !important; }
+        html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border { border-color: #334155 !important; }
+        html.dark .shadow-sm, html.dark .shadow-md { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+        html.dark input, html.dark select, html.dark textarea { background-color: #334155 !important; color: #f1f5f9 !important; border-color: #475569 !important; }
+        html.dark input::placeholder { color: #94a3b8; }
+        html.dark table thead { background-color: #1e293b !important; }
+        html.dark table thead th { color: #94a3b8 !important; }
+        html.dark table tbody tr { border-color: #334155 !important; }
+        html.dark table tbody tr:hover { background-color: #334155 !important; }
+        html.dark .rounded-xl, html.dark .rounded-lg { background-color: inherit; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -229,9 +259,9 @@
             <!-- Header del Sidebar -->
             <div class="sidebar-header">
                 <img src="/static/img/callejon9.jpeg" 
-                     alt="Callejon 9" 
+                     alt="Callejón 19"
                      class="sidebar-logo">
-                <h2 class="sidebar-title">Callejon 19</h2>
+                <h2 class="sidebar-title">Callejón 19</h2>
                 <p class="sidebar-subtitle">Sistema de Restaurante</p>
             </div>
             
@@ -305,10 +335,10 @@
                 </a>
                 {% endif %}
 
-                <!-- Configuracion -->
+                <!-- Configuración -->
                 <a href="{{ url_for('routes.settings') }}" class="nav-link" id="nav-settings">
                     <i class="bi bi-gear text-lg"></i>
-                    <span>Configuracion</span>
+                    <span>Configuración</span>
                 </a>
 
                 {% block navigation %}{% endblock %}
@@ -317,7 +347,7 @@
                 {% if session.usuario_rol == '1' %}
                 <div class="mt-4 pt-4 border-t border-gray-200">
                     <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                        Administracion
+                        Administración
                     </p>
                     
                     <a href="{{ url_for('routes.admin_backup_view') }}" 
@@ -340,7 +370,7 @@
                 <a href="{{ url_for('routes.logout') }}" 
                    class="btn btn-error w-full flex items-center justify-center gap-2">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar Sesion</span>
+                    <span>Cerrar Sesión</span>
                 </a>
             </div>
             
@@ -367,6 +397,13 @@
                             <i class="bi bi-list text-2xl"></i>
                         </button>
                         
+                        <!-- Toggle Modo Oscuro -->
+                        <button onclick="toggleDarkMode()" id="dark-mode-btn"
+                                class="p-2 rounded-lg hover:bg-gray-200 transition text-gray-600"
+                                title="Cambiar tema">
+                            <i class="bi bi-moon-stars-fill text-xl" id="dark-mode-icon"></i>
+                        </button>
+
                         <!-- Notificaciones -->
                         <div class="relative">
                             <a class="navbar-link is-arrowless p-2 rounded-lg hover:bg-gray-200 transition cursor-pointer" id="notification-trigger">
@@ -465,24 +502,28 @@
             }
         });
         
-        // Toggle Theme
-        function toggleTheme() {
+        // Toggle Dark Mode
+        function toggleDarkMode() {
             const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            
-            if (currentTheme === 'dark') {
-                html.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            }
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('dark-mode-icon').className = isDark
+                ? 'bi bi-sun-fill text-xl'
+                : 'bi bi-moon-stars-fill text-xl';
         }
-        
-        // Cargar tema guardado
+
+        // Apply saved theme immediately
+        (function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+
         document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (localStorage.getItem('theme') === 'dark') {
+                const icon = document.getElementById('dark-mode-icon');
+                if (icon) icon.className = 'bi bi-sun-fill text-xl';
+            }
         });
         
         // Marcar link activo en navegacion

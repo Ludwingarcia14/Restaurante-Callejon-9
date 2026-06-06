@@ -1,48 +1,267 @@
-{% extends "layout/layout_base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cocina - Callejón 19{% endblock %}</title>
 
-{% block extra_css %}
-<style>
-    /* ── Ocultar links de admin que no aplican a cocina ── */
-    #nav-dashboard,
-    #nav-menu,
-    #nav-ventas,
-    #nav-reportes,
-    #nav-analytics,
-    #nav-settings {
-        display: none !important;
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <style>
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            color: #374151;
+            text-decoration: none;
+        }
+        .nav-link:hover  { background: #fff7ed; color: #c2410c; }
+        .nav-link.active { background: #ffedd5; color: #ea580c; border-right: 3px solid #ea580c; }
+
+        /* Notificaciones */
+        @keyframes pulse-badge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        .notification-badge { animation: pulse-badge 2s infinite; }
+        #notification-dropdown { width: 380px; max-height: 500px; overflow-y: auto; }
+        #notification-dropdown::-webkit-scrollbar       { width: 6px; }
+        #notification-dropdown::-webkit-scrollbar-track { background: #f1f1f1; }
+        #notification-dropdown::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+        .notification-item { padding: 0.75rem 1rem; border-bottom: 1px solid #f5f5f5; transition: background-color 0.2s; cursor: pointer; }
+        .notification-item:hover  { background-color: #f9fafb; }
+        .notification-item.unread { background-color: #fff7ed; border-left: 3px solid #ea580c; }
+
+        /* Helpers de tarjetas */
+        .card        { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07); overflow: hidden; }
+        .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #f3f4f6; background: #f9fafb; }
+        .card-title  { font-size: 1.1rem; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 0.5rem; }
+        .card-body   { padding: 1.5rem; }
+
+        .btn-kitchen {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: #ea580c;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-kitchen:hover { background: #c2410c; }
+
+        /* ── Dark Mode ── */
+        html.dark body { background-color: #0f172a; }
+        html.dark aside { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark .bg-white { background-color: #1e293b !important; }
+        html.dark .bg-gray-100 { background-color: #0f172a !important; }
+        html.dark .bg-gray-50 { background-color: #1e293b !important; }
+        html.dark .text-gray-800, html.dark .text-gray-900 { color: #f1f5f9 !important; }
+        html.dark .text-gray-700 { color: #e2e8f0 !important; }
+        html.dark .text-gray-600 { color: #cbd5e1 !important; }
+        html.dark .text-gray-500 { color: #94a3b8 !important; }
+        html.dark .border-r, html.dark .border-b, html.dark .border { border-color: #334155 !important; }
+        html.dark .card { background: #1e293b !important; }
+        html.dark .card-header { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark header { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark input, html.dark select { background-color: #334155 !important; color: #f1f5f9 !important; border-color: #475569 !important; }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div class="flex min-h-screen">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="w-64 bg-white border-r shadow-md flex flex-col fixed h-full z-20">
+
+        <!-- Logo -->
+        <div class="h-20 flex items-center justify-center border-b bg-orange-50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                    <i class="bi bi-egg-fried text-white text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-orange-700">Cocina</h2>
+            </div>
+        </div>
+
+        <!-- Perfil de Usuario -->
+        <div class="px-6 py-4 border-b">
+            <div class="flex items-center gap-3">
+                {% if session.usuario_foto %}
+                <img src="{{ session.usuario_foto }}"
+                     alt="{{ session.usuario_nombre }}"
+                     class="w-12 h-12 rounded-full object-cover border-2 border-orange-300">
+                {% else %}
+                <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {{ session.get('usuario_nombre', 'U')[0] }}
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-800 truncate">{{ session.get('usuario_nombre', 'Usuario') }} {{ session.get('usuario_apellidos', '') }}</p>
+                    <p class="text-xs text-gray-500 truncate">
+                        <span class="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
+                            <i class="bi bi-egg-fried"></i> Cocina
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <nav class="flex-1 px-4 py-6 overflow-y-auto flex flex-col gap-1">
+            {% block navigation %}{% endblock %}
+        </nav>
+
+        <!-- Cerrar Sesión -->
+        <div class="p-4 border-t">
+            <a href="{{ url_for('routes.logout') }}"
+               class="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="flex-1 ml-64">
+
+        <!-- Header -->
+        <header class="bg-white border-b h-20 flex items-center px-8 sticky top-0 z-10">
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold text-gray-800">{% block page_title %}Cocina{% endblock %}</h1>
+                <p class="text-sm text-gray-600">{% block page_subtitle %}Gestión de pedidos y preparación{% endblock %}</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Toggle Modo Oscuro -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 transition text-gray-600" title="Cambiar tema">
+                    <i class="bi bi-moon-stars-fill text-xl" id="dark-mode-icon"></i>
+                </button>
+
+                <!-- Notificaciones -->
+                <div class="relative">
+                    <button id="notification-trigger"
+                            class="relative p-2 rounded-lg hover:bg-gray-100 transition text-gray-600">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="notification-count"
+                              class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center notification-badge">
+                            0
+                        </span>
+                    </button>
+                    <div id="notification-dropdown"
+                         class="hidden absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50">
+                        <div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between rounded-t-xl">
+                            <h3 class="text-sm font-semibold text-gray-700">Notificaciones</h3>
+                            <button onclick="marcarTodasLeidas()"
+                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                Limpiar todo
+                            </button>
+                        </div>
+                        <div id="notification-list">
+                            <div id="no-notifications" class="px-4 py-8 text-center">
+                                <i class="fas fa-bell-slash text-gray-300 text-3xl mb-2 block"></i>
+                                <p class="text-sm text-gray-400">No hay notificaciones nuevas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Avatar -->
+                <div class="flex items-center gap-2">
+                    {% if session.usuario_foto %}
+                    <img src="{{ session.usuario_foto }}"
+                         alt="{{ session.usuario_nombre }}"
+                         class="w-9 h-9 rounded-full object-cover border border-gray-300">
+                    {% else %}
+                    <div class="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ session.get('usuario_nombre', 'U')[0] }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenido de la página -->
+        <div class="p-8">
+            {% block content %}{% endblock %}
+        </div>
+
+    </main>
+</div>
+
+<!-- Script de notificaciones -->
+<script src="{{ url_for('static', filename='js/notificaciones_header.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const trigger  = document.getElementById('notification-trigger');
+        const dropdown = document.getElementById('notification-dropdown');
+        if (trigger) {
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function () {
+                dropdown.classList.add('hidden');
+            });
+        }
+    });
+
+    function showLoading(message = 'Cargando...') {
+        Swal.fire({ title: message, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    }
+    function hideLoading() { Swal.close(); }
+    function showToast(message, type = 'success') {
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+            .fire({ icon: type, title: message });
+    }
+    function showSuccess(message) {
+        Swal.fire({ icon: 'success', title: '¡Éxito!', text: message, timer: 2000, showConfirmButton: false });
+    }
+    function showError(message) {
+        Swal.fire({ icon: 'error', title: 'Error', text: message });
     }
 
-    /* Ocultar también la sección de Administración (solo rol 1) */
-    .sidebar-nav .mt-4.pt-4.border-t {
-        display: none !important;
+    function toggleDarkMode() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        const icon = document.getElementById('dark-mode-icon');
+        if (icon) icon.className = isDark ? 'bi bi-sun-fill text-xl' : 'bi bi-moon-stars-fill text-xl';
     }
+    (function() {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    })();
+    document.addEventListener('DOMContentLoaded', function() {
+        if (localStorage.getItem('theme') === 'dark') {
+            const icon = document.getElementById('dark-mode-icon');
+            if (icon) icon.className = 'bi bi-sun-fill text-xl';
+        }
+    });
+</script>
 
-    /* ── Color activo naranja para cocina ── */
-    .nav-link.active {
-        background: #fff7ed;
-        color: #ea580c;
-        border-right: 3px solid #ea580c;
-    }
-
-    /* ── Helpers de tarjetas para vistas de cocina ── */
-    .card        { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07); overflow: hidden; }
-    .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #f3f4f6; background: #f9fafb; }
-    .card-title  { font-size: 1.1rem; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 0.5rem; }
-    .card-body   { padding: 1.5rem; }
-
-    .btn-kitchen {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        background: #ea580c;
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    .btn-kitchen:hover { background: #c2410c; }
-</style>
-{% endblock %}
+{% block extra_js %}{% endblock %}
+</body>
+</html>

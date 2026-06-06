@@ -19,14 +19,7 @@ class PropinasController:
             # 🔥 USAR HORA LOCAL (NO UTC)
             inicio_dia = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             fin_dia = inicio_dia + timedelta(days=1)
-            
-            print(f"\n{'='*60}")
-            print(f"💵 PROPINAS DEL DÍA - DEBUG")
-            print(f"{'='*60}")
-            print(f"Mesero ID: {mesero_id}")
-            print(f"Inicio día: {inicio_dia}")
-            print(f"Fin día: {fin_dia}")
-            
+
             # 🔥 Obtener propinas del día
             propinas = list(db.propinas.find({
                 "mesero_id": mesero_oid,
@@ -36,13 +29,9 @@ class PropinasController:
                 }
             }).sort("fecha", -1))
             
-            print(f"📊 Propinas encontradas: {len(propinas)}")
-            
             # Calcular total
             total_propinas = sum(float(p.get("monto", 0)) for p in propinas)
-            
-            print(f"💰 Total de propinas: ${total_propinas:.2f}")
-            
+
             # Formatear para el frontend
             propinas_formateadas = []
             for p in propinas:
@@ -54,10 +43,7 @@ class PropinasController:
                     "metodo_pago": p.get("metodo_pago", "efectivo"),
                     "fecha": p.get("fecha").isoformat() if p.get("fecha") else None
                 })
-                print(f"   ✅ Mesa {p.get('mesa_numero')}: ${p.get('monto', 0):.2f} ({p.get('metodo_pago', 'efectivo')})")
-            
-            print(f"{'='*60}\n")
-            
+
             return jsonify({
                 "success": True,
                 "total": total_propinas,

@@ -235,20 +235,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-            
+
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            
+
             oscillator.frequency.value = 800;
             oscillator.type = 'sine';
-            
+
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
+
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
         } catch (e) {
-            console.log("Audio no disponible");
+            // Audio not available, silently ignore
         }
     }
 
@@ -261,7 +261,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         
         socket.on("connect", () => {
-            console.log("[Socket.io] Conectado");
             socket.emit('registrar', { token: token });
         });
 
@@ -270,7 +269,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         socket.on("notificacion", (data) => {
-            console.log("[Socket.io] Notificacion recibida:", data);
             
             aumentarContador();
             
@@ -313,11 +311,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         socket.on("disconnect", () => {
-            console.log("[Socket.io] Desconectado");
         });
 
-        socket.on("reconnect", (attemptNumber) => {
-            console.log(`[Socket.io] Reconectado despues de ${attemptNumber} intentos`);
+        socket.on("reconnect", () => {
             cargarNotificaciones();
         });
     }
@@ -328,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 await Notification.requestPermission();
             } catch (err) {
-                console.log("No se pudieron solicitar permisos de notificacion");
+                // Permission request failed, silently ignore
             }
         }
     }

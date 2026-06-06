@@ -5,7 +5,6 @@ let pedidoActualListo = null;
 let intervaloListos = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Vista Pedidos Listos inicializada');
     cargarPedidosListos();
 
     // Actualizar cada 10s

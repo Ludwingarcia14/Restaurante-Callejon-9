@@ -9,7 +9,6 @@ let intervaloPrep = null;
 // INICIALIZACIÓN
 // ===================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Vista de Preparación inicializada');
     cargarPedidosPreparacion();
     
     // Actualizar cada 5 segundos
@@ -229,9 +228,6 @@ async function cambiarEstadoPlatillo(detalleId, nuevoEstado) {
         
         const data = await response.json();
         
-        if (data.success) {
-            console.log('Estado actualizado');
-        }
     } catch (error) {
         console.error('Error:', error);
         Swal.fire('Error', 'No se pudo actualizar el estado', 'error');

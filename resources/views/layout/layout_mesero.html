@@ -108,6 +108,23 @@
             background: #888;
             border-radius: 3px;
         }
+
+        /* ── Dark Mode ── */
+        html.dark body { background-color: #0f172a; }
+        html.dark aside { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark .bg-white { background-color: #1e293b !important; }
+        html.dark .bg-gray-50 { background-color: #1e293b !important; }
+        html.dark .bg-gray-100 { background-color: #0f172a !important; }
+        html.dark .text-gray-800, html.dark .text-gray-900 { color: #f1f5f9 !important; }
+        html.dark .text-gray-700 { color: #e2e8f0 !important; }
+        html.dark .text-gray-600 { color: #cbd5e1 !important; }
+        html.dark .text-gray-500 { color: #94a3b8 !important; }
+        html.dark .border-r, html.dark .border-b, html.dark .border { border-color: #334155 !important; }
+        html.dark .nav-link { color: #cbd5e1; }
+        html.dark .nav-link:hover { background: #334155; }
+        html.dark .nav-link.active { background: #1e3a5f; color: #60a5fa; }
+        html.dark input, html.dark select, html.dark textarea { background-color: #334155 !important; color: #f1f5f9 !important; border-color: #475569 !important; }
+        html.dark header { background: #1e293b !important; border-color: #334155 !important; }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -119,7 +136,7 @@
         <aside class="w-64 bg-white border-r shadow-md flex flex-col fixed h-full z-20">
             <!-- Logo -->
             <div class="h-20 flex items-center justify-center border-b">
-                <h2 class="text-2xl font-bold text-gray-800">Callejon 9</h2>
+                <h2 class="text-2xl font-bold text-gray-800">Callejón 19</h2>
             </div>
             
             <!-- Perfil de Usuario -->
@@ -140,12 +157,12 @@
                 {% block navigation %}{% endblock %}
             </nav>
             
-            <!-- Cerrar Sesion -->
+            <!-- Cerrar Sesión -->
             <div class="p-4 border-t">
-                <a href="{{ url_for('routes.logout') }}" 
+                <a href="{{ url_for('routes.logout') }}"
                    class="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar Sesion</span>
+                    <span>Cerrar Sesión</span>
                 </a>
             </div>
         </aside>
@@ -206,8 +223,14 @@
     
     <script>
         function toggleTheme() {
-            window.location.href = "{{ url_for('routes.toggle_theme') }}";
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            const icon = document.querySelector('.bi-moon, .bi-sun, .bi-moon-fill, .bi-sun-fill');
+            if (icon) icon.className = isDark ? 'bi bi-sun text-xl text-gray-600' : 'bi bi-moon text-xl text-gray-600';
         }
+        (function() {
+            if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+        })();
         
         function showLoading(message = 'Cargando...') {
             Swal.fire({

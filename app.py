@@ -12,7 +12,7 @@ from datetime import datetime
 
 # 2. Librerías de Terceros
 from dotenv import load_dotenv
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_session import Session
 from flask_socketio import join_room
@@ -42,11 +42,15 @@ app.config.update(
 # CONFIGURACIÓN DE SEGURIDAD (CORS)
 # ================================
 ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "http://127.0.0.1:5000"
+    origin for origin in [
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        os.getenv("CORS_LOCAL_ORIGIN", ""),
+    ]
+    if origin
 ]
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
 
@@ -105,6 +109,14 @@ app.register_blueprint(routes_bp)
 app.register_blueprint(api_v1_bp)
 register_reports_routes(app)
 
+# Índices de colecciones nuevas
+from models.cliente_model import Cliente
+from models.pedido_movil_model import PedidoMovil as _PedidoMovil
+from models.pago_movil_model import PagoMovil as _PagoMovil
+Cliente.ensure_indexes()
+_PedidoMovil.ensure_indexes()
+_PagoMovil.ensure_indexes()
+
 # ================================
 # MIDDLEWARE Y CONTEXTO
 # ================================
@@ -122,6 +134,20 @@ def log_request():
     print("[COOKIES]:", list(request.cookies.keys()))
 
 # ================================
+# APP MÓVIL REACT (servir desde /app/)
+# ================================
+_FRONTEND_DIST = os.path.join(os.path.dirname(__file__), 'frontend_dist')
+
+@app.route('/app/', defaults={'path': ''})
+@app.route('/app/<path:path>')
+def serve_react_app(path):
+    """Sirve la app móvil React compilada. Rutas desconocidas → index.html (React Router)."""
+    full = os.path.join(_FRONTEND_DIST, path)
+    if path and os.path.isfile(full):
+        return send_from_directory(_FRONTEND_DIST, path)
+    return send_from_directory(_FRONTEND_DIST, 'index.html')
+
+# ================================
 # EVENTOS DE SOCKET.IO
 # ================================
 @socketio.on("connect")
@@ -136,6 +162,15 @@ def socket_disconnect():
 def on_join_room(room):
     join_room(room)
     print(f"[SALA] Cliente unido a la sala: {room}")
+
+@socketio.on("join_cliente")
+def on_join_cliente(data):
+    """App móvil se une a su sala personal para recibir updates de pedidos."""
+    cliente_id = data.get("cliente_id") if isinstance(data, dict) else str(data)
+    if cliente_id:
+        sala = f"cliente_{cliente_id}"
+        join_room(sala)
+        print(f"[SALA] Cliente unido a sala personal: {sala}")
 
 # ================================
 # MANEJO DE ERRORES GLOBALES
@@ -196,6 +231,6 @@ if __name__ == "__main__":
         app,
         debug=debug_mode,
         use_reloader=reloader_config and debug_mode,
-        host='127.0.0.1',
+        host='0.0.0.0',
         port=5000
     )

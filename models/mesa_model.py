@@ -1,6 +1,7 @@
 """
 Modelo de Mesas - Estado y Asignacion
 """
+import secrets
 from config.db import db
 from datetime import datetime
 from bson.objectid import ObjectId
@@ -180,6 +181,44 @@ class Mesa:
                 "$set": {"updated_at": datetime.utcnow()},
             },
         )
+
+    # =====================================================
+    # QR POR MESA (app móvil)
+    # =====================================================
+
+    @classmethod
+    def find_by_qr(cls, codigo_qr: str):
+        return cls._collection().find_one({"codigo_qr": codigo_qr})
+
+    @classmethod
+    def get_or_create_qr(cls, numero) -> str:
+        """Devuelve el codigo_qr existente o genera uno nuevo para la mesa."""
+        mesa = cls.find_by_numero(numero)
+        if not mesa:
+            return None
+        if mesa.get("codigo_qr"):
+            return mesa["codigo_qr"]
+        codigo = secrets.token_urlsafe(24)
+        cls._collection().update_one(
+            {"_id": mesa["_id"]},
+            {"$set": {"codigo_qr": codigo, "updated_at": datetime.utcnow()}},
+        )
+        return codigo
+
+    @classmethod
+    def generar_qr_todas(cls):
+        """Genera codigo_qr para todas las mesas que no lo tengan."""
+        mesas = cls.find_all()
+        actualizadas = 0
+        for mesa in mesas:
+            if not mesa.get("codigo_qr"):
+                codigo = secrets.token_urlsafe(24)
+                cls._collection().update_one(
+                    {"_id": mesa["_id"]},
+                    {"$set": {"codigo_qr": codigo, "updated_at": datetime.utcnow()}},
+                )
+                actualizadas += 1
+        return actualizadas
 
     # =====================================================
     # RESERVAS

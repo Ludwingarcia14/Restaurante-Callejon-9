@@ -57,7 +57,7 @@ NODE_NOTIFICATIONS_URL: str = os.getenv("NODE_NOTIFICATIONS_URL", "http://localh
 # ─────────────────────────────────────────────
 # SEGURIDAD / 2FA
 # ─────────────────────────────────────────────
-EMERGENCY_2FA_KEY: str = os.getenv("EMERGENCY_2FA_KEY", "callejon9-emergency-2024")
+EMERGENCY_2FA_KEY: str = os.getenv("EMERGENCY_2FA_KEY")
 
 # ─────────────────────────────────────────────
 # SERVIDOR

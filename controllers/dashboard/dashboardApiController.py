@@ -318,14 +318,45 @@ class DashboardAPIController:
 
             if result.modified_count > 0:
                 return jsonify({
-                    "success": True, 
+                    "success": True,
                     "message": "Usuario desconectado correctamente"
                 })
             else:
                 return jsonify({
-                    "success": False, 
+                    "success": False,
                     "error": "No se pudo desconectar al usuario"
                 }), 500
 
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
+
+    # ==============================
+    # CONFIGURACIÓN DEL SISTEMA
+    # ==============================
+
+    @staticmethod
+    def get_settings():
+        if session.get("usuario_rol") != "1":
+            return jsonify({"error": "No autorizado"}), 403
+        settings = db.configuracion_sistema.find_one({"_id": "global"}) or {}
+        return jsonify({
+            "modo_mantenimiento": settings.get("modo_mantenimiento", False),
+            "aceptar_reservas": settings.get("aceptar_reservas", True),
+            "sistema_pagos": settings.get("sistema_pagos", True),
+        })
+
+    @staticmethod
+    def update_settings():
+        if session.get("usuario_rol") != "1":
+            return jsonify({"error": "No autorizado"}), 403
+        data = request.get_json()
+        allowed = {"modo_mantenimiento", "aceptar_reservas", "sistema_pagos"}
+        update = {k: bool(v) for k, v in data.items() if k in allowed}
+        if not update:
+            return jsonify({"error": "Sin cambios válidos"}), 400
+        db.configuracion_sistema.update_one(
+            {"_id": "global"},
+            {"$set": update},
+            upsert=True
+        )
+        return jsonify({"success": True})

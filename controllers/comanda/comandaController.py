@@ -234,15 +234,6 @@ class ComandaController:
 
             # 🔥 USAR HORA LOCAL (NO UTC)
             fecha_actual = datetime.now()
-            
-            print(f"\n{'='*60}")
-            print(f"💵 CERRANDO CUENTA - {metodo_pago.upper()}")
-            print(f"{'='*60}")
-            print(f"Cuenta ID: {cuenta_id}")
-            print(f"Total: ${total_final:.2f}")
-            print(f"Propina: ${propina:.2f}")
-            print(f"Fecha cierre: {fecha_actual}")
-            print(f"{'='*60}\n")
 
             # ==========================
             # 💾 GUARDAR COMANDA
@@ -397,13 +388,6 @@ class ComandaController:
         )
         fin_dia = inicio_dia + timedelta(days=1)
 
-        print(f"\n{'='*60}")
-        print(f"📊 ESTADÍSTICAS DEL DÍA - DEBUG")
-        print(f"{'='*60}")
-        print(f"Mesero ID: {mesero_id}")
-        print(f"Inicio día: {inicio_dia}")
-        print(f"Fin día: {fin_dia}")
-
         # 🔥 BUSCAR COMANDAS CON ESTADO "pagada" O "cerrada"
         cursor = db.comandas.find({
             "estado": {"$in": ["pagada", "cerrada"]},
@@ -419,19 +403,11 @@ class ComandaController:
         ordenes = 0
 
         comandas_del_dia = list(cursor)
-        print(f"\n📅 Comandas del día encontradas: {len(comandas_del_dia)}")
 
         for c in comandas_del_dia:
             venta += float(c.get("total_final", 0))
             propinas += float(c.get("propina", 0))
             ordenes += 1
-            print(f"   ✅ Folio: {c.get('folio')}, Total: ${c.get('total_final', 0):.2f}, Fecha: {c.get('fecha_cierre')}")
-
-        print(f"\n💰 RESULTADOS:")
-        print(f"   Venta total: ${venta:.2f}")
-        print(f"   Propinas: ${propinas:.2f}")
-        print(f"   Órdenes: {ordenes}")
-        print(f"{'='*60}\n")
 
         return jsonify({
             "success": True,
@@ -467,8 +443,6 @@ def _notificar_cocina_nuevo_pedido(comanda_id, mesa_numero, items, mesero_nombre
             room='cocina',
             namespace='/'
         )
-        
-        print(f"✅ Notificación enviada a cocina - Mesa {mesa_numero}")
         
         # También crear notificación en BD para todos los usuarios de cocina
         _crear_notificacion_bd_cocina(comanda_id, mesa_numero, items)

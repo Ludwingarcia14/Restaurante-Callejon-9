@@ -1,0 +1,306 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Cerrar Cuenta - Callejón 19{% endblock %}
+{% block page_title %}Cerrar Cuenta{% endblock %}
+{% block page_subtitle %}{{ cuenta.mesa_nombre if cuenta else 'Cuenta' }} — Procesar pago{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --color-primary: #F2913D;
+        --color-primary-dark: #DE823D;
+        --color-secondary: #F2CA99;
+        --color-accent: #F2A399;
+        --color-dark: #0D0D0D;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+        color: white;
+    }
+
+    .metodo-btn {
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        background: white;
+    }
+    .metodo-btn.activo {
+        border-color: var(--color-primary);
+        background: #fff7ed;
+    }
+    .metodo-btn:hover {
+        border-color: var(--color-primary);
+    }
+
+    .propina-btn {
+        transition: all 0.2s;
+    }
+    .propina-btn:hover {
+        border-color: var(--color-primary);
+        background: #fff7ed;
+        color: var(--color-primary-dark);
+    }
+
+    input[type="number"]:focus,
+    textarea:focus {
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 3px rgba(242, 145, 61, 0.2);
+        outline: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="page-header rounded-xl p-6 mb-6 flex items-center gap-4">
+        <a href="{{ url_for('routes.ventas_cuentas') }}"
+           class="w-9 h-9 bg-white bg-opacity-20 rounded-lg flex items-center justify-center hover:bg-opacity-30 transition">
+            <i class="bi bi-arrow-left text-white"></i>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold flex items-center gap-3">
+                <i class="bi bi-cash-coin"></i>
+                Cerrar Cuenta{% if cuenta %} — {{ cuenta.mesa_nombre }}{% endif %}
+            </h1>
+            <p class="mt-1 opacity-90">Revisa los productos y procesa el pago</p>
+        </div>
+    </div>
+
+    {% if cuenta %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Resumen de la cuenta -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-receipt text-orange-500"></i> Detalle de la Cuenta
+                </h3>
+            </div>
+            <div class="p-5">
+                <!-- Info de la cuenta -->
+                <div class="space-y-1.5 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
+                    <p class="font-bold text-gray-800 text-base">{{ cuenta.mesa_nombre or 'Mesa' }}</p>
+                    <p class="flex items-center gap-2">
+                        <i class="bi bi-person text-gray-400"></i>
+                        Mesero: <span class="font-medium text-gray-700">{{ cuenta.mesero_nombre or '—' }}</span>
+                    </p>
+                    <p class="flex items-center gap-2">
+                        <i class="bi bi-clock text-gray-400"></i>
+                        Apertura: {{ cuenta.created_at.strftime('%H:%M') if cuenta.created_at else '—' }}
+                    </p>
+                    {% if cuenta.cliente_nombre %}
+                    <p class="flex items-center gap-2">
+                        <i class="bi bi-person-check text-gray-400"></i>
+                        Cliente: <span class="font-medium text-gray-700">{{ cuenta.cliente_nombre }}</span>
+                    </p>
+                    {% endif %}
+                    {% if cuenta.num_personas %}
+                    <p class="flex items-center gap-2">
+                        <i class="bi bi-people text-gray-400"></i>
+                        {{ cuenta.num_personas }} persona(s)
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Productos -->
+                {% if cuenta.items %}
+                <div class="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                    {% for item in cuenta.items %}
+                    <div class="flex justify-between items-center text-sm py-1">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold">
+                                {{ item.cantidad }}
+                            </span>
+                            <span class="text-gray-700">{{ item.nombre }}</span>
+                        </div>
+                        <span class="font-medium text-gray-800">
+                            ${{ "%.2f"|format((item.precio or 0) * (item.cantidad or 1)) }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6 text-gray-400">
+                    <i class="bi bi-bag-x text-3xl block mb-2"></i>
+                    <p class="text-sm">Sin productos registrados</p>
+                </div>
+                {% endif %}
+
+                <!-- Total -->
+                <div class="pt-3 border-t border-gray-200">
+                    <div class="flex justify-between items-center font-bold text-xl">
+                        <span class="text-gray-700">Subtotal</span>
+                        <span class="text-gray-800">${{ "%.2f"|format(cuenta.total or 0) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de pago -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-cash-stack text-green-500"></i> Procesar Pago
+                </h3>
+            </div>
+            <div class="p-5">
+                <form id="form-cerrar" onsubmit="return false;">
+
+                    <!-- Método de pago -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Método de Pago</label>
+                        <div class="grid grid-cols-3 gap-2" id="metodos">
+                            <div class="metodo-btn activo" onclick="seleccionarMetodo('efectivo', this)">
+                                <i class="bi bi-cash block text-2xl mb-1 text-green-600"></i>
+                                <span class="text-xs font-semibold text-gray-700">Efectivo</span>
+                            </div>
+                            <div class="metodo-btn" onclick="seleccionarMetodo('tarjeta', this)">
+                                <i class="bi bi-credit-card block text-2xl mb-1 text-blue-600"></i>
+                                <span class="text-xs font-semibold text-gray-700">Tarjeta</span>
+                            </div>
+                            <div class="metodo-btn" onclick="seleccionarMetodo('transferencia', this)">
+                                <i class="bi bi-phone block text-2xl mb-1 text-purple-600"></i>
+                                <span class="text-xs font-semibold text-gray-700">Transferencia</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="metodo-pago" value="efectivo">
+                    </div>
+
+                    <!-- Propina -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Propina</label>
+                        <div class="flex gap-2 mb-2">
+                            {% for pct in [0, 10, 15, 20] %}
+                            <button type="button" onclick="aplicarPropina({{ pct }})"
+                                class="propina-btn flex-1 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg">
+                                {{ pct }}%
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                            <input type="number" id="propina" min="0" step="0.01" value="0" placeholder="0.00"
+                                   oninput="recalcular()"
+                                   class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Resumen de cobro -->
+                    <div class="bg-gray-50 rounded-xl p-4 mb-5">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1.5">
+                            <span>Subtotal</span>
+                            <span>${{ "%.2f"|format(cuenta.total or 0) }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-3">
+                            <span>Propina</span>
+                            <span id="propina-display">$0.00</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-2">
+                            <span class="text-gray-700">Total a cobrar</span>
+                            <span id="total-final" class="text-orange-600">${{ "%.2f"|format(cuenta.total or 0) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="flex gap-3">
+                        <a href="{{ url_for('routes.ventas_cuentas') }}"
+                           class="flex-1 py-3 text-center border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="button" onclick="cerrarCuenta('{{ cuenta._id }}')"
+                                class="flex-1 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center gap-2">
+                            <i class="bi bi-check-circle-fill"></i> Cobrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-16 text-center">
+        <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="bi bi-exclamation-triangle text-4xl text-yellow-500"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-600 mb-1">Cuenta no encontrada</h3>
+        <p class="text-gray-400 mb-6">La cuenta que buscas no existe o ya fue cerrada</p>
+        <a href="{{ url_for('routes.ventas_cuentas') }}"
+           class="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition">
+            <i class="bi bi-arrow-left"></i> Volver a Cuentas
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const subtotal = {{ cuenta.total or 0 if cuenta else 0 }};
+
+    function seleccionarMetodo(metodo, el) {
+        document.querySelectorAll('.metodo-btn').forEach(b => b.classList.remove('activo'));
+        el.classList.add('activo');
+        document.getElementById('metodo-pago').value = metodo;
+    }
+
+    function aplicarPropina(pct) {
+        const propina = subtotal * pct / 100;
+        document.getElementById('propina').value = propina.toFixed(2);
+        recalcular();
+    }
+
+    function recalcular() {
+        const propina = parseFloat(document.getElementById('propina').value) || 0;
+        const total = subtotal + propina;
+        document.getElementById('propina-display').textContent = '$' + propina.toFixed(2);
+        document.getElementById('total-final').textContent = '$' + total.toFixed(2);
+    }
+
+    async function cerrarCuenta(cuentaId) {
+        const propina = parseFloat(document.getElementById('propina').value) || 0;
+        const metodo = document.getElementById('metodo-pago').value;
+        const total = subtotal + propina;
+
+        const result = await Swal.fire({
+            title: '¿Cobrar cuenta?',
+            html: `<p class="text-gray-600">Total a cobrar: <strong class="text-lg text-green-600">$${total.toFixed(2)}</strong></p>
+                   <p class="text-gray-500 text-sm mt-1">Método: ${metodo}</p>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, cobrar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/api/ventas/cuentas/${cuentaId}/cerrar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ metodo_pago: metodo, propina, total })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await Swal.fire({
+                    title: '¡Cobrado!',
+                    text: 'La cuenta fue cerrada correctamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#F2913D'
+                });
+                window.location.href = "{{ url_for('routes.ventas_cuentas') }}";
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo cerrar la cuenta', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error de conexión', 'No se pudo conectar con el servidor.', 'error');
+        }
+    }
+</script>
+{% endblock %}

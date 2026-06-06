@@ -26,11 +26,6 @@
         backdrop-filter: blur(4px);
     }
 
-    /* Terminal de logs */
-    .terminal-scroll::-webkit-scrollbar { width: 6px; }
-    .terminal-scroll::-webkit-scrollbar-track { background: #1e293b; }
-    .terminal-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-
     /* Pulso en indicadores */
     @keyframes pulse-ring {
         0% { transform: scale(0.95); opacity: 1; }
@@ -69,7 +64,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 fade-up">
         <div>
             <h1 class="text-2xl font-bold text-gray-800" id="welcome-message">Dashboard</h1>
-            <p class="text-gray-500 text-sm mt-1">Monitoreo en tiempo real del restaurante Callejón 9</p>
+            <p class="text-gray-500 text-sm mt-1">Monitoreo en tiempo real del restaurante Callejón 19</p>
         </div>
 
         <!-- Indicadores de Estado en Tiempo Real -->
@@ -176,92 +171,72 @@
         </div>
     </div>
 
-    <!-- Logs del Sistema y Controles -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up delay-200">
-        
-        <!-- Terminal de Logs -->
-        <div class="lg:col-span-2 bg-slate-900 rounded-xl shadow-lg overflow-hidden border border-slate-800">
-            <div class="px-4 py-2 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="h-3 w-3 rounded-full bg-red-500"></div>
-                    <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
-                    <div class="h-3 w-3 rounded-full bg-green-500"></div>
-                </div>
-                <span class="text-xs font-mono text-slate-400">system_activity.log</span>
+    <!-- Panel de Control y Acciones -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-up delay-200">
+
+        <!-- Configuración del Sistema -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="ri-settings-4-line text-gray-500"></i> Configuración del Sistema
+                </h3>
             </div>
-            <div class="p-4 h-64 overflow-y-auto terminal-scroll font-mono text-xs">
-                <ul id="system-logs-list" class="space-y-1">
-                    <li class="text-slate-500">$ Iniciando monitoreo del sistema...</li>
-                </ul>
+            <div class="p-5 space-y-4">
+                <!-- Toggle: Modo Mantenimiento -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Modo Mantenimiento</p>
+                        <p class="text-xs text-gray-400">Solo admins pueden entrar</p>
+                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input type="checkbox" id="toggle-maintenance" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
+                        <label for="toggle-maintenance" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                </div>
+
+                <!-- Toggle: Aceptar Reservas -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Aceptar Reservas</p>
+                        <p class="text-xs text-gray-400">Permitir nuevas reservas</p>
+                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input type="checkbox" id="toggle-reservas" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
+                        <label for="toggle-reservas" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                </div>
+
+                <!-- Toggle: Sistema de Pagos -->
+                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Sistema de Pagos</p>
+                        <p class="text-xs text-gray-400">Gateway activo</p>
+                    </div>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input type="checkbox" id="toggle-pagos" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
+                        <label for="toggle-pagos" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Panel de Control y Danger Zone -->
-        <div class="space-y-4">
-            <!-- Configuración del Sistema -->
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-gray-100 bg-gray-50">
-                    <h3 class="font-semibold text-gray-700 flex items-center gap-2">
-                        <i class="ri-settings-4-line text-gray-500"></i> Configuración
-                    </h3>
-                </div>
-                <div class="p-4 space-y-4">
-                    <!-- Toggle: Modo Mantenimiento -->
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Modo Mantenimiento</p>
-                            <p class="text-xs text-gray-400">Solo admins pueden entrar</p>
-                        </div>
-                        <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                            <input type="checkbox" id="toggle-maintenance" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
-                            <label for="toggle-maintenance" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
-                        </div>
-                    </div>
-
-                    <!-- Toggle: Aceptar Reservas -->
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Aceptar Reservas</p>
-                            <p class="text-xs text-gray-400">Permitir nuevas reservas</p>
-                        </div>
-                        <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                            <input type="checkbox" id="toggle-reservas" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
-                            <label for="toggle-reservas" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
-                        </div>
-                    </div>
-
-                    <!-- Toggle: Sistema de Pagos -->
-                    <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Sistema de Pagos</p>
-                            <p class="text-xs text-gray-400">Gateway activo</p>
-                        </div>
-                        <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                            <input type="checkbox" id="toggle-pagos" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
-                            <label for="toggle-pagos" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
-                        </div>
-                    </div>
-                </div>
+        <!-- Acciones Críticas -->
+        <div class="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
+            <div class="p-4 bg-red-50 border-b border-red-100">
+                <h3 class="font-semibold text-red-600 flex items-center gap-2">
+                    <i class="ri-alert-line"></i> Acciones Críticas
+                </h3>
             </div>
-
-            <!-- Danger Zone -->
-            <div class="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
-                <div class="p-3 bg-red-50 border-b border-red-100">
-                    <h3 class="text-xs font-bold text-red-600 uppercase tracking-wide flex items-center gap-1">
-                        <i class="ri-alert-line"></i> Acciones Críticas
-                    </h3>
-                </div>
-                <div class="p-4 space-y-3">
-                    <button onclick="enviarAnuncio()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
-                        <i class="ri-megaphone-line"></i> Anuncio Global
-                    </button>
-                    <button onclick="corteCaja()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-600 text-sm font-medium rounded-lg hover:bg-green-50 transition shadow-sm">
-                        <i class="bi bi-cash-stack"></i> Corte de Caja
-                    </button>
-                    <button onclick="cerrarTodoSistema()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition shadow-sm">
-                        <i class="ri-shut-down-line"></i> Cerrar Sistema
-                    </button>
-                </div>
+            <div class="p-5 space-y-3">
+                <button onclick="enviarAnuncio()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
+                    <i class="ri-megaphone-line"></i> Enviar Anuncio Global
+                </button>
+                <button onclick="corteCaja()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-green-200 text-green-600 text-sm font-medium rounded-lg hover:bg-green-50 transition shadow-sm">
+                    <i class="bi bi-cash-stack"></i> Generar Corte de Caja
+                </button>
+                <button onclick="cerrarTodoSistema()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition shadow-sm">
+                    <i class="ri-shut-down-line"></i> Cerrar Sistema
+                </button>
             </div>
         </div>
     </div>
@@ -314,7 +289,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================== 
 // VARIABLES GLOBALES
@@ -342,7 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const skeletonContainer = document.getElementById('skeleton-grid');
     const dashboardGrid = document.getElementById('dashboard-grid');
     const personalActivoList = document.getElementById('personal-activo-list');
-    const systemLogsList = document.getElementById('system-logs-list');
     const actividadReciente = document.getElementById('actividad-reciente');
 
     // ============================== 
@@ -407,12 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
             await cargarPersonalActivo();
             await cargarActividadReciente();
 
-            // Logs del sistema
-            agregarLog('Sistema iniciado correctamente', 'INFO');
-            if (personalActivoData.length > 0) {
-                agregarLog(`${personalActivoData.length} empleados conectados en tiempo real`, 'INFO');
-            }
-
             // Mostrar dashboard
             skeletonContainer.classList.add('hidden');
             dashboardGrid.classList.remove('hidden');
@@ -433,7 +400,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (result.success) {
                 empleadosData = result.data;
-                console.log('Empleados cargados:', empleadosData.length);
             }
         } catch (error) {
             console.error('Error cargando empleados:', error);
@@ -480,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">${persona.nombre}</div>
-                                    <div class="text-xs text-gray-500">${rol.nombre} • ${persona.ultimaActividad}</div>
+                                    <div class="text-xs text-gray-500">${rol.nombre} • ${persona.tiempo_conectado || 'Conectado'}</div>
                                 </div>
                             </div>
                             <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
@@ -536,58 +502,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ============================== 
-    // 7. SISTEMA DE LOGS
     // ==============================
-    function agregarLog(mensaje, nivel = 'INFO') {
-        const ahora = new Date();
-        const tiempo = ahora.toLocaleTimeString('es-MX', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
-        });
-        
-        const colorMap = {
-            'INFO': 'text-slate-300',
-            'WARN': 'text-yellow-400',
-            'ERROR': 'text-red-400',
-            'SUCCESS': 'text-green-400'
-        };
-
-        const color = colorMap[nivel] || 'text-slate-300';
-
-        systemLogsList.insertAdjacentHTML('beforeend', `
-            <li class="flex gap-2 font-mono text-xs py-0.5 hover:bg-white/5 px-2 rounded">
-                <span class="text-slate-500">${tiempo}</span>
-                <span class="${color} font-bold w-16">[${nivel}]</span>
-                <span class="text-slate-300 flex-1">${mensaje}</span>
-            </li>
-        `);
-
-        systemLogsList.parentElement.scrollTop = systemLogsList.parentElement.scrollHeight;
-
-        if (systemLogsList.children.length > 50) {
-            systemLogsList.firstChild.remove();
-        }
-    }
-
-    // ============================== 
-    // 8. TOGGLES
-    // ==============================
-    document.getElementById('toggle-maintenance').addEventListener('change', function() {
-        agregarLog(`Modo mantenimiento: ${this.checked ? 'Activado' : 'Desactivado'}`, 'INFO');
-    });
-
-    document.getElementById('toggle-reservas').addEventListener('change', function() {
-        agregarLog(`Reservas: ${this.checked ? 'Activadas' : 'Desactivadas'}`, 'INFO');
-    });
-
-    document.getElementById('toggle-pagos').addEventListener('change', function() {
-        agregarLog(`Sistema de pagos: ${this.checked ? 'Activado' : 'Desactivado'}`, 'INFO');
-    });
-
-    // ============================== 
-    // 9. FUNCIONES DE BOTONES
+    // 7. FUNCIONES DE BOTONES
     // ==============================
     window.enviarAnuncio = function() {
         Swal.fire({
@@ -598,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmButtonText: 'Enviar'
         }).then((result) => {
             if (result.value) {
-                agregarLog(`Anuncio enviado: "${result.value}"`, 'SUCCESS');
+                showNotification('Anuncio enviado correctamente', 'success');
             }
         });
     };
@@ -611,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                agregarLog('Generando corte de caja...', 'INFO');
+                window.location.href = '/caja/corte';
             }
         });
     };
@@ -625,27 +541,63 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmButtonColor: '#dc2626'
         }).then((result) => {
             if (result.isConfirmed) {
-                agregarLog('CIERRE TOTAL DEL SISTEMA INICIADO', 'ERROR');
-                setTimeout(() => {
-                    window.location.href = '/logout';
-                }, 2000);
+                window.location.href = '/logout';
             }
         });
     };
 
-    // ============================== 
+    // ==============================
     // 10. INICIAR CARGA
     // ==============================
     cargarDashboard();
+    cargarSettings();
 
-    // ============================== 
-    // 11. AUTO-REFRESH (10 segundos para tiempo real)
+    // ==============================
+    // 11. TOGGLE EVENT LISTENERS
+    // ==============================
+    document.getElementById('toggle-maintenance').addEventListener('change', function() {
+        guardarSetting('modo_mantenimiento', this.checked);
+    });
+    document.getElementById('toggle-reservas').addEventListener('change', function() {
+        guardarSetting('aceptar_reservas', this.checked);
+    });
+    document.getElementById('toggle-pagos').addEventListener('change', function() {
+        guardarSetting('sistema_pagos', this.checked);
+    });
+
+    // ==============================
+    // 12. AUTO-REFRESH (10 segundos para tiempo real)
     // ==============================
     setInterval(() => {
         cargarPersonalActivo();
         cargarActividadReciente();
     }, 10000);
 });
+
+// ==============================
+// SETTINGS - TOGGLES DEL SISTEMA
+// ==============================
+
+async function cargarSettings() {
+    try {
+        const res = await fetch('/api/settings/sistema');
+        const s = await res.json();
+        document.getElementById('toggle-maintenance').checked = s.modo_mantenimiento || false;
+        document.getElementById('toggle-reservas').checked = s.aceptar_reservas !== false;
+        document.getElementById('toggle-pagos').checked = s.sistema_pagos !== false;
+    } catch (e) { console.error('Error cargando settings:', e); }
+}
+
+async function guardarSetting(key, value) {
+    try {
+        await fetch('/api/settings/sistema', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({[key]: value})
+        });
+        showNotification(value ? 'Activado' : 'Desactivado', 'success');
+    } catch (e) { showNotification('Error al guardar', 'error'); }
+}
 
 // ============================== 
 // SISTEMA DE MODALS
