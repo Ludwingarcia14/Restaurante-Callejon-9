@@ -1,30 +1,21 @@
+"""
+Rutas del sistema - Callejón 9
+Separadas por módulo para mantener orden y claridad.
+"""
 from flask import Blueprint
 
 routes_bp = Blueprint("routes", __name__)
 
-from .auth_routes import register_auth_routes
-from .notificaciones_routes import register_notificaciones_routes
-from .settings_routes import register_settings_routes
-from .admin_routes import register_admin_routes
-from .mesero_routes import register_mesero_routes
-from .cocina_routes import register_cocina_routes
-from .inventario_routes import register_inventario_routes
-from .ventas_routes import register_ventas_routes
-from .analytics_routes import register_analytics_routes
-from .backup_routes import register_backup_routes
-from .pago_routes import register_pago_routes
-
-register_auth_routes(routes_bp)
-register_notificaciones_routes(routes_bp)
-register_settings_routes(routes_bp)
-register_admin_routes(routes_bp)
-register_mesero_routes(routes_bp)
-register_cocina_routes(routes_bp)
-register_inventario_routes(routes_bp)
-register_ventas_routes(routes_bp)
-register_analytics_routes(routes_bp)
-register_backup_routes(routes_bp)
-register_pago_routes(routes_bp)
+from . import auth_routes          # noqa: F401, E402
+from . import admin_routes         # noqa: F401, E402
+from . import mesero_routes        # noqa: F401, E402
+from . import cocina_routes        # noqa: F401, E402
+from . import inventario_routes    # noqa: F401, E402
+from . import ventas_routes        # noqa: F401, E402
+from . import notificaciones_routes # noqa: F401, E402
+from . import settings_routes      # noqa: F401, E402
+from . import pagos_routes         # noqa: F401, E402
+from . import analytics_routes     # noqa: F401, E402
 
 
 def register_reports_routes(app):

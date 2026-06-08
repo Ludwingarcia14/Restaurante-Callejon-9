@@ -8,6 +8,7 @@ from models.empleado_model import Usuario, RolPermisos
 from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
 from services.security.two_factor_service import TwoFactorService
 from services.security.password_service import PasswordService
+import hmac
 import secrets
 import logging
 from functools import wraps
@@ -78,7 +79,7 @@ class AuthController:
                 password_ok = PasswordService.verify_password(password, stored_password)
             else:
                 # Contraseña en texto plano (legado) — comparar y migrar a bcrypt
-                password_ok = (stored_password == password)
+                password_ok = hmac.compare_digest(stored_password, password)
                 if password_ok:
                     try:
                         new_hash = PasswordService.hash_password(password)

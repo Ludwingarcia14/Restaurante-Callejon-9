@@ -73,11 +73,7 @@ class MercadoPagoController:
             }
         }
 
-        print("📦 Creando preferencia con datos:", preference_data)
-
         result = sdk.preference().create(preference_data)
-
-        print("📦 RESULTADO MP:", result)
 
         if result["status"] not in [200, 201]:
             return jsonify({
@@ -90,9 +86,6 @@ class MercadoPagoController:
         # 🔥 USA SANDBOX EN DESARROLLO
         init_point = preference.get("sandbox_init_point") or preference.get("init_point")
         preference_id = preference.get("id")
-
-        print(f"✅ Init Point generado: {init_point}")
-        print(f"✅ Preference ID: {preference_id}")
 
         # 🔥 GUARDAR PREFERENCIA EN BD
         db.payment_preferences.insert_one({
@@ -163,9 +156,7 @@ class MercadoPagoController:
             }
             
             search_result = sdk.payment().search(filters=filters)
-            
-            print(f"🔍 Búsqueda de pagos para cuenta {cuenta_id}:", search_result)
-            
+
             if search_result["status"] == 200:
                 results = search_result["response"].get("results", [])
                 
@@ -174,9 +165,7 @@ class MercadoPagoController:
                     pago = results[0]
                     status = pago.get("status")
                     payment_id = pago.get("id")
-                    
-                    print(f"💳 Pago encontrado - ID: {payment_id}, Status: {status}")
-                    
+
                     if status == "approved":
                         # 🔥 PAGO APROBADO - CERRAR LA CUENTA
                         metadata = pago.get("metadata", {})
@@ -189,17 +178,7 @@ class MercadoPagoController:
                         
                         # 🔥 USAR HORA LOCAL (NO UTC)
                         fecha_actual = datetime.now()
-                        
-                        print(f"\n{'='*60}")
-                        print(f"💳 CERRANDO CUENTA POR PAGO APROBADO")
-                        print(f"{'='*60}")
-                        print(f"Cuenta ID: {cuenta_id}")
-                        print(f"Payment ID: {payment_id}")
-                        print(f"Total: ${total_final:.2f}")
-                        print(f"Propina: ${propina:.2f}")
-                        print(f"Fecha cierre: {fecha_actual}")
-                        print(f"{'='*60}\n")
-                        
+
                         # Cerrar comanda
                         db.comandas.update_one(
                             {"_id": cuenta_oid},
@@ -317,9 +296,50 @@ class MercadoPagoController:
 
     @staticmethod
     def webhook():
-        """Recibe notificaciones de Mercado Pago (IPN) - Solo funciona con túnel"""
-        data = request.get_json()
-        print(f"🔔 WEBHOOK RECIBIDO: {data}")
-        
-        # Siempre responder 200 OK a Mercado Pago
+        """Recibe notificaciones de Mercado Pago (IPN/Webhook)."""
+        data = request.get_json(silent=True) or {}
+
+        topic   = data.get("topic") or data.get("type", "")
+        mp_id   = data.get("id") or data.get("data", {}).get("id")
+
+        if topic in ("payment", "merchant_order") and mp_id:
+            try:
+                payment_info = sdk.payment().get(mp_id)
+                if payment_info.get("status") == 200:
+                    p        = payment_info["response"]
+                    estado   = p.get("status")
+                    ext_ref  = p.get("external_reference", "")
+                    pago_id_mp = str(p.get("id", ""))
+
+                    if ext_ref.startswith("MOVIL_"):
+                        # Pago móvil
+                        from models.pago_movil_model import PagoMovil
+                        pago_id = ext_ref[len("MOVIL_"):]
+                        pago_doc = PagoMovil.find_by_id(pago_id)
+                        if pago_doc and estado == "approved":
+                            PagoMovil.set_aprobado(pago_id, pago_id_mp)
+                            # Notificar al cliente
+                            try:
+                                from extensions import socketio
+                                socketio.emit(
+                                    "pago_aprobado",
+                                    {"pedido_id": pago_doc.get("pedido_id"),
+                                     "pago_id": pago_id,
+                                     "total_final": pago_doc.get("total_final")},
+                                    room=f"cliente_{pago_doc.get('cliente_id')}",
+                                    namespace="/",
+                                )
+                                socketio.emit(
+                                    "pago_aprobado_movil",
+                                    {"pedido_id": pago_doc.get("pedido_id"),
+                                     "pago_id": pago_id},
+                                    room="meseros", namespace="/",
+                                )
+                            except Exception:
+                                pass
+                        elif pago_doc and estado in ("rejected", "cancelled"):
+                            PagoMovil.set_rechazado(pago_id)
+            except Exception as e:
+                print(f"⚠️ Error procesando webhook MP: {e}")
+
         return jsonify({"success": True}), 200

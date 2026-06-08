@@ -3,9 +3,10 @@ API Controller para Dashboard de Administración
 Endpoints del dashboard admin
 """
 
-from flask import jsonify, session
+from flask import jsonify, session, request
 from config.db import db
 from datetime import datetime
+from utils.pagination import get_pagination_params, paginate_response
 
 
 class DashboardAPIController:
@@ -117,25 +118,29 @@ class DashboardAPIController:
         if session.get("usuario_rol") != "1":
             return jsonify({"error": "No autorizado"}), 403
 
+        limit, page, skip = get_pagination_params(default_limit=50, max_limit=200)
+        query = {"usuario_rol": {"$in": ["1", "2", "3", "4"]}}
+
+        total = db.usuarios.count_documents(query)
         empleados = list(db.usuarios.find(
-            {"usuario_rol": {"$in": ["1","2","3","4"]}},
+            query,
             {"usuario_clave": 0}
-        ).sort("usuario_nombre", 1))
+        ).sort("usuario_nombre", 1).skip(skip).limit(limit))
 
-        resultado = []
-
-        for e in empleados:
-            resultado.append({
+        resultado = [
+            {
                 "id": str(e["_id"]),
                 "nombre": f"{e.get('usuario_nombre','')} {e.get('usuario_apellidos','')}".strip(),
-                "email": e.get("usuario_email",""),
-                "rol": e.get("usuario_rol",""),
-                "status": e.get("usuario_status",0)
-            })
+                "email": e.get("usuario_email", ""),
+                "rol": e.get("usuario_rol", ""),
+                "status": e.get("usuario_status", 0),
+            }
+            for e in empleados
+        ]
 
         return jsonify({
             "success": True,
-            "data": resultado
+            **paginate_response(resultado, total, page, limit),
         })
 
 
@@ -313,14 +318,45 @@ class DashboardAPIController:
 
             if result.modified_count > 0:
                 return jsonify({
-                    "success": True, 
+                    "success": True,
                     "message": "Usuario desconectado correctamente"
                 })
             else:
                 return jsonify({
-                    "success": False, 
+                    "success": False,
                     "error": "No se pudo desconectar al usuario"
                 }), 500
 
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
+
+    # ==============================
+    # CONFIGURACIÓN DEL SISTEMA
+    # ==============================
+
+    @staticmethod
+    def get_settings():
+        if session.get("usuario_rol") != "1":
+            return jsonify({"error": "No autorizado"}), 403
+        settings = db.configuracion_sistema.find_one({"_id": "global"}) or {}
+        return jsonify({
+            "modo_mantenimiento": settings.get("modo_mantenimiento", False),
+            "aceptar_reservas": settings.get("aceptar_reservas", True),
+            "sistema_pagos": settings.get("sistema_pagos", True),
+        })
+
+    @staticmethod
+    def update_settings():
+        if session.get("usuario_rol") != "1":
+            return jsonify({"error": "No autorizado"}), 403
+        data = request.get_json()
+        allowed = {"modo_mantenimiento", "aceptar_reservas", "sistema_pagos"}
+        update = {k: bool(v) for k, v in data.items() if k in allowed}
+        if not update:
+            return jsonify({"error": "Sin cambios válidos"}), 400
+        db.configuracion_sistema.update_one(
+            {"_id": "global"},
+            {"$set": update},
+            upsert=True
+        )
+        return jsonify({"success": True})

@@ -9,17 +9,15 @@ let intervaloActualizacion = null;
 // INICIALIZACIÓN
 // ===================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Vista de Pedidos Pendientes inicializada');
     cargarPedidos();
-    
+
     // Actualizar cada 10 segundos
     intervaloActualizacion = setInterval(() => {
         cargarPedidos();
     }, 10000);
-    
+
     // Event listeners
     document.getElementById('sonido-toggle').addEventListener('change', function() {
-        console.log('Sonido:', this.checked ? 'Activado' : 'Desactivado');
     });
 });
 

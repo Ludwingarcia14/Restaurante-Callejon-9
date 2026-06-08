@@ -30,6 +30,7 @@ Thumbs.db
 # IDEs
 .idea/
 .vscode/
+.kilo/
 
 # Logs
 *.log

@@ -25,23 +25,12 @@ class supportController:
     def DashboardData():
         """API que devuelve los datos del dashboard"""
         try:
-            print("\n" + "="*50)
-            print("INICIANDO DashboardData...")
-            print("="*50)
-            
             # === CONTADORES PRINCIPALES ===
             total = db.tickets.count_documents({})
-            print(f"Total de tickets: {total}")
-            
+
             abiertos = db.tickets.count_documents({"estado": {"$in": ["Abierto", "abierto", "pendiente", "Pendiente"]}})
             cerrados = db.tickets.count_documents({"estado": {"$in": ["Cerrado", "cerrado", "resuelto", "Resuelto"]}})
             criticos = db.tickets.count_documents({"prioridad": {"$in": ["Alta", "alta", "critica", "crítica"]}})
-
-            print(f"CONTADORES:")
-            print(f"   Total: {total}")
-            print(f"   Abiertos: {abiertos}")
-            print(f"   Cerrados: {cerrados}")
-            print(f"   Críticos: {criticos}")
 
             # === AGRUPACIÓN POR ESTADO ===
             try:
@@ -68,8 +57,6 @@ class supportController:
                 
                 if not datos_estados:
                     datos_estados = [{"estado": "Sin datos", "cantidad": 0}]
-                    
-                print(f"ESTADOS: {datos_estados}")
             except Exception as e:
                 print(f"Error en agregación de estados: {e}")
                 datos_estados = [{"estado": "Error", "cantidad": 0}]
@@ -81,8 +68,7 @@ class supportController:
                 hace_6_meses = ahora - timedelta(days=180)
 
                 ticket_sample = db.tickets.find_one()
-                print(f"Ticket de ejemplo: {ticket_sample}")
-                
+
                 if ticket_sample and "fecha" in ticket_sample:
                     pipeline_evolucion = [
                         {
@@ -126,10 +112,7 @@ class supportController:
                                 "cantidad": e["cantidad"]
                             })
                 else:
-                    print("No hay campo 'fecha' en los tickets")
                     datos_evolucion = []
-                
-                print(f"EVOLUCIÓN: {datos_evolucion}")
             except Exception as e:
                 print(f"Error en evolución temporal: {e}")
                 datos_evolucion = []
@@ -165,8 +148,6 @@ class supportController:
                         alerta_data["fecha_creacion"] = "N/A"
                     
                     alertas.append(alerta_data)
-
-                print(f"ALERTAS: {len(alertas)} encontradas")
             except Exception as e:
                 print(f"Error en alertas: {e}")
                 alertas = []
@@ -202,8 +183,6 @@ class supportController:
                         ticket_data["fecha_creacion"] = "N/A"
                     
                     ultimos.append(ticket_data)
-
-                print(f"TICKETS: {len(ultimos)} recientes")
             except Exception as e:
                 print(f"Error en últimos tickets: {e}")
                 ultimos = []
@@ -222,8 +201,6 @@ class supportController:
                 "tickets": ultimos
             }
 
-            print("DashboardData completado exitosamente")
-            print("="*50 + "\n")
             return jsonify(respuesta)
 
         except Exception as e:
@@ -347,13 +324,9 @@ class supportController:
     def AlertasSoporte():
         """Muestra alertas de tickets pendientes"""
         try:
-            print("Cargando alertas...")
-            
             alertas = list(db.tickets.find({
                 "estado": {"$in": ["Abierto", "abierto", "pendiente", "Pendiente", "en_revision", "en revisión", "En revisión"]}
             }).sort("_id", -1).limit(100))
-
-            print(f"Total de tickets encontrados: {len(alertas)}")
 
             for a in alertas:
                 a["_id"] = str(a["_id"])
@@ -382,10 +355,6 @@ class supportController:
                 a["asignado_a"] = a.get("asesor", "")
                 a["descripcion"] = a.get("descripcion", "")
 
-            print(f"Alertas procesadas: {len(alertas)}")
-            if alertas:
-                print(f"Ejemplo de alerta: {alertas[0]}")
-
             return render_template("support/alertas.html", alertas=alertas)
 
         except Exception as e:
@@ -400,14 +369,10 @@ class supportController:
     def HistorialSoporte():
         """Muestra historial de tickets cerrados"""
         try:
-            print("Cargando historial...")
-            
             # Obtener tickets cerrados/resueltos
             historial = list(db.tickets.find({
                 "estado": {"$in": ["Cerrado", "cerrado", "resuelto", "Resuelto", "completado", "Completado"]}
             }).sort("_id", -1).limit(200))
-
-            print(f"Tickets cerrados encontrados: {len(historial)}")
 
             for h in historial:
                 h["_id"] = str(h["_id"])
@@ -427,8 +392,6 @@ class supportController:
                 h["prioridad"] = h.get("prioridad", "")
                 h["asesor"] = h.get("asesor") or h.get("asignado_a", "")
                 h["descripcion"] = h.get("descripcion") or h.get("detalle", "")
-
-            print(f"Historial procesado: {len(historial)} tickets")
 
             return render_template("support/historial.html", historial=historial)
 
@@ -474,8 +437,6 @@ class supportController:
     def GestionEquipo():
         """Gestión de asignación de tickets"""
         try:
-            print("Cargando gestión de equipo...")
-            
             # Obtener asesores INTERNOS
             asesores_cursor = db.usuarios.find(
                 {
@@ -499,8 +460,6 @@ class supportController:
                         "nombre": nombre_completo,
                         "email": a.get("usuario_email", "Sin email")
                     })
-
-            print(f"👥 Asesores encontrados: {len(asesores)}")
 
             # Obtener tickets activos
             tickets = []
@@ -526,8 +485,6 @@ class supportController:
                     "area": t.get("asunto", "general"),
                     "estado": t.get("estado", "pendiente")
                 })
-
-            print(f"Tickets activos: {len(tickets)}")
 
             return render_template("support/gestion.html", tickets=tickets, asesores=asesores)
 

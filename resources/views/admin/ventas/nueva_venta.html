@@ -1,0 +1,353 @@
+{% extends "layout/layout_base.html" %}
+
+{% block title %}Nueva Venta - Callejón 19{% endblock %}
+{% block page_title %}Nueva Venta{% endblock %}
+{% block page_subtitle %}Registra una nueva orden para el restaurante{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --color-primary: #F2913D;
+        --color-primary-dark: #DE823D;
+        --color-secondary: #F2CA99;
+        --color-accent: #F2A399;
+        --color-dark: #0D0D0D;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)) !important;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: var(--color-primary) !important;
+        color: white !important;
+        border: none;
+    }
+    .btn-primary:hover {
+        background-color: var(--color-primary-dark) !important;
+    }
+
+    .platillo-card {
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .platillo-card:hover {
+        border-color: var(--color-primary);
+        background-color: #fff7ed;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(242, 145, 61, 0.2);
+    }
+    .platillo-card:active {
+        transform: scale(0.97);
+    }
+
+    select:focus,
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 3px rgba(242, 145, 61, 0.2);
+        outline: none;
+    }
+
+    #carrito-items::-webkit-scrollbar {
+        width: 4px;
+    }
+    #carrito-items::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    #carrito-items::-webkit-scrollbar-thumb {
+        background: var(--color-secondary);
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="page-header rounded-xl p-6 mb-6 flex items-center gap-4">
+        <a href="{{ url_for('routes.ventas_dashboard') }}"
+           class="w-9 h-9 bg-white bg-opacity-20 rounded-lg flex items-center justify-center hover:bg-opacity-30 transition">
+            <i class="bi bi-arrow-left text-white"></i>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold flex items-center gap-3">
+                <i class="bi bi-cart-plus"></i>
+                Nueva Venta
+            </h1>
+            <p class="mt-1 opacity-90">Selecciona una mesa y agrega los productos de la orden</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Panel izquierdo: Mesa + Menú -->
+        <div class="lg:col-span-2 space-y-4">
+
+            <!-- Selección de mesa -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    <i class="bi bi-table text-orange-500 mr-1"></i> Mesa
+                </label>
+                <select id="mesa-select"
+                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                    <option value="">— Selecciona una mesa —</option>
+                    {% for mesa in mesas %}
+                    <option value="{{ mesa._id }}"
+                            data-nombre="{{ mesa.nombre or 'Mesa ' + mesa.numero|string }}">
+                        {{ mesa.nombre or 'Mesa ' + mesa.numero|string }}
+                        {% if mesa.estado %} — {{ mesa.estado }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Menú de platillos -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                    <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                        <i class="bi bi-grid text-orange-500"></i> Menú Disponible
+                    </h3>
+                    <input type="text" id="buscar-platillo" placeholder="Buscar platillo..."
+                           oninput="filtrarMenu()"
+                           class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm w-full sm:w-52">
+                </div>
+
+                {% if menu %}
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="menu-grid">
+                    {% for platillo in menu %}
+                    <div class="platillo-card bg-gray-50 rounded-xl p-3 text-center"
+                         data-id="{{ platillo._id }}"
+                         data-nombre="{{ platillo.nombre }}"
+                         data-precio="{{ platillo.precio }}"
+                         data-nombre-lower="{{ platillo.nombre|lower }}"
+                         onclick="agregarItem(this)">
+                        <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="bi bi-egg-fried text-orange-500"></i>
+                        </div>
+                        <p class="font-semibold text-gray-800 text-sm leading-tight mb-1">{{ platillo.nombre }}</p>
+                        <p class="text-orange-600 font-bold text-sm">${{ "%.2f"|format(platillo.precio) }}</p>
+                        {% if platillo.categoria %}
+                        <p class="text-xs text-gray-400 mt-0.5">{{ platillo.categoria }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="text-center text-gray-400 text-sm py-4 hidden" id="sin-resultados">
+                    Sin resultados para tu búsqueda
+                </p>
+                {% else %}
+                <div class="text-center py-10 text-gray-400">
+                    <i class="bi bi-bag-x text-4xl block mb-2"></i>
+                    <p>No hay platillos disponibles en el menú</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Panel derecho: Carrito -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-fit lg:sticky lg:top-4">
+            <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="bi bi-cart3 text-orange-500"></i>
+                    Orden Actual
+                    <span id="carrito-count" class="hidden px-1.5 py-0.5 bg-orange-500 text-white text-xs rounded-full">0</span>
+                </h3>
+                <button onclick="limpiarCarrito()"
+                        class="text-xs text-red-500 hover:text-red-700 hover:underline transition">
+                    Limpiar
+                </button>
+            </div>
+
+            <!-- Items del carrito -->
+            <div class="overflow-y-auto p-4 max-h-72 min-h-24" id="carrito-items">
+                <div id="carrito-vacio" class="text-center text-gray-400 text-sm py-8">
+                    <i class="bi bi-cart text-3xl block mb-2 text-gray-300"></i>
+                    Sin productos agregados
+                </div>
+            </div>
+
+            <!-- Totales y acciones -->
+            <div class="p-4 border-t border-gray-100 space-y-3 bg-gray-50">
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span id="subtotal-display" class="font-medium">$0.00</span>
+                </div>
+                <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-2">
+                    <span class="text-gray-700">Total</span>
+                    <span id="total-display" class="text-orange-600">$0.00</span>
+                </div>
+                <button onclick="guardarVenta()"
+                        class="btn-primary w-full py-3 rounded-lg font-bold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm">
+                    <i class="bi bi-check-circle-fill"></i> Guardar Orden
+                </button>
+                <a href="{{ url_for('routes.ventas_dashboard') }}"
+                   class="block text-center text-sm text-gray-400 hover:text-gray-600 hover:underline transition">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let carrito = [];
+
+    function filtrarMenu() {
+        const busqueda = document.getElementById('buscar-platillo').value.toLowerCase().trim();
+        const cards = document.querySelectorAll('#menu-grid .platillo-card');
+        let visibles = 0;
+        cards.forEach(card => {
+            const nombre = card.dataset.nombreLower || '';
+            const visible = nombre.includes(busqueda);
+            card.style.display = visible ? '' : 'none';
+            if (visible) visibles++;
+        });
+        const sinRes = document.getElementById('sin-resultados');
+        if (sinRes) sinRes.classList.toggle('hidden', visibles > 0 || busqueda === '');
+    }
+
+    function agregarItem(el) {
+        const id = el.dataset.id;
+        const nombre = el.dataset.nombre;
+        const precio = parseFloat(el.dataset.precio) || 0;
+        const existente = carrito.find(i => i.id === id);
+        if (existente) {
+            existente.cantidad++;
+        } else {
+            carrito.push({ id, nombre, precio, cantidad: 1 });
+        }
+        renderCarrito();
+
+        // Feedback visual rápido
+        el.style.background = '#dcfce7';
+        setTimeout(() => { el.style.background = ''; }, 300);
+    }
+
+    function cambiarCantidad(id, delta) {
+        const item = carrito.find(i => i.id === id);
+        if (!item) return;
+        item.cantidad += delta;
+        if (item.cantidad <= 0) {
+            carrito = carrito.filter(i => i.id !== id);
+        }
+        renderCarrito();
+    }
+
+    function limpiarCarrito() {
+        if (carrito.length === 0) return;
+        carrito = [];
+        renderCarrito();
+    }
+
+    function renderCarrito() {
+        const container = document.getElementById('carrito-items');
+        const count = document.getElementById('carrito-count');
+
+        if (carrito.length === 0) {
+            container.innerHTML = `
+                <div id="carrito-vacio" class="text-center text-gray-400 text-sm py-8">
+                    <i class="bi bi-cart text-3xl block mb-2 text-gray-300"></i>
+                    Sin productos agregados
+                </div>`;
+            document.getElementById('subtotal-display').textContent = '$0.00';
+            document.getElementById('total-display').textContent = '$0.00';
+            count.classList.add('hidden');
+            return;
+        }
+
+        let html = '';
+        let subtotal = 0;
+        carrito.forEach(item => {
+            const subtotalItem = item.precio * item.cantidad;
+            subtotal += subtotalItem;
+            html += `
+                <div class="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100 last:border-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 truncate">${item.nombre}</p>
+                        <p class="text-xs text-gray-500">$${item.precio.toFixed(2)} c/u</p>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="cambiarCantidad('${item.id}', -1)"
+                                class="w-6 h-6 rounded-full border border-gray-300 text-sm hover:bg-red-50 hover:border-red-300 hover:text-red-600 flex items-center justify-center transition">
+                            −
+                        </button>
+                        <span class="w-5 text-center text-sm font-bold text-gray-800">${item.cantidad}</span>
+                        <button onclick="cambiarCantidad('${item.id}', 1)"
+                                class="w-6 h-6 rounded-full border border-gray-300 text-sm hover:bg-green-50 hover:border-green-300 hover:text-green-600 flex items-center justify-center transition">
+                            +
+                        </button>
+                    </div>
+                    <span class="text-sm font-bold text-orange-600 w-14 text-right shrink-0">
+                        $${subtotalItem.toFixed(2)}
+                    </span>
+                </div>`;
+        });
+
+        container.innerHTML = html;
+
+        const totalItems = carrito.reduce((s, i) => s + i.cantidad, 0);
+        count.textContent = totalItems;
+        count.classList.remove('hidden');
+
+        document.getElementById('subtotal-display').textContent = '$' + subtotal.toFixed(2);
+        document.getElementById('total-display').textContent = '$' + subtotal.toFixed(2);
+    }
+
+    async function guardarVenta() {
+        const mesaSelect = document.getElementById('mesa-select');
+        if (!mesaSelect.value) {
+            Swal.fire({ title: 'Mesa requerida', text: 'Por favor selecciona una mesa.', icon: 'warning', confirmButtonColor: '#F2913D' });
+            return;
+        }
+        if (carrito.length === 0) {
+            Swal.fire({ title: 'Sin productos', text: 'Agrega al menos un producto a la orden.', icon: 'warning', confirmButtonColor: '#F2913D' });
+            return;
+        }
+
+        const subtotal = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+        const mesaNombre = mesaSelect.options[mesaSelect.selectedIndex].dataset.nombre;
+        const items = carrito.map(i => ({
+            platillo_id: i.id,
+            nombre: i.nombre,
+            precio: i.precio,
+            cantidad: i.cantidad
+        }));
+
+        try {
+            const res = await fetch('/api/ventas/crear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mesa_id: mesaSelect.value,
+                    mesa_nombre: mesaNombre,
+                    items,
+                    subtotal,
+                    total: subtotal,
+                    impuesto: 0,
+                    descuento: 0,
+                    propina: 0
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await Swal.fire({
+                    title: '¡Orden guardada!',
+                    text: 'La venta fue registrada correctamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#F2913D'
+                });
+                window.location.href = "{{ url_for('routes.ventas_cuentas') }}";
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo guardar la orden', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error de conexión', 'No se pudo conectar con el servidor.', 'error');
+        }
+    }
+</script>
+{% endblock %}

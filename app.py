@@ -12,7 +12,7 @@ from datetime import datetime
 
 # 2. Librerías de Terceros
 from dotenv import load_dotenv
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_session import Session
 from flask_socketio import join_room
@@ -117,9 +117,19 @@ clean_old_sessions()
 # REGISTRO DE RUTAS (Blueprints)
 # ================================
 from routes import routes_bp, register_reports_routes
+from routes_v1 import api_v1_bp
 
 app.register_blueprint(routes_bp)
+app.register_blueprint(api_v1_bp)
 register_reports_routes(app)
+
+# Índices de colecciones nuevas (móvil)
+from models.cliente_model import Cliente
+from models.pedido_movil_model import PedidoMovil as _PedidoMovil
+from models.pago_movil_model import PagoMovil as _PagoMovil
+Cliente.ensure_indexes()
+_PedidoMovil.ensure_indexes()
+_PagoMovil.ensure_indexes()
 
 # ================================
 # MIDDLEWARE Y CONTEXTO
@@ -136,6 +146,20 @@ def log_request():
     print("[COOKIES]:", list(request.cookies.keys()))
 
 # ================================
+# APP MÓVIL REACT (servir desde /app/)
+# ================================
+_FRONTEND_DIST = os.path.join(os.path.dirname(__file__), 'frontend_dist')
+
+@app.route('/app/', defaults={'path': ''})
+@app.route('/app/<path:path>')
+def serve_react_app(path):
+    """Sirve la app móvil React compilada. Rutas desconocidas → index.html (React Router)."""
+    full = os.path.join(_FRONTEND_DIST, path)
+    if path and os.path.isfile(full):
+        return send_from_directory(_FRONTEND_DIST, path)
+    return send_from_directory(_FRONTEND_DIST, 'index.html')
+
+# ================================
 # EVENTOS DE SOCKET.IO
 # ================================
 @socketio.on("connect")
@@ -150,6 +174,15 @@ def socket_disconnect():
 def on_join_room(room):
     join_room(room)
     print(f"[SALA] Cliente unido a la sala: {room}")
+
+@socketio.on("join_cliente")
+def on_join_cliente(data):
+    """App móvil se une a su sala personal para recibir updates de pedidos."""
+    cliente_id = data.get("cliente_id") if isinstance(data, dict) else str(data)
+    if cliente_id:
+        sala = f"cliente_{cliente_id}"
+        join_room(sala)
+        print(f"[SALA] Cliente unido a sala personal: {sala}")
 
 # ================================
 # API DOCS
@@ -184,10 +217,34 @@ SwaggerUIBundle({
 # ================================
 @app.errorhandler(404)
 def not_found(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Recurso no encontrado"}), 404
     return redirect(url_for("routes.login"))
 
 @app.errorhandler(403)
 def forbidden(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Sin permisos"}), 403
+    return redirect(url_for("routes.login"))
+
+@app.errorhandler(400)
+def bad_request(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Solicitud inválida"}), 400
+    return redirect(url_for("routes.login"))
+
+@app.errorhandler(401)
+def unauthorized(e):
+    return jsonify({"status": "error", "message": "No autorizado"}), 401
+
+@app.errorhandler(429)
+def too_many_requests(e):
+    return jsonify({"status": "error", "message": "Demasiados intentos, intenta más tarde"}), 429
+
+@app.errorhandler(500)
+def internal_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
     return redirect(url_for("routes.login"))
 
 # ================================

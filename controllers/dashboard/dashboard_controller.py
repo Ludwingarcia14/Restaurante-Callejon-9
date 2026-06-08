@@ -32,12 +32,10 @@ class DashboardController:
         }
 
         endpoint = rol_endpoints.get(rol)
-        print(f"Redirigiendo al endpoint: {endpoint} (Rol: {rol})")
-        
+
         if endpoint:
             return redirect(url_for(f"routes.{endpoint}"))
         else:
-            print(f" Rol no reconocido: {rol}")
             return "⚠ Rol no reconocido", 403
 
     # ==========================================
@@ -166,11 +164,12 @@ class DashboardController:
                     }), 400
                 
                 # Contraseña
+                from services.security.password_service import PasswordService
                 nuevo_empleado = {
                     "usuario_nombre": data["nombre"],
                     "usuario_apellidos": data["apellidos"],
                     "usuario_email": data["email"].lower(),
-                    "usuario_clave": data["password"],
+                    "usuario_clave": PasswordService.hash_password(data["password"]),
                     "usuario_rol": data["rol"],
                     "usuario_telefono": data.get("telefono", ""),
                     "usuario_foto": None,
@@ -308,7 +307,7 @@ class DashboardController:
         """Vista de reportes para administración"""
         if "usuario_rol" not in session or str(session["usuario_rol"]) != "1":
             return redirect(url_for("routes.login"))
-        return render_template("support/reportes/   index.html")
+        return render_template("reports/index.html")
 
     @staticmethod
     def toggle_theme():
