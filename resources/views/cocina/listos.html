@@ -34,7 +34,7 @@
 {% block content %}
 
 <!-- HEADER -->
-<div class="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white mb-6 flex items-center justify-between">
+<div class="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white mb-6 flex items-center justify-between flex-wrap gap-4">
     <div>
         <h2 class="text-2xl font-bold">Pedidos Listos ✅</h2>
         <p class="text-sm opacity-90 mt-1">Esperando ser entregados al cliente</p>
@@ -69,13 +69,14 @@
     </div>
     
     <!-- COLUMNA LATERAL -->
-    <div class="lg:col-span-1">
-        <div class="bg-white rounded-xl shadow-md p-4 sticky top-20 max-h-[600px] overflow-y-auto">
-            <h3 class="font-bold text-lg mb-4 text-gray-800 pb-3 border-b-2 border-green-300">
-                <i class="bi bi-list-check"></i> Para Entregar
-            </h3>
-            <div id="listado-rapido-listos" class="space-y-2">
-                <p class="text-sm text-gray-500 text-center py-6">Cargando...</p>
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-md p-4 sticky top-20 max-h-[80vh] overflow-y-auto">
+                <h3 class="font-bold text-lg mb-4 text-gray-800 pb-3 border-b-2 border-green-300">
+                    <i class="bi bi-list-check"></i> Para Entregar
+                </h3>
+                    <div id="listado-rapido-listos" class="space-y-2">
+                        <p class="text-sm text-gray-500 text-center py-6">Cargando...</p>
+                    </div>
             </div>
         </div>
     </div>
