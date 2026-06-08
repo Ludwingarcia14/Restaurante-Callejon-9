@@ -52,6 +52,22 @@ document.addEventListener('DOMContentLoaded', function() {
     <i class="bi bi-book text-lg"></i>
     <span>Metodología</span>
 </a>
+<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
+    <i class="bi bi-arrow-left-right text-lg"></i>
+    <span>Proceso de Datos</span>
+</a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
+    <i class="bi bi-bar-chart-steps text-lg"></i>
+    <span>Pareto 80/20</span>
+</a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
+    <i class="bi bi-share text-lg"></i>
+    <span>Asociación</span>
+</a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
+    <i class="bi bi-graph-up text-lg"></i>
+    <span>Predicción</span>
+</a>
 {% endblock %}
 
 {% block content %}
@@ -233,6 +249,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p class="text-gray-500 font-medium">Sincronizando cocina...</p>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Analytics avanzado -->
+<div class="mt-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <i class="bi bi-graph-up-arrow text-[#F2913D]"></i>
+        Analytics Avanzado
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ url_for('routes.mesero_pareto') }}"
+           class="flex items-center gap-4 p-5 bg-white rounded-xl shadow-sm border-l-4 hover:shadow-md transition group"
+           style="border-color:#f59e0b;">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:#fef3c7;">
+                <i class="bi bi-bar-chart-steps text-2xl" style="color:#d97706;"></i>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 group-hover:text-amber-600 transition">Pareto 80/20</p>
+                <p class="text-xs text-gray-500">Qué platillos generan el 80% del ingreso</p>
+            </div>
+        </a>
+        <a href="{{ url_for('routes.mesero_asociacion') }}"
+           class="flex items-center gap-4 p-5 bg-white rounded-xl shadow-sm border-l-4 hover:shadow-md transition group"
+           style="border-color:#8b5cf6;">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:#ede9fe;">
+                <i class="bi bi-share text-2xl" style="color:#7c3aed;"></i>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 group-hover:text-purple-600 transition">Asociación</p>
+                <p class="text-xs text-gray-500">Combos que se piden juntos — sugerencias</p>
+            </div>
+        </a>
+        <a href="{{ url_for('routes.mesero_prediccion') }}"
+           class="flex items-center gap-4 p-5 bg-white rounded-xl shadow-sm border-l-4 hover:shadow-md transition group"
+           style="border-color:#0ea5e9;">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:#e0f2fe;">
+                <i class="bi bi-graph-up text-2xl" style="color:#0284c7;"></i>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 group-hover:text-sky-600 transition">Predicción</p>
+                <p class="text-xs text-gray-500">Demanda proyectada e ingredientes a prep.</p>
+            </div>
+        </a>
     </div>
 </div>
 

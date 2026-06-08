@@ -54,6 +54,22 @@ document.addEventListener('DOMContentLoaded', function() {
     <i class="bi bi-book text-lg"></i>
     <span>Metodología</span>
 </a>
+<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
+    <i class="bi bi-arrow-left-right text-lg"></i>
+    <span>Proceso de Datos</span>
+</a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
+    <i class="bi bi-bar-chart-steps text-lg"></i>
+    <span>Pareto 80/20</span>
+</a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
+    <i class="bi bi-share text-lg"></i>
+    <span>Asociación</span>
+</a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
+    <i class="bi bi-graph-up text-lg"></i>
+    <span>Predicción</span>
+</a>
 {% endblock %}
 
 

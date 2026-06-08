@@ -1,0 +1,182 @@
+{% extends "layout/layout_mesero.html" %}
+{% block title %}Reglas de Asociación{% endblock %}
+{% block page_title %}Asociación de Platillos{% endblock %}
+{% block page_subtitle %}Qué platillos se piden juntos con más frecuencia{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link"><i class="bi bi-house-door text-lg"></i><span>Inicio</span></a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link"><i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span></a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link"><i class="bi bi-journal-text text-lg"></i><span>Menú</span></a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link"><i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span></a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link"><i class="bi bi-clock-history text-lg"></i><span>Historial</span></a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link"><i class="bi bi-book text-lg"></i><span>Metodología</span></a>
+<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link"><i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span></a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link active"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);">
+  <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+      <i class="bi bi-share text-2xl"></i>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold mb-1">Reglas de Asociación — Market Basket</h2>
+      <p class="text-sm opacity-85">Descubre qué platillos se piden juntos. Úsalo para hacer sugerencias inteligentes a los comensales y aumentar el ticket promedio.</p>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4">
+  <div class="flex items-center gap-2">
+    <label class="text-xs font-semibold text-gray-500 uppercase">Soporte mín.</label>
+    <select id="sel-soporte" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+      <option value="0.02">2%</option><option value="0.04" selected>4%</option>
+      <option value="0.06">6%</option><option value="0.10">10%</option>
+    </select>
+  </div>
+  <div class="flex items-center gap-2">
+    <label class="text-xs font-semibold text-gray-500 uppercase">Confianza mín.</label>
+    <select id="sel-confianza" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+      <option value="0.15">15%</option><option value="0.25" selected>25%</option>
+      <option value="0.40">40%</option><option value="0.60">60%</option>
+    </select>
+  </div>
+  <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#7c3aed;">
+    <i class="bi bi-arrow-clockwise mr-1"></i>Calcular
+  </button>
+  <span id="estado" class="text-xs text-gray-400"></span>
+</div>
+
+<div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Calculando…
+  </div>
+</div>
+
+<div class="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
+  <div><strong class="text-purple-700">Soporte:</strong> % de comandas con ambos platillos. A mayor soporte, más frecuente es el combo.</div>
+  <div><strong class="text-purple-700">Confianza:</strong> % de veces que, si piden A, también piden B. Mide la fuerza de la sugerencia.</div>
+  <div><strong class="text-purple-700">Lift:</strong> Cuánto más probable es el combo vs. azar. Lift &gt;2 = asociación muy fuerte.</div>
+</div>
+
+<!-- Top combos -->
+<div id="combos-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+    <i class="bi bi-trophy text-purple-500"></i> Combos Recomendados — Sugerir a comensales
+  </h3>
+  <div id="combos-lista" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+  <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+    <i class="bi bi-list-ul text-purple-500"></i>
+    <h3 class="text-sm font-semibold text-gray-700">Todas las reglas</h3>
+  </div>
+  <div id="tabla-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Calculando…
+  </div>
+  <div id="tabla-reglas" style="display:none;" class="overflow-auto"></div>
+  <div id="aviso-panel" style="display:none;" class="p-6 text-center text-sm text-amber-700 bg-amber-50 border-t border-amber-100"></div>
+</div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.animate-spin{animation:spin 1s linear infinite}
+</style>
+<script>
+async function cargar(){
+  const soporte=document.getElementById('sel-soporte').value;
+  const confianza=document.getElementById('sel-confianza').value;
+  document.getElementById('estado').textContent='Calculando…';
+  document.getElementById('tabla-loading').style.display='flex';
+  document.getElementById('tabla-reglas').style.display='none';
+  document.getElementById('aviso-panel').style.display='none';
+  document.getElementById('combos-panel').style.display='none';
+  document.getElementById('kpi-cards').innerHTML=`<div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2"><i class="bi bi-arrow-repeat animate-spin"></i> Calculando…</div>`;
+  try{
+    const r=await fetch(`/api/analytics/asociacion?soporte=${soporte}&confianza=${confianza}&dias=90`);
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    renderKPIs(d);
+    if(d.aviso){
+      document.getElementById('tabla-loading').style.display='none';
+      document.getElementById('aviso-panel').textContent=d.aviso;
+      document.getElementById('aviso-panel').style.display='';
+      document.getElementById('estado').textContent='';return;
+    }
+    renderTabla(d.reglas);renderCombos(d.reglas.slice(0,5));
+    document.getElementById('estado').textContent=`${d.reglas.length} reglas · ${d.n_transacciones} transacciones`;
+  }catch(e){
+    document.getElementById('tabla-loading').innerHTML=`<span class="text-red-400 text-sm">${e.message}</span>`;
+    document.getElementById('estado').textContent='';
+  }
+}
+function renderKPIs(d){
+  const cards=[
+    {label:'Transacciones',val:d.n_transacciones||'—',icon:'bi-receipt',color:'#7c3aed'},
+    {label:'Items únicos',val:d.n_items_unicos||'—',icon:'bi-grid-3x3-gap',color:'#8b5cf6'},
+    {label:'Reglas encontradas',val:(d.reglas||[]).length,icon:'bi-share',color:'#10b981'},
+    {label:'Soporte mínimo',val:d.min_soporte+'%',icon:'bi-percent',color:'#f59e0b'},
+  ];
+  document.getElementById('kpi-cards').innerHTML=cards.map(k=>`
+    <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:${k.color}20;">
+        <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
+      </div>
+      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
+    </div>`).join('');
+}
+function renderTabla(reglas){
+  document.getElementById('tabla-loading').style.display='none';
+  document.getElementById('tabla-reglas').style.display='';
+  document.getElementById('tabla-reglas').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+        <th class="px-4 py-3">Si piden…</th><th class="px-4 py-3">También piden…</th>
+        <th class="px-4 py-3 text-center">Confianza</th><th class="px-4 py-3 text-center">Lift</th>
+      </tr></thead>
+      <tbody>${reglas.map(r=>`
+        <tr class="hover:bg-purple-50 border-b border-gray-100 transition">
+          <td class="px-4 py-3">${r.si_piden.map(p=>`<span class="inline-block bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`).join('')}</td>
+          <td class="px-4 py-3">${r.tambien_piden.map(p=>`<span class="inline-block bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`).join('')}</td>
+          <td class="px-4 py-3 text-center"><span class="font-bold ${r.confianza>=50?'text-green-600':r.confianza>=30?'text-amber-600':'text-gray-500'}">${r.confianza}%</span></td>
+          <td class="px-4 py-3 text-center"><span class="font-bold ${r.lift>=2?'text-purple-700':r.lift>=1.5?'text-purple-500':'text-gray-400'}">${r.lift}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+function renderCombos(reglas){
+  if(!reglas.length)return;
+  document.getElementById('combos-panel').style.display='';
+  document.getElementById('combos-lista').innerHTML=reglas.map((r,i)=>`
+    <div class="rounded-xl border border-purple-100 p-4" style="background:linear-gradient(135deg,#faf5ff,#f5f3ff);">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">${i+1}</span>
+        <span class="text-xs font-semibold text-purple-700">Confianza ${r.confianza}% · Lift ${r.lift}</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-1 mb-2">
+        ${r.si_piden.map(p=>`<span class="bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium">${p}</span>`).join('')}
+        <i class="bi bi-arrow-right text-gray-400 mx-1"></i>
+        ${r.tambien_piden.map(p=>`<span class="bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs font-medium">${p}</span>`).join('')}
+      </div>
+      <p class="text-xs text-gray-500">${r.descripcion}</p>
+    </div>`).join('');
+}
+cargar();
+</script>
+{% endblock %}

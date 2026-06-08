@@ -1,0 +1,216 @@
+{% extends "layout/layout_mesero.html" %}
+{% block title %}Predicción de Demanda{% endblock %}
+{% block page_title %}Predicción de Demanda{% endblock %}
+{% block page_subtitle %}Proyección de pedidos, ingresos e ingredientes para los próximos días{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link"><i class="bi bi-house-door text-lg"></i><span>Inicio</span></a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link"><i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span></a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link"><i class="bi bi-journal-text text-lg"></i><span>Menú</span></a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link"><i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span></a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link"><i class="bi bi-clock-history text-lg"></i><span>Historial</span></a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
+<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link"><i class="bi bi-book text-lg"></i><span>Metodología</span></a>
+<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link"><i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span></a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link active"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);">
+  <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+      <i class="bi bi-graph-up text-2xl"></i>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold mb-1">Predicción de Demanda — Gradient Boosting</h2>
+      <p class="text-sm opacity-85">Proyecta pedidos diarios, ingresos esperados e ingredientes a preparar para los próximos días. Útil para planear el turno.</p>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4">
+  <div class="flex items-center gap-2">
+    <label class="text-xs font-semibold text-gray-500 uppercase">Proyección</label>
+    <select id="sel-fut" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+      <option value="7" selected>7 días</option><option value="14">14 días</option><option value="30">30 días</option>
+    </select>
+  </div>
+  <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#0284c7;">
+    <i class="bi bi-arrow-clockwise mr-1"></i>Predecir
+  </button>
+  <span id="estado" class="text-xs text-gray-400"></span>
+</div>
+
+<div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando modelo…
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+    <i class="bi bi-activity text-sky-500"></i> Pedidos diarios — Historial y Proyección
+    <span class="text-xs font-normal text-gray-400">Sólida = real · Punteada = predicción</span>
+  </h3>
+  <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
+  </div>
+  <canvas id="chartPrediccion" style="display:none; max-height:300px;"></canvas>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+      <i class="bi bi-calendar-event text-sky-500"></i>
+      <h3 class="text-sm font-semibold text-gray-700">Proyección por Día</h3>
+    </div>
+    <div id="tabla-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i>
+    </div>
+    <div id="tabla-pred" style="display:none;" class="overflow-auto"></div>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+      <i class="bi bi-box-seam text-emerald-500"></i>
+      <h3 class="text-sm font-semibold text-gray-700">Ingredientes a Preparar</h3>
+      <span class="text-xs text-gray-400 font-normal">(estimado del período)</span>
+    </div>
+    <div id="ingr-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i>
+    </div>
+    <div id="tabla-ingr" style="display:none;" class="overflow-auto"></div>
+  </div>
+</div>
+
+<div id="aviso-panel" style="display:none;" class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800"></div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.animate-spin{animation:spin 1s linear infinite}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartPred;
+function fmt(v){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);}
+async function cargar(){
+  const fut=document.getElementById('sel-fut').value;
+  document.getElementById('estado').textContent='Entrenando modelo…';
+  document.getElementById('chart-loading').style.display='flex';
+  if(chartPred)chartPred.destroy();
+  document.getElementById('chartPrediccion').style.display='none';
+  document.getElementById('tabla-loading').style.display='flex';
+  document.getElementById('ingr-loading').style.display='flex';
+  document.getElementById('tabla-pred').style.display='none';
+  document.getElementById('tabla-ingr').style.display='none';
+  document.getElementById('aviso-panel').style.display='none';
+  document.getElementById('kpi-cards').innerHTML=`<div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2"><i class="bi bi-arrow-repeat animate-spin"></i> Entrenando…</div>`;
+  try{
+    const r=await fetch(`/api/analytics/prediccion?dias_historial=90&dias_futuro=${fut}`);
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    if(d.aviso){
+      document.getElementById('aviso-panel').textContent=d.aviso;
+      document.getElementById('aviso-panel').style.display='';
+      ['chart-loading','tabla-loading','ingr-loading'].forEach(id=>document.getElementById(id).style.display='none');
+      document.getElementById('estado').textContent='';return;
+    }
+    renderKPIs(d);renderGrafico(d);renderTablaPred(d.predicciones);
+    renderTablaIngr(d.ingredientes_estimados||[]);
+    document.getElementById('estado').textContent=`${d.predicciones.length} días proyectados · MAE: ${d.metricas.mae}`;
+  }catch(e){
+    document.getElementById('aviso-panel').textContent='Error: '+e.message;
+    document.getElementById('aviso-panel').style.display='';
+    ['chart-loading','tabla-loading','ingr-loading'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('estado').textContent='';
+  }
+}
+function renderKPIs(d){
+  const totalPed=d.predicciones.reduce((a,b)=>a+b.pedidos_pred,0);
+  const totalIng=d.predicciones.reduce((a,b)=>a+b.ingreso_pred,0);
+  const maxDia=d.predicciones.reduce((a,b)=>a.pedidos_pred>b.pedidos_pred?a:b,{pedidos_pred:0,dia_semana:''});
+  const cards=[
+    {label:'Pedidos estimados',val:totalPed,icon:'bi-receipt',color:'#0284c7'},
+    {label:'Ingreso proyectado',val:fmt(totalIng),icon:'bi-currency-dollar',color:'#10b981'},
+    {label:'Día de mayor demanda',val:`${maxDia.dia_semana} — ${maxDia.pedidos_pred} pedidos`,icon:'bi-calendar-event',color:'#f59e0b'},
+    {label:'R² del modelo',val:d.metricas.r2,icon:'bi-cpu',color:'#8b5cf6'},
+  ];
+  document.getElementById('kpi-cards').innerHTML=cards.map(k=>`
+    <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:${k.color}20;">
+        <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
+      </div>
+      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
+    </div>`).join('');
+}
+function renderGrafico(d){
+  document.getElementById('chart-loading').style.display='none';
+  document.getElementById('chartPrediccion').style.display='';
+  const hL=d.historico.map(h=>h.fecha.slice(5)),hD=d.historico.map(h=>h.real);
+  const pL=d.predicciones.map(p=>p.fecha.slice(5)),pD=d.predicciones.map(p=>p.pedidos_pred);
+  chartPred=new Chart(document.getElementById('chartPrediccion'),{type:'line',
+    data:{labels:[...hL,...pL],datasets:[
+      {label:'Pedidos reales',data:[...hD,...Array(pL.length).fill(null)],borderColor:'#0ea5e9',backgroundColor:'#0ea5e920',fill:true,tension:0.3,pointRadius:2},
+      {label:'Predicción',data:[...Array(hL.length).fill(null),...pD],borderColor:'#f59e0b',borderDash:[6,3],backgroundColor:'#f59e0b15',fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:'#f59e0b'},
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:10},maxTicksLimit:20}},y:{beginAtZero:true,title:{display:true,text:'Pedidos'}}}}
+  });
+}
+function renderTablaPred(preds){
+  document.getElementById('tabla-loading').style.display='none';
+  document.getElementById('tabla-pred').style.display='';
+  document.getElementById('tabla-pred').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+        <th class="px-4 py-2">Fecha</th><th class="px-4 py-2">Día</th>
+        <th class="px-4 py-2 text-center">Pedidos</th><th class="px-4 py-2 text-right">Ingreso est.</th>
+      </tr></thead>
+      <tbody>${preds.map(p=>`
+        <tr class="hover:bg-sky-50 border-b border-gray-100 ${p.es_fin_semana?'bg-sky-50':''} transition">
+          <td class="px-4 py-2 font-medium">${p.fecha}</td>
+          <td class="px-4 py-2"><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${p.es_fin_semana?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-600'}">${p.dia_semana}</span></td>
+          <td class="px-4 py-2 text-center font-bold text-sky-700">${p.pedidos_pred}</td>
+          <td class="px-4 py-2 text-right text-gray-600">${fmt(p.ingreso_pred)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+function renderTablaIngr(ingr){
+  document.getElementById('ingr-loading').style.display='none';
+  document.getElementById('tabla-ingr').style.display='';
+  if(!ingr.length){document.getElementById('tabla-ingr').innerHTML='<p class="p-4 text-sm text-gray-400 text-center">Sin datos</p>';return;}
+  document.getElementById('tabla-ingr').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+        <th class="px-4 py-2">Platillo / Ingrediente</th>
+        <th class="px-4 py-2 text-center">Unidades a prep.</th><th class="px-4 py-2 text-center">Prom./día</th>
+      </tr></thead>
+      <tbody>${ingr.map((i,idx)=>`
+        <tr class="hover:bg-emerald-50 border-b border-gray-100 transition">
+          <td class="px-4 py-2 font-medium text-gray-700">
+            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full text-white text-xs mr-1 font-bold"
+                  style="background:${['#10b981','#0ea5e9','#8b5cf6','#f59e0b','#ef4444'][idx%5]};">${idx+1}</span>
+            ${i.ingrediente}
+          </td>
+          <td class="px-4 py-2 text-center font-bold text-emerald-700">${i.unidades_pred}</td>
+          <td class="px-4 py-2 text-center text-gray-400">${i.base_diaria}/día</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+cargar();
+</script>
+{% endblock %}

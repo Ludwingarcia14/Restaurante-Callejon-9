@@ -1,0 +1,296 @@
+{% extends "layout/layout_base.html" %}
+{% block title %}Predicción de Demanda{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-7xl mx-auto">
+
+  <!-- Cabecera -->
+  <div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-graph-up text-2xl"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold mb-1">Predicción de Demanda — Gradient Boosting</h2>
+        <p class="text-sm opacity-85">Proyecta pedidos diarios, ingresos esperados e ingredientes necesarios para los próximos días.</p>
+      </div>
+      <a href="{{ url_for('routes.analytics_index') }}" class="ml-auto text-white opacity-70 hover:opacity-100 text-sm flex items-center gap-1">
+        <i class="bi bi-arrow-left"></i> Analytics
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-gray-500 uppercase">Historial</label>
+      <select id="sel-hist" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+        <option value="60">60 días</option>
+        <option value="90" selected>90 días</option>
+        <option value="180">6 meses</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-gray-500 uppercase">Proyección</label>
+      <select id="sel-fut" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+        <option value="7" selected>7 días</option>
+        <option value="14">14 días</option>
+        <option value="30">30 días</option>
+      </select>
+    </div>
+    <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#0284c7;">
+      <i class="bi bi-arrow-clockwise mr-1"></i>Predecir
+    </button>
+    <span id="estado" class="text-xs text-gray-400"></span>
+  </div>
+
+  <!-- KPI cards de predicción -->
+  <div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando modelo…
+    </div>
+  </div>
+
+  <!-- Gráfico histórico + predicción -->
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+      <i class="bi bi-activity text-sky-500"></i> Pedidos diarios — Historial y Proyección
+      <span class="text-xs font-normal text-gray-400">Línea sólida = real · Punteada = predicción</span>
+    </h3>
+    <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
+    </div>
+    <canvas id="chartPrediccion" style="display:none; max-height:320px;"></canvas>
+  </div>
+
+  <!-- Tabla de predicciones -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+        <i class="bi bi-calendar-event text-sky-500"></i>
+        <h3 class="text-sm font-semibold text-gray-700">Proyección por Día</h3>
+      </div>
+      <div id="tabla-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
+        <i class="bi bi-arrow-repeat animate-spin"></i>
+      </div>
+      <div id="tabla-pred" style="display:none;" class="overflow-auto"></div>
+    </div>
+
+    <!-- Ingredientes estimados -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+        <i class="bi bi-box-seam text-emerald-500"></i>
+        <h3 class="text-sm font-semibold text-gray-700">Ingredientes a Preparar</h3>
+        <span class="text-xs text-gray-400 font-normal">(estimado para el período)</span>
+      </div>
+      <div id="ingr-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
+        <i class="bi bi-arrow-repeat animate-spin"></i>
+      </div>
+      <div id="tabla-ingr" style="display:none;" class="overflow-auto"></div>
+    </div>
+  </div>
+
+  <!-- Métricas del modelo -->
+  <div id="metricas-panel" style="display:none;"
+       class="bg-sky-50 border border-sky-100 rounded-xl p-5 text-sm text-sky-800">
+    <p class="font-semibold mb-2"><i class="bi bi-cpu mr-1 text-sky-500"></i>Métricas del Modelo (validación en últimos 7 días)</p>
+    <div id="metricas-content" class="grid grid-cols-3 gap-4 text-center mt-2"></div>
+    <p class="text-xs text-sky-600 mt-3 opacity-70">
+      Modelo: Gradient Boosting Regressor · Features: día de la semana, mes, fin de semana, temporada alta, día del mes.
+    </p>
+  </div>
+
+  <!-- Aviso -->
+  <div id="aviso-panel" style="display:none;"
+       class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800 mt-4"></div>
+
+</div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.animate-spin{animation:spin 1s linear infinite}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartPred;
+function fmt(v){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);}
+
+async function cargar(){
+  const hist = document.getElementById('sel-hist').value;
+  const fut  = document.getElementById('sel-fut').value;
+  document.getElementById('estado').textContent = 'Entrenando modelo…';
+  document.getElementById('chart-loading').style.display='flex';
+  if(chartPred) chartPred.destroy();
+  document.getElementById('chartPrediccion').style.display='none';
+  document.getElementById('tabla-loading').style.display='flex';
+  document.getElementById('ingr-loading').style.display='flex';
+  document.getElementById('tabla-pred').style.display='none';
+  document.getElementById('tabla-ingr').style.display='none';
+  document.getElementById('metricas-panel').style.display='none';
+  document.getElementById('aviso-panel').style.display='none';
+  document.getElementById('kpi-cards').innerHTML=`
+    <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando…
+    </div>`;
+
+  try{
+    const r = await fetch(`/api/analytics/prediccion?dias_historial=${hist}&dias_futuro=${fut}`);
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+
+    if(d.aviso){
+      document.getElementById('aviso-panel').textContent = d.aviso;
+      document.getElementById('aviso-panel').style.display='';
+      ['chart-loading','tabla-loading','ingr-loading'].forEach(id=>document.getElementById(id).style.display='none');
+      document.getElementById('estado').textContent='';
+      return;
+    }
+
+    renderKPIs(d);
+    renderGrafico(d);
+    renderTablaPred(d.predicciones);
+    renderTablaIngr(d.ingredientes_estimados||[]);
+    renderMetricas(d.metricas);
+    document.getElementById('estado').textContent =
+      `${d.metricas.dias_historial} días de historial · ${d.predicciones.length} días proyectados`;
+  }catch(e){
+    document.getElementById('estado').textContent='';
+    document.getElementById('aviso-panel').textContent = 'Error: '+e.message;
+    document.getElementById('aviso-panel').style.display='';
+    ['chart-loading','tabla-loading','ingr-loading'].forEach(id=>document.getElementById(id).style.display='none');
+  }
+}
+
+function renderKPIs(d){
+  const totalPed  = d.predicciones.reduce((a,b)=>a+b.pedidos_pred,0);
+  const totalIng  = d.predicciones.reduce((a,b)=>a+b.ingreso_pred,0);
+  const maxDia    = d.predicciones.reduce((a,b)=>a.pedidos_pred>b.pedidos_pred?a:b,{pedidos_pred:0,dia_semana:''});
+  const finSemana = d.predicciones.filter(p=>p.es_fin_semana).reduce((a,b)=>a+b.pedidos_pred,0);
+  const cards=[
+    {label:'Pedidos estimados',val:totalPed,icon:'bi-receipt',color:'#0284c7'},
+    {label:'Ingreso proyectado',val:fmt(totalIng),icon:'bi-currency-dollar',color:'#10b981'},
+    {label:'Día de mayor demanda',val:`${maxDia.dia_semana} — ${maxDia.pedidos_pred} pedidos`,icon:'bi-calendar-event',color:'#f59e0b'},
+    {label:'Pedidos fin de semana',val:finSemana,icon:'bi-star',color:'#8b5cf6'},
+  ];
+  document.getElementById('kpi-cards').innerHTML=cards.map(k=>`
+    <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:${k.color}20;">
+        <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
+      </div>
+      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
+    </div>
+  `).join('');
+}
+
+function renderGrafico(d){
+  document.getElementById('chart-loading').style.display='none';
+  document.getElementById('chartPrediccion').style.display='';
+
+  const histLabels = d.historico.map(h=>h.fecha.slice(5));
+  const histData   = d.historico.map(h=>h.real);
+  const predLabels = d.predicciones.map(p=>p.fecha.slice(5));
+  const predData   = d.predicciones.map(p=>p.pedidos_pred);
+
+  chartPred = new Chart(document.getElementById('chartPrediccion'),{
+    type:'line',
+    data:{
+      labels:[...histLabels,...predLabels],
+      datasets:[
+        {label:'Pedidos reales',data:[...histData,...Array(predLabels.length).fill(null)],
+         borderColor:'#0ea5e9',backgroundColor:'#0ea5e920',fill:true,tension:0.3,pointRadius:2},
+        {label:'Predicción',data:[...Array(histLabels.length).fill(null),...predData],
+         borderColor:'#f59e0b',borderDash:[6,3],backgroundColor:'#f59e0b15',fill:true,tension:0.3,
+         pointRadius:4,pointBackgroundColor:'#f59e0b'},
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+      scales:{
+        x:{ticks:{font:{size:10},maxTicksLimit:20}},
+        y:{beginAtZero:true,title:{display:true,text:'Pedidos'}}
+      }
+    }
+  });
+}
+
+function renderTablaPred(preds){
+  document.getElementById('tabla-loading').style.display='none';
+  document.getElementById('tabla-pred').style.display='';
+  document.getElementById('tabla-pred').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+          <th class="px-4 py-2">Fecha</th>
+          <th class="px-4 py-2">Día</th>
+          <th class="px-4 py-2 text-center">Pedidos</th>
+          <th class="px-4 py-2 text-right">Ingreso est.</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${preds.map(p=>`
+          <tr class="hover:bg-sky-50 border-b border-gray-100 ${p.es_fin_semana?'bg-sky-50':''} transition">
+            <td class="px-4 py-2 font-medium">${p.fecha}</td>
+            <td class="px-4 py-2">
+              <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
+                ${p.es_fin_semana?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-600'}">${p.dia_semana}</span>
+            </td>
+            <td class="px-4 py-2 text-center font-bold text-sky-700">${p.pedidos_pred}</td>
+            <td class="px-4 py-2 text-right text-gray-600">${fmt(p.ingreso_pred)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderTablaIngr(ingr){
+  document.getElementById('ingr-loading').style.display='none';
+  document.getElementById('tabla-ingr').style.display='';
+  if(!ingr.length){
+    document.getElementById('tabla-ingr').innerHTML='<p class="p-4 text-sm text-gray-400 text-center">Sin datos de ingredientes</p>';
+    return;
+  }
+  document.getElementById('tabla-ingr').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+          <th class="px-4 py-2">Ingrediente / Platillo</th>
+          <th class="px-4 py-2 text-center">Unidades a prep.</th>
+          <th class="px-4 py-2 text-center">Prom. diario</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ingr.map((i,idx)=>`
+          <tr class="hover:bg-emerald-50 border-b border-gray-100 transition">
+            <td class="px-4 py-2 font-medium text-gray-700">
+              <span class="w-5 h-5 inline-flex items-center justify-center rounded-full text-white text-xs mr-1 font-bold"
+                    style="background:${['#10b981','#0ea5e9','#8b5cf6','#f59e0b','#ef4444'][idx%5]};">${idx+1}</span>
+              ${i.ingrediente}
+            </td>
+            <td class="px-4 py-2 text-center font-bold text-emerald-700">${i.unidades_pred}</td>
+            <td class="px-4 py-2 text-center text-gray-400">${i.base_diaria}/día</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderMetricas(m){
+  document.getElementById('metricas-panel').style.display='';
+  const items=[
+    {label:'MAE',val:m.mae,desc:'Error absoluto medio (pedidos)'},
+    {label:'RMSE',val:m.rmse,desc:'Error cuadrático medio'},
+    {label:'R²',val:m.r2,desc:'Coeficiente de determinación (0→1)'},
+  ];
+  document.getElementById('metricas-content').innerHTML=items.map(i=>`
+    <div class="bg-white rounded-lg p-3 border border-sky-100">
+      <p class="text-lg font-bold text-sky-700">${i.val}</p>
+      <p class="text-xs font-semibold text-sky-600">${i.label}</p>
+      <p class="text-xs text-sky-500 opacity-70">${i.desc}</p>
+    </div>
+  `).join('');
+}
+
+cargar();
+</script>
+{% endblock %}

@@ -2,6 +2,9 @@ from flask import jsonify, render_template, session
 from config.db import db
 from datetime import datetime, timedelta
 from controllers.auth.AuthController import login_required, rol_required
+from services.analytics.pareto_service import ParetoService
+from services.analytics.asociacion_service import AsociacionService
+from services.analytics.prediccion_service import PrediccionService
 
 
 class AnalyticsController:
@@ -284,6 +287,76 @@ class AnalyticsController:
             resultado = list(db.ventas.aggregate(pipeline))
             return jsonify({"data": resultado})
 
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # PARETO 80/20
+
+    @staticmethod
+    def vista_pareto():
+        if session.get("usuario_rol") != "1":
+            from flask import redirect, url_for
+            return redirect(url_for("routes.login"))
+        return render_template("admin/analytics/pareto.html",
+                               usuario={"nombre": session.get("usuario_nombre", "Admin")})
+
+    @staticmethod
+    def get_pareto():
+        try:
+            if session.get("usuario_rol") not in ("1", "2"):
+                return jsonify({"error": "No autorizado"}), 403
+            from flask import request
+            dias = int(request.args.get("dias", 90))
+            return jsonify(ParetoService.get_pareto(dias=dias))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # REGLAS DE ASOCIACIÓN
+
+    @staticmethod
+    def vista_asociacion():
+        if session.get("usuario_rol") != "1":
+            from flask import redirect, url_for
+            return redirect(url_for("routes.login"))
+        return render_template("admin/analytics/asociacion.html",
+                               usuario={"nombre": session.get("usuario_nombre", "Admin")})
+
+    @staticmethod
+    def get_asociacion():
+        try:
+            if session.get("usuario_rol") not in ("1", "2"):
+                return jsonify({"error": "No autorizado"}), 403
+            from flask import request
+            soporte    = float(request.args.get("soporte",    0.04))
+            confianza  = float(request.args.get("confianza",  0.25))
+            dias       = int(request.args.get("dias",         90))
+            return jsonify(AsociacionService.get_reglas(
+                min_support=soporte, min_confidence=confianza, dias=dias
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # PREDICCIÓN DE DEMANDA
+
+    @staticmethod
+    def vista_prediccion():
+        if session.get("usuario_rol") != "1":
+            from flask import redirect, url_for
+            return redirect(url_for("routes.login"))
+        return render_template("admin/analytics/prediccion.html",
+                               usuario={"nombre": session.get("usuario_nombre", "Admin")})
+
+    @staticmethod
+    def get_prediccion():
+        try:
+            if session.get("usuario_rol") not in ("1", "2"):
+                return jsonify({"error": "No autorizado"}), 403
+            from flask import request
+            dias_hist  = int(request.args.get("dias_historial", 90))
+            dias_fut   = int(request.args.get("dias_futuro",    7))
+            return jsonify(PrediccionService.predecir_demanda(
+                dias_historial=dias_hist, dias_futuro=dias_fut
+            ))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 

@@ -239,6 +239,45 @@
         </div>
     </div>
 
+    <!-- Analytics avanzado: ML -->
+    <div class="mb-4">
+        <h3 class="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <i class="bi bi-cpu text-indigo-500"></i> Analytics Avanzado — Machine Learning
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="{{ url_for('routes.analytics_pareto') }}"
+               class="flex items-start gap-4 p-5 bg-white rounded-xl shadow-sm hover:shadow-md transition border-l-4 border-amber-400 group">
+                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-200 transition">
+                    <i class="bi bi-bar-chart-steps text-amber-600 text-lg"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm">Pareto 80/20</p>
+                    <p class="text-xs text-gray-500 mt-0.5">¿Qué platillos generan el 80% de los ingresos? Curva de Pareto acumulada por producto.</p>
+                </div>
+            </a>
+            <a href="{{ url_for('routes.analytics_asociacion') }}"
+               class="flex items-start gap-4 p-5 bg-white rounded-xl shadow-sm hover:shadow-md transition border-l-4 border-purple-400 group">
+                <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200 transition">
+                    <i class="bi bi-share text-purple-600 text-lg"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm">Reglas de Asociación</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Market Basket Analysis con Apriori. Qué platillos se piden juntos con mayor frecuencia.</p>
+                </div>
+            </a>
+            <a href="{{ url_for('routes.analytics_prediccion') }}"
+               class="flex items-start gap-4 p-5 bg-white rounded-xl shadow-sm hover:shadow-md transition border-l-4 border-sky-400 group">
+                <div class="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center flex-shrink-0 group-hover:bg-sky-200 transition">
+                    <i class="bi bi-graph-up text-sky-600 text-lg"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm">Predicción de Demanda</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Gradient Boosting: proyecta pedidos, ingresos e ingredientes necesarios para los próximos días.</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 

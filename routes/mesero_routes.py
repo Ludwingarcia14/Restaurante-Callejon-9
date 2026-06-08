@@ -10,6 +10,8 @@ from controllers.mesero.kmeans_controller import MeseroKMeansController
 from controllers.mesero.randomforest_controller import MeseroRandomForestController
 from controllers.mesero.diagnostico_controller import MeseroDiagnosticoController
 from controllers.mesero.metodologia_controller import MeseroMetodologiaController
+from controllers.mesero.etl_controller import MeseroProcesosDatosController
+from controllers.analytics.analytics_controller import AnalyticsController
 from models.producto_model import Producto
 
 # ── Vistas ────────────────────────────────────────────────
@@ -86,6 +88,33 @@ def mesero_diagnostico():
 @rol_required(['2'])
 def mesero_metodologia():
     return MeseroMetodologiaController.vista()
+
+@routes_bp.route("/mesero/etl")
+@login_required
+@rol_required(['2'])
+def mesero_etl():
+    return MeseroProcesosDatosController.vista()
+
+@routes_bp.route("/mesero/pareto")
+@login_required
+@rol_required(['2'])
+def mesero_pareto():
+    from flask import render_template as _rt
+    return _rt("mesero/mesero_pareto.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/asociacion")
+@login_required
+@rol_required(['2'])
+def mesero_asociacion():
+    from flask import render_template as _rt
+    return _rt("mesero/mesero_asociacion.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/prediccion")
+@login_required
+@rol_required(['2'])
+def mesero_prediccion():
+    from flask import render_template as _rt
+    return _rt("mesero/mesero_prediccion.html", perfil=session.get("perfil_mesero", {}))
 
 # ── API Mesero ────────────────────────────────────────────
 @routes_bp.route("/api/menu", methods=["GET"])
