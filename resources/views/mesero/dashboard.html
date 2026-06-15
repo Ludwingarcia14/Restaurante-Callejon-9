@@ -72,25 +72,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block content %}
 
-<div class="p-6 rounded-xl shadow-lg text-white mb-6"
+<div class="p-5 rounded-xl shadow-lg text-white mb-6"
     style="background: linear-gradient(135deg, #F2913D 0%, #F2A339 100%);">
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-2xl font-bold mb-2">¡Hola, {{ session.usuario_nombre }}! 👋</h2>
-            <div class="flex items-center gap-4 text-sm opacity-90">
-                <div class="flex items-center gap-2">
+    <div class="flex items-start justify-between flex-wrap gap-3">
+        <div class="min-w-0">
+            <h2 class="text-xl sm:text-2xl font-bold mb-1">¡Hola, {{ session.usuario_nombre }}! 👋</h2>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm opacity-90">
+                <div class="flex items-center gap-1.5">
                     <i class="bi bi-clock"></i>
                     <span>Turno: {{ perfil.turno|title if perfil.turno else 'No asignado' }}</span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                     <i class="bi bi-person-badge"></i>
                     <span>ID: {{ perfil.numero_empleado if perfil.numero_empleado else 'N/A' }}</span>
                 </div>
             </div>
         </div>
-        <div class="text-right bg-white bg-opacity-20 p-3 rounded-lg backdrop-blur-sm">
-            <div class="text-3xl font-bold">{{ stats.mesas_asignadas|length }}</div>
-            <div class="text-xs uppercase tracking-wider opacity-90">Mesas Asignadas</div>
+        <div class="text-right bg-white bg-opacity-20 px-4 py-2.5 rounded-lg backdrop-blur-sm shrink-0">
+            <div class="text-3xl font-bold leading-none">{{ stats.mesas_asignadas|length }}</div>
+            <div class="text-xs uppercase tracking-wider opacity-90 mt-0.5">Mesas</div>
         </div>
     </div>
 </div>

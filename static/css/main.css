@@ -450,6 +450,29 @@ body {
 }
 
 /* ===================================
+   MOBILE (≤ 640px)
+   =================================== */
+
+@media (max-width: 640px) {
+    .page-header {
+        padding: 0.875rem 1rem;
+    }
+
+    .page-title {
+        font-size: 1.125rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .page-content {
+        padding: 1rem;
+    }
+}
+
+
+/* ===================================
    UTILIDADES
    =================================== */
 
