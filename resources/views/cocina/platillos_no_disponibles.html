@@ -1,0 +1,687 @@
+{% extends "layout/layout_cocina.html" %}
+
+{% block title %}Platillos No Disponibles - Gestión{% endblock %}
+{% block page_title %}Gestión de Platillos No Disponibles{% endblock %}
+{% block page_subtitle %}Control de disponibilidad del menú{% endblock %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link">
+    <i class="bi bi-house-door"></i>
+    <span>Inicio</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_pedidos') }}" class="nav-link">
+    <i class="bi bi-list-task"></i>
+    <span>Pedidos Pendientes</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_en_proceso') }}" class="nav-link">
+    <i class="bi bi-hourglass-split"></i>
+    <span>En Preparación</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_listos') }}" class="nav-link">
+    <i class="bi bi-check-circle"></i>
+    <span>Listos</span>
+</a>
+
+<a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
+    <i class="bi bi-box-seam"></i>
+   <span>Inventario</span>
+</a>
+
+<a href="{{ url_for('routes.vista_platillos_no_disponibles') }}" class="nav-link active">
+    <i class="bi bi-slash-circle"></i>
+    <span>No Disponibles</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- HEADER CON ESTADÍSTICAS -->
+<div class="bg-gradient-to-r from-yellow-500 to-orange-600 p-6 rounded-xl shadow-lg text-white mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <i class="bi bi-slash-circle"></i> Control de Disponibilidad
+            </h2>
+            <p class="text-sm opacity-90 mt-1">
+                Gestiona qué platillos están disponibles o no en el menú
+            </p>
+        </div>
+        <div class="text-right">
+            <div class="text-4xl font-bold" id="total-no-disponibles">0</div>
+            <p class="text-sm opacity-90">No disponibles actualmente</p>
+        </div>
+    </div>
+</div>
+
+<!-- TABS DE NAVEGACIÓN -->
+<div class="mb-6">
+    <div class="border-b border-gray-200">
+        <nav class="flex gap-4">
+            <button onclick="cambiarTab('activos')" id="tab-activos-btn" 
+                    class="tab-btn px-4 py-2 font-semibold text-orange-600 border-b-2 border-orange-600">
+                <i class="bi bi-ban"></i> Actualmente No Disponibles
+            </button>
+            <button onclick="cambiarTab('historial')" id="tab-historial-btn" 
+                    class="tab-btn px-4 py-2 font-semibold text-gray-500 hover:text-gray-700">
+                <i class="bi bi-clock-history"></i> Historial por Platillo
+            </button>
+            <button onclick="cambiarTab('registros')" id="tab-registros-btn" 
+                    class="tab-btn px-4 py-2 font-semibold text-gray-500 hover:text-gray-700">
+                <i class="bi bi-table"></i> Todos los Registros
+            </button>
+            <button onclick="cambiarTab('estadisticas')" id="tab-estadisticas-btn" 
+                    class="tab-btn px-4 py-2 font-semibold text-gray-500 hover:text-gray-700">
+                <i class="bi bi-graph-up"></i> Estadísticas
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- TAB 1: ACTUALMENTE NO DISPONIBLES -->
+<div id="tab-activos" class="tab-content">
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-800">
+                <i class="bi bi-exclamation-triangle-fill text-red-500"></i> Platillos No Disponibles
+            </h3>
+            <button onclick="abrirModalMarcarNoDisponible()" 
+                    class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2">
+                <i class="bi bi-plus-circle"></i> Marcar como No Disponible
+            </button>
+        </div>
+        
+        <div id="lista-no-disponibles" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Se cargará dinámicamente -->
+            <div class="col-span-full text-center py-12 text-gray-400">
+                <i class="bi bi-arrow-repeat animate-spin text-4xl mb-3 block"></i>
+                <p>Cargando platillos no disponibles...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 2: HISTORIAL POR PLATILLO -->
+<div id="tab-historial" class="tab-content hidden">
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">
+            <i class="bi bi-bar-chart"></i> Platillos que han estado No Disponibles
+        </h3>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platillo</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Veces Marcado</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado Actual</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-historial" class="divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-gray-400">Cargando historial...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 3: TODOS LOS REGISTROS -->
+<div id="tab-registros" class="tab-content hidden">
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-800">
+                <i class="bi bi-list-ul"></i> Registro Completo
+            </h3>
+            <div class="flex gap-2">
+                <button onclick="cargarRegistros(1)" class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platillo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registrado por</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-registros" class="divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-gray-400">Cargando registros...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        <div id="paginacion" class="flex items-center justify-between mt-6">
+            <!-- Se llenará dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- TAB 4: ESTADÍSTICAS -->
+<div id="tab-estadisticas" class="tab-content hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Tarjetas de estadísticas -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Resumen General</h3>
+            <div class="space-y-3" id="resumen-general">
+                <div class="flex justify-between p-3 bg-gray-50 rounded">
+                    <span>Total platillos:</span>
+                    <span class="font-bold" id="stat-total-platillos">--</span>
+                </div>
+                <div class="flex justify-between p-3 bg-red-50 rounded">
+                    <span>No disponibles actuales:</span>
+                    <span class="font-bold text-red-600" id="stat-no-disponibles">--</span>
+                </div>
+                <div class="flex justify-between p-3 bg-blue-50 rounded">
+                    <span>Porcentaje no disponibles:</span>
+                    <span class="font-bold text-blue-600" id="stat-porcentaje">--</span>
+                </div>
+                <div class="flex justify-between p-3 bg-green-50 rounded">
+                    <span>Registros históricos:</span>
+                    <span class="font-bold text-green-600" id="stat-total-registros">--</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top razones -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Top 5 Razones Más Comunes</h3>
+            <div id="top-razones" class="space-y-2">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- MODAL: MARCAR NO DISPONIBLE -->
+<div id="modal-marcar" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Marcar como No Disponible</h2>
+            <button onclick="cerrarModalMarcar()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Seleccionar Platillo</label>
+                <select id="select-platillo" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500">
+                    <option value="">Cargando platillos...</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Razón</label>
+                <textarea id="razon-no-disponible" rows="3" 
+                          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                          placeholder="Ej: Sin ingredientes, Problemas con proveedor, etc."></textarea>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="cerrarModalMarcar()" class="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                    Cancelar
+                </button>
+                <button onclick="confirmarMarcarNoDisponible()" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                    Marcar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cocina/platillos_no_disponibles.js') }}"></script>
+
+<script>
+    // Variables globales
+    let currentPage = 1;
+    let totalPages = 1;
+    
+    // Cambiar entre tabs
+    function cambiarTab(tabName) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // Mostrar el tab seleccionado
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+        
+        // Actualizar estilos de los botones
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('text-orange-600', 'border-orange-600');
+            btn.classList.add('text-gray-500');
+        });
+        
+        const activeBtn = document.getElementById(`tab-${tabName}-btn`);
+        activeBtn.classList.remove('text-gray-500');
+        activeBtn.classList.add('text-orange-600', 'border-orange-600');
+        
+        // Cargar datos según el tab
+        if (tabName === 'activos') {
+            cargarNoDisponibles();
+        } else if (tabName === 'historial') {
+            cargarHistorial();
+        } else if (tabName === 'registros') {
+            cargarRegistros(1);
+        } else if (tabName === 'estadisticas') {
+            cargarEstadisticas();
+        }
+    }
+    
+    // Funciones principales
+    async function cargarNoDisponibles() {
+        try {
+            const response = await fetch('/api/cocina/platillos/no-disponibles/activos');
+            const data = await response.json();
+            
+            if (data.success) {
+                actualizarContador(data.total);
+                renderizarNoDisponibles(data.data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar platillos no disponibles');
+        }
+    }
+    
+    function renderizarNoDisponibles(platillos) {
+        const container = document.getElementById('lista-no-disponibles');
+        
+        if (!platillos || platillos.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-12 text-gray-400">
+                    <i class="bi bi-check-circle text-6xl mb-3 block"></i>
+                    <p class="text-lg font-semibold">¡Todos los platillos están disponibles!</p>
+                    <p class="text-sm mt-1">No hay platillos marcados como no disponibles</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = platillos.map(p => `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-egg-fried text-red-500 text-xl"></i>
+                        <h4 class="font-bold text-gray-800">${escapeHtml(p.platillo_nombre)}</h4>
+                    </div>
+                    <span class="text-xs bg-red-200 text-red-700 px-2 py-1 rounded-full">
+                        ${p.tiempo_no_disponible}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <p class="text-sm text-gray-600">
+                        <i class="bi bi-chat-text"></i> ${escapeHtml(p.razon)}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="bi bi-person"></i> Marcado por: ${p.usuario_registro}
+                    </p>
+                </div>
+                <button onclick='reactivarPlatillo(${p.platillo_id}, "${escapeHtml(p.platillo_nombre)}")' 
+                        class="w-full px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-semibold">
+                    <i class="bi bi-arrow-repeat"></i> Reactivar
+                </button>
+            </div>
+        `).join('');
+    }
+    
+    async function reactivarPlatillo(platilloId, platilloNombre) {
+        const confirmacion = await Swal.fire({
+            title: '¿Reactivar platillo?',
+            text: `¿Estás seguro de que quieres reactivar "${platilloNombre}"?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reactivar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#10b981'
+        });
+        
+        if (confirmacion.isConfirmed) {
+            try {
+                const response = await fetch(`/api/cocina/platillos/no-disponibles/reactivar/${platilloId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarExito(data.message);
+                    cargarNoDisponibles();
+                    cargarRegistros(currentPage);
+                    cargarHistorial();
+                    cargarEstadisticas();
+                } else {
+                    mostrarError(data.error);
+                }
+            } catch (error) {
+                mostrarError('Error al reactivar el platillo');
+            }
+        }
+    }
+    
+    async function cargarHistorial() {
+        try {
+            const response = await fetch('/api/cocina/platillos/no-disponibles/historial');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                renderizarHistorial(data.data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    function renderizarHistorial(historial) {
+        const tbody = document.getElementById('tabla-historial');
+        
+        if (!historial || historial.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="4" class="text-center py-8 text-gray-400">No hay historial registrado</td></tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = historial.map(h => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(h.platillo_nombre)}</td>
+                <td class="px-6 py-4 text-center">
+                    <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                        ${h.veces_marcado} veces
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    ${h.actualmente_no_disponible 
+                        ? '<span class="text-red-600"><i class="bi bi-x-circle"></i> No disponible</span>'
+                        : '<span class="text-green-600"><i class="bi bi-check-circle"></i> Disponible</span>'
+                    }
+                </td>
+                <td class="px-6 py-4 text-right">
+                    ${!h.actualmente_no_disponible 
+                        ? `<button onclick='abrirModalMarcarConId(${h.platillo_id}, "${escapeHtml(h.platillo_nombre)}")' 
+                                class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                <i class="bi bi-ban"></i> Marcar ND
+                           </button>`
+                        : `<button onclick='reactivarPlatillo(${h.platillo_id}, "${escapeHtml(h.platillo_nombre)}")'
+                                class="text-sm bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                                <i class="bi bi-arrow-repeat"></i> Reactivar
+                           </button>`
+                    }
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    async function cargarRegistros(page) {
+        currentPage = page;
+        try {
+            const response = await fetch(`/api/cocina/platillos/no-disponibles/todos?page=${page}&incluir_inactivos=true`);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderizarRegistros(data.data, data);
+                renderizarPaginacion(data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    function renderizarRegistros(registros, paginacion) {
+        const tbody = document.getElementById('tabla-registros');
+        
+        if (!registros || registros.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No hay registros</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = registros.map(r => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium">${escapeHtml(r.platillo_nombre)}</td>
+                <td class="px-4 py-3">${escapeHtml(r.razon)}</td>
+                <td class="px-4 py-3 text-center">
+                    ${r.activo 
+                        ? '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Activo</span>'
+                        : '<span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Resuelto</span>'
+                    }
+                </td>
+                <td class="px-4 py-3 text-sm">${r.usuario_registro}</td>
+                <td class="px-4 py-3 text-sm">${r.fecha_registro}</td>
+                <td class="px-4 py-3 text-center">
+                    ${r.activo 
+                        ? `<button onclick='reactivarPlatillo(${r.platillo_id}, "${escapeHtml(r.platillo_nombre)}")' 
+                                class="text-green-600 hover:text-green-800">
+                                <i class="bi bi-check-circle text-xl"></i>
+                            </button>`
+                        : '<span class="text-gray-400"><i class="bi bi-check-circle-fill"></i></span>'
+                    }
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function renderizarPaginacion(paginacion) {
+        const container = document.getElementById('paginacion');
+        
+        if (paginacion.pages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '<div class="flex gap-2">';
+        
+        // Botón anterior
+        if (paginacion.page > 1) {
+            html += `<button onclick="cargarRegistros(${paginacion.page - 1})" 
+                           class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
+                           Anterior
+                      </button>`;
+        }
+        
+        // Números de página
+        for (let i = 1; i <= paginacion.pages; i++) {
+            if (i === paginacion.page) {
+                html += `<button class="px-3 py-1 bg-orange-500 text-white rounded">${i}</button>`;
+            } else if (Math.abs(i - paginacion.page) <= 2 || i === 1 || i === paginacion.pages) {
+                html += `<button onclick="cargarRegistros(${i})" 
+                               class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
+                               ${i}
+                          </button>`;
+            } else if (i === paginacion.page - 3 || i === paginacion.page + 3) {
+                html += '<span class="px-3 py-1">...</span>';
+            }
+        }
+        
+        // Botón siguiente
+        if (paginacion.page < paginacion.pages) {
+            html += `<button onclick="cargarRegistros(${paginacion.page + 1})" 
+                           class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">
+                           Siguiente
+                      </button>`;
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    
+    async function cargarEstadisticas() {
+        try {
+            const response = await fetch('/api/cocina/platillos/no-disponibles/estadisticas');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const stats = data.data;
+                document.getElementById('stat-total-platillos').textContent = stats.total_platillos || 0;
+                document.getElementById('stat-no-disponibles').textContent = stats.no_disponibles || 0;
+                document.getElementById('stat-porcentaje').textContent = `${stats.porcentaje_no_disponibles || 0}%`;
+                document.getElementById('stat-total-registros').textContent = stats.total_registros_historicos || 0;
+                
+                // Renderizar top razones
+                const topRazonesContainer = document.getElementById('top-razones');
+                if (stats.top_razones && stats.top_razones.length > 0) {
+                    topRazonesContainer.innerHTML = stats.top_razones.map(r => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-700">${escapeHtml(r.razon)}</span>
+                            <span class="font-bold text-orange-600">${r.total} veces</span>
+                        </div>
+                    `).join('');
+                } else {
+                    topRazonesContainer.innerHTML = '<p class="text-center text-gray-400 py-4">No hay datos registrados</p>';
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    async function cargarSelectPlatillos() {
+        try {
+            const response = await fetch('/api/cocina/platillos/activos');
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                const select = document.getElementById('select-platillo');
+                select.innerHTML = '<option value="">Selecciona un platillo</option>' +
+                    data.data.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    function actualizarContador(total) {
+        document.getElementById('total-no-disponibles').textContent = total;
+    }
+    
+    function abrirModalMarcarNoDisponible() {
+        cargarSelectPlatillos();
+        document.getElementById('modal-marcar').classList.remove('hidden');
+    }
+    
+    function abrirModalMarcarConId(platilloId, platilloNombre) {
+        cargarSelectPlatillos().then(() => {
+            const select = document.getElementById('select-platillo');
+            select.value = platilloId;
+            document.getElementById('modal-marcar').classList.remove('hidden');
+        });
+    }
+    
+    function cerrarModalMarcar() {
+        document.getElementById('modal-marcar').classList.add('hidden');
+        document.getElementById('select-platillo').value = '';
+        document.getElementById('razon-no-disponible').value = '';
+    }
+    
+    async function confirmarMarcarNoDisponible() {
+        const platilloId = document.getElementById('select-platillo').value;
+        const razon = document.getElementById('razon-no-disponible').value.trim();
+        
+        if (!platilloId) {
+            mostrarError('Selecciona un platillo');
+            return;
+        }
+        
+        if (!razon) {
+            mostrarError('Ingresa una razón');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/cocina/platillos/no-disponibles/marcar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platillo_id: parseInt(platilloId), razon: razon })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                mostrarExito(data.message);
+                cerrarModalMarcar();
+                cargarNoDisponibles();
+                cargarRegistros(1);
+                cargarHistorial();
+                cargarEstadisticas();
+            } else {
+                mostrarError(data.error);
+            }
+        } catch (error) {
+            mostrarError('Error al marcar platillo como no disponible');
+        }
+    }
+    
+    function mostrarExito(mensaje) {
+        Swal.fire({ icon: 'success', title: '¡Éxito!', text: mensaje, timer: 2000, showConfirmButton: false });
+    }
+    
+    function mostrarError(mensaje) {
+        Swal.fire({ icon: 'error', title: 'Error', text: mensaje });
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Socket.IO para actualizaciones en tiempo real
+    let socket = null;
+    function inicializarSocket() {
+        try {
+            socket = io({ transports: ['websocket'] });
+            socket.on('connect', () => {
+                console.log('Socket.IO conectado');
+                socket.emit('join_room', 'cocina');
+            });
+            socket.on('platillo_no_disponible', () => {
+                cargarNoDisponibles();
+                cargarRegistros(currentPage);
+                cargarHistorial();
+            });
+            socket.on('platillo_reactivado', () => {
+                cargarNoDisponibles();
+                cargarRegistros(currentPage);
+                cargarHistorial();
+            });
+        } catch (error) {
+            console.error('Error Socket.IO:', error);
+        }
+    }
+    
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarNoDisponibles();
+        inicializarSocket();
+    });
+    
+    // Exponer funciones globales
+    window.cambiarTab = cambiarTab;
+    window.reactivarPlatillo = reactivarPlatillo;
+    window.abrirModalMarcarNoDisponible = abrirModalMarcarNoDisponible;
+    window.abrirModalMarcarConId = abrirModalMarcarConId;
+    window.cerrarModalMarcar = cerrarModalMarcar;
+    window.confirmarMarcarNoDisponible = confirmarMarcarNoDisponible;
+    window.cargarRegistros = cargarRegistros;
+</script>
+{% endblock %}
