@@ -1,0 +1,87 @@
+{% extends "layout/layout_cliente.html" %}
+
+{% block title %}Menú - Callejón 19{% endblock %}
+
+{% block content %}
+<div class="mb-6 mt-2">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Nuestro Menú</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Descubre nuestros platillos</p>
+</div>
+
+<div id="menuContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-16">
+    </div>
+
+<template id="platilloTemplate">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden flex h-32 border border-gray-100 dark:border-slate-700">
+        <div class="w-1/3 bg-gray-100 dark:bg-slate-700 relative">
+            <img src="" alt="Platillo" class="platillo-img w-full h-full object-cover">
+            <div class="platillo-placeholder absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 hidden">
+                <i class="bi bi-image text-2xl"></i>
+            </div>
+        </div>
+        <div class="w-2/3 p-3 flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-800 dark:text-white text-sm leading-tight platillo-nombre line-clamp-1">Nombre</h3>
+                    <span class="platillo-precio font-bold text-orange-500 text-sm ml-2 whitespace-nowrap">$0.00</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 platillo-desc">Descripción</p>
+            </div>
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-[10px] font-semibold tracking-wider uppercase text-orange-600 bg-orange-50 dark:bg-slate-700 dark:text-orange-400 px-2 py-1 rounded-md platillo-categoria">Categoría</span>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cliente/api_cliente.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const container = document.getElementById('menuContainer');
+        const template = document.getElementById('platilloTemplate');
+
+        showLoading('Cargando menú...');
+        
+        // Petición al endpoint público de la API
+        const response = await APICliente.get('/api/v1/menu');
+        
+        hideLoading();
+
+        if (response.success && response.data.data && response.data.data.length > 0) {
+            const platillos = response.data.data;
+            
+            platillos.forEach(platillo => {
+                const clone = template.content.cloneNode(true);
+                
+                clone.querySelector('.platillo-nombre').textContent = platillo.nombre;
+                clone.querySelector('.platillo-desc').textContent = platillo.descripcion || 'Sin descripción';
+                
+                // Usamos formatCurrency definida globalmente en main.js
+                clone.querySelector('.platillo-precio').textContent = formatCurrency(platillo.precio);
+                clone.querySelector('.platillo-categoria').textContent = platillo.categoria_nombre;
+
+                const img = clone.querySelector('.platillo-img');
+                const placeholder = clone.querySelector('.platillo-placeholder');
+
+                if (platillo.imagen) {
+                    img.src = platillo.imagen;
+                } else {
+                    img.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                }
+
+                container.appendChild(clone);
+            });
+        } else {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i class="bi bi-journal-x text-5xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+                    <p class="text-gray-500 dark:text-gray-400 font-medium">El menú no está disponible por el momento.</p>
+                </div>
+            `;
+        }
+    });
+</script>
+{% endblock %}

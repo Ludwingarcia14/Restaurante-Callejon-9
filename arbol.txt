@@ -1,0 +1,447 @@
+Folder PATH listing for volume Windows
+Volume serial number is 12AA-C5C6
+C:.
+¦   .dockerignore
+¦   .env
+¦   .env.example
+¦   .gitattributes
+¦   .gitignore
+¦   .hintrc
+¦   actividad.py
+¦   app.py
+¦   arbol.txt
+¦   constants.py
+¦   Dockerfile
+¦   extensions.py
+¦   README.md
+¦   requirements.txt
+¦   routes_v1.py
+¦   seed_inventario.py
+¦   seed_productos.py
+¦   verificarMesas.py
+¦   
++---.kilo
+¦       package-lock.json
+¦       
++---.vscode
+¦       settings.json
+¦       
++---analytics
+¦       spark_analytics.py
+¦       __init__.py
+¦       
++---config
+¦   ¦   db.py
+¦   ¦   localhost+2-key.pem
+¦   ¦   localhost+2.pem
+¦   ¦   server.py
+¦   ¦   settings.py
+¦   ¦   
+¦   +---__pycache__
+¦           db.cpython-312.pyc
+¦           
++---controllers
+¦   +---admin
+¦   ¦   ¦   BackupController.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           BackupController.cpython-312.pyc
+¦   ¦           
+¦   +---analytics
+¦   ¦   ¦   analytics_controller.py
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           analytics_controller.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---api
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---v1
+¦   ¦   ¦   ¦   auth_mobile_controller.py
+¦   ¦   ¦   ¦   cliente_auth_controller.py
+¦   ¦   ¦   ¦   cliente_perfil_controller.py
+¦   ¦   ¦   ¦   cuenta_movil_controller.py
+¦   ¦   ¦   ¦   menu_movil_controller.py
+¦   ¦   ¦   ¦   mesa_movil_controller.py
+¦   ¦   ¦   ¦   pago_movil_controller.py
+¦   ¦   ¦   ¦   pedido_movil_controller.py
+¦   ¦   ¦   ¦   __init__.py
+¦   ¦   ¦   ¦   
+¦   ¦   ¦   +---__pycache__
+¦   ¦   ¦           auth_mobile_controller.cpython-312.pyc
+¦   ¦   ¦           cliente_auth_controller.cpython-312.pyc
+¦   ¦   ¦           cliente_perfil_controller.cpython-312.pyc
+¦   ¦   ¦           cuenta_movil_controller.cpython-312.pyc
+¦   ¦   ¦           menu_movil_controller.cpython-312.pyc
+¦   ¦   ¦           mesa_movil_controller.cpython-312.pyc
+¦   ¦   ¦           pago_movil_controller.cpython-312.pyc
+¦   ¦   ¦           pedido_movil_controller.cpython-312.pyc
+¦   ¦   ¦           __init__.cpython-312.pyc
+¦   ¦   ¦           
+¦   ¦   +---__pycache__
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---auth
+¦   ¦   ¦   AuthController.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           AuthController.cpython-312.pyc
+¦   ¦           
+¦   +---client
+¦   ¦       client_controller.py
+¦   ¦       
+¦   +---cocina
+¦   ¦   ¦   cocinaController.py
+¦   ¦   ¦   platillos_no_disponibles_controller.py
+¦   ¦   ¦   _init_.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           cocinaController.cpython-312.pyc
+¦   ¦           
+¦   +---comanda
+¦   ¦   ¦   comandaController.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           comandaController.cpython-312.pyc
+¦   ¦           
+¦   +---dashboard
+¦   ¦   ¦   dashboardApiController.py
+¦   ¦   ¦   dashboard_controller.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           dashboardApiController.cpython-312.pyc
+¦   ¦           dashboard_controller.cpython-312.pyc
+¦   ¦           
+¦   +---historial
+¦   ¦   ¦   historialController.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           historialController.cpython-312.pyc
+¦   ¦           
+¦   +---inventario
+¦   ¦   ¦   inventarioController.py
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           inventarioController.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---menu
+¦   ¦   ¦   menuController.py
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           menuController.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---mesa
+¦   ¦   ¦   mesaController.py
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           mesaController.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---mesero
+¦   ¦   +---__pycache__
+¦   ¦           diagnostico_controller.cpython-312.pyc
+¦   ¦           etl_controller.cpython-312.pyc
+¦   ¦           kmeans_controller.cpython-312.pyc
+¦   ¦           metodologia_controller.cpython-312.pyc
+¦   ¦           randomforest_controller.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---notificaciones
+¦   ¦   ¦   notificacion_controller.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           notificacion_controller.cpython-312.pyc
+¦   ¦           
+¦   +---pago
+¦   ¦   ¦   mercadoPagoController.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           mercadoPagoController.cpython-312.pyc
+¦   ¦           
+¦   +---propina
+¦   ¦   ¦   propinasController.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           propinasController.cpython-312.pyc
+¦   ¦           
+¦   +---reports
+¦   ¦   ¦   reports_controller.py
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           reports_controller.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---settings
+¦   ¦   ¦   settingsController.py
+¦   ¦   ¦   __init__.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           settingsController.cpython-312.pyc
+¦   ¦           __init__.cpython-312.pyc
+¦   ¦           
+¦   +---support
+¦   ¦       supportController.py
+¦   ¦       
+¦   +---venta
+¦       ¦   ventasController.py
+¦       ¦   __init__.py
+¦       ¦   
+¦       +---__pycache__
+¦               ventasController.cpython-312.pyc
+¦               __init__.cpython-312.pyc
+¦               
++---flask_session
+¦       2029240f6d1128be89ddc32729463129
+¦       9e3e7a4d4dd5d5ac50d2ec4c980e098b
+¦       
++---frontend
+¦   ¦   vite.config.js
+¦   ¦   
+¦   +---src
+¦       +---pages
+¦           +---components
+¦               +---store
+¦                   +---api
+¦                           app.jsx
+¦                           
++---frontend_dist
+¦   ¦   favicon.svg
+¦   ¦   icons.svg
+¦   ¦   index.html
+¦   ¦   
+¦   +---assets
+¦           index-D5rIB5Fn.js
+¦           index-G7JbBlOp.css
+¦           
++---models
+¦   ¦   cliente_model.py
+¦   ¦   comanda_model.py
+¦   ¦   dashboard_model.py
+¦   ¦   empleado_model.py
+¦   ¦   inventario_model.py
+¦   ¦   menu_model.py
+¦   ¦   mesa_model.py
+¦   ¦   notificacion.py
+¦   ¦   pago_movil_model.py
+¦   ¦   pedido_movil_model.py
+¦   ¦   producto_model.py
+¦   ¦   reports_model.py
+¦   ¦   venta_model.py
+¦   ¦   __init__.py
+¦   ¦   
+¦   +---__pycache__
+¦           cliente_model.cpython-312.pyc
+¦           comanda_model.cpython-312.pyc
+¦           empleado_model.cpython-312.pyc
+¦           inventario_model.cpython-312.pyc
+¦           menu_model.cpython-312.pyc
+¦           mesa_model.cpython-312.pyc
+¦           notificacion.cpython-312.pyc
+¦           pago_movil_model.cpython-312.pyc
+¦           pedido_movil_model.cpython-312.pyc
+¦           producto_model.cpython-312.pyc
+¦           reports_model.cpython-312.pyc
+¦           ticket_model.cpython-312.pyc
+¦           venta_model.cpython-312.pyc
+¦           __init__.cpython-312.pyc
+¦           
++---resources
+¦   +---views
+¦       ¦   login.html
+¦       ¦   
+¦       +---admin
+¦       ¦   ¦   dashboard.html
+¦       ¦   ¦   
+¦       ¦   +---admin
+¦       ¦   ¦       backup.html
+¦       ¦   ¦       restore.html
+¦       ¦   ¦       
+¦       ¦   +---analytics
+¦       ¦   ¦       analytics.html
+¦       ¦   ¦       
+¦       ¦   +---config
+¦       ¦   ¦       config.html
+¦       ¦   ¦       
+¦       ¦   +---empleados
+¦       ¦   ¦       crear.html
+¦       ¦   ¦       editar.html
+¦       ¦   ¦       lista.html
+¦       ¦   ¦       
+¦       ¦   +---menu
+¦       ¦   ¦       crear.html
+¦       ¦   ¦       detalle.html
+¦       ¦   ¦       editar.html
+¦       ¦   ¦       lista.html
+¦       ¦   ¦       
+¦       ¦   +---ventas
+¦       ¦           cerrar_cuenta.html
+¦       ¦           corte_caja.html
+¦       ¦           cuentas.html
+¦       ¦           dashboard.html
+¦       ¦           nueva_venta.html
+¦       ¦           
+¦       +---caja
+¦       ¦       dashboard.html
+¦       ¦       
+¦       +---cocina
+¦       ¦   ¦   dashboard.html
+¦       ¦   ¦   en_proceso.html
+¦       ¦   ¦   listos.html
+¦       ¦   ¦   pedidos.html
+¦       ¦   ¦   
+¦       ¦   +---config
+¦       ¦           config.html
+¦       ¦           
+¦       +---errors
+¦       ¦       401.html
+¦       ¦       404.html
+¦       ¦       
+¦       +---inventario
+¦       ¦   ¦   alertas.html
+¦       ¦   ¦   dashboard.html
+¦       ¦   ¦   insumos.html
+¦       ¦   ¦   movimientos.html
+¦       ¦   ¦   reportes.html
+¦       ¦   ¦   
+¦       ¦   +---config
+¦       ¦   ¦       config.html
+¦       ¦   ¦       
+¦       ¦   +---insumos
+¦       ¦   ¦       crear.html
+¦       ¦   ¦       
+¦       ¦   +---proveedores
+¦       ¦           lista.html
+¦       ¦           
+¦       +---layout
+¦       ¦       layout_base.html
+¦       ¦       layout_cocina.html
+¦       ¦       layout_inventario.html
+¦       ¦       layout_mesero.html
+¦       ¦       layout_support.html
+¦       ¦       
+¦       +---mesero
+¦       ¦   ¦   comandas.html
+¦       ¦   ¦   dashboard.html
+¦       ¦   ¦   mesero_historial.html
+¦       ¦   ¦   mesero_menu.html
+¦       ¦   ¦   mesero_propinas.html
+¦       ¦   ¦   
+¦       ¦   +---config
+¦       ¦           config.html
+¦       ¦           
+¦       +---reports
+¦       ¦       financieros.html
+¦       ¦       index.html
+¦       ¦       inventario.html
+¦       ¦       operativos.html
+¦       ¦       pdf_template.html
+¦       ¦       resumen_ejecutivo.html
+¦       ¦       
+¦       +---support
+¦               alertas.html
+¦               comunicacion_ticket.html
+¦               dashboard.html
+¦               gestion.html
+¦               historial.html
+¦               metricas.html
+¦               tickets.html
+¦               
++---routes
+¦   ¦   admin_routes.py
+¦   ¦   auth_routes.py
+¦   ¦   cocina_routes.py
+¦   ¦   inventario_routes.py
+¦   ¦   mesero_routes.py
+¦   ¦   notificaciones_routes.py
+¦   ¦   pagos_routes.py
+¦   ¦   settings_routes.py
+¦   ¦   ventas_routes.py
+¦   ¦   __init__.py
+¦   ¦   
+¦   +---__pycache__
+¦           admin_routes.cpython-312.pyc
+¦           analytics_routes.cpython-312.pyc
+¦           auth_routes.cpython-312.pyc
+¦           cocina_routes.cpython-312.pyc
+¦           inventario_routes.cpython-312.pyc
+¦           mesero_routes.cpython-312.pyc
+¦           notificaciones_routes.cpython-312.pyc
+¦           pagos_routes.cpython-312.pyc
+¦           settings_routes.cpython-312.pyc
+¦           ventas_routes.cpython-312.pyc
+¦           __init__.cpython-312.pyc
+¦           
++---services
+¦   +---analytics
+¦   ¦   +---__pycache__
+¦   ¦           asociacion_service.cpython-312.pyc
+¦   ¦           pareto_service.cpython-312.pyc
+¦   ¦           prediccion_service.cpython-312.pyc
+¦   ¦           
+¦   +---notificaciones
+¦   ¦   ¦   notification_service.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           notification_service.cpython-312.pyc
+¦   ¦           
+¦   +---security
+¦   ¦   ¦   password_service.py
+¦   ¦   ¦   two_factor_service.py
+¦   ¦   ¦   
+¦   ¦   +---__pycache__
+¦   ¦           password_service.cpython-312.pyc
+¦   ¦           two_factor_service.cpython-312.pyc
+¦   ¦           
+¦   +---__pycache__
+¦           cocina_service.cpython-312.pyc
+¦           comanda_service.cpython-312.pyc
+¦           mesero_diagnostico_service.cpython-312.pyc
+¦           mesero_kmeans_service.cpython-312.pyc
+¦           mesero_randomforest_service.cpython-312.pyc
+¦           propina_service.cpython-312.pyc
+¦           
++---static
+¦   +---css
+¦   ¦       errors.css
+¦   ¦       main.css
+¦   ¦       
+¦   +---img
+¦   ¦       callejon9.jpeg
+¦   ¦       logo.png
+¦   ¦       
+¦   +---js
+¦       ¦   main.js
+¦       ¦   notificaciones_header.js
+¦       ¦   pedidos.js
+¦       ¦   preparacion.js
+¦       ¦   
+¦       +---cocina
+¦               listos.js
+¦               
++---utils
+¦   ¦   hash_password.py
+¦   ¦   jwt_utils.py
+¦   ¦   pagination.py
+¦   ¦   response.py
+¦   ¦   validators.py
+¦   ¦   __init__.py
+¦   ¦   
+¦   +---__pycache__
+¦           jwt_utils.cpython-312.pyc
+¦           pagination.cpython-312.pyc
+¦           response.cpython-312.pyc
+¦           validators.cpython-312.pyc
+¦           __init__.cpython-312.pyc
+¦           
++---__pycache__
+        extensions.cpython-312.pyc
+        routes_v1.cpython-312.pyc
+        

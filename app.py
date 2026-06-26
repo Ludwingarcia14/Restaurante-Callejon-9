@@ -207,6 +207,12 @@ def internal_error(e):
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
     return redirect(url_for("routes.login"))
 
+ 
+#print("\n=== RUTAS REGISTRADAS ===")
+#print(app.url_map)
+#print("=========================\n")
+
+
 # ================================
 # INICIO DEL SERVIDOR
 # ================================

@@ -16,7 +16,7 @@ from . import ventas_routes        # noqa: F401, E402
 from . import notificaciones_routes # noqa: F401, E402
 from . import settings_routes      # noqa: F401, E402
 from . import pagos_routes         # noqa: F401, E402
-
+import routes.cliente_routes
 
 def register_reports_routes(app):
     """Registra las rutas de reportes en la aplicación"""
