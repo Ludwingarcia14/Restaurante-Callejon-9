@@ -14,7 +14,7 @@
         <h2 class="text-xl font-bold mb-1">Predicción de Demanda — Gradient Boosting</h2>
         <p class="text-sm opacity-85">Proyecta pedidos diarios, ingresos esperados e ingredientes necesarios para los próximos días.</p>
       </div>
-      <a href="{{ url_for('routes.analytics_index') }}" class="ml-auto text-white opacity-70 hover:opacity-100 text-sm flex items-center gap-1">
+      <a href="{{ url_for('routes.analytics_index') }}" class="ml-auto text-white opacity-70 hover:opacity-100 text-sm flex items-center gap-1 shrink-0">
         <i class="bi bi-arrow-left"></i> Analytics
       </a>
     </div>
@@ -41,29 +41,34 @@
     <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#0284c7;">
       <i class="bi bi-arrow-clockwise mr-1"></i>Predecir
     </button>
-    <span id="estado" class="text-xs text-gray-400"></span>
+    <span id="estado" class="text-xs text-gray-400 ml-auto"></span>
   </div>
 
-  <!-- KPI cards de predicción -->
+  <!-- KPI cards -->
   <div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+    <div class="col-span-2 md:col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
       <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando modelo…
     </div>
   </div>
 
   <!-- Gráfico histórico + predicción -->
   <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-      <i class="bi bi-activity text-sky-500"></i> Pedidos diarios — Historial y Proyección
-      <span class="text-xs font-normal text-gray-400">Línea sólida = real · Punteada = predicción</span>
-    </h3>
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+        <i class="bi bi-activity text-sky-500"></i> Pedidos diarios — Historial y Proyección
+      </h3>
+      <span class="text-xs text-gray-400">
+        <span class="inline-block w-8 h-0.5 bg-sky-400 align-middle mr-1"></span>Real
+        <span class="inline-block w-8 border-t-2 border-dashed border-amber-400 align-middle mx-2"></span>Predicción
+      </span>
+    </div>
     <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
       <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
     </div>
     <canvas id="chartPrediccion" style="display:none; max-height:320px;"></canvas>
   </div>
 
-  <!-- Tabla de predicciones -->
+  <!-- Tablas: proyección + ingredientes -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -74,9 +79,20 @@
         <i class="bi bi-arrow-repeat animate-spin"></i>
       </div>
       <div id="tabla-pred" style="display:none;" class="overflow-auto"></div>
+      <div id="tabla-pred-pager" style="display:none;"
+           class="flex items-center justify-between px-4 py-2 border-t border-gray-100 text-xs text-gray-500">
+        <button id="pager-prev" onclick="predPage(-1)"
+                class="flex items-center gap-1 px-3 py-1 rounded-lg border border-gray-200 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 disabled:opacity-30 disabled:cursor-not-allowed transition">
+          <i class="bi bi-chevron-left"></i> Anterior
+        </button>
+        <span id="pager-info" class="font-medium"></span>
+        <button id="pager-next" onclick="predPage(1)"
+                class="flex items-center gap-1 px-3 py-1 rounded-lg border border-gray-200 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 disabled:opacity-30 disabled:cursor-not-allowed transition">
+          Siguiente <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- Ingredientes estimados -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
         <i class="bi bi-box-seam text-emerald-500"></i>
@@ -90,14 +106,44 @@
     </div>
   </div>
 
+  <!-- Patrón semanal -->
+  <div id="semana-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+      <i class="bi bi-bar-chart-fill text-sky-500"></i> Patrón semanal — pedidos esperados por día
+    </h3>
+    <div id="semana-bars" class="space-y-2"></div>
+  </div>
+
   <!-- Métricas del modelo -->
   <div id="metricas-panel" style="display:none;"
-       class="bg-sky-50 border border-sky-100 rounded-xl p-5 text-sm text-sky-800">
-    <p class="font-semibold mb-2"><i class="bi bi-cpu mr-1 text-sky-500"></i>Métricas del Modelo (validación en últimos 7 días)</p>
-    <div id="metricas-content" class="grid grid-cols-3 gap-4 text-center mt-2"></div>
-    <p class="text-xs text-sky-600 mt-3 opacity-70">
-      Modelo: Gradient Boosting Regressor · Features: día de la semana, mes, fin de semana, temporada alta, día del mes.
+       class="bg-sky-50 border border-sky-100 rounded-xl p-5 text-sm text-sky-800 mb-6">
+    <p class="font-semibold mb-3 flex items-center gap-2">
+      <i class="bi bi-cpu text-sky-500"></i>
+      Métricas del Modelo
+      <span class="text-xs font-normal text-sky-600 opacity-70" id="metricas-subtitle"></span>
     </p>
+    <div id="metricas-content" class="grid grid-cols-3 gap-4 text-center"></div>
+    <p class="text-xs text-sky-600 mt-3 opacity-70">
+      Gradient Boosting Regressor · Features: día de la semana, mes, fin de semana, viernes, temporada alta, día del mes.
+    </p>
+  </div>
+
+  <!-- Validación: real vs predicho (7 días holdout) -->
+  <div id="validacion-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+      <i class="bi bi-table text-sky-500"></i> Validación del Modelo
+      <span class="text-xs font-normal text-gray-400">(últimos 7 días del historial — real vs predicho)</span>
+    </h3>
+    <div id="validacion-content"></div>
+  </div>
+
+  <!-- Matriz de confusión (binaria: día alto vs bajo) -->
+  <div id="matriz-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
+      <i class="bi bi-grid-3x3 text-sky-500"></i> Matriz de Confusión
+    </h3>
+    <p class="text-xs text-gray-400 mb-4">Clasifica cada día como "Alto" o "Bajo" demanda respecto al umbral (promedio de entrenamiento) y compara predicción vs realidad.</p>
+    <div id="matriz-content"></div>
   </div>
 
   <!-- Aviso -->
@@ -109,6 +155,7 @@
 <style>
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .animate-spin{animation:spin 1s linear infinite}
+.semana-bar-fill { transition: width 0.6s cubic-bezier(.4,0,.2,1); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -120,16 +167,19 @@ async function cargar(){
   const fut  = document.getElementById('sel-fut').value;
   document.getElementById('estado').textContent = 'Entrenando modelo…';
   document.getElementById('chart-loading').style.display='flex';
-  if(chartPred) chartPred.destroy();
+  if(chartPred){ chartPred.destroy(); chartPred=null; }
   document.getElementById('chartPrediccion').style.display='none';
   document.getElementById('tabla-loading').style.display='flex';
   document.getElementById('ingr-loading').style.display='flex';
   document.getElementById('tabla-pred').style.display='none';
   document.getElementById('tabla-ingr').style.display='none';
   document.getElementById('metricas-panel').style.display='none';
+  document.getElementById('semana-panel').style.display='none';
+  document.getElementById('validacion-panel').style.display='none';
+  document.getElementById('matriz-panel').style.display='none';
   document.getElementById('aviso-panel').style.display='none';
   document.getElementById('kpi-cards').innerHTML=`
-    <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+    <div class="col-span-2 md:col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
       <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando…
     </div>`;
 
@@ -139,7 +189,8 @@ async function cargar(){
     if(d.error) throw new Error(d.error);
 
     if(d.aviso){
-      document.getElementById('aviso-panel').textContent = d.aviso;
+      document.getElementById('aviso-panel').innerHTML =
+        `<i class="bi bi-info-circle mr-2"></i>${d.aviso}`;
       document.getElementById('aviso-panel').style.display='';
       ['chart-loading','tabla-loading','ingr-loading'].forEach(id=>document.getElementById(id).style.display='none');
       document.getElementById('estado').textContent='';
@@ -150,72 +201,102 @@ async function cargar(){
     renderGrafico(d);
     renderTablaPred(d.predicciones);
     renderTablaIngr(d.ingredientes_estimados||[]);
+    renderSemana(d.resumen_semana||[]);
     renderMetricas(d.metricas);
+    renderValidacion(d.validacion||[]);
+    renderMatrizConfusion(d.matriz_confusion||{});
     document.getElementById('estado').textContent =
-      `${d.metricas.dias_historial} días de historial · ${d.predicciones.length} días proyectados`;
+      `${d.metricas.dias_historial} días de historial · ${d.predicciones.length} proyectados`;
   }catch(e){
     document.getElementById('estado').textContent='';
-    document.getElementById('aviso-panel').textContent = 'Error: '+e.message;
+    document.getElementById('aviso-panel').innerHTML = `<i class="bi bi-exclamation-triangle mr-2"></i>Error: ${e.message}`;
     document.getElementById('aviso-panel').style.display='';
     ['chart-loading','tabla-loading','ingr-loading'].forEach(id=>document.getElementById(id).style.display='none');
   }
 }
 
 function renderKPIs(d){
-  const totalPed  = d.predicciones.reduce((a,b)=>a+b.pedidos_pred,0);
-  const totalIng  = d.predicciones.reduce((a,b)=>a+b.ingreso_pred,0);
-  const maxDia    = d.predicciones.reduce((a,b)=>a.pedidos_pred>b.pedidos_pred?a:b,{pedidos_pred:0,dia_semana:''});
-  const finSemana = d.predicciones.filter(p=>p.es_fin_semana).reduce((a,b)=>a+b.pedidos_pred,0);
+  const totalPed = d.predicciones.reduce((a,b)=>a+b.pedidos_pred,0);
+  const totalIng = d.predicciones.reduce((a,b)=>a+b.ingreso_pred,0);
+  const maxDia   = d.predicciones.reduce((a,b)=>a.pedidos_pred>b.pedidos_pred?a:b,{pedidos_pred:0,dia_semana:''});
   const cards=[
-    {label:'Pedidos estimados',val:totalPed,icon:'bi-receipt',color:'#0284c7'},
-    {label:'Ingreso proyectado',val:fmt(totalIng),icon:'bi-currency-dollar',color:'#10b981'},
-    {label:'Día de mayor demanda',val:`${maxDia.dia_semana} — ${maxDia.pedidos_pred} pedidos`,icon:'bi-calendar-event',color:'#f59e0b'},
-    {label:'Pedidos fin de semana',val:finSemana,icon:'bi-star',color:'#8b5cf6'},
+    {label:'Pedidos estimados',   val:totalPed,                                          icon:'bi-receipt',       color:'#0284c7'},
+    {label:'Ingreso proyectado',  val:fmt(totalIng),                                     icon:'bi-currency-dollar',color:'#10b981'},
+    {label:'Día de mayor demanda',val:`${maxDia.dia_semana} — ${maxDia.pedidos_pred} ped`,icon:'bi-calendar-event',color:'#f59e0b'},
+    {label:'Ticket promedio',     val:fmt(d.ticket_promedio||0),                         icon:'bi-receipt-cutoff', color:'#8b5cf6'},
   ];
   document.getElementById('kpi-cards').innerHTML=cards.map(k=>`
     <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
       <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:${k.color}20;">
         <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
       </div>
-      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
-    </div>
-  `).join('');
+      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-sm font-bold text-gray-800 leading-tight">${k.val}</p></div>
+    </div>`).join('');
 }
 
 function renderGrafico(d){
   document.getElementById('chart-loading').style.display='none';
   document.getElementById('chartPrediccion').style.display='';
 
-  const histLabels = d.historico.map(h=>h.fecha.slice(5));
-  const histData   = d.historico.map(h=>h.real);
-  const predLabels = d.predicciones.map(p=>p.fecha.slice(5));
-  const predData   = d.predicciones.map(p=>p.pedidos_pred);
+  const hL = d.historico.map(h=>h.fecha.slice(5));
+  const hD = d.historico.map(h=>h.real);
+  const pL = d.predicciones.map(p=>p.fecha.slice(5));
+  const pD = d.predicciones.map(p=>p.pedidos_pred);
+
+  // Bridge: extend historical line to touch first prediction point
+  const histSeries = [...hD, pD[0], ...Array(pL.length-1).fill(null)];
+  const predSeries = [...Array(hL.length).fill(null), ...pD];
 
   chartPred = new Chart(document.getElementById('chartPrediccion'),{
     type:'line',
     data:{
-      labels:[...histLabels,...predLabels],
+      labels:[...hL,...pL],
       datasets:[
-        {label:'Pedidos reales',data:[...histData,...Array(predLabels.length).fill(null)],
-         borderColor:'#0ea5e9',backgroundColor:'#0ea5e920',fill:true,tension:0.3,pointRadius:2},
-        {label:'Predicción',data:[...Array(histLabels.length).fill(null),...predData],
-         borderColor:'#f59e0b',borderDash:[6,3],backgroundColor:'#f59e0b15',fill:true,tension:0.3,
-         pointRadius:4,pointBackgroundColor:'#f59e0b'},
+        {label:'Pedidos reales', data:histSeries,
+         borderColor:'#0ea5e9', backgroundColor:'#0ea5e920',
+         fill:true, tension:0.3, pointRadius:2, borderWidth:2},
+        {label:'Predicción',    data:predSeries,
+         borderColor:'#f59e0b', borderDash:[6,3], backgroundColor:'#f59e0b15',
+         fill:true, tension:0.3, pointRadius:4, pointBackgroundColor:'#f59e0b', borderWidth:2},
       ]
     },
     options:{
       responsive:true,
-      plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:12,padding:16}},
+        tooltip:{mode:'index',intersect:false}
+      },
       scales:{
-        x:{ticks:{font:{size:10},maxTicksLimit:20}},
-        y:{beginAtZero:true,title:{display:true,text:'Pedidos'}}
+        x:{ticks:{font:{size:10},maxTicksLimit:20},grid:{display:false}},
+        y:{beginAtZero:true,title:{display:true,text:'Pedidos/día'},
+           ticks:{font:{size:10}}}
       }
     }
   });
 }
 
+const PRED_PAGE_SIZE = 7;
+let _predsAll = [], _predsPage = 0;
+
 function renderTablaPred(preds){
+  _predsAll  = preds;
+  _predsPage = 0;
   document.getElementById('tabla-loading').style.display='none';
+  _renderPredPage();
+}
+
+function predPage(delta){
+  const maxPage = Math.ceil(_predsAll.length / PRED_PAGE_SIZE) - 1;
+  _predsPage = Math.max(0, Math.min(_predsPage + delta, maxPage));
+  _renderPredPage();
+}
+
+function _renderPredPage(){
+  const start = _predsPage * PRED_PAGE_SIZE;
+  const slice = _predsAll.slice(start, start + PRED_PAGE_SIZE);
+  const total = _predsAll.length;
+  const pages = Math.ceil(total / PRED_PAGE_SIZE);
+
   document.getElementById('tabla-pred').style.display='';
   document.getElementById('tabla-pred').innerHTML=`
     <table class="w-full text-xs border-collapse">
@@ -228,67 +309,202 @@ function renderTablaPred(preds){
         </tr>
       </thead>
       <tbody>
-        ${preds.map(p=>`
-          <tr class="hover:bg-sky-50 border-b border-gray-100 ${p.es_fin_semana?'bg-sky-50':''} transition">
-            <td class="px-4 py-2 font-medium">${p.fecha}</td>
+        ${slice.map(p=>`
+          <tr class="border-b border-gray-100 ${p.es_fin_semana?'bg-amber-50 hover:bg-amber-100':'hover:bg-sky-50'} transition">
+            <td class="px-4 py-2 font-medium text-gray-700">${p.fecha}</td>
             <td class="px-4 py-2">
               <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
-                ${p.es_fin_semana?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-600'}">${p.dia_semana}</span>
+                ${p.es_fin_semana?'bg-amber-200 text-amber-800':'bg-gray-100 text-gray-600'}">${p.dia_semana}</span>
             </td>
             <td class="px-4 py-2 text-center font-bold text-sky-700">${p.pedidos_pred}</td>
             <td class="px-4 py-2 text-right text-gray-600">${fmt(p.ingreso_pred)}</td>
-          </tr>
-        `).join('')}
+          </tr>`).join('')}
       </tbody>
     </table>`;
+
+  const pager = document.getElementById('tabla-pred-pager');
+  if(pages > 1){
+    pager.style.display='flex';
+    document.getElementById('pager-info').textContent =
+      `Semana ${_predsPage + 1} de ${pages} · días ${start + 1}–${Math.min(start + PRED_PAGE_SIZE, total)}`;
+    document.getElementById('pager-prev').disabled = _predsPage === 0;
+    document.getElementById('pager-next').disabled = _predsPage === pages - 1;
+  } else {
+    pager.style.display='none';
+  }
 }
 
 function renderTablaIngr(ingr){
   document.getElementById('ingr-loading').style.display='none';
   document.getElementById('tabla-ingr').style.display='';
   if(!ingr.length){
-    document.getElementById('tabla-ingr').innerHTML='<p class="p-4 text-sm text-gray-400 text-center">Sin datos de ingredientes</p>';
+    document.getElementById('tabla-ingr').innerHTML='<p class="p-6 text-sm text-gray-400 text-center">Sin datos de ingredientes</p>';
     return;
   }
   document.getElementById('tabla-ingr').innerHTML=`
     <table class="w-full text-xs border-collapse">
       <thead>
         <tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
-          <th class="px-4 py-2">Ingrediente / Platillo</th>
-          <th class="px-4 py-2 text-center">Unidades a prep.</th>
-          <th class="px-4 py-2 text-center">Prom. diario</th>
+          <th class="px-4 py-2">Platillo / Ingrediente</th>
+          <th class="px-4 py-2 text-center">Unidades</th>
+          <th class="px-4 py-2 text-center">Prom./día</th>
         </tr>
       </thead>
       <tbody>
         ${ingr.map((i,idx)=>`
           <tr class="hover:bg-emerald-50 border-b border-gray-100 transition">
-            <td class="px-4 py-2 font-medium text-gray-700">
-              <span class="w-5 h-5 inline-flex items-center justify-center rounded-full text-white text-xs mr-1 font-bold"
+            <td class="px-4 py-2 font-medium text-gray-700 flex items-center gap-2">
+              <span class="w-5 h-5 inline-flex items-center justify-center rounded-full text-white text-xs font-bold flex-shrink-0"
                     style="background:${['#10b981','#0ea5e9','#8b5cf6','#f59e0b','#ef4444'][idx%5]};">${idx+1}</span>
               ${i.ingrediente}
             </td>
             <td class="px-4 py-2 text-center font-bold text-emerald-700">${i.unidades_pred}</td>
             <td class="px-4 py-2 text-center text-gray-400">${i.base_diaria}/día</td>
-          </tr>
-        `).join('')}
+          </tr>`).join('')}
       </tbody>
     </table>`;
 }
 
+function renderSemana(semana){
+  if(!semana.length) return;
+  document.getElementById('semana-panel').style.display='';
+  const max = Math.max(...semana.map(s=>s.pedidos_prom), 1);
+  const colores = {
+    'Sábado':'#f59e0b','Domingo':'#f59e0b','Viernes':'#fb923c',
+    'Lunes':'#0ea5e9','Martes':'#0ea5e9','Miércoles':'#0ea5e9','Jueves':'#0ea5e9'
+  };
+  document.getElementById('semana-bars').innerHTML = semana.map(s=>`
+    <div class="flex items-center gap-3 text-xs">
+      <span class="w-20 text-gray-500 text-right shrink-0">${s.dia}</span>
+      <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+        <div class="semana-bar-fill h-full rounded-full flex items-center justify-end pr-2"
+             style="width:${Math.round(s.pedidos_prom/max*100)}%; background:${colores[s.dia]||'#0ea5e9'};">
+          <span class="text-white font-bold text-[10px]">${s.pedidos_prom}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
 function renderMetricas(m){
   document.getElementById('metricas-panel').style.display='';
+  document.getElementById('metricas-subtitle').textContent=
+    `${m.modelo||'Modelo'} · validación cruzada ${m.n_splits||1} pliegues · ${m.dias_historial} días`;
+
+  const r2Tag = m.r2 >= 0.7 ? ['text-emerald-700','bg-emerald-50 border-emerald-200','Bueno']
+              : m.r2 >= 0.4 ? ['text-amber-700', 'bg-amber-50 border-amber-200',  'Regular']
+              : m.r2 >= 0.0 ? ['text-red-700',   'bg-red-50 border-red-200',      'Bajo']
+              :               ['text-red-800',   'bg-red-100 border-red-300',     'Insuficiente'];
+
   const items=[
-    {label:'MAE',val:m.mae,desc:'Error absoluto medio (pedidos)'},
-    {label:'RMSE',val:m.rmse,desc:'Error cuadrático medio'},
-    {label:'R²',val:m.r2,desc:'Coeficiente de determinación (0→1)'},
+    {label:'MAE',  val:m.mae,  desc:'Error medio en pedidos/día',            cls:'text-sky-700 bg-white border-sky-100'},
+    {label:'RMSE', val:m.rmse, desc:'Penaliza errores grandes',              cls:'text-sky-700 bg-white border-sky-100'},
+    {label:`R² — ${r2Tag[2]}`, val:m.r2, desc:'Varianza explicada (0→1)',   cls:`${r2Tag[0]} ${r2Tag[1]}`},
   ];
   document.getElementById('metricas-content').innerHTML=items.map(i=>`
-    <div class="bg-white rounded-lg p-3 border border-sky-100">
-      <p class="text-lg font-bold text-sky-700">${i.val}</p>
-      <p class="text-xs font-semibold text-sky-600">${i.label}</p>
-      <p class="text-xs text-sky-500 opacity-70">${i.desc}</p>
+    <div class="rounded-lg p-3 border ${i.cls}">
+      <p class="text-xl font-bold">${i.val}</p>
+      <p class="text-xs font-semibold">${i.label}</p>
+      <p class="text-xs opacity-70 mt-0.5">${i.desc}</p>
+    </div>`).join('');
+
+  if(m.datos_limitados){
+    document.getElementById('metricas-content').insertAdjacentHTML('afterend',`
+      <div class="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <i class="bi bi-exclamation-triangle-fill mt-0.5 shrink-0"></i>
+        <span>Con <strong>${m.dias_historial} días</strong> de historial el modelo aún no detecta patrones semanales confiables.
+        Se recomienda acumular <strong>60+ días</strong> para que R² sea estable.
+        Las predicciones son aproximadas pero mejoran automáticamente con más datos.</span>
+      </div>`);
+  }
+}
+
+function renderValidacion(v){
+  if(!v||!v.length) return;
+  document.getElementById('validacion-panel').style.display='';
+  document.getElementById('validacion-content').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+          <th class="px-4 py-2">Fecha</th><th class="px-4 py-2">Día</th>
+          <th class="px-4 py-2 text-center">Real</th>
+          <th class="px-4 py-2 text-center">Predicho</th>
+          <th class="px-4 py-2 text-center">Error abs.</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${v.map(row=>{
+          const pct=row.real>0?row.error/row.real:0;
+          const cls=pct<0.10?'text-emerald-700':pct<0.25?'text-amber-700':'text-red-600';
+          return `<tr class="border-b border-gray-100 hover:bg-sky-50 transition">
+            <td class="px-4 py-2 text-gray-500">${row.fecha}</td>
+            <td class="px-4 py-2 text-gray-700">${row.dia_semana}</td>
+            <td class="px-4 py-2 text-center font-bold text-sky-700">${row.real}</td>
+            <td class="px-4 py-2 text-center font-bold text-amber-600">${row.pred}</td>
+            <td class="px-4 py-2 text-center font-semibold ${cls}">${row.error}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderMatrizConfusion(mc){
+  if(!mc||!mc.cm) return;
+  document.getElementById('matriz-panel').style.display='';
+  const [[tn,fp],[fn,tp]]=mc.cm;
+  const total=tn+fp+fn+tp||1;
+  const acc=Math.round((tn+tp)/total*100);
+  document.getElementById('matriz-content').innerHTML=`
+    <p class="text-xs text-gray-400 mb-5">
+      Umbral: <strong>${mc.umbral}</strong> pedidos/día &nbsp;·&nbsp;
+      Precisión global: <strong class="text-sky-700">${acc}%</strong> (${tn+tp} de ${total} días correctos)
+    </p>
+    <div class="overflow-x-auto">
+      <table class="text-sm mx-auto">
+        <thead>
+          <tr>
+            <td colspan="2"></td>
+            <th colspan="2" class="px-6 pb-2 text-center text-xs font-semibold text-gray-500 uppercase">Predicho</th>
+          </tr>
+          <tr>
+            <td colspan="2"></td>
+            <th class="px-8 py-2 text-center text-sm font-semibold text-gray-600 bg-gray-100 rounded-tl-lg border border-gray-200">Bajo</th>
+            <th class="px-8 py-2 text-center text-sm font-semibold text-gray-600 bg-gray-100 rounded-tr-lg border border-gray-200">Alto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th rowspan="2" class="pr-3 text-xs font-semibold text-gray-500 uppercase" style="writing-mode:vertical-lr;transform:rotate(180deg);text-align:center;">Real</th>
+            <th class="px-4 py-3 text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200">Bajo</th>
+            <td class="px-8 py-4 text-center border border-emerald-200 bg-emerald-50 rounded-tl">
+              <span class="text-2xl font-bold text-emerald-700">${tn}</span>
+              <p class="text-xs text-emerald-600 mt-0.5 font-semibold">TN ✓</p>
+              <p class="text-xs text-gray-400">Correcto bajo</p>
+            </td>
+            <td class="px-8 py-4 text-center border border-red-200 bg-red-50 rounded-tr">
+              <span class="text-2xl font-bold text-red-600">${fp}</span>
+              <p class="text-xs text-red-500 mt-0.5 font-semibold">FP ✗</p>
+              <p class="text-xs text-gray-400">Sobrestimó</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="px-4 py-3 text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200">Alto</th>
+            <td class="px-8 py-4 text-center border border-red-200 bg-red-50 rounded-bl">
+              <span class="text-2xl font-bold text-red-600">${fn}</span>
+              <p class="text-xs text-red-500 mt-0.5 font-semibold">FN ✗</p>
+              <p class="text-xs text-gray-400">Subestimó</p>
+            </td>
+            <td class="px-8 py-4 text-center border border-emerald-200 bg-emerald-50 rounded-br">
+              <span class="text-2xl font-bold text-emerald-700">${tp}</span>
+              <p class="text-xs text-emerald-600 mt-0.5 font-semibold">TP ✓</p>
+              <p class="text-xs text-gray-400">Correcto alto</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  `).join('');
+    <p class="text-xs text-gray-400 mt-4 text-center">
+      FP = predijo demanda alta pero fue baja &nbsp;·&nbsp; FN = predijo baja pero fue alta (el más costoso)
+    </p>`;
 }
 
 cargar();
