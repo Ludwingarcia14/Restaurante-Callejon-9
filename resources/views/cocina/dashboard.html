@@ -684,21 +684,8 @@ async function entregarPedido(comandaId, itemIds) {
 // ===================================
 // ACCIONES RÁPIDAS
 // ===================================
-async function marcarNoDisponible() {
-    const { value: platillo } = await Swal.fire({
-        title: 'Marcar como no disponible',
-        input: 'text',
-        inputLabel: '¿Qué platillo no está disponible?',
-        inputPlaceholder: 'Nombre del platillo',
-        showCancelButton: true,
-        confirmButtonText: 'Marcar',
-        cancelButtonText: 'Cancelar'
-    });
-    
-    if (platillo) {
-        // Aquí conectarías con tu API de inventario
-        showSuccess(`"${platillo}" marcado como no disponible`);
-    }
+function marcarNoDisponible() {
+    window.location.href = "{{ url_for('routes.vista_platillos_no_disponibles') }}";
 }
 
 function verInventario() {
