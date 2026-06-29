@@ -1,0 +1,121 @@
+{% extends "layout/layout_inventario.html" %}
+
+{% block title %}Registrar {{ tipo|title }}{% endblock %}
+{% block page_title %}Registrar {{ tipo|title }}{% endblock %}
+{% block page_subtitle %}Movimiento de inventario{% endblock %}
+
+{% block navigation %}{% set active_nav = 'movimientos' %}{% include "inventario/_nav.html" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-8">
+
+    <div class="mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            {% if tipo == 'entrada' %}
+                <i class="bi bi-box-arrow-in-down text-green-600"></i> Registrar Entrada
+            {% elif tipo == 'salida' %}
+                <i class="bi bi-box-arrow-up text-red-600"></i> Registrar Salida
+            {% else %}
+                <i class="bi bi-trash text-orange-600"></i> Registrar Merma
+            {% endif %}
+        </h3>
+        <p class="text-sm text-gray-500 mt-1">Selecciona el insumo y la cantidad</p>
+    </div>
+
+    <form id="formMovimiento" class="space-y-5">
+
+        <!-- Insumo -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Insumo *</label>
+            <select name="insumo_id" id="insumo_id" required
+                    class="w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value="" selected disabled>Selecciona un insumo</option>
+                {% for insumo in insumos %}
+                <option value="{{ insumo._id }}"
+                        data-nombre="{{ insumo.nombre }}"
+                        data-unidad="{{ insumo.unidad_medida }}"
+                        data-stock="{{ insumo.stock_actual }}">
+                    {{ insumo.nombre }} ({{ insumo.stock_actual }} {{ insumo.unidad_medida }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Cantidad -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Cantidad *</label>
+            <input type="number" name="cantidad" id="cantidad" step="any" min="0" required
+                   placeholder="0"
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+
+        {% if requiere_costo %}
+        <!-- Costo unitario (solo entrada) -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Costo unitario *</label>
+            <input type="number" name="costo_unitario" id="costo_unitario" step="any" min="0" required
+                   placeholder="0.00"
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        {% endif %}
+
+        <!-- Motivo (opcional) -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Motivo / referencia</label>
+            <input type="text" name="motivo" id="motivo"
+                   placeholder="Opcional"
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end gap-3 pt-4">
+            <a href="{{ url_for('routes.inventario_historial') }}"
+               class="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+                <i class="bi bi-save"></i> Registrar
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('formMovimiento').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    // Adjuntar el nombre del insumo (para la notificacion) desde la opcion elegida.
+    const selected = document.getElementById('insumo_id').selectedOptions[0];
+    data.nombre_insumo = selected ? selected.dataset.nombre : '';
+
+    try {
+        const response = await fetch('{{ action_url }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Movimiento registrado',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            window.location.href = '{{ url_for("routes.inventario_historial") }}';
+        } else {
+            showError(result.message || 'No se pudo registrar el movimiento');
+        }
+    } catch (error) {
+        showError('Error de conexión al servidor');
+    }
+});
+</script>
+{% endblock %}

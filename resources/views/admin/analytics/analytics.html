@@ -16,12 +16,12 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    .kpi-card.blue   { border-color: #F2913D; }
-    .kpi-card.green  { border-color: #22c55e; }
-    .kpi-card.purple { border-color: #F2A399; }
-    .kpi-card.orange { border-color: #DE823D; }
-    .kpi-card.teal   { border-color: #F2CA99; }
-    .kpi-card.rose   { border-color: #F2A399; }
+    .kpi-card.blue   { border-color: var(--color-primary); }
+    .kpi-card.green  { border-color: #059669; }
+    .kpi-card.purple { border-color: #7c3aed; }
+    .kpi-card.orange { border-color: #0ea5e9; }
+    .kpi-card.teal   { border-color: #0d9488; }
+    .kpi-card.rose   { border-color: #e11d48; }
 
     .chart-card {
         background: white;
@@ -119,14 +119,14 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <i class="bi bi-bar-chart-line-fill" style="color: #F2913D;"></i>
+                <i class="bi bi-bar-chart-line-fill" style="color: var(--color-primary);"></i>
                 Analytics · MapReduce
             </h1>
             <p class="text-sm text-gray-500 mt-1">
                 Consultas agregadas en tiempo real desde MongoDB · Últimos 30 días
             </p>
         </div>
-        <button onclick="cargarTodo()" class="flex items-center gap-2 bg-[#F2913D] hover:bg-[#DE823D] text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+        <button onclick="cargarTodo()" class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
             <i class="bi bi-arrow-clockwise"></i> Actualizar
         </button>
     </div>
@@ -144,7 +144,7 @@
         <!-- Ventas diarias -->
         <div class="chart-card lg:col-span-2">
             <h3>
-                <i class="bi bi-calendar3" style="color: #F2913D;"></i>
+                <i class="bi bi-calendar3" style="color: var(--color-primary);"></i>
                 Ventas Diarias
                 <span class="badge-mr">MapReduce · $group + $dateToString</span>
             </h3>
@@ -157,7 +157,7 @@
         <!-- Métodos de pago (dona) -->
         <div class="chart-card">
             <h3>
-                <i class="bi bi-credit-card" style="color: #F2A399;"></i>
+                <i class="bi bi-credit-card" style="color: var(--color-primary);"></i>
                 Métodos de Pago
                 <span class="badge-mr">MapReduce</span>
             </h3>
@@ -174,7 +174,7 @@
         <!-- Top platillos (tabla) -->
         <div class="chart-card lg:col-span-2">
             <h3>
-                <i class="bi bi-trophy" style="color: #DE823D;"></i>
+                <i class="bi bi-trophy" style="color: var(--color-primary);"></i>
                 Top 10 Platillos por Ingreso
                 <span class="badge-mr">MapReduce · $unwind + $group</span>
             </h3>
@@ -187,7 +187,7 @@
         <!-- Horas pico -->
         <div class="chart-card">
             <h3>
-                <i class="bi bi-clock" style="color: #F2CA99;"></i>
+                <i class="bi bi-clock" style="color: var(--color-primary);"></i>
                 Horas Pico
                 <span class="badge-mr">MapReduce · $hour</span>
             </h3>
@@ -217,7 +217,7 @@
         <!-- Ventas por Mesa -->
         <div class="chart-card">
             <h3>
-                <i class="bi bi-table" style="color: #F2A399;"></i>
+                <i class="bi bi-table" style="color: var(--color-primary);"></i>
                 Top 15 Mesas por Consumo
                 <span class="badge-mr">MapReduce · $group by mesa</span>
             </h3>
@@ -229,8 +229,8 @@
     </div>
 
     <!-- FOOTER NOTE -->
-    <div class="mt-6 p-4 rounded-lg text-sm flex items-start gap-3" style="background: rgba(242,145,61,0.1); border: 1px solid #F2913D; color: #525252;">
-        <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0" style="color: #F2913D;"></i>
+    <div class="mt-6 p-4 rounded-lg text-sm flex items-start gap-3" style="background: color-mix(in srgb, var(--color-primary) 10%, white); border: 1px solid var(--color-primary); color: #525252;">
+        <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0" style="color: var(--color-primary);"></i>
         <div>
             <strong>Motor de Analytics:</strong> Todas las consultas utilizan <strong>MongoDB Aggregation Pipeline</strong>
             con operaciones <code>$group</code>, <code>$unwind</code>, <code>$sum</code>, <code>$avg</code> y <code>$sort</code>
@@ -248,6 +248,10 @@
 // INSTANCIAS DE CHARTS
 // ==========================================
 let chartDias, chartMetodos, chartHoras;
+
+function _brand() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#F2913D';
+}
 
 // ==========================================
 // UTILIDADES
@@ -348,8 +352,8 @@ async function cargarVentasDia() {
                 datasets: [{
                     label: 'Ventas ($)',
                     data: totales,
-                    borderColor: '#F2913D',
-                    backgroundColor: 'rgba(242,145,61,0.1)',
+                    borderColor: _brand(),
+                    backgroundColor: _brand() + '22',
                     fill: true,
                     tension: 0.4,
                     pointRadius: 3
@@ -385,7 +389,7 @@ async function cargarMetodosPago() {
         hideEl('chart-metodos-loading');
         showEl('chart-metodos');
 
-        const colors = ['#F2913D','#F2A399','#F2CA99','#DE823D','#a855f7'];
+        const colors = [_brand(),'#059669','#3b82f6','#a855f7','#f59e0b'];
         if (chartMetodos) chartMetodos.destroy();
         chartMetodos = new Chart(document.getElementById('chart-metodos'), {
             type: 'doughnut',
@@ -481,7 +485,7 @@ async function cargarHorasPico() {
                 datasets: [{
                     label: 'Ventas',
                     data: counts,
-                    backgroundColor: 'rgba(242,145,61,0.7)',
+                    backgroundColor: _brand(),
                     borderRadius: 6
                 }]
             },

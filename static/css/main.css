@@ -37,6 +37,7 @@
     
     /* Tipografía */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Playfair Display', Georgia, serif;
     
     /* Sombras */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -153,8 +154,9 @@ body {
 }
 
 .sidebar-title {
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 0.25rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -237,13 +239,9 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-<<<<<<< HEAD
-/* ===== CONTENIDO PRINCIPAL ===== */
-=======
 /* ===================================
    CONTENIDO PRINCIPAL
    =================================== */
->>>>>>> 97bb3ca750697beda651f17df077b66da7fc4487
 
 .main-content {
     width: 100%;
@@ -266,8 +264,9 @@ body {
 }
 
 .page-title {
+    font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--color-dark);
     margin-bottom: 0.25rem;
 }
@@ -287,23 +286,43 @@ body {
    COMPONENTES
    =================================== */
 
-/* Cards */
+/* ===================================
+   TARJETA DE SECCIÓN (componente estándar)
+   Úsala en TODOS los módulos para coherencia:
+     <div class="card">
+       <div class="card-header">
+         <h3 class="card-title"><i class="bi bi-..."></i> Título</h3>
+         <p class="card-subtitle">Subtítulo opcional</p>
+       </div>
+       <div class="card-body"> ... </div>
+     </div>
+   =================================== */
 .card {
     background: white;
-    border-radius: 1rem;
-    box-shadow: var(--shadow-md);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: all var(--transition-base);
-}
-
-.card:hover {
-    box-shadow: var(--shadow-lg);
 }
 
 .card-header {
-    padding: 1.5rem;
-    border-bottom: 2px solid var(--gray-100);
-    font-weight: 700;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    background: #f9fafb;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.card-subtitle {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    margin-top: 0.125rem;
 }
 
 .card-body {

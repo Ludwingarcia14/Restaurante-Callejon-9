@@ -1,8 +1,9 @@
 from . import routes_bp
-from controllers.auth.AuthController import login_required
+from controllers.auth.AuthController import login_required, rol_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.dashboard.dashboardApiController import DashboardAPIController
 from controllers.settings.settingsController import SettingsController
+from controllers.restaurante.restauranteConfigController import RestauranteConfigController
 
 @routes_bp.route("/settings")
 @login_required
@@ -45,3 +46,22 @@ def api_settings_get():
 @routes_bp.route('/api/settings/sistema', methods=['POST'])
 def api_settings_update():
     return DashboardAPIController.update_settings()
+
+# ── Configuración del Restaurante (tenant) — solo admin ──
+@routes_bp.route('/api/restaurante/config', methods=['GET'])
+@login_required
+@rol_required(['1'])
+def api_restaurante_config_get():
+    return RestauranteConfigController.get_config()
+
+@routes_bp.route('/api/restaurante/config', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def api_restaurante_config_save():
+    return RestauranteConfigController.save_config()
+
+@routes_bp.route('/api/restaurante/logo', methods=['POST'])
+@login_required
+@rol_required(['1'])
+def api_restaurante_logo():
+    return RestauranteConfigController.upload_logo()

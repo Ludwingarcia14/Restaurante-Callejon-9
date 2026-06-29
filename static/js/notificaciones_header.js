@@ -359,3 +359,24 @@ document.addEventListener("DOMContentLoaded", function () {
     setInterval(cargarNotificaciones, 30000);
 
 });
+
+// ========================================
+// HEARTBEAT DE PRESENCIA
+// Marca al usuario "en linea" mientras la pagina este abierta.
+// Al cerrar pestana/navegador dejan de llegar latidos y el backend
+// lo considera desconectado tras el umbral (ver UMBRAL_ONLINE_SEG).
+// ========================================
+(function () {
+    function latido() {
+        if (document.hidden) return;
+        fetch('/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(function () { /* sin red: se ignora */ });
+    }
+    latido();
+    setInterval(latido, 45000);
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) latido();
+    });
+})();
