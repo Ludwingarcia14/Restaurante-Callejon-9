@@ -103,12 +103,6 @@ class AuthController:
             user_id = str(usuario_doc["_id"])
             tiene_2fa = usuario_doc.get("2fa_enabled", False)
 
-            # Actualizar token en BD
-            try:
-                Usuario.update_session_token(user_id, token_session, 1)
-            except Exception as e:
-                logger.warning("Error al actualizar token de sesión: %s", e)
-
             if tiene_2fa:
                 session["pending_login"] = {
                     "user_id":           user_id,
@@ -195,6 +189,7 @@ class AuthController:
             logging.warning(f"⚠️ Error al actualizar token: {e}")
 
         session["usuario_id"]        = user_id
+        session["tenant_id"]         = str(usuario_doc.get("tenant_id", ""))
         session["usuario_nombre"]    = usuario_doc.get("usuario_nombre", "")
         session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos", "")
         session["usuario_email"]     = usuario_doc.get("usuario_email", "")
@@ -310,6 +305,21 @@ class AuthController:
         except Exception as e:
             logging.error(f"Error en emergency_disable_2fa: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
+
+    # =====================================================
+    # HEARTBEAT (PRESENCIA)
+    # =====================================================
+    @staticmethod
+    def heartbeat():
+        """Registra un latido de presencia del usuario en sesion."""
+        usuario_id = session.get("usuario_id")
+        if not usuario_id:
+            return jsonify({"status": "error"}), 401
+        try:
+            Usuario.touch_last_seen(usuario_id)
+        except Exception as e:
+            logging.warning("Error en heartbeat: %s", e)
+        return jsonify({"status": "ok"})
 
 
 # ==========================================================

@@ -57,7 +57,8 @@ class AuthMobileController:
             return jsonify({"status": "error", "message": "Credenciales incorrectas"}), 401
 
         user_id = str(usuario_doc["_id"])
-        tokens = generate_tokens(user_id, rol, tipo="empleado")
+        tokens = generate_tokens(user_id, rol, tipo="empleado",
+                                 tenant_id=str(usuario_doc.get("tenant_id", "")))
 
         return jsonify({
             "status": "success",
@@ -100,6 +101,7 @@ class AuthMobileController:
             return jsonify({"status": "error", "message": "Usuario no encontrado"}), 404
 
         rol = str(usuario_doc.get("usuario_rol", ""))
-        tokens = generate_tokens(user_id, rol, tipo=tipo)
+        tokens = generate_tokens(user_id, rol, tipo=tipo,
+                                 tenant_id=str(usuario_doc.get("tenant_id", "")))
 
         return jsonify({"status": "success", **tokens}), 200

@@ -8,6 +8,8 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify
 
+from utils.tenant_context import set_current_tenant
+
 _JWT_SECRET = os.getenv("JWT_SECRET_KEY", "")
 _ALGORITHM = "HS256"
 _ACCESS_EXPIRE_MIN = 60
@@ -20,13 +22,14 @@ def _secret() -> str:
     return _JWT_SECRET
 
 
-def generate_tokens(user_id: str, rol: str, tipo: str = "empleado") -> dict:
+def generate_tokens(user_id: str, rol: str, tipo: str = "empleado", tenant_id: str = None) -> dict:
     """Genera access_token + refresh_token para un usuario."""
     now = datetime.now(timezone.utc)
     access_payload = {
         "sub": user_id,
         "rol": rol,
         "tipo": tipo,
+        "tenant_id": tenant_id,
         "type": "access",
         "iat": now,
         "exp": now + timedelta(minutes=_ACCESS_EXPIRE_MIN),
@@ -34,6 +37,7 @@ def generate_tokens(user_id: str, rol: str, tipo: str = "empleado") -> dict:
     refresh_payload = {
         "sub": user_id,
         "tipo": tipo,
+        "tenant_id": tenant_id,
         "type": "refresh",
         "iat": now,
         "exp": now + timedelta(days=_REFRESH_EXPIRE_DAYS),
@@ -63,6 +67,7 @@ def jwt_required(f):
             if payload.get("type") != "access":
                 return jsonify({"status": "error", "message": "Token inválido"}), 401
             request.jwt_payload = payload
+            set_current_tenant(payload.get("tenant_id"))
         except jwt.ExpiredSignatureError:
             return jsonify({"status": "error", "message": "Token expirado, usa /api/v1/auth/refresh"}), 401
         except jwt.InvalidTokenError:
@@ -85,6 +90,7 @@ def jwt_rol_required(roles: list):
                 if payload.get("type") != "access":
                     return jsonify({"status": "error", "message": "Token inválido"}), 401
                 request.jwt_payload = payload
+                set_current_tenant(payload.get("tenant_id"))
             except jwt.ExpiredSignatureError:
                 return jsonify({"status": "error", "message": "Token expirado"}), 401
             except jwt.InvalidTokenError:

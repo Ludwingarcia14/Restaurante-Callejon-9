@@ -4,46 +4,11 @@
 {% block page_title %}Dashboard de Inventario{% endblock %}
 {% block page_subtitle %}Gestión y control de almacén{% endblock %}
 
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_inventario') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg transition">
-    <i class="bi bi-house-door text-lg"></i>
-    <span>Inicio</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_insumos') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-box-seam text-lg"></i>
-    <span>Insumos</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_historial') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Movimientos</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_alertas') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-exclamation-triangle text-lg"></i>
-    <span>Alertas</span>
-    {% if stats.alertas_activas > 0 %}
-    <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-        {{ stats.alertas_activas }}
-    </span>
-    {% endif %}
-</a>
-
-<a href="{{ url_for('routes.inventario_proveedores') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-truck text-lg"></i>
-    <span>Proveedores</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-graph-up text-lg"></i>
-    <span>Reportes</span>
-</a>
-{% endblock %}
+{% block navigation %}{% set active_nav = 'dashboard' %}{% include "inventario/_nav.html" %}{% endblock %}
 
 {% block content %}
 <!-- Bienvenida -->
-<div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-xl shadow-lg text-white mb-6">
+<div class="bg-gradient-to-r from-brand-500 to-brand-700 p-6 rounded-xl shadow-lg text-white mb-6">
     <div class="flex items-center justify-between">
         <div>
             <h2 class="text-2xl font-bold mb-2">Bienvenido, {{ usuario }}</h2>

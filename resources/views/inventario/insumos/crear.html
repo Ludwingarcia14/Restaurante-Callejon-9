@@ -4,19 +4,7 @@
 {% block page_title %}Nuevo Insumo{% endblock %}
 {% block page_subtitle %}Registro de insumos en inventario{% endblock %}
 
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_inventario') }}"
-   class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-house-door"></i>
-    <span>Inicio</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_insumos') }}"
-   class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-box-seam"></i>
-    <span>Insumos</span>
-</a>
-{% endblock %}
+{% block navigation %}{% set active_nav = 'insumos' %}{% include "inventario/_nav.html" %}{% endblock %}
 
 {% block content %}
 
@@ -25,7 +13,7 @@
     <!-- Header -->
     <div class="mb-6">
         <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <i class="bi bi-plus-circle text-blue-600"></i>
+            <i class="bi bi-plus-circle text-brand-600"></i>
             Agregar Nuevo Insumo
         </h3>
         <p class="text-sm text-gray-500 mt-1">
@@ -34,57 +22,70 @@
     </div>
 
     <!-- Formulario -->
-    <form method="POST" class="space-y-5">
+    <form id="formInsumo" class="space-y-5">
 
         <!-- Nombre -->
         <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-                Nombre del insumo
-            </label>
-            <input type="text"
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre del insumo *</label>
+            <input type="text" name="nombre" required
                    placeholder="Ej. Tomate, Leche, Sal"
-                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500">
         </div>
 
         <!-- Categoría -->
         <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-                Categoría
-            </label>
-            <select
-                class="w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option selected disabled>Selecciona una categoría</option>
-                <option value="lacteos">🥛 Lácteos</option>
-                <option value="carnes">🍖 Carnes</option>
-                <option value="vegetales">🥦 Vegetales</option>
-                <option value="condimentos">🧂 Condimentos</option>
-                <option value="bebidas">🥤 Bebidas</option>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Categoría *</label>
+            <select name="categoria" required
+                class="w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <option value="" selected disabled>Selecciona una categoría</option>
+                {% for c in categorias %}
+                <option value="{{ c }}">{{ c|capitalize }}</option>
+                {% endfor %}
             </select>
         </div>
 
         <!-- Stock y Unidad -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">
-                    Stock inicial
-                </label>
-                <input type="number"
-                       placeholder="0"
-                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Unidad de medida *</label>
+                <select name="unidad_medida" required
+                    class="w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="" selected disabled>Selecciona unidad</option>
+                    {% for u in unidades %}
+                    <option value="{{ u }}">{{ u|upper }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">
-                    Unidad de medida
-                </label>
-                <select
-                    class="w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option selected disabled>Selecciona unidad</option>
-                    <option value="kg">Kilogramos (kg)</option>
-                    <option value="g">Gramos (g)</option>
-                    <option value="l">Litros (L)</option>
-                    <option value="pz">Piezas</option>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Proveedor</label>
+                <select name="proveedor_id"
+                    class="w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="">Sin proveedor</option>
+                    {% for p in proveedores %}
+                    <option value="{{ p._id }}">{{ p.nombre }}</option>
+                    {% endfor %}
                 </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Stock inicial</label>
+                <input type="number" name="stock_inicial" step="any" min="0" value="0"
+                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Stock mínimo *</label>
+                <input type="number" name="stock_minimo" step="any" min="0" required placeholder="0"
+                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Costo unitario</label>
+                <input type="number" name="costo_unitario" step="any" min="0" placeholder="0.00"
+                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500">
             </div>
         </div>
 
@@ -96,7 +97,7 @@
             </a>
 
             <button type="submit"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                class="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition flex items-center gap-2">
                 <i class="bi bi-save"></i>
                 Guardar Insumo
             </button>
@@ -105,4 +106,37 @@
     </form>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('formInsumo').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const data = Object.fromEntries(new FormData(this));
+
+    try {
+        const response = await fetch('{{ url_for("routes.inventario_crear_insumo") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Insumo creado',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            window.location.href = '{{ url_for("routes.inventario_insumos") }}';
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: result.message || 'No se pudo crear el insumo' });
+        }
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión al servidor' });
+    }
+});
+</script>
 {% endblock %}

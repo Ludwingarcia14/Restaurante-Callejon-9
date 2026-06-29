@@ -1,0 +1,111 @@
+{% extends "layout/layout_inventario.html" %}
+
+{% block title %}Predicción{% endblock %}
+{% block page_title %}Predicción de Inventario{% endblock %}
+{% block page_subtitle %}Pronóstico de consumo y reorden (Machine Learning){% endblock %}
+
+{% block navigation %}{% set active_nav = 'prediccion' %}{% include "inventario/_nav.html" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Nota honesta -->
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl p-4 flex gap-3">
+        <i class="bi bi-info-circle mt-0.5"></i>
+        <div>
+            Modelo entrenado con el historial real de salidas (ventana de <strong>{{ dias_ventana }} días</strong>).
+            Con pocos datos las métricas son <strong>ilustrativas</strong>: demuestran la metodología
+            (split train/test, RMSE, matriz de confusión), no precisión productiva.
+        </div>
+    </div>
+
+    {% if not r.ok %}
+    <div class="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-500">
+        <i class="bi bi-exclamation-circle text-3xl mb-2 block"></i>
+        {{ r.motivo }}
+    </div>
+    {% else %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- RMSE -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="font-semibold text-gray-700"><i class="bi bi-graph-down text-purple-600"></i> Error de Pronóstico (RMSE)</h3>
+            <p class="text-xs text-gray-500 mb-4">Regresión: consumo predicho vs real · test = {{ r.n_test }} insumos</p>
+            <div class="flex items-end gap-8">
+                <div>
+                    <div class="text-3xl font-bold text-gray-800">{{ r.rmse }}</div>
+                    <div class="text-xs text-gray-500">RMSE modelo</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-semibold text-gray-400">{{ r.rmse_baseline }}</div>
+                    <div class="text-xs text-gray-500">RMSE baseline (media)</div>
+                </div>
+            </div>
+            <p class="text-xs mt-3 {{ 'text-green-600' if r.rmse < r.rmse_baseline else 'text-gray-500' }}">
+                {% if r.rmse < r.rmse_baseline %}✓ El modelo supera al baseline{% else %}El modelo no supera al baseline (datos escasos){% endif %}
+            </p>
+        </div>
+
+        <!-- Matriz de confusión -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="font-semibold text-gray-700"><i class="bi bi-grid-3x3-gap text-purple-600"></i> Matriz de Confusión (Reorden)</h3>
+            {% if r.clasificacion %}
+            <p class="text-xs text-gray-500 mb-4">Clasificación: ¿necesita reorden? · test = {{ r.clasificacion.total }}</p>
+            {% set m = r.clasificacion.matriz %}
+            <div class="grid grid-cols-2 gap-2 max-w-xs text-center text-xs">
+                <div class="bg-green-100 text-green-800 rounded-lg p-3"><div class="text-2xl font-bold">{{ m.tp }}</div>VP</div>
+                <div class="bg-red-100 text-red-800 rounded-lg p-3"><div class="text-2xl font-bold">{{ m.fp }}</div>FP</div>
+                <div class="bg-red-100 text-red-800 rounded-lg p-3"><div class="text-2xl font-bold">{{ m.fn }}</div>FN</div>
+                <div class="bg-green-100 text-green-800 rounded-lg p-3"><div class="text-2xl font-bold">{{ m.tn }}</div>VN</div>
+            </div>
+            <div class="flex flex-wrap gap-4 mt-4 text-xs text-gray-600">
+                <span>Accuracy: <strong>{{ (r.clasificacion.accuracy * 100) | round(1) }}%</strong></span>
+                <span>Precision: <strong>{{ (r.clasificacion.precision * 100) | round(1) }}%</strong></span>
+                <span>Recall: <strong>{{ (r.clasificacion.recall * 100) | round(1) }}%</strong></span>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500 mt-4">
+                No hay ejemplos de ambas clases (reorden / no reorden) en el entrenamiento;
+                no se pudo entrenar el clasificador con estos datos.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabla de predicciones -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50">
+            <h3 class="font-semibold text-gray-700"><i class="bi bi-table text-purple-600"></i> Predicción por Insumo</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                        <th class="px-4 py-3">Insumo</th>
+                        <th class="px-4 py-3 text-right">Consumo real</th>
+                        <th class="px-4 py-3 text-right">Consumo predicho</th>
+                        <th class="px-4 py-3 text-center">¿Reorden?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in r.predicciones %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-2 font-medium">{{ p.nombre }}</td>
+                        <td class="px-4 py-2 text-right">{{ p.consumo_real }}</td>
+                        <td class="px-4 py-2 text-right">{{ p.consumo_predicho }}</td>
+                        <td class="px-4 py-2 text-center">
+                            {% if p.reorden == 1 %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Sí</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

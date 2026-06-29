@@ -7,7 +7,9 @@ from models.inventario_model import (
     Insumo, MovimientoInventario, Proveedor, AlertaStock,
     TipoMovimiento, UnidadMedida, CategoriaInsumo
 )
+from services.inventario.inventario_service import calcular_valor_inventario
 from bson.objectid import ObjectId
+from collections import Counter
 from datetime import datetime, timedelta
 from collections import defaultdict
 from controllers.notificaciones.notificacion_controller import NotificacionSistemaController
@@ -115,10 +117,7 @@ class InventarioController:
             )
 
             insumos = Insumo.obtener_todos()
-            valor_total = sum(
-                i.get("stock_actual", 0) * i.get("costo_unitario", 0)
-                for i in insumos
-            )
+            valor_total = calcular_valor_inventario(insumos)
 
             stats = {
                 "total_insumos": total_insumos,
@@ -143,46 +142,6 @@ class InventarioController:
     # ==========================================
     # INSUMOS
     # ==========================================
-    @staticmethod
-    def lista_insumos():
-        if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
-            return redirect(url_for("routes.login"))
-
-        try:
-            categoria = request.args.get("categoria")
-            filtros = {"activo": True}
-
-            if categoria and categoria != "todas":
-                filtros["categoria"] = categoria
-
-            insumos = Insumo.obtener_todos(filtros)
-
-            for insumo in insumos:
-                stock = insumo.get("stock_actual", 0)
-                minimo = insumo.get("stock_minimo", 0)
-
-                if stock == 0:
-                    insumo["estado_stock"] = "agotado"
-                elif stock <= minimo:
-                    insumo["estado_stock"] = "critico"
-                elif stock <= minimo * 1.5:
-                    insumo["estado_stock"] = "bajo"
-                else:
-                    insumo["estado_stock"] = "normal"
-
-            categorias = [cat.value for cat in CategoriaInsumo]
-
-            return render_template(
-                "inventario/insumos/lista.html",
-                insumos=insumos,
-                categorias=categorias,
-                categoria_seleccionada=categoria
-            )
-
-        except Exception as e:
-            logging.error(f"Error al listar insumos: {str(e)}")
-            return render_template("inventario/insumos/lista.html", error="Error interno del servidor")
-    
     @staticmethod
     def crear_insumo():
         """Formulario y procesamiento de creación de insumo"""
@@ -234,51 +193,74 @@ class InventarioController:
     # MOVIMIENTOS
     # ==========================================
     @staticmethod
-    def registrar_entrada():
-        if "usuario_rol" not in session or str(session["usuario_rol"]) not in ["1", "4"]:
-            return redirect(url_for("routes.login"))
+    def _procesar_movimiento(tipo):
+        """Logica compartida para registrar entrada, salida o merma.
 
+        En GET muestra el formulario; en POST registra el movimiento.
+        La autorizacion la garantizan los decoradores de la ruta.
+        """
         if request.method == "POST":
             try:
                 data = request.get_json()
 
                 movimiento_data = {
-                    "tipo": TipoMovimiento.ENTRADA,
+                    "tipo": tipo,
                     "insumo_id": data["insumo_id"],
                     "cantidad": float(data["cantidad"]),
-                    "costo_unitario": float(data["costo_unitario"]),
-                    "usuario_id": session["usuario_id"]
+                    "usuario_id": session["usuario_id"],
+                    "motivo": data.get("motivo", ""),
                 }
+                # El costo aplica a entradas; en salida/merma es opcional.
+                if data.get("costo_unitario") not in (None, ""):
+                    movimiento_data["costo_unitario"] = float(data["costo_unitario"])
 
                 resultado = MovimientoInventario.registrar_movimiento(movimiento_data)
 
-                if resultado["success"]:
-                    AlertaStock.generar_alertas_automaticas()
+                if not resultado["success"]:
+                    return jsonify({
+                        "success": False,
+                        "message": resultado.get("error", "No se pudo registrar el movimiento"),
+                    }), 400
 
-                    # Notificación
-                    NotificacionSistemaController.notificar_movimiento_inventario(
-                        usuario_id=session.get("usuario_id"),
-                        tipo_movimiento="entrada",
-                        nombre_insumo=data.get("nombre_insumo", "Insumo"),
-                        cantidad=data["cantidad"]
-                    )
-
-                    return jsonify({"success": True})
-
-                return jsonify({"success": False}), 400
+                AlertaStock.generar_alertas_automaticas()
+                NotificacionSistemaController.notificar_movimiento_inventario(
+                    usuario_id=session.get("usuario_id"),
+                    tipo_movimiento=tipo.value,
+                    nombre_insumo=data.get("nombre_insumo", "Insumo"),
+                    cantidad=data["cantidad"],
+                )
+                return jsonify({"success": True})
 
             except Exception as e:
-                logging.error(e)
-                return jsonify({"success": False}), 500
+                logging.error(f"Error al registrar {tipo.value}: {e}")
+                return jsonify({"success": False, "message": "Error interno del servidor"}), 500
 
-        insumos = Insumo.obtener_todos()
-        proveedores = Proveedor.obtener_todos()
-
+        # GET -> formulario
+        acciones = {
+            TipoMovimiento.ENTRADA: "routes.inventario_registrar_entrada",
+            TipoMovimiento.SALIDA: "routes.inventario_registrar_salida",
+            TipoMovimiento.MERMA: "routes.inventario_registrar_merma",
+        }
         return render_template(
-            "inventario/movimientos/entrada.html",
-            insumos=insumos,
-            proveedores=proveedores
+            "inventario/movimientos/form.html",
+            tipo=tipo.value,
+            requiere_costo=(tipo == TipoMovimiento.ENTRADA),
+            action_url=url_for(acciones[tipo]),
+            insumos=Insumo.obtener_todos({"activo": True}),
+            proveedores=Proveedor.obtener_todos(),
         )
+
+    @staticmethod
+    def registrar_entrada():
+        return InventarioController._procesar_movimiento(TipoMovimiento.ENTRADA)
+
+    @staticmethod
+    def registrar_salida():
+        return InventarioController._procesar_movimiento(TipoMovimiento.SALIDA)
+
+    @staticmethod
+    def registrar_merma():
+        return InventarioController._procesar_movimiento(TipoMovimiento.MERMA)
 
     @staticmethod
     def historial_movimientos():
@@ -308,15 +290,15 @@ class InventarioController:
             tipos_movimiento = [t.value for t in TipoMovimiento]
             
             return render_template(
-                "inventario/movimientos/historial.html",
+                "inventario/movimientos.html",
                 movimientos=movimientos,
                 insumos=insumos,
                 tipos_movimiento=tipos_movimiento
             )
-            
+
         except Exception as e:
             logging.error(f"Error al obtener historial: {str(e)}")
-            return render_template("inventario/movimientos/historial.html", error="Error interno del servidor")
+            return render_template("inventario/movimientos.html", error="Error interno del servidor")
     
     # ==========================================
     # ALERTAS
@@ -439,12 +421,13 @@ class InventarioController:
             return render_template("cocina/graficas_inventario.html", **datos)
         except Exception as e:
             logging.error(f"Error en graficas_cocina: {e}")
-            empty = json.dumps({"labels": []})
             return render_template(
                 "cocina/graficas_inventario.html",
                 total_insumos=0, total_criticos=0, total_normales=0, valor_total=0,
-                chart_estado=empty, chart_categorias=empty,
-                chart_movimientos=empty, chart_top_valor=empty
+                chart_estado=json.dumps({"labels": [], "data": [], "colors": []}),
+                chart_top_valor=json.dumps({"labels": [], "data": []}),
+                chart_categorias=json.dumps({"labels": [], "data": []}),
+                chart_movimientos=json.dumps({"labels": [], "data": [], "colors": []})
             )
 
     @staticmethod
@@ -464,7 +447,33 @@ class InventarioController:
             empty = json.dumps({"labels": []})
             return render_template(
                 "inventario/reportes.html",
-                total_insumos=0, total_criticos=0, total_normales=0, valor_total=0,
-                chart_estado=empty, chart_categorias=empty,
-                chart_movimientos=empty, chart_top_valor=empty
+                total_insumos=0, total_criticos=0,
+                total_normales=0, valor_total=0,
+                chart_estado=json.dumps({"labels": [], "data": [], "colors": []}),
+                chart_top_valor=json.dumps({"labels": [], "data": []}),
+                chart_categorias=json.dumps({"labels": [], "data": []}),
+                chart_movimientos=json.dumps({"labels": [], "data": [], "colors": []})
+            )
+
+    # ==========================================
+    # PREDICCIÓN (ML: consumo + reorden)
+    # ==========================================
+    @staticmethod
+    def prediccion():
+        """Pronóstico de consumo (regresión/RMSE) y reorden (clasificación/matriz)."""
+        from services.inventario.prediccion_service import preparar_dataset, entrenar_y_evaluar
+        try:
+            insumos = Insumo.obtener_todos({"activo": True})
+            movimientos = MovimientoInventario.obtener_historial({}, limit=5000)
+            fechas = [m["fecha"] for m in movimientos
+                      if m.get("tipo") == TipoMovimiento.SALIDA and m.get("fecha")]
+            dias_ventana = ((max(fechas) - min(fechas)).days + 1) if len(fechas) >= 2 else 30
+            dataset = preparar_dataset(insumos, movimientos, dias_ventana=dias_ventana, umbral_dias=7)
+            resultado = entrenar_y_evaluar(dataset)
+            return render_template("inventario/prediccion.html", r=resultado, dias_ventana=dias_ventana)
+        except Exception as e:
+            logging.error(f"Error en predicción de inventario: {e}")
+            return render_template(
+                "inventario/prediccion.html",
+                r={"ok": False, "motivo": "Error al generar la predicción"}, dias_ventana=0
             )

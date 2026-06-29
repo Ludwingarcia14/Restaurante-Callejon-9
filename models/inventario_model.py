@@ -8,6 +8,9 @@ from bson.objectid import ObjectId
 from enum import Enum
 import logging
 
+from services.inventario.inventario_service import calcular_nuevo_stock
+from models.base_model import BaseModel
+
 logger = logging.getLogger(__name__)
 
 # ==========================================
@@ -49,9 +52,10 @@ class CategoriaInsumo(str, Enum):
 # MODELO: INSUMO
 # ==========================================
 
-class Insumo:
+class Insumo(BaseModel):
     """
-    Modelo de Insumo - Representa un producto en el almacén
+    Modelo de Insumo - Representa un producto en el almacén.
+    Multi-tenant: todas las consultas se filtran por el tenant activo.
     """
     collection = db["insumos"]
     
@@ -84,37 +88,36 @@ class Insumo:
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
-    
-        result = cls.collection.insert_one(insumo)
+
+        result = cls.collection.insert_one(cls._scoped(insumo))
         return result.inserted_id
-    
+
     @classmethod
     def obtener_todos(cls, filtros=None):
-        """Obtiene todos los insumos con filtros opcionales"""
-        query = filtros or {}
-        return list(cls.collection.find(query).sort("nombre", 1))
-    
+        """Obtiene todos los insumos del tenant con filtros opcionales"""
+        return list(cls.collection.find(cls._scoped(filtros)).sort("nombre", 1))
+
     @classmethod
     def obtener_por_id(cls, insumo_id):
-        """Obtiene un insumo por su ID"""
-        return cls.collection.find_one({"_id": ObjectId(insumo_id)})
-    
+        """Obtiene un insumo del tenant por su ID"""
+        return cls.collection.find_one(cls._scoped({"_id": ObjectId(insumo_id)}))
+
     @classmethod
     def obtener_stock_critico(cls):
-        """Obtiene insumos con stock por debajo del mínimo"""
+        """Obtiene insumos del tenant con stock por debajo del mínimo"""
         pipeline = [
             {
-                "$match": {
+                "$match": cls._scoped({
                     "activo": True,
                     "$expr": {
                         "$lte": ["$stock_actual", "$stock_minimo"]
                     }
-                }
+                })
             },
             {"$sort": {"nombre": 1}}
         ]
         return list(cls.collection.aggregate(pipeline))
-    
+
     @classmethod
     def actualizar_stock(cls, insumo_id, nuevo_stock):
         """
@@ -122,7 +125,7 @@ class Insumo:
         ⚠️ SOLO para uso interno del sistema de movimientos
         """
         return cls.collection.update_one(
-            {"_id": ObjectId(insumo_id)},
+            cls._scoped({"_id": ObjectId(insumo_id)}),
             {
                 "$set": {
                     "stock_actual": nuevo_stock,
@@ -130,12 +133,12 @@ class Insumo:
                 }
             }
         )
-    
+
     @classmethod
     def actualizar_costo(cls, insumo_id, nuevo_costo):
         """Actualiza el costo unitario de un insumo"""
         return cls.collection.update_one(
-            {"_id": ObjectId(insumo_id)},
+            cls._scoped({"_id": ObjectId(insumo_id)}),
             {
                 "$set": {
                     "costo_unitario": nuevo_costo,
@@ -149,10 +152,10 @@ class Insumo:
 # MODELO: MOVIMIENTO DE INVENTARIO
 # ==========================================
 
-class MovimientoInventario:
+class MovimientoInventario(BaseModel):
     """
-    Modelo de Movimiento - Representa cada operación sobre el inventario
-    Sistema de auditoría completo
+    Modelo de Movimiento - Representa cada operación sobre el inventario.
+    Multi-tenant: consultas e inserciones filtradas por el tenant activo.
     """
     collection = db["movimientos_inventario"]
     
@@ -183,23 +186,13 @@ class MovimientoInventario:
             
             stock_anterior = insumo["stock_actual"]
             cantidad = float(data["cantidad"])
-            
-            # 2. Calcular nuevo stock según tipo de movimiento
-            if data["tipo"] in [TipoMovimiento.ENTRADA, TipoMovimiento.AJUSTE]:
-                # Si es ajuste, la cantidad puede ser negativa
-                if data["tipo"] == TipoMovimiento.AJUSTE:
-                    stock_nuevo = stock_anterior + cantidad
-                else:
-                    stock_nuevo = stock_anterior + abs(cantidad)
-            elif data["tipo"] in [TipoMovimiento.SALIDA, TipoMovimiento.MERMA]:
-                stock_nuevo = stock_anterior - abs(cantidad)
-            else:
-                return {"success": False, "error": "Tipo de movimiento inválido"}
-            
-            # 3. Validar que no quede stock negativo
-            if stock_nuevo < 0:
-                return {"success": False, "error": "Stock insuficiente"}
-            
+
+            # 2. Calcular nuevo stock segun tipo (regla de negocio en el servicio)
+            try:
+                stock_nuevo = calcular_nuevo_stock(stock_anterior, cantidad, data["tipo"])
+            except ValueError as e:
+                return {"success": False, "error": str(e)}
+
             # 4. Crear el documento del movimiento
             movimiento = {
                 "tipo": data["tipo"],
@@ -219,7 +212,7 @@ class MovimientoInventario:
             }
             
             # 5. Insertar movimiento
-            result = cls.collection.insert_one(movimiento)
+            result = cls.collection.insert_one(cls._scoped(movimiento))
             
             # 6. Actualizar stock del insumo
             Insumo.actualizar_stock(data["insumo_id"], stock_nuevo)
@@ -263,7 +256,7 @@ class MovimientoInventario:
                 fecha_query["$lte"] = filtros.pop("fecha_hasta")
             query["fecha"] = fecha_query
         
-        return list(cls.collection.find(query).sort("fecha", -1).limit(limit))
+        return list(cls.collection.find(cls._scoped(query)).sort("fecha", -1).limit(limit))
     
     @classmethod
     def obtener_movimientos_por_insumo(cls, insumo_id, limit=50):
@@ -281,14 +274,14 @@ class MovimientoInventario:
         """
         pipeline = [
             {
-                "$match": {
+                "$match": cls._scoped({
                     "insumo_id": ObjectId(insumo_id),
                     "tipo": TipoMovimiento.SALIDA,
                     "fecha": {
                         "$gte": fecha_desde,
                         "$lte": fecha_hasta
                     }
-                }
+                })
             },
             {
                 "$group": {
@@ -308,8 +301,8 @@ class MovimientoInventario:
 # MODELO: PROVEEDOR
 # ==========================================
 
-class Proveedor:
-    """Modelo de Proveedor"""
+class Proveedor(BaseModel):
+    """Modelo de Proveedor (multi-tenant)"""
     collection = db["proveedores"]
     
     @classmethod
@@ -329,26 +322,26 @@ class Proveedor:
             "updated_at": datetime.utcnow()
         }
         
-        result = cls.collection.insert_one(proveedor)
+        result = cls.collection.insert_one(cls._scoped(proveedor))
         return result.inserted_id
     
     @classmethod
     def obtener_todos(cls, solo_activos=True):
         """Obtiene todos los proveedores"""
         query = {"activo": True} if solo_activos else {}
-        return list(cls.collection.find(query).sort("nombre", 1))
+        return list(cls.collection.find(cls._scoped(query)).sort("nombre", 1))
     
     @classmethod
     def obtener_por_id(cls, proveedor_id):
         """Obtiene un proveedor por ID"""
-        return cls.collection.find_one({"_id": ObjectId(proveedor_id)})
+        return cls.collection.find_one(cls._scoped({"_id": ObjectId(proveedor_id)}))
     
     @classmethod
     def actualizar(cls, proveedor_id, data):
         """Actualiza un proveedor"""
         data["updated_at"] = datetime.utcnow()
         return cls.collection.update_one(
-            {"_id": ObjectId(proveedor_id)},
+            cls._scoped({"_id": ObjectId(proveedor_id)}),
             {"$set": data}
         )
     
@@ -356,7 +349,7 @@ class Proveedor:
     def desactivar(cls, proveedor_id):
         """Desactiva un proveedor (soft delete)"""
         return cls.collection.update_one(
-            {"_id": ObjectId(proveedor_id)},
+            cls._scoped({"_id": ObjectId(proveedor_id)}),
             {"$set": {"activo": False, "updated_at": datetime.utcnow()}}
         )
 
@@ -364,8 +357,8 @@ class Proveedor:
 # MODELO: ALERTA DE STOCK
 # ==========================================
 
-class AlertaStock:
-    """Modelo de Alertas de Stock Crítico"""
+class AlertaStock(BaseModel):
+    """Modelo de Alertas de Stock Crítico (multi-tenant)"""
     collection = db["alertas_stock"]
     
     @classmethod
@@ -379,10 +372,10 @@ class AlertaStock:
         
         for insumo in insumos_criticos:
             # Verificar si ya existe una alerta activa para este insumo
-            alerta_existente = cls.collection.find_one({
+            alerta_existente = cls.collection.find_one(cls._scoped({
                 "insumo_id": insumo["_id"],
                 "resuelta": False
-            })
+            }))
             
             if not alerta_existente:
                 alerta = {
@@ -397,7 +390,7 @@ class AlertaStock:
                     "fecha_resolucion": None
                 }
                 
-                result = cls.collection.insert_one(alerta)
+                result = cls.collection.insert_one(cls._scoped(alerta))
                 alertas_nuevas.append(result.inserted_id)
         
         return alertas_nuevas
@@ -420,13 +413,13 @@ class AlertaStock:
     @classmethod
     def obtener_alertas_activas(cls):
         """Obtiene todas las alertas no resueltas"""
-        return list(cls.collection.find({"resuelta": False}).sort("nivel_criticidad", -1))
+        return list(cls.collection.find(cls._scoped({"resuelta": False})).sort("nivel_criticidad", -1))
     
     @classmethod
     def resolver_alerta(cls, alerta_id, usuario_id):
         """Marca una alerta como resuelta"""
         return cls.collection.update_one(
-            {"_id": ObjectId(alerta_id)},
+            cls._scoped({"_id": ObjectId(alerta_id)}),
             {
                 "$set": {
                     "resuelta": True,

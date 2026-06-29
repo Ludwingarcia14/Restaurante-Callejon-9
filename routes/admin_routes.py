@@ -51,6 +51,12 @@ def api_dashboard_actividad():
 def api_dashboard_personal():
     return DashboardAPIController.get_personal_activo()
 
+@routes_bp.route("/api/dashboard/admin/ventas-tendencia")
+@login_required
+@rol_required(['1'])
+def api_dashboard_ventas_tendencia():
+    return DashboardAPIController.get_ventas_tendencia()
+
 @routes_bp.route("/api/empleados/todos")
 @login_required
 @rol_required(['1'])

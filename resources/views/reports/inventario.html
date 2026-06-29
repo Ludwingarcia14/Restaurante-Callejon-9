@@ -1,6 +1,19 @@
-{% extends "layout/layout_base.html" %}
+{% extends layout_tpl | default("layout/layout_base.html") %}
 
-{% block title %}Reportes de Inventario - Restaurante Callejón 19{% endblock %}
+{% block title %}Reportes de Inventario{% endblock %}
+{% block page_title %}Reportes de Inventario{% endblock %}
+{% block page_subtitle %}Control de stock, mermas y rotación{% endblock %}
+
+{# Navegación del panel de inventario (solo cuando se ve dentro de ese shell) #}
+{% block navigation %}{% if layout_tpl %}
+<a href="{{ url_for('routes.dashboard_inventario') }}" class="nav-link"><i class="bi bi-house-door"></i><span>Inicio</span></a>
+<a href="{{ url_for('routes.inventario_insumos') }}" class="nav-link"><i class="bi bi-box-seam"></i><span>Insumos</span></a>
+<a href="{{ url_for('routes.inventario_historial') }}" class="nav-link"><i class="bi bi-arrow-left-right"></i><span>Movimientos</span></a>
+<a href="{{ url_for('routes.inventario_alertas') }}" class="nav-link"><i class="bi bi-exclamation-triangle"></i><span>Alertas</span></a>
+<a href="{{ url_for('routes.inventario_proveedores') }}" class="nav-link"><i class="bi bi-truck"></i><span>Proveedores</span></a>
+<a href="{{ url_for('routes.inventario_reportes') }}" class="nav-link active"><i class="bi bi-graph-up"></i><span>Reportes</span></a>
+<a href="{{ url_for('routes.inventario_prediccion') }}" class="nav-link"><i class="bi bi-cpu"></i><span>Predicción</span></a>
+{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>

@@ -12,7 +12,7 @@ from datetime import datetime
 
 # 2. Librerías de Terceros
 from dotenv import load_dotenv
-from flask import Flask, request, redirect, url_for, jsonify, send_from_directory
+from flask import Flask, request, redirect, url_for, jsonify, send_from_directory, session
 from flask_cors import CORS
 from flask_session import Session
 from flask_socketio import join_room
@@ -90,7 +90,8 @@ app.config.update(
     SESSION_FILE_DIR=SESSION_DIR,
     SESSION_PERMANENT=False,
     SESSION_USE_SIGNER=True,
-    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true",
+    SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_NAME="callejon9_session",
     SESSION_REFRESH_EACH_REQUEST=True
@@ -138,12 +139,37 @@ _PagoMovil.ensure_indexes()
 def inject_now():
     return {"now": datetime.now}
 
+@app.context_processor
+def inject_tenant():
+    from models.restaurante_model import Restaurante
+    tenant_id = session.get("tenant_id")
+    tenant = None
+    if tenant_id:
+        try:
+            tenant = Restaurante.find_by_id(tenant_id)
+        except Exception:
+            tenant = None
+    return {"tenant": tenant or {}}
+
 @app.before_request
 def log_request():
     if request.path.startswith("/static"):
         return
     print(f"\n[REQ] {request.method} {request.path}")
     print("[COOKIES]:", list(request.cookies.keys()))
+
+# ================================
+# CONTEXTO DE TENANT (MULTI-TENANCY)
+# ================================
+from utils.tenant_context import set_current_tenant
+
+@app.before_request
+def load_tenant_context():
+    set_current_tenant(session.get("tenant_id"))
+
+@app.teardown_request
+def clear_tenant_context(exc=None):
+    set_current_tenant(None)
 
 # ================================
 # APP MÓVIL REACT (servir desde /app/)
@@ -263,7 +289,7 @@ if __name__ == "__main__":
 
     reloader_config = not is_windows
     debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
-    print(f"Auto-reload: {'Activado' if reloader_config and debug_mode else 'Desactivado'}")
+    print(f"Auto-reload: {'Activado' if reloader_config else 'Desactivado (Previniendo fallos en Windows)'}")
     print("=" * 60 + "\n")
 
     socketio.run(

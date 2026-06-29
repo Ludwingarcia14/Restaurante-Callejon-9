@@ -1,0 +1,24 @@
+{#
+  Navegación única del panel de Inventario.
+  Uso: {% block navigation %}{% set active_nav = 'insumos' %}{% include "inventario/_nav.html" %}{% endblock %}
+  `active_nav` marca el ítem activo. La insignia de Alertas requiere `stats.alertas_activas`.
+#}
+{% set nav_items = [
+    ('dashboard',   'routes.dashboard_inventario', 'bi-house-door',          'Inicio'),
+    ('insumos',     'routes.inventario_insumos',   'bi-box-seam',            'Insumos'),
+    ('movimientos', 'routes.inventario_historial', 'bi-arrow-left-right',    'Movimientos'),
+    ('alertas',     'routes.inventario_alertas',   'bi-exclamation-triangle','Alertas'),
+    ('proveedores', 'routes.inventario_proveedores','bi-truck',              'Proveedores'),
+    ('reportes',    'routes.inventario_reportes',  'bi-graph-up',            'Reportes'),
+    ('prediccion',  'routes.inventario_prediccion','bi-cpu',                 'Predicción'),
+] %}
+{% for key, endpoint, icon, label in nav_items %}
+<a href="{{ url_for(endpoint) }}"
+   class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition{% if active_nav == key %} active{% else %} hover:bg-gray-100{% endif %}">
+    <i class="bi {{ icon }} text-lg"></i>
+    <span>{{ label }}</span>
+    {% if key == 'alertas' and stats and stats.alertas_activas %}
+    <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ stats.alertas_activas }}</span>
+    {% endif %}
+</a>
+{% endfor %}

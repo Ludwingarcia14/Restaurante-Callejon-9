@@ -281,7 +281,7 @@
         if (!result.isConfirmed) return;
 
         try {
-            const res = await fetch(`/api/ventas/cuentas/${cuentaId}/cerrar`, {
+            const res = await fetch(`/api/cuentas/${cuentaId}/cerrar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ metodo_pago: metodo, propina, total })

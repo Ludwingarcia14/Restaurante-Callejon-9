@@ -4,48 +4,7 @@
 {% block page_title %}Reportes de Inventario{% endblock %}
 {% block page_subtitle %}Resumen y métricas del inventario{% endblock %}
 
-{% block extra_css %}
-<style>
-    #nav-dashboard,
-    #nav-menu,
-    #nav-ventas,
-    #nav-reportes,
-    #nav-analytics,
-    .sidebar-nav .mt-4.pt-4.border-t {
-        display: none !important;
-    }
-</style>
-{% endblock %}
-
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_inventario') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-house-door"></i>
-    <span>Inicio</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_insumos') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-box-seam"></i>
-    <span>Insumos</span>
-</a>
-<a href="{{ url_for('routes.inventario_historial') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Movimientos</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_alertas') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-exclamation-triangle text-lg"></i>
-    <span>Alertas</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_proveedores') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-truck text-lg"></i>
-    <span>Proveedores</span>
-</a>
-<a href="{{ url_for('routes.inventario_reportes') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-graph-up"></i>
-    <span>Reportes</span>
-</a>
-{% endblock %}
+{% block navigation %}{% set active_nav = 'reportes' %}{% include "inventario/_nav.html" %}{% endblock %}
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -221,8 +180,8 @@ new Chart(document.getElementById('chartTopValor'), {
         datasets: [{
             label: 'Valor ($)',
             data: chartTopData.data,
-            backgroundColor: '#a855f7cc',
-            borderColor: '#a855f7',
+            backgroundColor: '#f97316cc',
+            borderColor: '#f97316',
             borderWidth: 1,
             borderRadius: 6
         }]

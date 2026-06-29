@@ -307,7 +307,7 @@
         if (!result.isConfirmed) return;
 
         try {
-            const res = await fetch('/api/ventas/corte/generar', {
+            const res = await fetch('/api/corte/generar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notas })

@@ -86,22 +86,41 @@
         <!-- Panel izquierdo: Mesa + Menú -->
         <div class="lg:col-span-2 space-y-4">
 
-            <!-- Selección de mesa -->
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    <i class="bi bi-table text-orange-500 mr-1"></i> Mesa
-                </label>
-                <select id="mesa-select"
-                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
-                    <option value="">— Selecciona una mesa —</option>
-                    {% for mesa in mesas %}
-                    <option value="{{ mesa._id }}"
-                            data-nombre="{{ mesa.nombre or 'Mesa ' + mesa.numero|string }}">
-                        {{ mesa.nombre or 'Mesa ' + mesa.numero|string }}
-                        {% if mesa.estado %} — {{ mesa.estado }}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
+            <!-- Selección de mesa + datos del cliente -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        <i class="bi bi-table text-orange-500 mr-1"></i> Mesa
+                    </label>
+                    <select id="mesa-select"
+                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                        <option value="">— Selecciona una mesa —</option>
+                        {% for mesa in mesas %}
+                        <option value="{{ mesa._id }}"
+                                data-nombre="{{ mesa.nombre or 'Mesa ' + mesa.numero|string }}">
+                            {{ mesa.nombre or 'Mesa ' + mesa.numero|string }}
+                            {% if mesa.estado %} — {{ mesa.estado }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="bi bi-person text-orange-500 mr-1"></i> Nombre del cliente
+                        </label>
+                        <input type="text" id="cliente-nombre" placeholder="Opcional"
+                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="bi bi-people text-orange-500 mr-1"></i> Núm. personas
+                        </label>
+                        <input type="number" id="num-personas" min="1" value="1"
+                               class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                </div>
             </div>
 
             <!-- Menú de platillos -->
@@ -311,6 +330,8 @@
 
         const subtotal = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
         const mesaNombre = mesaSelect.options[mesaSelect.selectedIndex].dataset.nombre;
+        const clienteNombre = document.getElementById('cliente-nombre').value.trim();
+        const numPersonas = parseInt(document.getElementById('num-personas').value) || 1;
         const items = carrito.map(i => ({
             platillo_id: i.id,
             nombre: i.nombre,
@@ -325,6 +346,8 @@
                 body: JSON.stringify({
                     mesa_id: mesaSelect.value,
                     mesa_nombre: mesaNombre,
+                    cliente_nombre: clienteNombre,
+                    num_personas: numPersonas,
                     items,
                     subtotal,
                     total: subtotal,

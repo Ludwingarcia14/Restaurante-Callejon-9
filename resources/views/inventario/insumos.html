@@ -4,42 +4,7 @@
 {% block page_title %}Gestión de Insumos{% endblock %}
 {% block page_subtitle %}Listado y control de inventario{% endblock %}
 
-{% block navigation %}
-<a href="{{ url_for('routes.dashboard_inventario') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-house-door"></i>
-    <span>Inicio</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_insumos') }}" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg">
-    <i class="bi bi-box-seam"></i>
-    <span>Insumos</span>
-</a>
-<a href="{{ url_for('routes.inventario_historial') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Movimientos</span>
-</a>
-<a href="{{ url_for('routes.inventario_alertas') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-exclamation-triangle text-lg"></i>
-    <span>Alertas</span>
-    <a href="{{ url_for('routes.inventario_proveedores') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-truck text-lg"></i>
-    <span>Proveedores</span>
-</a>
-
-<a href="{{ url_for('routes.inventario_reportes') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-    <i class="bi bi-graph-up text-lg"></i>
-    <span>Reportes</span>
-</a>
-
-<script>
-    
-function toggleDropdown() {
-    const dropdown = document.getElementById("dropdownCategorias");
-    dropdown.classList.toggle("hidden");
-}
-</script>
-
-{% endblock %}
+{% block navigation %}{% set active_nav = 'insumos' %}{% include "inventario/_nav.html" %}{% endblock %}
 
 
 
@@ -70,8 +35,8 @@ function toggleDropdown() {
         <a href="?categoria=carnes" class="block px-4 py-2 hover:bg-gray-100 text-sm">
             🍖 Carnes
         </a>
-        <a href="?categoria=vegetales" class="block px-4 py-2 hover:bg-gray-100 text-sm">
-            🥦 Vegetales
+        <a href="?categoria=verduras" class="block px-4 py-2 hover:bg-gray-100 text-sm">
+            🥦 Verduras
         </a>
         <a href="?categoria=condimentos" class="block px-4 py-2 hover:bg-gray-100 text-sm">
             🧂 Condimentos
@@ -141,4 +106,12 @@ function toggleDropdown() {
 
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleDropdown() {
+    document.getElementById("dropdownCategorias").classList.toggle("hidden");
+}
+</script>
 {% endblock %}
