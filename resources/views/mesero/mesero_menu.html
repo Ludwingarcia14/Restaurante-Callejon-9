@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Menú - Mesero{% endblock %}
 {% block page_title %}Menú{% endblock %}
@@ -49,14 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
     <i class="bi bi-clipboard-data text-lg"></i>
     <span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i>
-    <span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Proceso de Datos</span>
 </a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i>
@@ -167,32 +159,31 @@ function renderProductos() {
         return;
     }
 
-    grid.innerHTML = filtrados.map(p => `
-    <div class="card hover:shadow-lg transition overflow-hidden">
-        
+    const frag = document.createDocumentFragment();
+    filtrados.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'card hover:shadow-lg transition overflow-hidden';
+        const imgSrc = p.imagen && p.imagen !== '/static/images/menu/default.jpg'
+            ? p.imagen
+            : '/static/images/menu/guacamole.jpg';
+        div.innerHTML = `
         <figure class="h-40 bg-gray-100">
-            <img
-                src="${p.imagen || '/static/images/menu/default.jpg'}"
-                alt="${p.nombre}"
-                class="w-full h-full object-cover"
-            >
+            <img src="${imgSrc}" alt="${p.nombre}"
+                 class="w-full h-full object-cover"
+                 loading="lazy"
+                 onerror="this.src='/static/images/menu/guacamole.jpg'">
         </figure>
-
         <div class="card-body">
             <h3 class="font-bold">${p.nombre}</h3>
-
-            <p class="text-sm text-gray-600">
-                ${p.descripcion || '—'}
-            </p>
-
+            <p class="text-sm text-gray-600">${p.descripcion || '—'}</p>
             <div class="flex justify-between items-center mt-4">
-                <span class="font-bold text-green-600">
-                    $${Number(p.precio).toFixed(2)}
-                </span>
+                <span class="font-bold text-green-600">$${Number(p.precio).toFixed(2)}</span>
             </div>
-        </div>
-    </div>
-    `).join('');
+        </div>`;
+        frag.appendChild(div);
+    });
+    grid.innerHTML = '';
+    grid.appendChild(frag);
 }
 </script>
 {% endblock %}

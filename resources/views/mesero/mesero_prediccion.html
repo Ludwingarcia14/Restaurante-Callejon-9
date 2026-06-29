@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 {% block title %}Predicción de Demanda{% endblock %}
 {% block page_title %}Predicción de Demanda{% endblock %}
 {% block page_subtitle %}Proyección de pedidos, ingresos e ingredientes para los próximos días{% endblock %}
@@ -21,15 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
 <a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link"><i class="bi bi-book text-lg"></i><span>Metodología</span></a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link"><i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span></a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
 <a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
 <a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link active"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
 {% endblock %}
 
 {% block content %}
-<div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);">
+<div class="pred-hero mb-6 p-6 rounded-2xl text-white">
   <div class="flex items-start gap-4">
     <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
       <i class="bi bi-graph-up text-2xl"></i>
@@ -100,10 +98,19 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
   <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-      <i class="bi bi-box-seam text-emerald-500"></i>
+    <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3">
+      <i class="bi bi-box-seam text-emerald-500 shrink-0"></i>
       <h3 class="text-sm font-semibold text-gray-700">Ingredientes a Preparar</h3>
       <span class="text-xs text-gray-400 font-normal">(estimado del período)</span>
+      <div id="ingr-slider-wrap" style="display:none;" class="ml-auto flex items-center gap-2">
+        <span class="text-xs text-gray-400">Top</span>
+        <input id="ingr-slider" type="range" min="1" max="10" value="5"
+               class="w-28 accent-emerald-500 cursor-pointer"
+               oninput="_renderIngrRows(this.value)">
+        <span class="text-xs font-bold text-emerald-600 w-16">
+          <span id="ingr-slider-val">5</span> de <span id="ingr-slider-max">—</span>
+        </span>
+      </div>
     </div>
     <div id="ingr-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
       <i class="bi bi-arrow-repeat animate-spin"></i>
@@ -123,15 +130,82 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Métricas del modelo -->
 <div id="metricas-panel" style="display:none;"
      class="bg-sky-50 border border-sky-100 rounded-xl p-5 text-sm text-sky-800 mb-6">
-  <p class="font-semibold mb-3 flex items-center gap-2">
-    <i class="bi bi-cpu text-sky-500"></i>
-    Métricas del Modelo
-    <span class="text-xs font-normal text-sky-600 opacity-70" id="metricas-subtitle"></span>
-  </p>
-  <div id="metricas-content" class="grid grid-cols-3 gap-4 text-center"></div>
-  <p class="text-xs text-sky-600 mt-3 opacity-70">
-    Gradient Boosting Regressor · Features: día semana, mes, fin de semana, viernes, temporada alta, día del mes.
-  </p>
+
+  <!-- Encabezado -->
+  <div class="flex items-start justify-between flex-wrap gap-2 mb-4">
+    <div>
+      <p class="font-semibold flex items-center gap-2">
+        <i class="bi bi-cpu text-sky-500"></i>
+        Métricas del Modelo
+        <span class="text-xs font-normal text-sky-500 opacity-80" id="metricas-subtitle"></span>
+      </p>
+      <p class="text-xs text-sky-700 opacity-70 mt-0.5">
+        Qué tan bien predijo el modelo en los datos de prueba (validación cruzada).
+      </p>
+    </div>
+  </div>
+
+  <!-- Tarjetas métricas -->
+  <div id="metricas-content" class="grid grid-cols-3 gap-4 text-center mb-4"></div>
+
+  <!-- Qué significa el subtítulo -->
+  <div class="bg-white border border-sky-100 rounded-lg p-4 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-sky-800">
+    <div class="flex gap-2 items-start">
+      <i class="bi bi-diagram-3 text-sky-400 mt-0.5 shrink-0"></i>
+      <div>
+        <p class="font-semibold">Gradient Boosting</p>
+        <p class="opacity-70">Ensambla cientos de árboles de decisión, cada uno corrigiendo los errores del anterior. Es más preciso que un solo árbol o una regresión lineal.</p>
+      </div>
+    </div>
+    <div class="flex gap-2 items-start">
+      <i class="bi bi-arrow-repeat text-sky-400 mt-0.5 shrink-0"></i>
+      <div>
+        <p class="font-semibold">3 pliegues (cross-validation)</p>
+        <p class="opacity-70">El historial se divide en 3 bloques. El modelo entrena con 2 y se prueba con el que queda, 3 veces rotando. Las métricas son el promedio de esas 3 pruebas — no miden datos que el modelo ya vio.</p>
+      </div>
+    </div>
+    <div class="flex gap-2 items-start">
+      <i class="bi bi-calendar-range text-sky-400 mt-0.5 shrink-0"></i>
+      <div>
+        <p class="font-semibold">90 días de historial</p>
+        <p class="opacity-70">El modelo aprende de los últimos 90 días de ventas. Más días = patrones más sólidos. Con menos de 30 días las métricas son preliminares.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features explicadas -->
+  <div>
+    <p class="text-xs font-semibold text-sky-700 mb-2 flex items-center gap-1.5">
+      <i class="bi bi-input-cursor-text text-sky-400"></i>
+      Variables que el modelo usa para predecir
+    </p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+      <div class="bg-white border border-sky-100 rounded-lg px-3 py-2">
+        <p class="font-semibold text-sky-700">Día de semana</p>
+        <p class="text-sky-600 opacity-70">Lunes, martes… domingo. Captura el patrón semanal: la demanda del jueves no es igual que la del domingo.</p>
+      </div>
+      <div class="bg-white border border-sky-100 rounded-lg px-3 py-2">
+        <p class="font-semibold text-sky-700">Mes del año</p>
+        <p class="text-sky-600 opacity-70">Estacionalidad mensual. Diciembre y mayo suelen tener comportamientos distintos al resto del año.</p>
+      </div>
+      <div class="bg-white border border-sky-100 rounded-lg px-3 py-2">
+        <p class="font-semibold text-sky-700">Fin de semana</p>
+        <p class="text-sky-600 opacity-70">Flag sábado/domingo (1 o 0). Los fines de semana suelen concentrar más comensales.</p>
+      </div>
+      <div class="bg-white border border-sky-100 rounded-lg px-3 py-2">
+        <p class="font-semibold text-sky-700">Viernes</p>
+        <p class="text-sky-600 opacity-70">Tratado por separado porque tiene un patrón propio — noche de viernes — que no encaja en el grupo "entre semana".</p>
+      </div>
+      <div class="bg-white border border-sky-100 rounded-lg px-3 py-2">
+        <p class="font-semibold text-sky-700">Temporada alta</p>
+        <p class="text-sky-600 opacity-70">Meses de mayor afluencia histórica. El modelo eleva su estimación cuando cae en esos periodos.</p>
+      </div>
+      <div class="bg-white border border-sky-100 rounded-lg px-3 py-2">
+        <p class="font-semibold text-sky-700">Día del mes</p>
+        <p class="text-sky-600 opacity-70">Captura el efecto quincena: los días 1, 15 y 30 suelen tener más actividad por cobros de nómina.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Validación: real vs predicho -->
@@ -143,14 +217,6 @@ document.addEventListener('DOMContentLoaded', function() {
   <div id="validacion-content"></div>
 </div>
 
-<!-- Matriz de confusión -->
-<div id="matriz-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
-  <h3 class="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
-    <i class="bi bi-grid-3x3 text-sky-500"></i> Matriz de Confusión
-  </h3>
-  <p class="text-xs text-gray-400 mb-4">Clasifica días como "Alto" o "Bajo" demanda y compara predicción vs realidad.</p>
-  <div id="matriz-content"></div>
-</div>
 
 <div id="aviso-panel" style="display:none;"
      class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800"></div>
@@ -159,10 +225,50 @@ document.addEventListener('DOMContentLoaded', function() {
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .animate-spin{animation:spin 1s linear infinite}
 .semana-bar-fill{transition:width 0.6s cubic-bezier(.4,0,.2,1)}
+
+/* Hero */
+.pred-hero { background: linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%); }
+html.dark .pred-hero { background: linear-gradient(135deg,rgba(14,165,233,0.28) 0%,rgba(2,132,199,0.18) 100%); border:1px solid rgba(14,165,233,0.25); }
+
+/* Color classes not covered by global dark CSS */
+html.dark .text-sky-500  { color:#38bdf8 !important; }
+html.dark .text-sky-600  { color:#7dd3fc !important; }
+html.dark .text-sky-700  { color:#38bdf8 !important; }
+html.dark .text-sky-800  { color:#7dd3fc !important; }
+html.dark .text-emerald-500 { color:#34d399 !important; }
+html.dark .text-emerald-600 { color:#10b981 !important; }
+html.dark .text-emerald-700 { color:#34d399 !important; }
+html.dark .text-amber-500   { color:#fbbf24 !important; }
+html.dark .text-amber-600   { color:#f59e0b !important; }
+
+/* Metricas panel */
+html.dark #metricas-panel { background:rgba(14,165,233,0.07) !important; border-color:rgba(14,165,233,0.2) !important; color:#7dd3fc !important; }
+html.dark #metricas-panel .bg-white { background:rgba(255,255,255,0.05) !important; border-color:rgba(14,165,233,0.15) !important; }
+html.dark #metricas-panel .border-sky-100 { border-color:rgba(14,165,233,0.15) !important; }
+html.dark #metricas-panel .text-sky-700   { color:#38bdf8 !important; }
+html.dark #metricas-panel .text-sky-600   { color:#7dd3fc !important; }
+html.dark #metricas-panel .text-sky-500   { color:#38bdf8 !important; }
+html.dark #metricas-panel .text-sky-400   { color:#7dd3fc !important; }
+html.dark #metricas-panel strong          { color:#bae6fd; }
+html.dark #metricas-panel .opacity-70     { opacity:0.85; }
+
+/* Aviso panel */
+html.dark #aviso-panel { background:rgba(245,158,11,0.1) !important; border-color:rgba(245,158,11,0.3) !important; color:#fcd34d !important; }
+
+/* Semana / Validacion panels */
+html.dark #semana-panel  { background:#241b14 !important; }
+html.dark #validacion-panel { background:#241b14 !important; }
+
+/* Pager */
+html.dark #tabla-pred-pager { border-color:#3a2c20; background:#241b14; color:#a08878; }
+html.dark #pager-prev, html.dark #pager-next { border-color:#3a2c20; color:#a08878; background:transparent; }
+html.dark #pager-prev:not(:disabled):hover, html.dark #pager-next:not(:disabled):hover { background:rgba(14,165,233,0.08); border-color:rgba(14,165,233,0.25); color:#7dd3fc; }
+html.dark #pager-info { color:#a08878; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let chartPred;
+const isDark = () => document.documentElement.classList.contains('dark');
 function fmt(v){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);}
 
 async function cargar(){
@@ -178,7 +284,6 @@ async function cargar(){
   document.getElementById('semana-panel').style.display='none';
   document.getElementById('metricas-panel').style.display='none';
   document.getElementById('validacion-panel').style.display='none';
-  document.getElementById('matriz-panel').style.display='none';
   document.getElementById('aviso-panel').style.display='none';
   document.getElementById('kpi-cards').innerHTML=`
     <div class="col-span-2 md:col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
@@ -198,7 +303,6 @@ async function cargar(){
     renderSemana(d.resumen_semana||[]);
     renderMetricas(d.metricas);
     renderValidacion(d.validacion||[]);
-    renderMatrizConfusion(d.matriz_confusion||{});
     document.getElementById('estado').textContent=`${d.predicciones.length} días · MAE: ${d.metricas.mae} · R²: ${d.metricas.r2}`;
   }catch(e){
     document.getElementById('aviso-panel').innerHTML=`<i class="bi bi-exclamation-triangle mr-2"></i>Error: ${e.message}`;
@@ -271,25 +375,43 @@ function predPage(delta){
 }
 
 function _renderPredPage(){
+  const dark = isDark();
   const start = _predsPage * PRED_PAGE_SIZE;
   const slice = _predsAll.slice(start, start + PRED_PAGE_SIZE);
   const total = _predsAll.length;
   const pages = Math.ceil(total / PRED_PAGE_SIZE);
 
+  const borderCol    = dark ? '#3a2c20' : '#f3f4f6';
+  const theadBg      = dark ? '#1e1611' : '#f9fafb';
+  const textMut      = dark ? '#a08878' : '#6b7280';
+  const textMain     = dark ? '#c5b5a4' : '#374151';
+  const wkendRowBg   = dark ? 'rgba(245,158,11,0.08)' : '#fffbeb';
+  const wkendHover   = dark ? 'rgba(245,158,11,0.14)' : '#fef3c7';
+  const wkdayHover   = dark ? 'rgba(14,165,233,0.07)' : '#f0f9ff';
+  const wkendBadgeBg = dark ? 'rgba(245,158,11,0.2)'  : '#fde68a';
+  const wkendBadgeTx = dark ? '#fcd34d' : '#92400e';
+  const wkdayBadgeBg = dark ? 'rgba(156,163,175,0.12)': '#f3f4f6';
+  const wkdayBadgeTx = dark ? '#80685a' : '#4b5563';
+  const pedColor     = dark ? '#38bdf8' : '#0369a1';
+  const ingrColor    = dark ? '#a08878' : '#4b5563';
+
   document.getElementById('tabla-pred').style.display='';
   document.getElementById('tabla-pred').innerHTML=`
     <table class="w-full text-xs border-collapse">
-      <thead><tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+      <thead><tr style="background:${theadBg};border-bottom:2px solid ${borderCol};color:${textMut};" class="text-left uppercase tracking-wide">
         <th class="px-4 py-2">Fecha</th><th class="px-4 py-2">Día</th>
         <th class="px-4 py-2 text-center">Pedidos</th><th class="px-4 py-2 text-right">Ingreso est.</th>
       </tr></thead>
       <tbody>${slice.map(p=>`
-        <tr class="border-b border-gray-100 ${p.es_fin_semana?'bg-amber-50 hover:bg-amber-100':'hover:bg-sky-50'} transition">
-          <td class="px-4 py-2 font-medium text-gray-700">${p.fecha}</td>
-          <td class="px-4 py-2"><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
-            ${p.es_fin_semana?'bg-amber-200 text-amber-800':'bg-gray-100 text-gray-600'}">${p.dia_semana}</span></td>
-          <td class="px-4 py-2 text-center font-bold text-sky-700">${p.pedidos_pred}</td>
-          <td class="px-4 py-2 text-right text-gray-600">${fmt(p.ingreso_pred)}</td>
+        <tr style="border-bottom:1px solid ${borderCol};background:${p.es_fin_semana?wkendRowBg:'transparent'};"
+            onmouseover="this.style.background='${p.es_fin_semana?wkendHover:wkdayHover}'"
+            onmouseout="this.style.background='${p.es_fin_semana?wkendRowBg:'transparent'}'"
+            class="transition">
+          <td class="px-4 py-2 font-medium" style="color:${textMain};">${p.fecha}</td>
+          <td class="px-4 py-2"><span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
+            style="background:${p.es_fin_semana?wkendBadgeBg:wkdayBadgeBg};color:${p.es_fin_semana?wkendBadgeTx:wkdayBadgeTx};">${p.dia_semana}</span></td>
+          <td class="px-4 py-2 text-center font-bold" style="color:${pedColor};">${p.pedidos_pred}</td>
+          <td class="px-4 py-2 text-right" style="color:${ingrColor};">${fmt(p.ingreso_pred)}</td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -306,25 +428,67 @@ function _renderPredPage(){
   }
 }
 
+let _ingrData=[];
+
 function renderTablaIngr(ingr){
+  _ingrData=ingr;
   document.getElementById('ingr-loading').style.display='none';
   document.getElementById('tabla-ingr').style.display='';
-  if(!ingr.length){document.getElementById('tabla-ingr').innerHTML='<p class="p-4 text-sm text-gray-400 text-center">Sin datos</p>';return;}
+  if(!ingr.length){
+    document.getElementById('tabla-ingr').innerHTML='<p class="p-4 text-sm text-gray-400 text-center">Sin datos</p>';
+    return;
+  }
+  const slider=document.getElementById('ingr-slider');
+  const def=Math.min(5,ingr.length);
+  slider.max=ingr.length;
+  slider.value=def;
+  document.getElementById('ingr-slider-max').textContent=ingr.length;
+  document.getElementById('ingr-slider-val').textContent=def;
+  document.getElementById('ingr-slider-wrap').style.display='';
+  _renderIngrRows(def);
+}
+
+function _renderIngrRows(n){
+  n=parseInt(n)||parseInt(document.getElementById('ingr-slider').value);
+  document.getElementById('ingr-slider-val').textContent=n;
+  const dark = isDark();
+  const subset=_ingrData.slice(0,n);
+  const max=Math.max(...subset.map(i=>i.unidades_pred),1);
+  const colores=['#10b981','#0ea5e9','#8b5cf6','#f59e0b','#ef4444'];
+  const borderCol = dark ? '#3a2c20' : '#f3f4f6';
+  const theadBg   = dark ? '#1e1611' : '#f9fafb';
+  const textMut   = dark ? '#a08878' : '#6b7280';
+  const textMain  = dark ? '#c5b5a4' : '#374151';
+  const hoverBg   = dark ? 'rgba(16,185,129,0.07)' : '#f0fdf4';
+  const barBg     = dark ? '#2e231a' : '#f3f4f6';
   document.getElementById('tabla-ingr').innerHTML=`
     <table class="w-full text-xs border-collapse">
-      <thead><tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+      <thead><tr style="background:${theadBg};border-bottom:2px solid ${borderCol};color:${textMut};" class="text-left uppercase tracking-wide">
         <th class="px-4 py-2">Platillo / Ingrediente</th>
-        <th class="px-4 py-2 text-center">Unidades</th><th class="px-4 py-2 text-center">Prom./día</th>
+        <th class="px-4 py-2 text-center">Unidades</th>
+        <th class="px-4 py-2 text-center">Prom./día</th>
+        <th class="px-4 py-2">Volumen</th>
       </tr></thead>
-      <tbody>${ingr.map((i,idx)=>`
-        <tr class="hover:bg-emerald-50 border-b border-gray-100 transition">
-          <td class="px-4 py-2 font-medium text-gray-700 flex items-center gap-2">
-            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full text-white text-xs font-bold flex-shrink-0"
-                  style="background:${['#10b981','#0ea5e9','#8b5cf6','#f59e0b','#ef4444'][idx%5]};">${idx+1}</span>
-            ${i.ingrediente}
+      <tbody>${subset.map((i,idx)=>`
+        <tr style="border-bottom:1px solid ${borderCol};"
+            onmouseover="this.style.background='${hoverBg}'"
+            onmouseout="this.style.background='transparent'"
+            class="transition">
+          <td class="px-4 py-2 font-medium" style="color:${textMain};">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 inline-flex items-center justify-center rounded-full text-white text-xs font-bold shrink-0"
+                    style="background:${colores[idx%5]};">${idx+1}</span>
+              ${i.ingrediente}
+            </div>
           </td>
-          <td class="px-4 py-2 text-center font-bold text-emerald-700">${i.unidades_pred}</td>
-          <td class="px-4 py-2 text-center text-gray-400">${i.base_diaria}/día</td>
+          <td class="px-4 py-2 text-center font-bold" style="color:${colores[idx%5]};">${i.unidades_pred}</td>
+          <td class="px-4 py-2 text-center" style="color:${textMut};">${i.base_diaria}/día</td>
+          <td class="px-4 py-3 w-32">
+            <div class="h-2 rounded-full overflow-hidden" style="background:${barBg};">
+              <div class="h-full rounded-full transition-all duration-500"
+                   style="width:${Math.round(i.unidades_pred/max*100)}%;background:${colores[idx%5]};"></div>
+            </div>
+          </td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -333,12 +497,15 @@ function renderTablaIngr(ingr){
 function renderSemana(semana){
   if(!semana.length) return;
   document.getElementById('semana-panel').style.display='';
+  const dark = isDark();
   const max=Math.max(...semana.map(s=>s.pedidos_prom),1);
   const colores={'Sábado':'#f59e0b','Domingo':'#f59e0b','Viernes':'#fb923c'};
+  const barBg  = dark ? '#2e231a' : '#f3f4f6';
+  const textCol= dark ? '#a08878' : '#6b7280';
   document.getElementById('semana-bars').innerHTML=semana.map(s=>`
     <div class="flex items-center gap-3 text-xs">
-      <span class="w-20 text-gray-500 text-right shrink-0">${s.dia}</span>
-      <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+      <span class="w-20 text-right shrink-0" style="color:${textCol};">${s.dia}</span>
+      <div class="flex-1 rounded-full h-5 overflow-hidden" style="background:${barBg};">
         <div class="semana-bar-fill h-full rounded-full flex items-center justify-end pr-2"
              style="width:${Math.round(s.pedidos_prom/max*100)}%; background:${colores[s.dia]||'#0ea5e9'};">
           <span class="text-white font-bold text-[10px]">${s.pedidos_prom}</span>
@@ -352,26 +519,32 @@ function renderMetricas(m){
   document.getElementById('metricas-subtitle').textContent=
     `${m.modelo||'Modelo'} · ${m.n_splits||1} pliegues · ${m.dias_historial} días`;
 
-  const r2Tag=m.r2>=0.7?['text-emerald-700','bg-white border-emerald-200','Bueno']
-             :m.r2>=0.4?['text-amber-700', 'bg-white border-amber-200',  'Regular']
-             :m.r2>=0.0?['text-red-700',   'bg-white border-red-200',    'Bajo']
-             :           ['text-red-800',   'bg-red-50 border-red-300',   'Insuficiente'];
+  const dark = isDark();
+  const skyC = dark ? '#38bdf8' : '#0369a1';
+  const skyBg= dark ? 'rgba(14,165,233,0.1)' : '#f0f9ff';
+  const skyBd= dark ? 'rgba(14,165,233,0.25)': '#bae6fd';
+
+  const r2Label = m.r2>=0.7?'Bueno':m.r2>=0.4?'Regular':m.r2>=0.0?'Bajo':'Insuficiente';
+  const r2C  = m.r2>=0.7?(dark?'#34d399':'#059669'):m.r2>=0.4?(dark?'#fcd34d':'#d97706'):( dark?'#f87171':'#dc2626');
+  const r2Bg = m.r2>=0.7?(dark?'rgba(16,185,129,0.1)':'#f0fdf4'):m.r2>=0.4?(dark?'rgba(245,158,11,0.1)':'#fffbeb'):(dark?'rgba(239,68,68,0.1)':'#fef2f2');
+  const r2Bd = m.r2>=0.7?(dark?'rgba(16,185,129,0.25)':'#bbf7d0'):m.r2>=0.4?(dark?'rgba(245,158,11,0.25)':'#fde68a'):(dark?'rgba(239,68,68,0.25)':'#fecaca');
 
   const items=[
-    {label:'MAE',  val:m.mae,  desc:'Error medio en pedidos/día',           cls:'text-sky-700 bg-white border-sky-100'},
-    {label:'RMSE', val:m.rmse, desc:'Penaliza errores grandes',             cls:'text-sky-700 bg-white border-sky-100'},
-    {label:`R² — ${r2Tag[2]}`,val:m.r2,desc:'Varianza explicada (0→1)',    cls:`${r2Tag[0]} ${r2Tag[1]}`},
+    {label:'MAE',       val:m.mae,  c:skyC, bg:skyBg, bd:skyBd, desc:`El modelo se equivoca en promedio ±${m.mae} pedidos por día. Cuanto menor, mejor.`},
+    {label:'RMSE',      val:m.rmse, c:skyC, bg:skyBg, bd:skyBd, desc:`El error "peor caso" típico ronda ±${m.rmse} pedidos. Penaliza más los días donde el modelo falla fuerte.`},
+    {label:`R² — ${r2Label}`, val:m.r2, c:r2C, bg:r2Bg, bd:r2Bd, desc:`El modelo explica el ${Math.round(m.r2*100)}% de la variabilidad diaria en la demanda. 1.0 sería perfecto; 0 sería adivinar al azar.`},
   ];
   document.getElementById('metricas-content').innerHTML=items.map(i=>`
-    <div class="rounded-lg p-3 border ${i.cls}">
+    <div class="rounded-lg p-3 border" style="background:${i.bg};border-color:${i.bd};color:${i.c};">
       <p class="text-xl font-bold">${i.val}</p>
       <p class="text-xs font-semibold">${i.label}</p>
-      <p class="text-xs opacity-70 mt-0.5">${i.desc}</p>
+      <p class="text-xs mt-0.5 leading-relaxed" style="opacity:0.8;">${i.desc}</p>
     </div>`).join('');
 
   if(m.datos_limitados){
     document.getElementById('metricas-content').insertAdjacentHTML('afterend',`
-      <div class="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+      <div class="mt-3 flex items-start gap-2 text-xs rounded-lg p-3"
+           style="background:rgba(245,158,11,${dark?'0.12':'0.08'});border:1px solid rgba(245,158,11,${dark?'0.3':'0.2'});color:${dark?'#fcd34d':'#92400e'};">
         <i class="bi bi-exclamation-triangle-fill mt-0.5 shrink-0"></i>
         <span>Con <strong>${m.dias_historial} días</strong> las métricas son preliminares.
         El modelo mejora automáticamente al acumular <strong>60+ días</strong> de historial.</span>
@@ -382,10 +555,18 @@ function renderMetricas(m){
 function renderValidacion(v){
   if(!v||!v.length) return;
   document.getElementById('validacion-panel').style.display='';
+  const dark = isDark();
+  const borderCol = dark ? '#3a2c20' : '#f3f4f6';
+  const theadBg   = dark ? '#1e1611' : '#f9fafb';
+  const textMut   = dark ? '#a08878' : '#6b7280';
+  const textMain  = dark ? '#c5b5a4' : '#374151';
+  const hoverBg   = dark ? 'rgba(14,165,233,0.07)' : '#f0f9ff';
+  const realColor = dark ? '#38bdf8' : '#0369a1';
+  const predColor = dark ? '#fcd34d' : '#d97706';
   document.getElementById('validacion-content').innerHTML=`
     <table class="w-full text-xs border-collapse">
       <thead>
-        <tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+        <tr style="background:${theadBg};border-bottom:2px solid ${borderCol};color:${textMut};" class="text-left uppercase tracking-wide">
           <th class="px-4 py-2">Fecha</th><th class="px-4 py-2">Día</th>
           <th class="px-4 py-2 text-center">Real</th>
           <th class="px-4 py-2 text-center">Predicho</th>
@@ -395,78 +576,22 @@ function renderValidacion(v){
       <tbody>
         ${v.map(row=>{
           const pct=row.real>0?row.error/row.real:0;
-          const cls=pct<0.10?'text-emerald-700':pct<0.25?'text-amber-700':'text-red-600';
-          return `<tr class="border-b border-gray-100 hover:bg-sky-50 transition">
-            <td class="px-4 py-2 text-gray-500">${row.fecha}</td>
-            <td class="px-4 py-2 text-gray-700">${row.dia_semana}</td>
-            <td class="px-4 py-2 text-center font-bold text-sky-700">${row.real}</td>
-            <td class="px-4 py-2 text-center font-bold text-amber-600">${row.pred}</td>
-            <td class="px-4 py-2 text-center font-semibold ${cls}">${row.error}</td>
+          const errC=pct<0.10?(dark?'#34d399':'#059669'):pct<0.25?(dark?'#fcd34d':'#d97706'):(dark?'#f87171':'#dc2626');
+          return `<tr style="border-bottom:1px solid ${borderCol};"
+                      onmouseover="this.style.background='${hoverBg}'"
+                      onmouseout="this.style.background='transparent'"
+                      class="transition">
+            <td class="px-4 py-2" style="color:${textMut};">${row.fecha}</td>
+            <td class="px-4 py-2" style="color:${textMain};">${row.dia_semana}</td>
+            <td class="px-4 py-2 text-center font-bold" style="color:${realColor};">${row.real}</td>
+            <td class="px-4 py-2 text-center font-bold" style="color:${predColor};">${row.pred}</td>
+            <td class="px-4 py-2 text-center font-semibold" style="color:${errC};">${row.error}</td>
           </tr>`;
         }).join('')}
       </tbody>
     </table>`;
 }
 
-function renderMatrizConfusion(mc){
-  if(!mc||!mc.cm) return;
-  document.getElementById('matriz-panel').style.display='';
-  const [[tn,fp],[fn,tp]]=mc.cm;
-  const total=tn+fp+fn+tp||1;
-  const acc=Math.round((tn+tp)/total*100);
-  document.getElementById('matriz-content').innerHTML=`
-    <p class="text-xs text-gray-400 mb-4">
-      Umbral: <strong>${mc.umbral}</strong> pedidos/día &nbsp;·&nbsp;
-      Precisión global: <strong class="text-sky-700">${acc}%</strong> (${tn+tp} de ${total} días correctos)
-    </p>
-    <div class="overflow-x-auto">
-      <table class="text-sm mx-auto">
-        <thead>
-          <tr>
-            <td colspan="2"></td>
-            <th colspan="2" class="px-4 pb-2 text-center text-xs font-semibold text-gray-500 uppercase">Predicho</th>
-          </tr>
-          <tr>
-            <td colspan="2"></td>
-            <th class="px-6 py-2 text-center text-sm font-semibold text-gray-600 bg-gray-100 rounded-tl-lg border border-gray-200">Bajo</th>
-            <th class="px-6 py-2 text-center text-sm font-semibold text-gray-600 bg-gray-100 rounded-tr-lg border border-gray-200">Alto</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th rowspan="2" class="pr-2 text-xs font-semibold text-gray-500 uppercase" style="writing-mode:vertical-lr;transform:rotate(180deg);text-align:center;">Real</th>
-            <th class="px-3 py-3 text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200">Bajo</th>
-            <td class="px-6 py-4 text-center border border-emerald-200 bg-emerald-50 rounded-tl">
-              <span class="text-2xl font-bold text-emerald-700">${tn}</span>
-              <p class="text-xs text-emerald-600 mt-0.5 font-semibold">TN ✓</p>
-              <p class="text-xs text-gray-400">Correcto bajo</p>
-            </td>
-            <td class="px-6 py-4 text-center border border-red-200 bg-red-50 rounded-tr">
-              <span class="text-2xl font-bold text-red-600">${fp}</span>
-              <p class="text-xs text-red-500 mt-0.5 font-semibold">FP ✗</p>
-              <p class="text-xs text-gray-400">Sobrestimó</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="px-3 py-3 text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200">Alto</th>
-            <td class="px-6 py-4 text-center border border-red-200 bg-red-50 rounded-bl">
-              <span class="text-2xl font-bold text-red-600">${fn}</span>
-              <p class="text-xs text-red-500 mt-0.5 font-semibold">FN ✗</p>
-              <p class="text-xs text-gray-400">Subestimó</p>
-            </td>
-            <td class="px-6 py-4 text-center border border-emerald-200 bg-emerald-50 rounded-br">
-              <span class="text-2xl font-bold text-emerald-700">${tp}</span>
-              <p class="text-xs text-emerald-600 mt-0.5 font-semibold">TP ✓</p>
-              <p class="text-xs text-gray-400">Correcto alto</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="text-xs text-gray-400 mt-3 text-center">
-      FP = predijo alta demanda pero fue baja · FN = predijo baja pero fue alta (el más costoso)
-    </p>`;
-}
 
 cargar();
 </script>

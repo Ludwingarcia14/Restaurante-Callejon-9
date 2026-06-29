@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Diagnóstico de Datos{% endblock %}
 {% block page_title %}Diagnóstico de Datos{% endblock %}
@@ -38,12 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link active">
     <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i><span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
-    <i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span>
 </a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>
@@ -89,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="text-xs text-gray-400 mb-4">
             Mín., máx., promedio y desviación estándar del ticket. A mayor desviación, más variabilidad en el gasto.
         </p>
-        <div id="diag-tabla-mesas"></div>
+        <div id="diag-tabla-mesas" class="overflow-x-auto"></div>
     </div>
 
     <!-- Métodos de pago -->
@@ -199,6 +193,7 @@ function renderMetodos(metodos) {
     const total = metodos.reduce((s, m) => s + m.count, 0);
     const colores = ['#3b82f6','#10b981','#f59e0b','#94a3b8'];
 
+    const dark = document.documentElement.classList.contains('dark');
     if (chartMetodos) chartMetodos.destroy();
     chartMetodos = new Chart(document.getElementById('chartMetodos'), {
         type: 'doughnut',
@@ -207,8 +202,8 @@ function renderMetodos(metodos) {
             datasets: [{
                 data: metodos.map(m => m.count),
                 backgroundColor: colores.slice(0, metodos.length),
-                borderWidth: 3,
-                borderColor: '#fff',
+                borderWidth: 2,
+                borderColor: dark ? '#18120e' : '#ffffff',
                 hoverOffset: 6,
             }]
         },
@@ -226,15 +221,16 @@ function renderMetodos(metodos) {
         }
     });
 
+    const textMut = dark ? '#a08878' : '#9ca3af';
     document.getElementById('diag-metodos-lista').innerHTML = metodos.map((m, i) => `
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${colores[i]};"></span>
-                <span class="capitalize text-sm text-gray-700">${m.metodo}</span>
+                <span class="capitalize text-sm" style="color:${dark ? '#c5b5a4' : '#374151'};">${m.metodo}</span>
             </div>
             <div class="text-right">
-                <span class="text-sm font-bold text-gray-800">${m.count}</span>
-                <span class="text-xs text-gray-400 ml-1">(${(m.count/total*100).toFixed(1)}%)</span>
+                <span class="text-sm font-bold" style="color:${colores[i]};">${m.count}</span>
+                <span class="text-xs ml-1" style="color:${textMut};">(${(m.count/total*100).toFixed(1)}%)</span>
             </div>
         </div>
     `).join('');

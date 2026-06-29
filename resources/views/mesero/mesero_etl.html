@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Proceso de Datos — ETL{% endblock %}
 {% block page_title %}Proceso de Datos{% endblock %}
@@ -38,12 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
     <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i><span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link active">
-    <i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span>
 </a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>

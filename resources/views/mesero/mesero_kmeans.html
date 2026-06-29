@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Segmentación de Mesas — K-Means{% endblock %}
 {% block page_title %}Segmentación de Mesas{% endblock %}
@@ -39,12 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
     <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
 </a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i><span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
-    <i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span>
-</a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>
 </a>
@@ -59,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
+<div class="kmeans-info-banner mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
      style="background:rgba(59,130,246,0.08); border:1px solid #93c5fd; color:#1e40af;">
     <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-blue-500"></i>
     <div>
@@ -97,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="tabla-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
             <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
         </div>
-        <div id="tabla-mesas" style="display:none;"></div>
+        <div id="tabla-mesas" style="display:none;" class="overflow-x-auto"></div>
     </div>
 </div>
 
@@ -109,19 +103,19 @@ document.addEventListener('DOMContentLoaded', function() {
         <span class="text-xs font-normal text-gray-400 ml-1">CRISP-DM · Fase 5</span>
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="rounded-lg p-4 text-center" style="background:#f5f3ff; border:1px solid #c4b5fd;">
+        <div class="eval-card rounded-lg p-4 text-center eval-purple">
             <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">Silhouette Score</p>
-            <p id="eval-sil" class="text-2xl font-bold text-purple-700">—</p>
-            <p class="text-xs text-gray-400 mt-1">Cuán bien separados están los clusters (0→1)</p>
+            <p id="eval-sil" class="text-2xl font-bold text-purple-600">—</p>
+            <p class="text-xs text-gray-400 mt-1">Cuán bien separados están los clusters (0?1)</p>
         </div>
-        <div class="rounded-lg p-4 text-center" style="background:#f0fdf4; border:1px solid #86efac;">
+        <div class="eval-card rounded-lg p-4 text-center eval-green">
             <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Inercia (k=3)</p>
-            <p id="eval-inertia" class="text-2xl font-bold text-green-700">—</p>
+            <p id="eval-inertia" class="text-2xl font-bold text-green-600">—</p>
             <p class="text-xs text-gray-400 mt-1">Suma de distancias al centroide</p>
         </div>
-        <div class="rounded-lg p-4 text-center" style="background:#fff7ed; border:1px solid #fed7aa;">
+        <div class="eval-card rounded-lg p-4 text-center eval-orange">
             <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Mesas analizadas</p>
-            <p id="eval-mesas" class="text-2xl font-bold text-orange-600">—</p>
+            <p id="eval-mesas" class="text-2xl font-bold text-orange-500">—</p>
             <p class="text-xs text-gray-400 mt-1">Con historial en los últimos 90 días</p>
         </div>
     </div>
@@ -152,12 +146,31 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 .animate-spin { animation: spin 1s linear infinite; }
+
+/* Tarjetas de evaluación — modo claro */
+.eval-purple { background:#f5f3ff; border:1px solid #c4b5fd; }
+.eval-green  { background:#f0fdf4; border:1px solid #86efac; }
+.eval-orange { background:#fff7ed; border:1px solid #fed7aa; }
+
+/* Tarjetas de evaluación — modo oscuro */
+html.dark .eval-purple { background:rgba(139,92,246,0.1)  !important; border-color:rgba(139,92,246,0.3)  !important; }
+html.dark .eval-green  { background:rgba(34,197,94,0.08)  !important; border-color:rgba(34,197,94,0.28)   !important; }
+html.dark .eval-orange { background:rgba(249,115,22,0.09) !important; border-color:rgba(249,115,22,0.3)   !important; }
+
+/* Banner info */
+html.dark .kmeans-info-banner {
+    background: rgba(59,130,246,0.1) !important;
+    border-color: rgba(59,130,246,0.35) !important;
+    color: #93c5fd !important;
+}
 </style>
 
 <script>
 let chartKmeans, chartElbow;
-const COLORS = ['#f59e0b','#3b82f6','#94a3b8'];
-const BG     = ['#fef3c7','#dbeafe','#f1f5f9'];
+const COLORS  = ['#f59e0b','#3b82f6','#94a3b8'];
+const BG      = ['#fef3c7','#dbeafe','#f1f5f9'];
+const BG_DARK = ['rgba(245,158,11,0.14)','rgba(59,130,246,0.14)','rgba(148,163,184,0.10)'];
+const isDark  = () => document.documentElement.classList.contains('dark');
 
 function fmt(v) {
     return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);
@@ -193,19 +206,23 @@ async function cargar() {
 }
 
 function renderResumen(resumen) {
-    document.getElementById('resumen-cards').innerHTML = resumen.map(c => `
+    const dark = isDark();
+    document.getElementById('resumen-cards').innerHTML = resumen.map((c, i) => {
+        const bg = dark ? BG_DARK[i] ?? c.color + '14' : c.bg;
+        const textMuted = dark ? '#a08878' : '#6b7280';
+        return `
         <div class="rounded-xl p-5 flex items-center gap-4 shadow-sm"
-             style="background:${c.bg}; border:1px solid ${c.color}40;">
+             style="background:${bg}; border:1px solid ${c.color}40;">
             <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:${c.color}22;">
                 <i class="bi ${c.icon} text-xl" style="color:${c.color};"></i>
             </div>
             <div>
                 <p class="text-sm font-semibold" style="color:${c.color};">${c.label}</p>
-                <p class="text-xs text-gray-500">${c.num_mesas} mesa${c.num_mesas!==1?'s':''}</p>
-                <p class="text-xs text-gray-600 mt-0.5">Ticket prom. ${fmt(c.ticket_prom)} · ${c.visitas_prom} visitas/mesa</p>
+                <p class="text-xs mt-0.5" style="color:${textMuted};">${c.num_mesas} mesa${c.num_mesas!==1?'s':''}</p>
+                <p class="text-xs mt-0.5" style="color:${textMuted};">Ticket prom. ${fmt(c.ticket_prom)} · ${c.visitas_prom} visitas/mesa</p>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function renderScatter(puntos) {
@@ -252,18 +269,24 @@ function renderTabla(puntos) {
                     <th class="px-3 py-2 text-right">Ingreso Total</th>
                 </tr>
             </thead>
-            <tbody>${sorted.map(p=>`
+            <tbody>${sorted.map(p=>{
+                const dark = isDark();
+                const badgeBg = dark ? BG_DARK[p.cluster] ?? COLORS[p.cluster]+'14' : BG[p.cluster];
+                const textMain = dark ? '#e8ddd4' : '#1f2937';
+                const textMid  = dark ? '#c5b5a4' : '#4b5563';
+                const textMut  = dark ? '#a08878' : '#6b7280';
+                return `
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="px-3 py-2 font-medium text-gray-800">${p.mesa}</td>
+                    <td class="px-3 py-2 font-medium" style="color:${textMain};">${p.mesa}</td>
                     <td class="px-3 py-2 text-center">
                         <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
-                              style="background:${BG[p.cluster]};color:${COLORS[p.cluster]};">${p.label}</span>
+                              style="background:${badgeBg};color:${COLORS[p.cluster]};">${p.label}</span>
                     </td>
-                    <td class="px-3 py-2 text-center text-gray-600">${p.x}</td>
-                    <td class="px-3 py-2 text-right text-gray-700">${fmt(p.y)}</td>
-                    <td class="px-3 py-2 text-right text-gray-500">${fmt(p.ingreso_total)}</td>
-                </tr>
-            `).join('')}</tbody>
+                    <td class="px-3 py-2 text-center" style="color:${textMid};">${p.x}</td>
+                    <td class="px-3 py-2 text-right" style="color:${textMid};">${fmt(p.y)}</td>
+                    <td class="px-3 py-2 text-right" style="color:${textMut};">${fmt(p.ingreso_total)}</td>
+                </tr>`;
+            }).join('')}</tbody>
         </table>`;
 }
 
@@ -303,15 +326,19 @@ function renderEvaluacion(ev) {
 
 function renderRecomendaciones(resumen) {
     document.getElementById('recomendaciones-panel').style.display = '';
-    document.getElementById('recomendaciones-lista').innerHTML = resumen.map(c=>`
-        <div class="rounded-xl p-4" style="background:${c.bg}; border:1px solid ${c.color}30;">
+    const dark = isDark();
+    const textMut = dark ? '#a08878' : '#4b5563';
+    document.getElementById('recomendaciones-lista').innerHTML = resumen.map((c, i)=>{
+        const bg = dark ? BG_DARK[i] ?? c.color + '14' : c.bg;
+        return `
+        <div class="rounded-xl p-4" style="background:${bg}; border:1px solid ${c.color}30;">
             <div class="flex items-center gap-2 mb-2">
                 <i class="bi ${c.icon}" style="color:${c.color};"></i>
                 <span class="text-sm font-semibold" style="color:${c.color};">${c.label}</span>
             </div>
-            <p class="text-xs text-gray-600">${c.recomendacion}</p>
-        </div>
-    `).join('');
+            <p class="text-xs" style="color:${textMut};">${c.recomendacion}</p>
+        </div>`;
+    }).join('');
 }
 
 cargar();

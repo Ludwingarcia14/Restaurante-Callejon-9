@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Mis Propinas{% endblock %}
 {% block page_title %}Control de Propinas{% endblock %}
@@ -47,14 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
     <i class="bi bi-clipboard-data text-lg"></i>
     <span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i>
-    <span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Proceso de Datos</span>
 </a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i>
@@ -252,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- TABLA -->
 <div class="bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#0D0D0D]">
     <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-        <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+        <h2 class="font-bold text-gray-900 flex items-center gap-2">
             <i class="bi bi-list-check text-[#F2913D]"></i>
             Desglose por Servicio
         </h2>
@@ -423,11 +415,12 @@ function graficaMetodos(propinas, totalEfectivo, totalTarjeta, totalTransferenci
     if (!datos.length) { empty.classList.remove('hidden'); leyenda.innerHTML = ''; return; }
     empty.classList.add('hidden');
 
+    const dark = document.documentElement.classList.contains('dark');
     chartMetodos = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: datos.map(d => d.label),
-            datasets: [{ data: datos.map(d => d.valor), backgroundColor: datos.map(d => d.color), borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+            datasets: [{ data: datos.map(d => d.valor), backgroundColor: datos.map(d => d.color), borderWidth: 2, borderColor: dark ? '#18120e' : '#ffffff', hoverOffset: 6 }]
         },
         options: {
             responsive: true, maintainAspectRatio: false, cutout: '68%',
@@ -436,12 +429,14 @@ function graficaMetodos(propinas, totalEfectivo, totalTarjeta, totalTransferenci
     });
 
     const total = datos.reduce((s, d) => s + d.valor, 0);
+    const textMid = dark ? '#c5b5a4' : '#374151';
+    const textMut = dark ? '#a08878' : '#9ca3af';
     leyenda.innerHTML = datos.map(d => `
         <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${d.color}"></span>
-            <span class="text-gray-700 flex-1">${d.label}</span>
-            <span class="font-bold text-gray-800">$${d.valor.toFixed(2)}</span>
-            <span class="text-gray-400">${Math.round(d.valor/total*100)}%</span>
+            <span style="color:${textMid};" class="flex-1">${d.label}</span>
+            <span class="font-bold" style="color:${d.color};">$${d.valor.toFixed(2)}</span>
+            <span style="color:${textMut};">${Math.round(d.valor/total*100)}%</span>
         </div>
     `).join('');
 }

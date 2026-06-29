@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 {% block title %}Pareto 80/20{% endblock %}
 {% block page_title %}Pareto 80/20{% endblock %}
 {% block page_subtitle %}¿Qué platillos generan el 80% de los ingresos?{% endblock %}
@@ -21,8 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
 <a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link"><i class="bi bi-book text-lg"></i><span>Metodología</span></a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link"><i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span></a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link active"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
 <a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
 <a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
@@ -73,13 +71,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <canvas id="chartPareto" style="display:none; max-height:320px;"></canvas>
   </div>
   <div class="bg-white rounded-xl shadow-sm p-6 overflow-auto">
-    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-      <i class="bi bi-table text-amber-500"></i> Detalle por Platillo
-    </h3>
+    <div class="flex items-center justify-between mb-3 gap-4">
+      <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2 shrink-0">
+        <i class="bi bi-table text-amber-500"></i> Detalle por Platillo
+      </h3>
+      <div id="pareto-slider-wrap" class="flex items-center gap-2 flex-1 max-w-xs" style="display:none!important;">
+        <i class="bi bi-funnel text-amber-400 text-xs shrink-0"></i>
+        <input id="pareto-slider" type="range" min="1" max="50" value="10"
+               class="flex-1 accent-amber-400" style="cursor:pointer;">
+        <span class="text-xs font-semibold text-amber-600 whitespace-nowrap">
+          Top <span id="pareto-slider-val">10</span>/<span id="pareto-slider-max">—</span>
+        </span>
+      </div>
+    </div>
     <div id="tabla-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
       <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
     </div>
-    <div id="tabla-pareto" style="display:none;"></div>
+    <div id="tabla-pareto" style="display:none;" class="overflow-x-auto"></div>
   </div>
 </div>
 
@@ -148,23 +156,53 @@ function renderGrafico(d){
         x:{ticks:{font:{size:9},maxRotation:40,minRotation:30}}}}
   });
 }
+let _paretoData = [];
 function renderTabla(d){
+  _paretoData = d.platillos;
   document.getElementById('tabla-loading').style.display='none';
   document.getElementById('tabla-pareto').style.display='';
+
+  const slider = document.getElementById('pareto-slider');
+  const wrap   = document.getElementById('pareto-slider-wrap');
+  const total  = _paretoData.length;
+  const def    = Math.min(10, total);
+  slider.max   = total;
+  slider.value = def;
+  document.getElementById('pareto-slider-max').textContent = total;
+  document.getElementById('pareto-slider-val').textContent = def;
+  wrap.style.display = total > 1 ? 'flex' : 'none';
+
+  slider.oninput = () => {
+    const n = parseInt(slider.value);
+    document.getElementById('pareto-slider-val').textContent = n;
+    _renderParetoRows(n);
+  };
+  _renderParetoRows(def);
+}
+function _renderParetoRows(n){
+  const dark = document.documentElement.classList.contains('dark');
+  const rows = _paretoData.slice(0, n);
+  const hoverBg   = dark ? '#2e231a' : '#f9fafb';
+  const paretoBg  = dark ? 'rgba(245,158,11,0.1)' : '#fffbeb';
+  const borderCol = dark ? '#3a2c20' : '#f3f4f6';
+  const textMain  = dark ? '#e8ddd4' : '#1f2937';
+  const textMut   = dark ? '#80685a' : '#9ca3af';
   document.getElementById('tabla-pareto').innerHTML=`
     <table class="w-full text-xs border-collapse">
-      <thead><tr class="border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+      <thead><tr class="border-b text-left uppercase tracking-wide" style="border-color:${borderCol};color:${textMut};">
         <th class="px-2 py-2">#</th><th class="px-2 py-2">Platillo</th>
         <th class="px-2 py-2 text-right">Ingreso</th><th class="px-2 py-2 text-right">% Acum.</th>
         <th class="px-2 py-2 text-center">Top</th>
       </tr></thead>
-      <tbody>${d.platillos.map(p=>`
-        <tr class="hover:bg-gray-50 border-b border-gray-100 ${p.es_pareto?'bg-amber-50':''}">
-          <td class="px-2 py-1.5 text-gray-400">${p.rank}</td>
-          <td class="px-2 py-1.5 font-medium text-gray-800">${p.platillo}</td>
-          <td class="px-2 py-1.5 text-right">${fmt(p.ingreso)}</td>
-          <td class="px-2 py-1.5 text-right"><span class="font-semibold ${p.pct_acumulado<=80?'text-amber-600':'text-gray-400'}">${p.pct_acumulado}%</span></td>
-          <td class="px-2 py-1.5 text-center">${p.es_pareto?'<i class="bi bi-star-fill text-amber-400"></i>':'<span class="text-gray-300">—</span>'}</td>
+      <tbody>${rows.map(p=>`
+        <tr class="border-b" style="border-color:${borderCol};background:${p.es_pareto?paretoBg:'transparent'};"
+            onmouseover="this.style.background='${p.es_pareto?paretoBg:hoverBg}'"
+            onmouseout="this.style.background='${p.es_pareto?paretoBg:'transparent'}'">
+          <td class="px-2 py-1.5" style="color:${textMut};">${p.rank}</td>
+          <td class="px-2 py-1.5 font-medium" style="color:${textMain};">${p.platillo}</td>
+          <td class="px-2 py-1.5 text-right" style="color:${textMain};">${fmt(p.ingreso)}</td>
+          <td class="px-2 py-1.5 text-right"><span class="font-semibold" style="color:${p.pct_acumulado<=80?'#d97706':textMut};">${p.pct_acumulado}%</span></td>
+          <td class="px-2 py-1.5 text-center">${p.es_pareto?'<i class="bi bi-star-fill text-amber-400"></i>':'<span style="color:'+textMut+';">—</span>'}</td>
         </tr>`).join('')}
       </tbody>
     </table>`;

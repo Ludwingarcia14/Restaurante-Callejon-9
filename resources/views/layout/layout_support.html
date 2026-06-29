@@ -12,9 +12,23 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="shortcut icon" href="{{ url_for('static', filename='assets/img/Logo2.png') }}" type="image/x-icon">
 </head>
+<style>
+.sup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;}
+.sup-overlay.active{display:block;}
+@media(max-width:1023px){
+    body{display:block;}
+    #supSidebar{position:fixed;left:0;top:0;height:100vh;transform:translateX(-100%);transition:transform .3s ease;z-index:50;}
+    #supSidebar.active{transform:translateX(0);}
+    #supMain{margin-left:0!important;padding:1rem!important;}
+    #supMain>div:first-child{margin-bottom:1rem;}
+    #supMain h1{font-size:1.25rem!important;}
+}
+</style>
 <body class="bg-gray-50 flex min-h-screen text-gray-800 font-sans">
 
-    <aside class="w-64 bg-white border-r shadow-md flex flex-col">
+<div class="sup-overlay" id="supOverlay"></div>
+
+    <aside id="supSidebar" class="w-64 bg-white border-r shadow-md flex flex-col">
         <div class="h-20 flex items-center justify-center">
             <img src="{{ url_for('static', filename='img/Logo2.png') }}" alt="Logo" class="w-28">
         </div>
@@ -83,11 +97,15 @@
         </div>
     </aside>
 
-    <main class="flex-1 p-10 overflow-y-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-700">{{ self.title() }}</h1>
-            
-            <div class="flex items-center space-x-4">
+    <main id="supMain" class="flex-1 p-10 overflow-y-auto">
+        <div class="flex items-center gap-3 mb-8">
+            <button id="supSidebarToggle"
+                    class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition text-gray-600 flex-shrink-0">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+            <h1 class="text-3xl font-bold text-gray-700 flex-1 truncate">{{ self.title() }}</h1>
+
+            <div class="flex items-center space-x-4 flex-shrink-0">
                 <span class="text-sm text-gray-500">{{ session['usuario_nombre'] }}</span>
                 
                 <img 
@@ -109,6 +127,16 @@ function toggleMenu(id) {
     const icon = document.getElementById(iconId);
     if (icon) icon.textContent = submenu.classList.contains('hidden') ? '▼' : '▲';
 }
+// Mobile sidebar
+(function(){
+    const toggle  = document.getElementById('supSidebarToggle');
+    const overlay = document.getElementById('supOverlay');
+    const sidebar = document.getElementById('supSidebar');
+    function close(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); }
+    function open() { sidebar.classList.add('active');    overlay.classList.add('active'); }
+    toggle?.addEventListener('click', function(e){ e.stopPropagation(); sidebar.classList.contains('active')?close():open(); });
+    overlay?.addEventListener('click', close);
+})();
 </script>
 <!-- 💬 Botón flotante de ayuda -->
 <div id="helpBubble"

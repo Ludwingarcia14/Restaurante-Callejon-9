@@ -1,5 +1,4 @@
 from config.db import db
-from bson import ObjectId
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -38,12 +37,10 @@ class MeseroKMeansService:
 
     @staticmethod
     def segmentar_mesas(mesero_id: str, dias: int = 90) -> dict:
-        mesero_oid = ObjectId(mesero_id)
         hace_n_dias = datetime.now() - timedelta(days=dias)
 
         pipeline = [
             {"$match": {
-                "mesero_id": mesero_oid,
                 "estado": {"$in": ["pagada", "cerrada"]},
                 "fecha_cierre": {"$gte": hace_n_dias}
             }},

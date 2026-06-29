@@ -1,4 +1,4 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 {% block title %}Reglas de Asociación{% endblock %}
 {% block page_title %}Asociación de Platillos{% endblock %}
 {% block page_subtitle %}Qué platillos se piden juntos con más frecuencia{% endblock %}
@@ -21,15 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
 <a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link"><i class="bi bi-book text-lg"></i><span>Metodología</span></a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link"><i class="bi bi-arrow-left-right text-lg"></i><span>Proceso de Datos</span></a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
 <a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link active"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
 <a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
 {% endblock %}
 
 {% block content %}
-<div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);">
+<div class="asoc-hero mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);">
   <div class="flex items-start gap-4">
     <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
       <i class="bi bi-share text-2xl"></i>
@@ -83,9 +81,19 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-  <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-    <i class="bi bi-list-ul text-purple-500"></i>
-    <h3 class="text-sm font-semibold text-gray-700">Todas las reglas</h3>
+  <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-2 shrink-0">
+      <i class="bi bi-list-ul text-purple-500"></i>
+      <h3 class="text-sm font-semibold text-gray-700">Todas las reglas</h3>
+    </div>
+    <div id="asoc-slider-wrap" class="flex items-center gap-2 flex-1 max-w-xs" style="display:none!important;">
+      <i class="bi bi-funnel text-purple-400 text-xs shrink-0"></i>
+      <input id="asoc-slider" type="range" min="1" max="50" value="10"
+             class="flex-1 accent-purple-500" style="cursor:pointer;">
+      <span class="text-xs font-semibold text-purple-600 whitespace-nowrap">
+        Top <span id="asoc-slider-val">10</span>/<span id="asoc-slider-max">—</span>
+      </span>
+    </div>
   </div>
   <div id="tabla-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
     <i class="bi bi-arrow-repeat animate-spin"></i> Calculando…
@@ -97,6 +105,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .animate-spin{animation:spin 1s linear infinite}
+html.dark .asoc-hero {
+    background: linear-gradient(135deg, rgba(109,40,217,0.35) 0%, rgba(76,29,149,0.45) 100%) !important;
+    border: 1px solid rgba(139,92,246,0.3);
+}
+html.dark .bg-purple-50 {
+    background-color: rgba(109,40,217,0.08) !important;
+    border-color: rgba(139,92,246,0.2) !important;
+}
 </style>
 <script>
 async function cargar(){
@@ -119,8 +135,9 @@ async function cargar(){
       document.getElementById('aviso-panel').style.display='';
       document.getElementById('estado').textContent='';return;
     }
-    renderTabla(d.reglas);renderCombos(d.reglas.slice(0,5));
-    document.getElementById('estado').textContent=`${d.reglas.length} reglas · ${d.n_transacciones} transacciones`;
+    const reglas = deduplicarReglas(d.reglas);
+    renderTabla(reglas);renderCombos(reglas.slice(0,5));
+    document.getElementById('estado').textContent=`${reglas.length} reglas · ${d.n_transacciones} transacciones`;
   }catch(e){
     document.getElementById('tabla-loading').innerHTML=`<span class="text-red-400 text-sm">${e.message}</span>`;
     document.getElementById('estado').textContent='';
@@ -141,40 +158,83 @@ function renderKPIs(d){
       <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
     </div>`).join('');
 }
+function deduplicarReglas(reglas){
+  const seen = new Map();
+  reglas.forEach(r => {
+    const key = [...r.si_piden, ...r.tambien_piden].sort().join('|');
+    const prev = seen.get(key);
+    if (!prev || r.confianza > prev.confianza) seen.set(key, r);
+  });
+  return [...seen.values()];
+}
+function tagPurple(p, dark){ return `<span style="background:${dark?'rgba(139,92,246,0.15)':'#ede9fe'};color:${dark?'#c4b5fd':'#6d28d9'};" class="inline-block rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`; }
+function tagGreen(p, dark){ return `<span style="background:${dark?'rgba(34,197,94,0.12)':'#dcfce7'};color:${dark?'#4ade80':'#15803d'};" class="inline-block rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`; }
+
+let _asocReglas = [];
 function renderTabla(reglas){
+  _asocReglas = reglas;
   document.getElementById('tabla-loading').style.display='none';
   document.getElementById('tabla-reglas').style.display='';
+
+  const slider = document.getElementById('asoc-slider');
+  const wrap   = document.getElementById('asoc-slider-wrap');
+  const total  = reglas.length;
+  const def    = Math.min(10, total);
+  slider.max   = total;
+  slider.value = def;
+  document.getElementById('asoc-slider-max').textContent = total;
+  document.getElementById('asoc-slider-val').textContent = def;
+  wrap.style.display = total > 1 ? 'flex' : 'none';
+
+  slider.oninput = () => {
+    const n = parseInt(slider.value);
+    document.getElementById('asoc-slider-val').textContent = n;
+    _renderAsocRows(n);
+  };
+  _renderAsocRows(def);
+}
+function _renderAsocRows(n){
+  const dark      = document.documentElement.classList.contains('dark');
+  const borderCol = dark ? '#3a2c20' : '#f3f4f6';
+  const theadBg   = dark ? '#1e1611' : '#f9fafb';
+  const hoverBg   = dark ? 'rgba(139,92,246,0.07)' : '#faf5ff';
+  const textMut   = dark ? '#a08878' : '#6b7280';
+  const rows = _asocReglas.slice(0, n);
   document.getElementById('tabla-reglas').innerHTML=`
     <table class="w-full text-xs border-collapse">
-      <thead><tr class="bg-gray-50 border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+      <thead><tr style="background:${theadBg};border-bottom:1px solid ${borderCol};color:${textMut};" class="text-left uppercase tracking-wide">
         <th class="px-4 py-3">Si piden…</th><th class="px-4 py-3">También piden…</th>
         <th class="px-4 py-3 text-center">Confianza</th><th class="px-4 py-3 text-center">Lift</th>
       </tr></thead>
-      <tbody>${reglas.map(r=>`
-        <tr class="hover:bg-purple-50 border-b border-gray-100 transition">
-          <td class="px-4 py-3">${r.si_piden.map(p=>`<span class="inline-block bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`).join('')}</td>
-          <td class="px-4 py-3">${r.tambien_piden.map(p=>`<span class="inline-block bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`).join('')}</td>
-          <td class="px-4 py-3 text-center"><span class="font-bold ${r.confianza>=50?'text-green-600':r.confianza>=30?'text-amber-600':'text-gray-500'}">${r.confianza}%</span></td>
-          <td class="px-4 py-3 text-center"><span class="font-bold ${r.lift>=2?'text-purple-700':r.lift>=1.5?'text-purple-500':'text-gray-400'}">${r.lift}</span></td>
+      <tbody>${rows.map(r=>`
+        <tr style="border-bottom:1px solid ${borderCol};" onmouseover="this.style.background='${hoverBg}'" onmouseout="this.style.background='transparent'" class="transition">
+          <td class="px-4 py-3">${r.si_piden.map(p=>tagPurple(p,dark)).join('')}</td>
+          <td class="px-4 py-3">${r.tambien_piden.map(p=>tagGreen(p,dark)).join('')}</td>
+          <td class="px-4 py-3 text-center"><span class="font-bold ${r.confianza>=50?'text-green-500':r.confianza>=30?'text-amber-500':'text-gray-400'}">${r.confianza}%</span></td>
+          <td class="px-4 py-3 text-center"><span class="font-bold ${r.lift>=2?'text-purple-400':r.lift>=1.5?'text-purple-400':'text-gray-400'}">${r.lift}</span></td>
         </tr>`).join('')}
       </tbody>
     </table>`;
 }
 function renderCombos(reglas){
   if(!reglas.length)return;
+  const dark = document.documentElement.classList.contains('dark');
+  const cardBg  = dark ? 'rgba(139,92,246,0.08)'  : 'linear-gradient(135deg,#faf5ff,#f5f3ff)';
+  const cardBdr = dark ? 'rgba(139,92,246,0.25)'  : '#e9d5ff';
+  const descCol = dark ? '#a08878' : '#6b7280';
   document.getElementById('combos-panel').style.display='';
   document.getElementById('combos-lista').innerHTML=reglas.map((r,i)=>`
-    <div class="rounded-xl border border-purple-100 p-4" style="background:linear-gradient(135deg,#faf5ff,#f5f3ff);">
+    <div class="rounded-xl p-4" style="background:${cardBg}; border:1px solid ${cardBdr};">
       <div class="flex items-center gap-2 mb-2">
         <span class="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">${i+1}</span>
-        <span class="text-xs font-semibold text-purple-700">Confianza ${r.confianza}% · Lift ${r.lift}</span>
+        <span class="text-xs font-semibold" style="color:${dark?'#c4b5fd':'#6d28d9'};">Confianza ${r.confianza}% · Lift ${r.lift}</span>
       </div>
       <div class="flex flex-wrap items-center gap-1 mb-2">
-        ${r.si_piden.map(p=>`<span class="bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium">${p}</span>`).join('')}
-        <i class="bi bi-arrow-right text-gray-400 mx-1"></i>
-        ${r.tambien_piden.map(p=>`<span class="bg-green-100 text-green-700 rounded-full px-2 py-0.5 text-xs font-medium">${p}</span>`).join('')}
+        ${r.si_piden.map(p=>tagPurple(p,dark)).join('')}
+        <i class="bi bi-arrow-right mx-1" style="color:${dark?'#80685a':'#9ca3af'};"></i>
+        ${r.tambien_piden.map(p=>tagGreen(p,dark)).join('')}
       </div>
-      <p class="text-xs text-gray-500">${r.descripcion}</p>
+      <p class="text-xs" style="color:${descCol};">${r.descripcion}</p>
     </div>`).join('');
 }
 cargar();
