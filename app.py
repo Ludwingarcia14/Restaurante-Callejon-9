@@ -12,7 +12,7 @@ from datetime import datetime
 
 # 2. Librerías de Terceros
 from dotenv import load_dotenv
-from flask import Flask, request, redirect, url_for, jsonify, send_from_directory
+from flask import Flask, request, redirect, url_for, jsonify, send_from_directory, session
 from flask_cors import CORS
 from flask_session import Session
 from flask_socketio import join_room
@@ -73,9 +73,11 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 app.config.update(
     SESSION_TYPE="filesystem",
     SESSION_FILE_DIR=SESSION_DIR,
-    SESSION_PERMANENT=False,  
+    SESSION_PERMANENT=False,
     SESSION_USE_SIGNER=True,
-    SESSION_COOKIE_SECURE=False,  # Cambiar a True si configuras HTTPS
+    # En producción (HTTPS) debe ser True. Controlado por entorno para no romper local.
+    SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true",
+    SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_NAME="callejon9_session",
     SESSION_REFRESH_EACH_REQUEST=True
@@ -125,6 +127,19 @@ def inject_now():
     """Inyecta la fecha y hora actual en todos los templates Jinja2."""
     return {"now": datetime.now}
 
+@app.context_processor
+def inject_tenant():
+    """Expone el restaurante (tenant) actual a todos los templates (white-label)."""
+    from models.restaurante_model import Restaurante
+    tenant_id = session.get("tenant_id")
+    tenant = None
+    if tenant_id:
+        try:
+            tenant = Restaurante.find_by_id(tenant_id)
+        except Exception:
+            tenant = None
+    return {"tenant": tenant or {}}
+
 @app.before_request
 def log_request():
     """Registra las peticiones entrantes ignorando los archivos estáticos."""
@@ -132,6 +147,23 @@ def log_request():
         return
     print(f"\n[REQ] {request.method} {request.path}")
     print("[COOKIES]:", list(request.cookies.keys()))
+
+# ================================
+# CONTEXTO DE TENANT (MULTI-TENANCY)
+# ================================
+from utils.tenant_context import set_current_tenant
+
+@app.before_request
+def load_tenant_context():
+    """Carga el tenant activo desde la sesion web. En peticiones con JWT, el
+    decorador jwt_required lo sobreescribe desde el token (corre despues)."""
+    set_current_tenant(session.get("tenant_id"))
+
+@app.teardown_request
+def clear_tenant_context(exc=None):
+    """Limpia el tenant al terminar el request (evita fuga entre peticiones que
+    reusan el mismo hilo)."""
+    set_current_tenant(None)
 
 # ================================
 # APP MÓVIL REACT (servir desde /app/)

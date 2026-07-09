@@ -2,7 +2,7 @@
 
 {% block title %}Centro de Control{% endblock %}
 {% block page_title %}Dashboard Administrativo{% endblock %}
-{% block page_subtitle %}Monitoreo en tiempo real del restaurante{% endblock %}
+{% block page_subtitle %}Resumen de tu negocio{% endblock %}
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -63,35 +63,15 @@
     <!-- Header con Bienvenida y Estado del Sistema -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 fade-up">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800" id="welcome-message">Dashboard</h1>
-            <p class="text-gray-500 text-sm mt-1">Monitoreo en tiempo real del restaurante Callejón 19</p>
+            <h1 class="font-display text-3xl font-bold text-gray-800" id="welcome-message">Dashboard</h1>
+            <p class="text-gray-500 text-sm mt-1">Resumen de tu negocio — Callejón 9</p>
         </div>
 
-        <!-- Indicadores de Estado en Tiempo Real -->
-        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-            <div class="flex items-center gap-2">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-                <span class="text-xs font-semibold text-gray-600 uppercase">Sistema</span>
-            </div>
-            <div class="h-4 w-px bg-gray-200"></div>
-            <div class="flex items-center gap-2">
-                <span id="status-cocina" class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                <span class="text-xs font-semibold text-gray-600 uppercase">Cocina</span>
-            </div>
-            <div class="h-4 w-px bg-gray-200"></div>
-            <div class="flex items-center gap-2">
-                <span id="status-caja" class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                <span class="text-xs font-semibold text-gray-600 uppercase">Caja</span>
-            </div>
-        </div>
     </div>
 
     <!-- KPIs Principales con Skeleton -->
-    <div id="skeleton-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {% for _ in range(8) %}
+    <div id="skeleton-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for _ in range(3) %}
         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm animate-pulse">
             <div class="flex justify-between items-start">
                 <div class="h-4 w-24 bg-gray-200 rounded"></div>
@@ -102,63 +82,31 @@
         {% endfor %}
     </div>
 
-    <div id="dashboard-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hidden"></div>
+    <div id="dashboard-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 hidden"></div>
 
-    <!-- Sección de Actividad y Personal -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up delay-100">
-        
-        <!-- Actividad en Tiempo Real -->
-        <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="font-semibold text-gray-700 flex items-center gap-2">
-                    <i class="ri-pulse-line text-blue-500"></i> Actividad en Tiempo Real
-                </h3>
-                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">Live</span>
-            </div>
-            <div class="p-6">
-                <!-- Grid de Métricas en Vivo -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-                        <div class="text-3xl font-bold text-blue-600" id="mesas-ocupadas">0</div>
-                        <div class="text-xs text-gray-600 mt-1">Mesas Ocupadas</div>
-                    </div>
-                    
-                    <div class="text-center p-4 bg-orange-50 rounded-lg border border-orange-100">
-                        <div class="text-3xl font-bold text-orange-600" id="comandas-activas">0</div>
-                        <div class="text-xs text-gray-600 mt-1">Comandas Activas</div>
-                    </div>
-                    
-                    <div class="text-center p-4 bg-red-50 rounded-lg border border-red-100">
-                        <div class="text-3xl font-bold text-red-600" id="en-cocina">0</div>
-                        <div class="text-xs text-gray-600 mt-1">En Cocina</div>
-                    </div>
-                    
-                    <div class="text-center p-4 bg-green-50 rounded-lg border border-green-100">
-                        <div class="text-2xl font-bold text-green-600" id="ventas-dia">$0</div>
-                        <div class="text-xs text-gray-600 mt-1">Ventas Hoy</div>
-                    </div>
-                </div>
-
-                <!-- Actividad Reciente -->
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Últimas Acciones</h4>
-                    <div class="space-y-2 max-h-48 overflow-y-auto" id="actividad-reciente">
-                        <div class="text-center py-4 text-gray-400 text-sm">
-                            <i class="bi bi-hourglass-split text-2xl mb-2 block"></i>
-                            Cargando actividad...
-                        </div>
-                    </div>
-                </div>
+    <!-- Gráfica de Tendencia de Ventas -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden fade-up delay-100">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                <i class="bi bi-graph-up-arrow text-brand-500"></i> Tendencia de Ventas
+            </h3>
+            <div class="flex gap-1 bg-gray-100 rounded-lg p-1" id="rango-ventas">
+                <button data-dias="7" class="rango-btn px-3 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-gray-800">7 días</button>
+                <button data-dias="30" class="rango-btn px-3 py-1 text-xs font-medium rounded-md text-gray-500">30 días</button>
             </div>
         </div>
+        <div class="p-5">
+            <div class="h-72"><canvas id="chartVentas"></canvas></div>
+        </div>
+    </div>
 
         <!-- Personal Activo en Línea -->
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
             <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="font-semibold text-gray-700 flex items-center gap-2">
-                    <i class="bi bi-people text-purple-500"></i> Personal Activo
+                    <i class="bi bi-people text-brand-500"></i> Personal Activo
                 </h3>
-                <span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium" id="count-activos">0</span>
+                <span class="px-2 py-0.5 bg-brand-100 text-brand-700 text-xs rounded-full font-medium" id="count-activos">0</span>
             </div>
             <div class="flex-1 overflow-y-auto max-h-96">
                 <ul id="personal-activo-list" class="divide-y divide-gray-50">
@@ -169,77 +117,6 @@
                 </ul>
             </div>
         </div>
-    </div>
-
-    <!-- Panel de Control y Acciones -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-up delay-200">
-
-        <!-- Configuración del Sistema -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-gray-100 bg-gray-50">
-                <h3 class="font-semibold text-gray-700 flex items-center gap-2">
-                    <i class="ri-settings-4-line text-gray-500"></i> Configuración del Sistema
-                </h3>
-            </div>
-            <div class="p-5 space-y-4">
-                <!-- Toggle: Modo Mantenimiento -->
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-700">Modo Mantenimiento</p>
-                        <p class="text-xs text-gray-400">Solo admins pueden entrar</p>
-                    </div>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                        <input type="checkbox" id="toggle-maintenance" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
-                        <label for="toggle-maintenance" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
-                    </div>
-                </div>
-
-                <!-- Toggle: Aceptar Reservas -->
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-700">Aceptar Reservas</p>
-                        <p class="text-xs text-gray-400">Permitir nuevas reservas</p>
-                    </div>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                        <input type="checkbox" id="toggle-reservas" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
-                        <label for="toggle-reservas" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
-                    </div>
-                </div>
-
-                <!-- Toggle: Sistema de Pagos -->
-                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-                    <div>
-                        <p class="text-sm font-medium text-gray-700">Sistema de Pagos</p>
-                        <p class="text-xs text-gray-400">Gateway activo</p>
-                    </div>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
-                        <input type="checkbox" id="toggle-pagos" checked class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 transition-all duration-300"/>
-                        <label for="toggle-pagos" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Acciones Críticas -->
-        <div class="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden">
-            <div class="p-4 bg-red-50 border-b border-red-100">
-                <h3 class="font-semibold text-red-600 flex items-center gap-2">
-                    <i class="ri-alert-line"></i> Acciones Críticas
-                </h3>
-            </div>
-            <div class="p-5 space-y-3">
-                <button onclick="enviarAnuncio()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition shadow-sm">
-                    <i class="ri-megaphone-line"></i> Enviar Anuncio Global
-                </button>
-                <button onclick="corteCaja()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-green-200 text-green-600 text-sm font-medium rounded-lg hover:bg-green-50 transition shadow-sm">
-                    <i class="bi bi-cash-stack"></i> Generar Corte de Caja
-                </button>
-                <button onclick="cerrarTodoSistema()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition shadow-sm">
-                    <i class="ri-shut-down-line"></i> Cerrar Sistema
-                </button>
-            </div>
-        </div>
-    </div>
 
 </div>
 
@@ -254,7 +131,7 @@
         
         <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
             <!-- Header del Modal -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
                         <i id="modal-icon" class="bi bi-people-fill"></i>
@@ -278,7 +155,7 @@
                 <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
                     Cerrar
                 </button>
-                <button id="modal-action-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium hidden">
+                <button id="modal-action-btn" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium hidden">
                     Acción
                 </button>
             </div>
@@ -316,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const skeletonContainer = document.getElementById('skeleton-grid');
     const dashboardGrid = document.getElementById('dashboard-grid');
     const personalActivoList = document.getElementById('personal-activo-list');
-    const actividadReciente = document.getElementById('actividad-reciente');
 
     // ============================== 
     // 3. CARGAR DATOS DEL DASHBOARD
@@ -327,15 +203,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             // Renderizar KPIs
+            // Paleta restringida (SaaS): slate=conteos neutros, amber=marca/operativo, emerald=positivo/dinero
             const kpis = [
-                { icon: 'ri-group-line', label: 'Total Empleados', val: data.total_empleados || 0, color: 'blue', clickable: true },
-                { icon: 'ri-user-star-line', label: 'Personal Activo', val: data.empleados_activos || 0, color: 'green', clickable: true },
-                { icon: 'ri-admin-line', label: 'Administradores', val: data.total_admin || 0, color: 'purple', clickable: true },
-                { icon: 'ri-user-smile-line', label: 'Meseros', val: data.total_meseros || 0, color: 'cyan', clickable: true },
-                { icon: 'ri-restaurant-line', label: 'Cocina', val: data.total_cocina || 0, color: 'orange', clickable: true },
-                { icon: 'ri-box-seam', label: 'Inventario', val: data.total_inventario || 0, color: 'indigo', clickable: true },
-                { icon: 'ri-file-list-3-line', label: 'Comandas', val: data.comandas_activas || 0, color: 'yellow', clickable: false },
-                { icon: 'ri-money-dollar-circle-line', label: 'Ventas Hoy', val: `$${(data.ventas_dia || 0).toLocaleString()}`, color: 'emerald', clickable: false }
+                { icon: 'ri-money-dollar-circle-line', label: 'Ventas Hoy', val: `$${(data.ventas_dia || 0).toLocaleString()}`, color: 'emerald', clickable: false },
+                { icon: 'ri-group-line', label: 'Total Empleados', val: data.total_empleados || 0, color: 'amber', clickable: true },
+                { icon: 'ri-user-star-line', label: 'Personal Activo', val: data.empleados_activos || 0, color: 'emerald', clickable: false }
             ];
 
             dashboardGrid.innerHTML = '';
@@ -369,16 +241,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 dashboardGrid.insertAdjacentHTML('beforeend', cardHTML);
             });
 
-            // Actualizar contadores en tiempo real
-            document.getElementById('mesas-ocupadas').textContent = data.mesas_ocupadas || 0;
-            document.getElementById('comandas-activas').textContent = data.comandas_activas || 0;
-            document.getElementById('en-cocina').textContent = data.en_cocina || 0;
-            document.getElementById('ventas-dia').textContent = `$${(data.ventas_dia || 0).toLocaleString()}`;
 
             // Cargar datos adicionales
             await cargarEmpleados();
             await cargarPersonalActivo();
-            await cargarActividadReciente();
 
             // Mostrar dashboard
             skeletonContainer.classList.add('hidden');
@@ -431,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rolMap = {
                 '1': { nombre: 'Admin', color: 'purple', icon: 'bi-shield-check' },
                 '2': { nombre: 'Mesero', color: 'green', icon: 'bi-person-badge' },
-                '3': { nombre: 'Cocina', color: 'orange', icon: 'bi-egg-fried' },
+                '3': { nombre: 'Cocina', color: 'amber', icon: 'bi-egg-fried' },
                 '4': { nombre: 'Inventario', color: 'blue', icon: 'bi-box-seam' }
             };
 
@@ -449,7 +315,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="text-xs text-gray-500">${rol.nombre} • ${persona.tiempo_conectado || 'Conectado'}</div>
                                 </div>
                             </div>
-                            <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <div class="flex items-center gap-2">
+                                <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="En línea"></span>
+                                <button onclick="desconectarUsuario('${persona.email}')" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Desconectar usuario">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </li>
                 `);
@@ -461,143 +332,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ============================== 
-    // 6. CARGAR ACTIVIDAD RECIENTE
-    // ==============================
-    async function cargarActividadReciente() {
-        try {
-            const response = await fetch('/api/dashboard/admin/actividad');
-            let actividades = [];
-            
-            if (response.ok) {
-                actividades = await response.json();
-            }
 
-            if (actividades.length === 0) {
-                actividades = [
-                    { icono: 'bi-check-circle', texto: 'Mesa 5 cerrada', tiempo: 'Hace 2 min', color: 'green' },
-                    { icono: 'bi-bell', texto: 'Nueva comanda', tiempo: 'Hace 5 min', color: 'blue' },
-                    { icono: 'bi-cart-check', texto: 'Pedido enviado a cocina', tiempo: 'Hace 8 min', color: 'orange' }
-                ];
-            }
-
-            actividadReciente.innerHTML = '';
-            actividades.forEach(act => {
-                actividadReciente.insertAdjacentHTML('beforeend', `
-                    <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                        <div class="mt-0.5 flex-shrink-0">
-                            <div class="h-8 w-8 rounded-full bg-${act.color}-100 flex items-center justify-center">
-                                <i class="${act.icono} text-${act.color}-600"></i>
-                            </div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm text-gray-800">${act.texto}</p>
-                            <p class="text-xs text-gray-500 mt-0.5">${act.tiempo}</p>
-                        </div>
-                    </div>
-                `);
-            });
-        } catch (error) {
-            console.error('Error cargando actividad:', error);
-        }
-    }
-
-    // ==============================
-    // 7. FUNCIONES DE BOTONES
-    // ==============================
-    window.enviarAnuncio = function() {
-        Swal.fire({
-            title: 'Enviar Anuncio',
-            input: 'textarea',
-            inputPlaceholder: 'Mensaje...',
-            showCancelButton: true,
-            confirmButtonText: 'Enviar'
-        }).then((result) => {
-            if (result.value) {
-                showNotification('Anuncio enviado correctamente', 'success');
-            }
-        });
-    };
-
-    window.corteCaja = function() {
-        Swal.fire({
-            title: 'Corte de Caja',
-            text: '¿Generar corte del día?',
-            icon: 'question',
-            showCancelButton: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '/caja/corte';
-            }
-        });
-    };
-
-    window.cerrarTodoSistema = function() {
-        Swal.fire({
-            title: 'CERRAR SISTEMA',
-            text: 'Esto cerrará todas las sesiones',
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '/logout';
-            }
-        });
-    };
 
     // ==============================
     // 10. INICIAR CARGA
     // ==============================
     cargarDashboard();
-    cargarSettings();
-
-    // ==============================
-    // 11. TOGGLE EVENT LISTENERS
-    // ==============================
-    document.getElementById('toggle-maintenance').addEventListener('change', function() {
-        guardarSetting('modo_mantenimiento', this.checked);
-    });
-    document.getElementById('toggle-reservas').addEventListener('change', function() {
-        guardarSetting('aceptar_reservas', this.checked);
-    });
-    document.getElementById('toggle-pagos').addEventListener('change', function() {
-        guardarSetting('sistema_pagos', this.checked);
-    });
 
     // ==============================
     // 12. AUTO-REFRESH (10 segundos para tiempo real)
     // ==============================
     setInterval(() => {
         cargarPersonalActivo();
-        cargarActividadReciente();
     }, 10000);
 });
 
-// ==============================
-// SETTINGS - TOGGLES DEL SISTEMA
-// ==============================
-
-async function cargarSettings() {
-    try {
-        const res = await fetch('/api/settings/sistema');
-        const s = await res.json();
-        document.getElementById('toggle-maintenance').checked = s.modo_mantenimiento || false;
-        document.getElementById('toggle-reservas').checked = s.aceptar_reservas !== false;
-        document.getElementById('toggle-pagos').checked = s.sistema_pagos !== false;
-    } catch (e) { console.error('Error cargando settings:', e); }
-}
-
-async function guardarSetting(key, value) {
-    try {
-        await fetch('/api/settings/sistema', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({[key]: value})
-        });
-        showNotification(value ? 'Activado' : 'Desactivado', 'success');
-    } catch (e) { showNotification('Error al guardar', 'error'); }
-}
 
 // ============================== 
 // SISTEMA DE MODALS
@@ -615,11 +364,6 @@ async function abrirModal(tipo) {
             title: 'Todos los Empleados',
             icon: 'bi-people-fill',
             content: await generarContenidoEmpleados('todos')
-        },
-        'Personal Activo': {
-            title: 'Personal Conectado',
-            icon: 'bi-person-check-fill',
-            content: await generarContenidoPersonalActivo()
         },
         'Administradores': {
             title: 'Administradores',
@@ -695,7 +439,7 @@ async function generarContenidoEmpleados(filtro) {
                         <span class="px-2 py-1 text-xs rounded-full ${
                             emp.rol === '1' ? 'bg-purple-100 text-purple-700' :
                             emp.rol === '2' ? 'bg-green-100 text-green-700' :
-                            emp.rol === '3' ? 'bg-orange-100 text-orange-700' :
+                            emp.rol === '3' ? 'bg-amber-100 text-amber-700' :
                             'bg-blue-100 text-blue-700'
                         }">
                             ${rolMap[emp.rol]}
@@ -738,7 +482,7 @@ async function generarContenidoPersonalActivo() {
                 const rolMap = {
                     '1': { nombre: 'Admin', color: 'purple', icon: 'bi-shield-check' },
                     '2': { nombre: 'Mesero', color: 'green', icon: 'bi-person-badge' },
-                    '3': { nombre: 'Cocina', color: 'orange', icon: 'bi-egg-fried' },
+                    '3': { nombre: 'Cocina', color: 'amber', icon: 'bi-egg-fried' },
                     '4': { nombre: 'Inventario', color: 'blue', icon: 'bi-box-seam' }
                 };
                 const rol = rolMap[persona.rol] || { nombre: 'Usuario', color: 'gray', icon: 'bi-person' };
@@ -895,5 +639,80 @@ async function desconectarUsuario(email) {
         Swal.fire('Error', 'Error de conexión', 'error');
     }
 }
+</script>
+
+<script>
+// ==============================
+// GRÁFICA DE TENDENCIA DE VENTAS
+// ==============================
+let chartVentasInstance = null;
+
+async function cargarGraficaVentas(dias = 7) {
+    try {
+        const res = await fetch(`/api/dashboard/admin/ventas-tendencia?dias=${dias}`);
+        const data = await res.json();
+        const series = data.series || [];
+        const labels = series.map(p => {
+            const d = new Date(p.fecha + 'T00:00:00');
+            return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+        });
+        const valores = series.map(p => p.total);
+
+        const canvas = document.getElementById('chartVentas');
+        if (!canvas) return;
+        if (chartVentasInstance) chartVentasInstance.destroy();
+
+        const grad = canvas.getContext('2d').createLinearGradient(0, 0, 0, 280);
+        grad.addColorStop(0, 'rgba(242,145,61,0.30)');
+        grad.addColorStop(1, 'rgba(242,145,61,0)');
+
+        chartVentasInstance = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Ventas',
+                    data: valores,
+                    borderColor: '#F2913D',
+                    backgroundColor: grad,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#DE823D',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: c => '$' + Number(c.parsed.y).toLocaleString('es-MX') } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => '$' + Number(v).toLocaleString('es-MX') }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error cargando gráfica de ventas:', e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    cargarGraficaVentas(7);
+    document.querySelectorAll('#rango-ventas .rango-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#rango-ventas .rango-btn').forEach(b => {
+                b.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+                b.classList.add('text-gray-500');
+            });
+            this.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+            this.classList.remove('text-gray-500');
+            cargarGraficaVentas(parseInt(this.dataset.dias));
+        });
+    });
+});
 </script>
 {% endblock %}

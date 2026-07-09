@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <title>{% block title %}Callejón 19{% endblock %} - Sistema de Restaurante</title>
+    <title>{% block title %}Callejón 9{% endblock %} - Sistema de Restaurante</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/callejon9.jpeg') }}" type="image/x-icon">
@@ -13,7 +13,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
     
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -22,8 +22,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Tailwind CSS -->
-    <script>window.tailwind && (tailwind.config = { darkMode: 'class' })</script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // brand y orange siguen el color del tenant (white-label)
+                        brand: {
+                            50: 'var(--brand-50)', 100: 'var(--brand-100)', 200: 'var(--brand-200)', 300: 'var(--brand-300)',
+                            400: 'var(--brand-400)', 500: 'var(--brand-500)', 600: 'var(--brand-600)', 700: 'var(--brand-700)',
+                            800: 'var(--brand-800)', 900: 'var(--brand-900)'
+                        },
+                        orange: {
+                            50: 'var(--brand-50)', 100: 'var(--brand-100)', 200: 'var(--brand-200)', 300: 'var(--brand-300)',
+                            400: 'var(--brand-400)', 500: 'var(--brand-500)', 600: 'var(--brand-600)', 700: 'var(--brand-700)',
+                            800: 'var(--brand-800)', 900: 'var(--brand-900)'
+                        }
+                    },
+                    fontFamily: {
+                        display: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -100,14 +125,23 @@
             top: 0;
             height: 100vh;
             width: 260px;
-            background: white;
-            border-right: 1px solid #e5e7eb;
+            background: #211913; /* espresso calido */
+            color: #f5ece4;
+            border-right: 1px solid #3a2c20;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             z-index: 1000;
             transition: transform 0.3s ease;
         }
+        /* Texto legible sobre el espresso */
+        .sidebar .sidebar-title,
+        .sidebar .sidebar-user-name { color: #f7efe7; }
+        .sidebar .sidebar-subtitle,
+        .sidebar .sidebar-user-role { color: rgba(247,239,231,0.65) !important; }
+        .sidebar .text-gray-400 { color: rgba(247,239,231,0.5) !important; }
+        .sidebar .border-gray-200,
+        .sidebar .border-t { border-color: rgba(255,255,255,0.09) !important; }
         
         @media (max-width: 1024px) {
             .sidebar {
@@ -121,13 +155,14 @@
         
         .sidebar-header {
             padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid rgba(255,255,255,0.09);
+            background: #1c150f;
             flex-shrink: 0;
         }
-        
+
         .sidebar-user {
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid rgba(255,255,255,0.09);
             flex-shrink: 0;
         }
         
@@ -156,7 +191,7 @@
         
         .sidebar-footer {
             padding: 1rem 1.5rem;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid rgba(255,255,255,0.09);
             flex-shrink: 0;
         }
         
@@ -165,20 +200,21 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.75rem 1.5rem;
-            color: #6b7280;
+            color: rgba(247,239,231,0.72);
             text-decoration: none;
             transition: all 0.2s;
         }
-        
+
         .nav-link:hover {
-            background: #f3f4f6;
-            color: #111827;
+            background: rgba(255,255,255,0.07);
+            color: #ffffff;
         }
-        
+
         .nav-link.active {
-            background: #eff6ff;
-            color: #2563eb;
-            border-right: 3px solid #2563eb;
+            background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+            color: var(--color-primary);
+            border-right: 3px solid var(--color-primary);
+            font-weight: 600;
         }
         
         .app-container {
@@ -190,7 +226,7 @@
             flex: 1;
             margin-left: 260px;
             min-height: 100vh;
-            background: #f9fafb;
+            background: #fdf8f3; /* crema cálido en vez de gris frío */
         }
         
         @media (max-width: 1024px) {
@@ -214,19 +250,23 @@
         }
 
         /* ── Dark Mode ── */
-        html.dark body { background-color: #0f172a; color: #e2e8f0; }
-        html.dark .sidebar { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark body { background-color: #18120e; color: #ece4dd; }
+        html.dark .sidebar { background: #211913 !important; border-color: #3a2c20 !important; }
         html.dark .sidebar-header, html.dark .sidebar-user, html.dark .sidebar-footer { border-color: #334155 !important; }
-        html.dark .nav-link { color: #cbd5e1; }
-        html.dark .nav-link:hover { background: #334155; color: #f1f5f9; }
-        html.dark .nav-link.active { background: #1e3a5f; color: #60a5fa; border-color: #3b82f6; }
+        html.dark .nav-link { color: rgba(247,239,231,0.72); }
+        html.dark .nav-link:hover { background: rgba(255,255,255,0.07); color: #ffffff; }
+        html.dark .nav-link.active { background: color-mix(in srgb, var(--color-primary) 18%, transparent); color: var(--color-primary); border-color: var(--color-primary); }
         html.dark .sidebar-user-name { color: #f1f5f9; }
-        html.dark .page-header { background: #1e293b !important; border-color: #334155 !important; }
-        html.dark .page-content { background: #0f172a; }
-        html.dark .bg-white { background-color: #1e293b !important; }
-        html.dark .bg-gray-50 { background-color: #1e293b !important; }
-        html.dark .bg-gray-100 { background-color: #0f172a !important; }
-        html.dark .bg-gray-200 { background-color: #334155 !important; }
+        html.dark .page-header { background: #241b14 !important; border-color: #3a2c20 !important; }
+        html.dark .page-content { background: #18120e; }
+        html.dark .bg-white { background-color: #241b14 !important; }
+        html.dark .bg-gray-50 { background-color: #241b14 !important; }
+        html.dark .bg-gray-100 { background-color: #18120e !important; }
+        html.dark .bg-gray-200 { background-color: #3a2c20 !important; }
+        html.dark .card { background: #241b14 !important; border-color: #3a2c20 !important; }
+        html.dark .card-header { background: #1e1611 !important; border-color: #3a2c20 !important; }
+        html.dark .card-title { color: #f1f5f9 !important; }
+        html.dark .card-subtitle { color: #94a3b8 !important; }
         html.dark .text-gray-800, html.dark .text-gray-900 { color: #f1f5f9 !important; }
         html.dark .text-gray-700 { color: #e2e8f0 !important; }
         html.dark .text-gray-600 { color: #cbd5e1 !important; }
@@ -239,9 +279,37 @@
         html.dark table thead { background-color: #1e293b !important; }
         html.dark table thead th { color: #94a3b8 !important; }
         html.dark table tbody tr { border-color: #334155 !important; }
-        html.dark table tbody tr:hover { background-color: #334155 !important; }
-        html.dark .rounded-xl, html.dark .rounded-lg { background-color: inherit; }
+        html.dark table tbody tr:hover { background-color: #2e231a !important; }
     </style>
+
+    <!-- Escala de marca derivada del color primario (alimenta utilidades brand-*/orange-*) -->
+    <style>
+        :root {
+            --brand-50:  color-mix(in srgb, var(--color-primary) 8%, white);
+            --brand-100: color-mix(in srgb, var(--color-primary) 16%, white);
+            --brand-200: color-mix(in srgb, var(--color-primary) 30%, white);
+            --brand-300: color-mix(in srgb, var(--color-primary) 45%, white);
+            --brand-400: color-mix(in srgb, var(--color-primary) 68%, white);
+            --brand-500: var(--color-primary);
+            --brand-600: color-mix(in srgb, var(--color-primary) 88%, black);
+            --brand-700: color-mix(in srgb, var(--color-primary) 72%, black);
+            --brand-800: color-mix(in srgb, var(--color-primary) 58%, black);
+            --brand-900: color-mix(in srgb, var(--color-primary) 48%, black);
+        }
+    </style>
+
+    <!-- Tema del restaurante (white-label, por tenant) -->
+    {% if tenant and tenant.tema %}
+    <style>
+        :root {
+            {% if tenant.tema.primario %}
+            --color-primary: {{ tenant.tema.primario }};
+            --color-primary-dark: color-mix(in srgb, {{ tenant.tema.primario }}, black 12%);
+            {% endif %}
+            {% if tenant.tema.acento %}--color-accent: {{ tenant.tema.acento }};{% endif %}
+        }
+    </style>
+    {% endif %}
 </head>
 <body class="bg-gray-100">
     
@@ -258,10 +326,10 @@
             
             <!-- Header del Sidebar -->
             <div class="sidebar-header">
-                <img src="/static/img/callejon9.jpeg" 
-                     alt="Callejón 19"
+                <img src="{{ tenant.logo if tenant and tenant.logo else '/static/img/callejon9.jpeg' }}"
+                     alt="{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }}"
                      class="sidebar-logo">
-                <h2 class="sidebar-title">Callejón 19</h2>
+                <h2 class="sidebar-title">{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }}</h2>
                 <p class="sidebar-subtitle">Sistema de Restaurante</p>
             </div>
             
@@ -272,7 +340,7 @@
                      alt="{{ session.usuario_nombre }}" 
                      class="sidebar-user-avatar">
                 {% else %}
-                <div class="sidebar-user-avatar bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl">
+                <div class="sidebar-user-avatar bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-2xl">
                     {{ session.usuario_nombre[0]|upper if session.usuario_nombre else 'U' }}
                 </div>
                 {% endif %}
@@ -282,7 +350,7 @@
                 </div>
                 <div class="sidebar-user-role">
                     {% if session.usuario_rol == '1' %}
-                        <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                        <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
                             <i class="bi bi-shield-check"></i> Administrador
                         </span>
                     {% elif session.usuario_rol == '2' %}
@@ -321,19 +389,11 @@
                     <span>Ventas</span>
                 </a>
 
-                <!-- Reportes -->
+                <!-- Reportes y Analítica (unificado) -->
                 <a href="{{ url_for('reports.index') }}" class="nav-link" id="nav-reportes">
                     <i class="bi bi-graph-up text-lg"></i>
-                    <span>Reportes</span>
+                    <span>Reportes y Analítica</span>
                 </a>
-
-                <!-- Analytics -->
-                {% if session.usuario_rol == '1' %}
-                <a href="{{ url_for('routes.analytics_index') }}" class="nav-link" id="nav-analytics">
-                    <i class="bi bi-bar-chart-line text-lg"></i>
-                    <span>Analytics</span>
-                </a>
-                {% endif %}
 
                 <!-- Configuración -->
                 <a href="{{ url_for('routes.settings') }}" class="nav-link" id="nav-settings">
@@ -408,7 +468,7 @@
                         <div class="relative">
                             <a class="navbar-link is-arrowless p-2 rounded-lg hover:bg-gray-200 transition cursor-pointer" id="notification-trigger">
                                 <span class="icon has-text-white">
-                                    <i class="fas fa-bell fa-lg text-gray-600"></i>
+                                    <i class="bi bi-bell text-xl text-gray-600"></i>
                                 </span>
                                 <span class="tag is-danger is-rounded notification-badge hidden" id="notification-count">
                                     0
@@ -426,7 +486,7 @@
                                 <!-- Lista -->
                                 <div id="notification-list">
                                     <div class="px-4 py-8 text-center" id="no-notifications">
-                                        <i class="fas fa-bell-slash text-gray-300 text-3xl mb-2"></i>
+                                        <i class="bi bi-bell-slash text-gray-300 text-3xl mb-2"></i>
                                         <p class="text-sm text-gray-500">No hay notificaciones nuevas</p>
                                     </div>
                                 </div>
@@ -440,7 +500,7 @@
                                  alt="{{ session.usuario_nombre }}" 
                                  class="w-10 h-10 rounded-full object-cover border-2 border-gray-300">
                             {% else %}
-                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                            <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold">
                                 {{ session.usuario_nombre[0]|upper if session.usuario_nombre else 'U' }}
                             </div>
                             {% endif %}
@@ -585,7 +645,7 @@
                 text: message,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#667eea',
+                confirmButtonColor: '#F2913D',
                 cancelButtonColor: '#ef4444',
                 confirmButtonText: 'Si, continuar',
                 cancelButtonText: 'Cancelar'

@@ -5,8 +5,9 @@ Endpoints del dashboard admin
 
 from flask import jsonify, session, request
 from config.db import db
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.pagination import get_pagination_params, paginate_response
+from services.dashboard.dashboard_service import serie_ventas_por_dia, online_cutoff
 
 
 class DashboardAPIController:
@@ -27,7 +28,7 @@ class DashboardAPIController:
 
         empleados_activos = db.usuarios.count_documents({
             "usuario_rol": {"$in": ["1","2","3","4"]},
-            "usuario_status": 1
+            "last_seen": {"$gte": online_cutoff(datetime.now())}
         })
 
         ventas = list(db.ventas.aggregate([
@@ -52,6 +53,33 @@ class DashboardAPIController:
 
 
     # ==============================
+    # TENDENCIA DE VENTAS (GRAFICA)
+    # ==============================
+
+    @staticmethod
+    def get_ventas_tendencia():
+        if session.get("usuario_rol") != "1":
+            return jsonify({"error": "No autorizado"}), 403
+
+        try:
+            dias = int(request.args.get("dias", 7))
+        except (TypeError, ValueError):
+            dias = 7
+        if dias not in (7, 30):
+            dias = 7
+
+        hoy = datetime.now()
+        inicio = hoy.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=dias - 1)
+
+        ventas = list(db.ventas.find(
+            {"fecha": {"$gte": inicio}},
+            {"fecha": 1, "total": 1}
+        ))
+
+        return jsonify({"dias": dias, "series": serie_ventas_por_dia(ventas, dias, hoy)})
+
+
+    # ==============================
     # PERSONAL ACTIVO (ONLINE) - CONEXION REAL
     # ==============================
 
@@ -67,7 +95,7 @@ class DashboardAPIController:
         # Un usuario está conectado si tiene fecha_conexion diferente de None
         personal = list(db.usuarios.find({
             "usuario_rol": {"$in": ["1","2","3","4"]},
-            "fecha_conexion": {"$ne": None}
+            "last_seen": {"$gte": online_cutoff(datetime.now())}
         }).sort("usuario_nombre", 1))
 
         resultado = []

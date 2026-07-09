@@ -111,6 +111,7 @@ class AuthController:
 
             # Poblar sesión Flask
             session["usuario_id"] = user_id
+            session["tenant_id"] = str(usuario_doc.get("tenant_id", ""))
             session["usuario_nombre"] = usuario_doc.get("usuario_nombre", "")
             session["usuario_apellidos"] = usuario_doc.get("usuario_apellidos", "")
             session["usuario_email"] = usuario_doc.get("usuario_email", "")
@@ -204,6 +205,21 @@ class AuthController:
             "status": "error",
             "message": "2FA no implementado en esta versión"
         }), 400
+
+    # =====================================================
+    # HEARTBEAT (PRESENCIA)
+    # =====================================================
+    @staticmethod
+    def heartbeat():
+        """Registra un latido de presencia del usuario en sesion."""
+        usuario_id = session.get("usuario_id")
+        if not usuario_id:
+            return jsonify({"status": "error"}), 401
+        try:
+            Usuario.touch_last_seen(usuario_id)
+        except Exception as e:
+            logging.warning("Error en heartbeat: %s", e)
+        return jsonify({"status": "ok"})
 
 
 # ==========================================================

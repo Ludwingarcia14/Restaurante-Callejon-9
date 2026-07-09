@@ -1,5 +1,5 @@
 from . import routes_bp
-from flask import redirect, url_for, render_template
+from flask import redirect, url_for, render_template, request
 from controllers.auth.AuthController import login_required, rol_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.inventario.inventarioController import InventarioController
@@ -21,8 +21,14 @@ def dashboard_inventario():
 @login_required
 @rol_required(['1', '3', '4'])
 def inventario_insumos():
-    insumos = Insumo.obtener_todos()
-    return render_template("inventario/insumos.html", insumos=insumos)
+    categoria = request.args.get("categoria")
+    filtros = {"categoria": categoria} if categoria else None
+    insumos = Insumo.obtener_todos(filtros)
+    return render_template(
+        "inventario/insumos.html",
+        insumos=insumos,
+        categoria_seleccionada=categoria
+    )
 
 @routes_bp.route("/inventario/insumos/crear", methods=["GET", "POST"])
 @login_required
@@ -83,3 +89,9 @@ def inventario_crear_proveedor():
 @rol_required(['1', '4', '3'])
 def inventario_reportes():
     return InventarioController.reportes()
+
+@routes_bp.route("/inventario/prediccion")
+@login_required
+@rol_required(['1', '4', '3'])
+def inventario_prediccion():
+    return InventarioController.prediccion()

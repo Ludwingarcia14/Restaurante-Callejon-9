@@ -79,16 +79,26 @@ class Usuario:
             "updated_at": datetime.utcnow()
         }
         
-        # Si status es 1 (conectado), guardar timestamp de conexion
+        # Si status es 1 (conectado), guardar timestamp de conexion y latido inicial
         if status == 1:
             update_data["fecha_conexion"] = datetime.utcnow()
-        # Si status es 0 (desconectado), limpiar timestamp de conexion
+            update_data["last_seen"] = datetime.utcnow()
+        # Si status es 0 (desconectado), limpiar timestamps (offline inmediato)
         elif status == 0:
             update_data["fecha_conexion"] = None
-        
+            update_data["last_seen"] = None
+
         return cls.collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": update_data}
+        )
+
+    @classmethod
+    def touch_last_seen(cls, user_id):
+        """Registra un latido de presencia (heartbeat) del usuario."""
+        return cls.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"last_seen": datetime.utcnow(), "usuario_status": 1}}
         )
 
     @classmethod

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Callejón 19 - Inventario{% endblock %}</title>
+    <title>{% block title %}{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }} - Inventario{% endblock %}</title>
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -23,6 +23,45 @@
     <!-- Socket.IO -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Sistema de diseño compartido (marca + white-label) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand:  {50:'var(--brand-50)',100:'var(--brand-100)',200:'var(--brand-200)',300:'var(--brand-300)',400:'var(--brand-400)',500:'var(--brand-500)',600:'var(--brand-600)',700:'var(--brand-700)',800:'var(--brand-800)',900:'var(--brand-900)'},
+                    orange: {50:'var(--brand-50)',100:'var(--brand-100)',200:'var(--brand-200)',300:'var(--brand-300)',400:'var(--brand-400)',500:'var(--brand-500)',600:'var(--brand-600)',700:'var(--brand-700)',800:'var(--brand-800)',900:'var(--brand-900)'},
+                    purple: {50:'var(--brand-50)',100:'var(--brand-100)',200:'var(--brand-200)',300:'var(--brand-300)',400:'var(--brand-400)',500:'var(--brand-500)',600:'var(--brand-600)',700:'var(--brand-700)',800:'var(--brand-800)',900:'var(--brand-900)'},
+                    blue:   {50:'var(--brand-50)',100:'var(--brand-100)',200:'var(--brand-200)',300:'var(--brand-300)',400:'var(--brand-400)',500:'var(--brand-500)',600:'var(--brand-600)',700:'var(--brand-700)',800:'var(--brand-800)',900:'var(--brand-900)'},
+                    indigo: {50:'var(--brand-50)',100:'var(--brand-100)',200:'var(--brand-200)',300:'var(--brand-300)',400:'var(--brand-400)',500:'var(--brand-500)',600:'var(--brand-600)',700:'var(--brand-700)',800:'var(--brand-800)',900:'var(--brand-900)'}
+                },
+                fontFamily: { display:['"Playfair Display"','Georgia','serif'], sans:['Inter','system-ui','sans-serif'] }
+            }}
+        }
+    </script>
+    <style>
+        :root {
+            --color-primary: #F2913D;
+            --brand-50: color-mix(in srgb, var(--color-primary) 8%, white);
+            --brand-100: color-mix(in srgb, var(--color-primary) 16%, white);
+            --brand-200: color-mix(in srgb, var(--color-primary) 30%, white);
+            --brand-300: color-mix(in srgb, var(--color-primary) 45%, white);
+            --brand-400: color-mix(in srgb, var(--color-primary) 68%, white);
+            --brand-500: var(--color-primary);
+            --brand-600: color-mix(in srgb, var(--color-primary) 88%, black);
+            --brand-700: color-mix(in srgb, var(--color-primary) 72%, black);
+            --brand-800: color-mix(in srgb, var(--color-primary) 58%, black);
+            --brand-900: color-mix(in srgb, var(--color-primary) 48%, black);
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        {% if tenant and tenant.tema and tenant.tema.primario %}
+        :root { --color-primary: {{ tenant.tema.primario }}; }
+        {% endif %}
+    </style>
+
     <style>
         /* ── nav-link en CSS puro (sin @apply) ── */
         .nav-link {
@@ -32,11 +71,22 @@
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             transition: all 0.2s;
-            color: #374151;
+            color: rgba(247,239,231,0.72);
             text-decoration: none;
         }
-        .nav-link:hover  { background: #f3f4f6; }
-        .nav-link.active { background: #f3e8ff; color: #7e22ce; box-shadow: 0 1px 3px rgb(0 0 0/0.08); }
+        .nav-link:hover  { background: rgba(255,255,255,0.07); color: #fff; }
+        .nav-link.active { background: color-mix(in srgb, var(--color-primary) 16%, transparent); color: var(--color-primary); }
+
+        /* Sidebar espresso + estructura robusta (no depende de clases Tailwind) */
+        aside {
+            background: #211913 !important; color: #f5ece4; border-color: #3a2c20 !important;
+            position: fixed; left: 0; top: 0; height: 100vh; width: 16rem; z-index: 20; overflow-y: auto;
+        }
+        main { margin-left: 16rem; min-height: 100vh; }
+        aside .text-gray-800 { color: #f7efe7 !important; }
+        aside .text-gray-500 { color: rgba(247,239,231,0.6) !important; }
+        aside .border-b, aside .border-t { border-color: rgba(255,255,255,0.09) !important; }
+        .sidebar-title { font-family: 'Playfair Display', Georgia, serif; }
 
         /* ── Notificaciones ── */
         @keyframes pulse-badge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
@@ -49,22 +99,19 @@
         .notification-item:hover  { background-color: #f9fafb; }
         .notification-item.unread { background-color: #eff6ff; border-left: 3px solid #3b82f6; }
 
-        /* ── Dark Mode ── */
-        html.dark body { background-color: #0f172a; }
-        html.dark aside { background: #1e293b !important; border-color: #334155 !important; }
-        html.dark .bg-white { background-color: #1e293b !important; }
-        html.dark .bg-gray-50 { background-color: #1e293b !important; }
-        html.dark .bg-gray-100 { background-color: #0f172a !important; }
+        /* ── Dark Mode (cálido, coherente con el admin) ── */
+        html.dark body { background-color: #18120e; color: #ece4dd; }
+        html.dark aside { background: #211913 !important; border-color: #3a2c20 !important; }
+        html.dark .bg-white { background-color: #241b14 !important; }
+        html.dark .bg-gray-50 { background-color: #241b14 !important; }
+        html.dark .bg-gray-100 { background-color: #18120e !important; }
         html.dark .text-gray-800, html.dark .text-gray-900 { color: #f1f5f9 !important; }
         html.dark .text-gray-700 { color: #e2e8f0 !important; }
         html.dark .text-gray-600 { color: #cbd5e1 !important; }
         html.dark .text-gray-500 { color: #94a3b8 !important; }
-        html.dark .border-r, html.dark .border-b, html.dark .border { border-color: #334155 !important; }
-        html.dark .nav-link { color: #cbd5e1; }
-        html.dark .nav-link:hover { background: #334155; }
-        html.dark .nav-link.active { background: #1e3a5f; color: #60a5fa; }
-        html.dark input, html.dark select, html.dark textarea { background-color: #334155 !important; color: #f1f5f9 !important; border-color: #475569 !important; }
-        html.dark header { background: #1e293b !important; border-color: #334155 !important; }
+        html.dark .border-r, html.dark .border-b, html.dark .border { border-color: #3a2c20 !important; }
+        html.dark input, html.dark select, html.dark textarea { background-color: #3a2c20 !important; color: #f1f5f9 !important; border-color: #4a3a2b !important; }
+        html.dark header { background: #241b14 !important; border-color: #3a2c20 !important; }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -78,7 +125,7 @@
 
         <!-- Logo -->
         <div class="h-20 flex items-center justify-center border-b">
-            <h2 class="text-2xl font-bold text-purple-800">Inventario</h2>
+            <h2 class="sidebar-title text-2xl font-bold">Inventario</h2>
         </div>
 
         <!-- Perfil de Usuario -->
@@ -87,16 +134,16 @@
                 {% if session.usuario_foto %}
                 <img src="{{ session.usuario_foto }}"
                      alt="{{ session.usuario_nombre }}"
-                     class="w-12 h-12 rounded-full object-cover border-2 border-purple-300">
+                     class="w-12 h-12 rounded-full object-cover border-2 border-brand-400">
                 {% else %}
-                <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                <div class="w-12 h-12 bg-brand-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                     {{ session.get('usuario_nombre', 'U')[0] }}
                 </div>
                 {% endif %}
                 <div class="flex-1 min-w-0">
                     <p class="font-medium text-gray-800 truncate">{{ session.get('usuario_nombre', 'Usuario') }} {{ session.get('usuario_apellidos', '') }}</p>
                     <p class="text-xs text-gray-500 truncate">
-                        <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs">
+                        <span class="px-2 py-0.5 bg-brand-100 text-brand-700 rounded-full text-xs">
                             <i class="bi bi-box-seam"></i> Inventario
                         </span>
                     </p>
@@ -170,7 +217,7 @@
                          alt="{{ session.usuario_nombre }}"
                          class="w-9 h-9 rounded-full object-cover border border-gray-300">
                     {% else %}
-                    <div class="w-9 h-9 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <div class="w-9 h-9 bg-brand-500 rounded-full flex items-center justify-center text-white font-bold">
                         {{ session.get('usuario_nombre', 'U')[0] }}
                     </div>
                     {% endif %}
