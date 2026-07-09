@@ -88,6 +88,13 @@
             max-height: 500px;
             overflow-y: auto;
         }
+
+        @media (max-width: 480px) {
+        #notification-dropdown {
+        width: 90vw;
+        right: -0.5rem;
+        }
+    }
         
         .notification-item {
             padding: 0.75rem 1rem;
@@ -549,16 +556,20 @@
             sidebarOverlay.classList.toggle('active');
         }
         
-        sidebarToggle?.addEventListener('click', toggleSidebar);
+        sidebarToggle?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleSidebar();
+        });
         sidebarOverlay?.addEventListener('click', toggleSidebar);
         
         // Cerrar sidebar al hacer clic fuera en movil
-        document.getElementById('mainContent')?.addEventListener('click', function() {
+        document.getElementById('mainContent')?.addEventListener('click', function(e) {
             if (window.innerWidth < 1024) {
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.remove('active');
-                appContainer.classList.remove('sidebar-active');
-                sidebarOverlay.classList.remove('active');
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    appContainer.classList.remove('sidebar-active');
+                    sidebarOverlay.classList.remove('active');
+                }
             }
         });
         
@@ -659,6 +670,9 @@
     
     <!-- Scripts Adicionales -->
     {% block extra_js %}{% endblock %}
+
+    <!-- Barra de navegación inferior (móvil) -->
+    {% block bottom_nav %}{% endblock %}
     
 </body>
 </html>

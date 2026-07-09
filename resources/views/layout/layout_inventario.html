@@ -80,9 +80,19 @@
         /* Sidebar espresso + estructura robusta (no depende de clases Tailwind) */
         aside {
             background: #211913 !important; color: #f5ece4; border-color: #3a2c20 !important;
-            position: fixed; left: 0; top: 0; height: 100vh; width: 16rem; z-index: 20; overflow-y: auto;
+            position: fixed; left: 0; top: 0; height: 100vh; width: 16rem; z-index: 30; overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
         }
-        main { margin-left: 16rem; min-height: 100vh; }
+        aside.sidebar-open { transform: translateX(0); }
+        main { margin-left: 0; min-height: 100vh; }
+
+        /* ── Responsive: drawer en móvil/tablet, fijo desde lg ── */
+        @media (min-width: 1024px) {
+            aside { transform: translateX(0); }
+            main  { margin-left: 16rem; }
+            #inventario-overlay { display: none !important; }
+        }
         aside .text-gray-800 { color: #f7efe7 !important; }
         aside .text-gray-500 { color: rgba(247,239,231,0.6) !important; }
         aside .border-b, aside .border-t { border-color: rgba(255,255,255,0.09) !important; }
@@ -121,7 +131,9 @@
 <div class="flex min-h-screen">
 
     <!-- ===== SIDEBAR ===== -->
-    <aside class="w-64 bg-white border-r shadow-md flex flex-col fixed h-full z-20">
+    <div id="inventario-overlay" class="fixed inset-0 bg-black/50 z-20 hidden" onclick="toggleInventarioSidebar()"></div>
+
+    <aside id="inventario-sidebar" class="w-64 bg-white border-r shadow-md flex flex-col h-full">
 
         <!-- Logo -->
         <div class="h-20 flex items-center justify-center border-b">
@@ -167,13 +179,18 @@
     </aside>
 
     <!-- ===== CONTENIDO PRINCIPAL ===== -->
-    <main class="flex-1 ml-64">
+    <main class="flex-1">
 
         <!-- Header -->
-        <header class="bg-white border-b h-20 flex items-center px-8 sticky top-0 z-10">
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold text-gray-800">{% block page_title %}Inventario{% endblock %}</h1>
-                <p class="text-sm text-gray-600">{% block page_subtitle %}Gestión de almacén e insumos{% endblock %}</p>
+        <header class="bg-white border-b h-20 flex items-center px-4 lg:px-8 sticky top-0 z-10">
+
+            <button onclick="toggleInventarioSidebar(event)" class="lg:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 transition text-gray-600">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+
+            <div class="flex-1 min-w-0">
+                <h1 class="text-lg lg:text-2xl font-bold text-gray-800 truncate">{% block page_title %}Inventario{% endblock %}</h1>
+                <p class="text-xs lg:text-sm text-gray-600 truncate">{% block page_subtitle %}Gestión de almacén e insumos{% endblock %}</p>
             </div>
 
             <div class="flex items-center gap-4">
@@ -226,7 +243,7 @@
         </header>
 
         <!-- Contenido de la página -->
-        <div class="p-8">
+        <div class="p-4 lg:p-8">
             {% block content %}{% endblock %}
         </div>
 
@@ -282,6 +299,30 @@
     function showError(message) {
         Swal.fire({ icon: 'error', title: 'Error', text: message });
     }
+
+    // ── Drawer del Sidebar (móvil/tablet) ────────────────────
+    function toggleInventarioSidebar(e) {
+        if (e) e.stopPropagation();
+        const sidebar = document.getElementById('inventario-sidebar');
+        const overlay = document.getElementById('inventario-overlay');
+        if (sidebar) sidebar.classList.toggle('sidebar-open');
+        if (overlay) overlay.classList.toggle('hidden');
+    }
+
+    // Cierra el drawer al elegir una opción del menú (solo en móvil)
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('inventario-sidebar');
+        if (!sidebar) return;
+        sidebar.querySelectorAll('a.nav-link').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth < 1024) {
+                    sidebar.classList.remove('sidebar-open');
+                    const overlay = document.getElementById('inventario-overlay');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+            });
+        });
+    });
 </script>
 
 {% block extra_js %}{% endblock %}
