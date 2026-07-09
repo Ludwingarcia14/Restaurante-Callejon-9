@@ -36,32 +36,29 @@
 <!-- ===================================
      HEADER CON INFO DE COCINA
      =================================== -->
-<div class="bg-gradient-to-r from-orange-500 to-red-600 p-5 rounded-xl shadow-lg text-white mb-6">
-    <div class="flex items-start justify-between flex-wrap gap-3">
-        
-        <div class="min-w-0">
-            <h2 class="text-xl sm:text-2xl font-bold mb-2">¡Bienvenido, {{ session.usuario_nombre }}! 👋</h2>
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm opacity-90">
-                <div class="flex items-center gap-1.5">
-                    <i class="bi bi-geo-alt"></i>
-                    <span>Área: Parrilla</span>
+<div class="bg-gradient-to-r from-orange-500 to-red-600 p-6 rounded-xl shadow-lg text-white mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold mb-2">¡Bienvenido, {{ session.usuario_nombre }}! 🔥</h2>
+            <div class="flex items-center gap-4 text-sm opacity-90">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-egg-fried"></i>
+                    <span>Área: {{ perfil.area|title if perfil.area else 'General' }}</span>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-2">
                     <i class="bi bi-clock"></i>
-                    <span>Turno: Matutino</span>
+                    <span>Turno: {{ perfil.turno|title if perfil.turno else 'N/A' }}</span>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-2">
                     <i class="bi bi-person-badge"></i>
-                    <span>Cocinero</span>
+                    <span>{{ perfil.puesto|title if perfil.puesto else 'Cocinero' }}</span>
                 </div>
             </div>
         </div>
-        
-        <div class="text-right shrink-0 bg-white bg-opacity-20 px-4 py-2.5 rounded-lg backdrop-blur-sm">
-            <div class="text-4xl sm:text-5xl font-bold leading-none">0</div>
-            <p class="text-xs uppercase tracking-wider opacity-90 mt-0.5">Pedidos<br>Pendientes</p>
+        <div class="text-right">
+            <div class="text-4xl font-bold" id="pedidos-pendientes-count">0</div>
+            <div class="text-sm opacity-90">Pedidos Pendientes</div>
         </div>
-        
     </div>
 </div>
 
