@@ -29,6 +29,9 @@
             </div>
             <div class="flex justify-between items-center mt-2">
                 <span class="text-[10px] font-semibold tracking-wider uppercase text-orange-600 bg-orange-50 dark:bg-slate-700 dark:text-orange-400 px-2 py-1 rounded-md platillo-categoria">Categoría</span>
+                <button type="button" class="platillo-agregar-btn w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors" title="Agregar al carrito">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -71,6 +74,23 @@
                     img.classList.add('hidden');
                     placeholder.classList.remove('hidden');
                 }
+
+                clone.querySelector('.platillo-agregar-btn').addEventListener('click', () => {
+                    if (!localStorage.getItem('access_token')) {
+                        window.location.href = '/cliente/login';
+                        return;
+                    }
+                    Carrito.agregar(platillo, 1);
+                    Swal.fire({
+                        icon: 'success',
+                        title: `${platillo.nombre} agregado`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                });
 
                 container.appendChild(clone);
             });

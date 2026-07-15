@@ -9,6 +9,30 @@ import numpy as np
 class CocinaService:
 
     @staticmethod
+    def get_pedidos_movil_pendientes() -> list:
+        """
+        Pedidos hechos por clientes desde la app/wearable (colección pedidos_movil),
+        pendientes de preparar. Reutiliza el mismo modelo que usa la API /api/v1,
+        pero se consulta aquí vía sesión (empleado), no JWT.
+        """
+        from models.pedido_movil_model import PedidoMovil
+        pedidos = PedidoMovil.find_pendientes_cocina()
+        return [PedidoMovil.to_public(p) for p in pedidos]
+
+    @staticmethod
+    def actualizar_estado_pedido_movil(pedido_id: str, nuevo_estado: str) -> bool:
+        from models.pedido_movil_model import PedidoMovil, ESTADOS_VALIDOS
+        if nuevo_estado not in ESTADOS_VALIDOS:
+            return False
+        doc = PedidoMovil.find_by_id(pedido_id)
+        if not doc:
+            return False
+        PedidoMovil.update_estado(pedido_id, nuevo_estado)
+        doc["estado"] = nuevo_estado
+        _emitir_actualizacion_cliente_movil(doc.get("cliente_id", ""), doc)
+        return True
+
+    @staticmethod
     def get_pedidos_pendientes() -> list:
         cursor = db.comandas.find({
             "$or": [
@@ -230,6 +254,30 @@ class CocinaService:
 
 
 # ── Utilidades de tiempo y socket (privadas al módulo) ──────────────────────
+
+def _emitir_actualizacion_cliente_movil(cliente_id: str, pedido_doc: dict):
+    """
+    Notifica al cliente (sala 'cliente_{id}') el nuevo estado de su pedido movil,
+    desde el flujo de Cocina (sesion). Misma sala/evento que usa
+    controllers/api/v1/pedido_movil_controller.py para mantener consistencia.
+    """
+    if not cliente_id:
+        return
+    try:
+        from extensions import socketio
+        socketio.emit(
+            "pedido_actualizado",
+            {
+                "pedido_id": str(pedido_doc["_id"]),
+                "estado": pedido_doc.get("estado"),
+                "folio": pedido_doc.get("folio"),
+            },
+            room=f"cliente_{cliente_id}",
+            namespace="/",
+        )
+    except Exception as e:
+        print(f"⚠️ Error Socket.IO cliente movil: {e}")
+
 
 def calcular_tiempo_espera(fecha_inicio) -> int:
     if not fecha_inicio:

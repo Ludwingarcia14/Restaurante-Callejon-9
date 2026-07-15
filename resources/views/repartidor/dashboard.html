@@ -231,8 +231,8 @@
                     </button>
                     {% endif %}
                     <a class="btn-accion btn-secondary btn-sm" id="nav-btn-{{ e._id }}"
-                       href="https://maps.google.com/?q={{ e.direccion | urlencode }}&travelmode=driving"
-                       target="_blank" title="Navegar">
+                       href="https://maps.google.com/?q={% if e.cliente_lat and e.cliente_lng %}{{ e.cliente_lat }},{{ e.cliente_lng }}{% else %}{{ e.direccion | urlencode }}{% endif %}&travelmode=driving"
+                       target="_blank" title="Navegar{% if e.cliente_lat and e.cliente_lng %} (ubicación GPS del cliente){% endif %}">
                         <i class="bi bi-arrow-right-circle-fill" style="color:#f97316;font-size:18px;"></i>
                     </a>
                     <button class="btn-accion btn-secondary btn-sm" onclick="centrarEnDestino('{{ e._id }}')" title="Ver en mapa">
@@ -318,7 +318,11 @@ async function geocodificar(direccion) {
 async function cargarDestinos() {
     for (let i = 0; i < ENTREGAS.length; i++) {
         const e = ENTREGAS[i];
-        const coords = await geocodificar(e.direccion);
+        // Si el cliente compartió su GPS (pedido desde la app/wearable), usamos
+        // esas coordenadas reales en vez de geocodificar el texto de la dirección.
+        const coords = (e.cliente_lat && e.cliente_lng)
+            ? [e.cliente_lat, e.cliente_lng]
+            : await geocodificar(e.direccion);
         if (!coords) continue;
         destCoords[e._id] = coords;
         const m = L.marker(coords, { icon: iconDestino(i, e.estado) })

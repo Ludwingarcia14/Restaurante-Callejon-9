@@ -1,0 +1,254 @@
+{% extends "layout/layout_cliente.html" %}
+
+{% block title %}Mi Carrito - Callejón 19{% endblock %}
+
+{% block content %}
+<div class="mb-6 mt-2">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Tu Carrito</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Revisa tu pedido antes de confirmar</p>
+</div>
+
+<div id="carritoVacio" class="hidden text-center py-16">
+    <i class="bi bi-cart-x text-6xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+    <p class="text-gray-500 dark:text-gray-400 font-medium">Tu carrito está vacío</p>
+    <a href="{{ url_for('routes.cliente_menu_view') }}" class="inline-block mt-4 text-orange-500 font-semibold hover:underline">Ver el menú</a>
+</div>
+
+<div id="carritoContenido">
+    <!-- Items del carrito -->
+    <div id="carritoItems" class="space-y-3 mb-6"></div>
+
+    <!-- Tipo de entrega -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-4">
+        <h3 class="font-bold text-gray-800 dark:text-white mb-3 text-sm">¿Cómo quieres recibir tu pedido?</h3>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <button type="button" id="btnTipoMesa" class="tipo-entrega-btn py-3 rounded-xl border-2 border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600 font-semibold text-sm flex flex-col items-center gap-1">
+                <i class="bi bi-shop text-lg"></i> En el restaurante
+            </button>
+            <button type="button" id="btnTipoDelivery" class="tipo-entrega-btn py-3 rounded-xl border-2 border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 font-semibold text-sm flex flex-col items-center gap-1">
+                <i class="bi bi-bicycle text-lg"></i> A domicilio
+            </button>
+        </div>
+
+        <!-- Campos: Mesa -->
+        <div id="camposMesa">
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1" for="mesaNumeroInput">Número de mesa</label>
+            <input type="number" id="mesaNumeroInput" min="1"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 dark:text-white"
+                placeholder="Ej. 5">
+        </div>
+
+        <!-- Campos: Delivery -->
+        <div id="camposDelivery" class="hidden space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1" for="direccionInput">Dirección</label>
+                <textarea id="direccionInput" rows="2" maxlength="300"
+                    class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 dark:text-white"
+                    placeholder="Calle, número, colonia..."></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1" for="referenciasInput">Referencias (opcional)</label>
+                <input type="text" id="referenciasInput" maxlength="300"
+                    class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 dark:text-white"
+                    placeholder="Casa color verde, portón negro...">
+            </div>
+            <button type="button" id="btnUsarGPS" class="w-full py-3 rounded-xl border-2 border-dashed border-orange-300 dark:border-orange-500/40 text-orange-600 dark:text-orange-400 font-semibold text-sm flex items-center justify-center gap-2">
+                <i class="bi bi-geo-alt"></i> Usar mi ubicación actual (GPS)
+            </button>
+            <p id="gpsStatus" class="text-xs text-center"></p>
+        </div>
+    </div>
+
+    <!-- Notas -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-4">
+        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1" for="notasPedidoInput">Notas para tu pedido (opcional)</label>
+        <input type="text" id="notasPedidoInput" maxlength="300"
+            class="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 dark:text-white"
+            placeholder="Sin cebolla, term medio, etc.">
+    </div>
+
+    <!-- Total y confirmar -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-24">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-gray-600 dark:text-gray-400 font-semibold">Total</span>
+            <span id="carritoTotal" class="text-2xl font-bold text-orange-500">$0.00</span>
+        </div>
+        <button type="button" id="btnConfirmarPedido" class="w-full bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg flex justify-center items-center gap-2">
+            <span>Confirmar Pedido</span>
+            <i class="bi bi-check-circle"></i>
+        </button>
+    </div>
+</div>
+
+<template id="itemCarritoTemplate">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-3 flex gap-3 items-center">
+        <div class="flex-1 min-w-0">
+            <p class="font-bold text-gray-800 dark:text-white text-sm item-nombre truncate">Nombre</p>
+            <p class="text-orange-500 font-semibold text-sm item-precio">$0.00</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button" class="item-restar w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 flex items-center justify-center font-bold">-</button>
+            <span class="item-cantidad w-6 text-center font-semibold dark:text-white">1</span>
+            <button type="button" class="item-sumar w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 flex items-center justify-center font-bold">+</button>
+        </div>
+        <button type="button" class="item-eliminar text-red-400 hover:text-red-600 ml-1">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cliente/geolocalizacion.js') }}"></script>
+<script>
+    let tipoEntrega = 'mesa';
+    let ubicacionCapturada = null; // {lat, lng, accuracy} si el cliente usó el botón de GPS
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!localStorage.getItem('access_token')) {
+            window.location.href = '/cliente/login';
+            return;
+        }
+        renderCarrito();
+
+        document.getElementById('btnTipoMesa').addEventListener('click', () => cambiarTipoEntrega('mesa'));
+        document.getElementById('btnTipoDelivery').addEventListener('click', () => cambiarTipoEntrega('delivery'));
+        document.getElementById('btnUsarGPS').addEventListener('click', capturarUbicacion);
+        document.getElementById('btnConfirmarPedido').addEventListener('click', confirmarPedido);
+    });
+
+    function cambiarTipoEntrega(tipo) {
+        tipoEntrega = tipo;
+        const esMesa = tipo === 'mesa';
+
+        document.getElementById('camposMesa').classList.toggle('hidden', !esMesa);
+        document.getElementById('camposDelivery').classList.toggle('hidden', esMesa);
+
+        const btnMesa = document.getElementById('btnTipoMesa');
+        const btnDelivery = document.getElementById('btnTipoDelivery');
+        btnMesa.classList.toggle('border-orange-500', esMesa);
+        btnMesa.classList.toggle('bg-orange-50', esMesa);
+        btnMesa.classList.toggle('text-orange-600', esMesa);
+        btnMesa.classList.toggle('border-gray-200', !esMesa);
+        btnMesa.classList.toggle('text-gray-500', !esMesa);
+
+        btnDelivery.classList.toggle('border-orange-500', !esMesa);
+        btnDelivery.classList.toggle('bg-orange-50', !esMesa);
+        btnDelivery.classList.toggle('text-orange-600', !esMesa);
+        btnDelivery.classList.toggle('border-gray-200', esMesa);
+        btnDelivery.classList.toggle('text-gray-500', esMesa);
+    }
+
+    async function capturarUbicacion() {
+        const status = document.getElementById('gpsStatus');
+        status.textContent = 'Obteniendo tu ubicación...';
+        status.className = 'text-xs text-center text-gray-500';
+
+        try {
+            ubicacionCapturada = await Geolocalizacion.obtenerUbicacionActual();
+            status.textContent = `Ubicación capturada (precisión ${Math.round(ubicacionCapturada.accuracy)}m). Se usará para que el repartidor te encuentre.`;
+            status.className = 'text-xs text-center text-green-600 font-medium';
+        } catch (err) {
+            ubicacionCapturada = null;
+            status.textContent = err.message;
+            status.className = 'text-xs text-center text-red-500 font-medium';
+        }
+    }
+
+    function renderCarrito() {
+        const items = Carrito.obtener();
+        const contenedor = document.getElementById('carritoItems');
+        const template = document.getElementById('itemCarritoTemplate');
+
+        document.getElementById('carritoVacio').classList.toggle('hidden', items.length > 0);
+        document.getElementById('carritoContenido').classList.toggle('hidden', items.length === 0);
+
+        contenedor.innerHTML = '';
+        items.forEach(item => {
+            const clone = template.content.cloneNode(true);
+            clone.querySelector('.item-nombre').textContent = item.nombre;
+            clone.querySelector('.item-precio').textContent = formatCurrency(item.precio);
+            clone.querySelector('.item-cantidad').textContent = item.cantidad;
+
+            clone.querySelector('.item-sumar').addEventListener('click', () => {
+                Carrito.actualizarCantidad(item.platillo_id, item.cantidad + 1);
+                renderCarrito();
+            });
+            clone.querySelector('.item-restar').addEventListener('click', () => {
+                Carrito.actualizarCantidad(item.platillo_id, item.cantidad - 1);
+                renderCarrito();
+            });
+            clone.querySelector('.item-eliminar').addEventListener('click', () => {
+                Carrito.eliminar(item.platillo_id);
+                renderCarrito();
+            });
+
+            contenedor.appendChild(clone);
+        });
+
+        document.getElementById('carritoTotal').textContent = formatCurrency(Carrito.total());
+    }
+
+    async function confirmarPedido() {
+        const items = Carrito.obtener();
+        if (items.length === 0) {
+            showError('Tu carrito está vacío');
+            return;
+        }
+
+        const body = {
+            tipo_entrega: tipoEntrega,
+            notas: document.getElementById('notasPedidoInput').value.trim(),
+            items: items.map(i => ({
+                platillo_id: i.platillo_id,
+                cantidad: i.cantidad,
+                notas: i.notas || ''
+            }))
+        };
+
+        if (tipoEntrega === 'mesa') {
+            const mesaNumero = document.getElementById('mesaNumeroInput').value;
+            if (!mesaNumero) {
+                showError('Ingresa el número de tu mesa');
+                return;
+            }
+            body.mesa_numero = parseInt(mesaNumero, 10);
+        } else {
+            const direccion = document.getElementById('direccionInput').value.trim();
+            if (!direccion) {
+                showError('Ingresa tu dirección de entrega');
+                return;
+            }
+            body.direccion = direccion;
+            body.referencias = document.getElementById('referenciasInput').value.trim();
+        }
+
+        showLoading('Enviando tu pedido...');
+        const response = await APICliente.post('/api/v1/pedidos', body);
+
+        if (!response.success) {
+            hideLoading();
+            showError(response.error || 'No se pudo enviar el pedido');
+            return;
+        }
+
+        const pedido = response.data.data;
+
+        // Si es delivery y ya tenemos coordenadas capturadas, las guardamos de inmediato
+        if (tipoEntrega === 'delivery' && ubicacionCapturada) {
+            try {
+                await Geolocalizacion.guardarUbicacionPedido(pedido.id, ubicacionCapturada);
+            } catch (e) {
+                console.warn('No se pudo guardar la ubicación GPS:', e);
+            }
+        }
+
+        hideLoading();
+        Carrito.vaciar();
+        showSuccess('¡Tu pedido fue enviado a cocina!');
+        setTimeout(() => {
+            window.location.href = '/cliente/pedido';
+        }, 1200);
+    }
+</script>
+{% endblock %}

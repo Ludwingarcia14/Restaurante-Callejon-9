@@ -13,6 +13,30 @@ class CocinaController:
             return jsonify({"success": False, "error": str(e)}), 500
 
     @staticmethod
+    def obtener_pedidos_movil():
+        """Pedidos hechos desde la app/wearable del cliente (no confundir con comandas de mesero)."""
+        try:
+            pedidos = CocinaService.get_pedidos_movil_pendientes()
+            return jsonify({"success": True, "pedidos": pedidos, "total": len(pedidos)}), 200
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
+    def actualizar_estado_pedido_movil():
+        try:
+            data = request.json or {}
+            pedido_id = data.get("pedido_id")
+            nuevo_estado = data.get("estado")
+            if not pedido_id or not nuevo_estado:
+                return jsonify({"success": False, "error": "pedido_id y estado son requeridos"}), 400
+            ok = CocinaService.actualizar_estado_pedido_movil(pedido_id, nuevo_estado)
+            if ok:
+                return jsonify({"success": True, "message": f"Pedido actualizado a '{nuevo_estado}'"}), 200
+            return jsonify({"success": False, "error": "No se pudo actualizar el pedido"}), 400
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
     def obtener_pedidos_en_proceso():
         try:
             pedidos = CocinaService.get_pedidos_en_proceso()

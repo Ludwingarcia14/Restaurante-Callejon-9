@@ -49,6 +49,19 @@ def api_cocina_pedidos_en_proceso():
 def api_cocina_pedidos_listos():
     return CocinaController.obtener_pedidos_listos()
 
+# ── Pedidos móviles (cliente/wearable) — Fase 3 ──────────────
+@routes_bp.route("/api/cocina/pedidos-movil", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_pedidos_movil():
+    return CocinaController.obtener_pedidos_movil()
+
+@routes_bp.route("/api/cocina/pedidos-movil/estado", methods=["POST"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_pedidos_movil_estado():
+    return CocinaController.actualizar_estado_pedido_movil()
+
 @routes_bp.route("/api/cocina/pedido/iniciar", methods=["POST"])
 @login_required
 @rol_required(['1', '3'])

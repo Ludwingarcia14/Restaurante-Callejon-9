@@ -16,3 +16,11 @@ def cliente_perfil_view():
 @routes_bp.route("/cliente/menu")
 def cliente_menu_view():
     return render_template("cliente/menu.html")
+
+@routes_bp.route("/cliente/carrito")
+def cliente_carrito_view():
+    return render_template("cliente/carrito.html")
+
+@routes_bp.route("/cliente/pedido")
+def cliente_pedido_activo_view():
+    return render_template("cliente/pedido_activo.html")

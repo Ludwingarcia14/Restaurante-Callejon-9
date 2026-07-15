@@ -81,7 +81,7 @@
                 <i class="bi bi-check-circle-fill"></i> Entregado
             </button>
             {% endif %}
-            <a href="https://maps.google.com/?q={{ e.direccion | urlencode }}" target="_blank"
+            <a href="https://maps.google.com/?q={% if e.cliente_lat and e.cliente_lng %}{{ e.cliente_lat }},{{ e.cliente_lng }}{% else %}{{ e.direccion | urlencode }}{% endif %}" target="_blank"
                class="px-4 py-3 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-xl font-medium transition flex items-center gap-1.5">
                 <i class="bi bi-map"></i> Mapa
             </a>

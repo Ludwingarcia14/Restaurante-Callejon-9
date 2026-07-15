@@ -1,0 +1,167 @@
+{% extends "layout/layout_cliente.html" %}
+
+{% block title %}Mi Pedido - Callejón 19{% endblock %}
+
+{% block content %}
+<div class="mb-6 mt-2">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Mi Pedido</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Sigue el estado de tu pedido en tiempo real</p>
+</div>
+
+<div id="sinPedido" class="hidden text-center py-16">
+    <i class="bi bi-receipt text-6xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+    <p class="text-gray-500 dark:text-gray-400 font-medium">No tienes ningún pedido activo</p>
+    <a href="{{ url_for('routes.cliente_menu_view') }}" class="inline-block mt-4 text-orange-500 font-semibold hover:underline">Ver el menú</a>
+</div>
+
+<div id="pedidoContenido" class="hidden">
+    <!-- Progreso -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5 mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400" id="pedidoFolio">Folio</span>
+            <span class="text-xs font-bold px-3 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400" id="pedidoEstadoLabel">Recibido</span>
+        </div>
+
+        <div class="flex items-center justify-between mt-4" id="progresoPasos">
+            <div class="paso-item flex flex-col items-center gap-1 flex-1" data-paso="1">
+                <div class="paso-circulo w-9 h-9 rounded-full flex items-center justify-center bg-gray-200 dark:bg-slate-700 text-gray-400"><i class="bi bi-receipt"></i></div>
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 text-center">Recibido</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-gray-200 dark:bg-slate-700 paso-linea" data-linea="1"></div>
+            <div class="paso-item flex flex-col items-center gap-1 flex-1" data-paso="2">
+                <div class="paso-circulo w-9 h-9 rounded-full flex items-center justify-center bg-gray-200 dark:bg-slate-700 text-gray-400"><i class="bi bi-egg-fried"></i></div>
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 text-center">Preparando</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-gray-200 dark:bg-slate-700 paso-linea" data-linea="2"></div>
+            <div class="paso-item flex flex-col items-center gap-1 flex-1" data-paso="3">
+                <div class="paso-circulo w-9 h-9 rounded-full flex items-center justify-center bg-gray-200 dark:bg-slate-700 text-gray-400"><i class="bi bi-check-circle"></i></div>
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 text-center">Listo</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-gray-200 dark:bg-slate-700 paso-linea" data-linea="3"></div>
+            <div class="paso-item flex flex-col items-center gap-1 flex-1" data-paso="4">
+                <div class="paso-circulo w-9 h-9 rounded-full flex items-center justify-center bg-gray-200 dark:bg-slate-700 text-gray-400"><i class="bi bi-bag-check"></i></div>
+                <span class="text-[10px] text-gray-500 dark:text-gray-400 text-center">Entregado</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle de entrega -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-4" id="detalleEntrega"></div>
+
+    <!-- Items -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-4">
+        <h3 class="font-bold text-gray-800 dark:text-white mb-3 text-sm">Tu orden</h3>
+        <div id="pedidoItems" class="space-y-2"></div>
+        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
+            <span class="font-semibold text-gray-600 dark:text-gray-400">Total</span>
+            <span id="pedidoTotal" class="text-xl font-bold text-orange-500">$0.00</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/cliente/pedido_tracking.js') }}"></script>
+<script>
+    let pedidoActualId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!localStorage.getItem('access_token')) {
+            window.location.href = '/cliente/login';
+            return;
+        }
+
+        await cargarPedidoActivo();
+
+        // Conectar socket para actualizaciones en tiempo real
+        const perfilResp = await APICliente.get('/api/v1/clientes/perfil');
+        if (perfilResp.success && perfilResp.data.data) {
+            PedidoTracking.conectar(perfilResp.data.data.id, (data) => {
+                if (data.pedido_id === pedidoActualId) {
+                    cargarPedidoActivo();
+                }
+            });
+        }
+
+        // Polling de respaldo por si el socket se desconecta
+        PedidoTracking.iniciarPolling(cargarPedidoActivo, 15000);
+    });
+
+    window.addEventListener('beforeunload', () => PedidoTracking.desconectar());
+
+    async function cargarPedidoActivo() {
+        const response = await APICliente.get('/api/v1/pedidos/activo');
+        if (!response.success || !response.data.data) {
+            document.getElementById('sinPedido').classList.remove('hidden');
+            document.getElementById('pedidoContenido').classList.add('hidden');
+            pedidoActualId = null;
+            return;
+        }
+
+        const pedido = response.data.data;
+        pedidoActualId = pedido.id;
+
+        document.getElementById('sinPedido').classList.add('hidden');
+        document.getElementById('pedidoContenido').classList.remove('hidden');
+
+        document.getElementById('pedidoFolio').textContent = `Pedido ${pedido.folio}`;
+
+        const info = PedidoTracking.getEstadoInfo(pedido.estado);
+        document.getElementById('pedidoEstadoLabel').textContent = info.label;
+        actualizarProgreso(info.paso);
+
+        // Detalle de entrega
+        const detalle = document.getElementById('detalleEntrega');
+        if (pedido.tipo_entrega === 'delivery') {
+            detalle.innerHTML = `
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1"><i class="bi bi-bicycle"></i> A domicilio</p>
+                <p class="text-sm font-semibold text-gray-800 dark:text-white">${escapeHtml(pedido.direccion || '')}</p>
+                ${pedido.referencias ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${escapeHtml(pedido.referencias)}</p>` : ''}
+                ${pedido.ubicacion ? '<p class="text-xs text-green-600 mt-2"><i class="bi bi-geo-alt-fill"></i> Ubicación GPS compartida con el repartidor</p>' : '<p class="text-xs text-amber-600 mt-2"><i class="bi bi-exclamation-circle"></i> Sin ubicación GPS, se usará tu dirección</p>'}
+            `;
+        } else {
+            detalle.innerHTML = `
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1"><i class="bi bi-shop"></i> En el restaurante</p>
+                <p class="text-sm font-semibold text-gray-800 dark:text-white">Mesa ${pedido.mesa_numero ?? '-'}</p>
+            `;
+        }
+
+        // Items
+        const itemsContainer = document.getElementById('pedidoItems');
+        itemsContainer.innerHTML = pedido.items.map(item => `
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-700 dark:text-gray-300">${item.cantidad}x ${escapeHtml(item.nombre)}</span>
+                <span class="font-semibold text-gray-800 dark:text-white">${formatCurrency(item.precio * item.cantidad)}</span>
+            </div>
+        `).join('');
+
+        document.getElementById('pedidoTotal').textContent = formatCurrency(pedido.total);
+    }
+
+    function actualizarProgreso(pasoActual) {
+        document.querySelectorAll('.paso-item').forEach(el => {
+            const paso = parseInt(el.dataset.paso, 10);
+            const circulo = el.querySelector('.paso-circulo');
+            if (paso <= pasoActual) {
+                circulo.classList.remove('bg-gray-200', 'dark:bg-slate-700', 'text-gray-400');
+                circulo.classList.add('bg-orange-500', 'text-white');
+            } else {
+                circulo.classList.add('bg-gray-200', 'dark:bg-slate-700', 'text-gray-400');
+                circulo.classList.remove('bg-orange-500', 'text-white');
+            }
+        });
+        document.querySelectorAll('.paso-linea').forEach(el => {
+            const linea = parseInt(el.dataset.linea, 10);
+            el.classList.toggle('bg-orange-500', linea < pasoActual);
+            el.classList.toggle('bg-gray-200', linea >= pasoActual);
+        });
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

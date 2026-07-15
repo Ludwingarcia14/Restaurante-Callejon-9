@@ -145,6 +145,12 @@ def pedido_detalle(pedido_id):
     """Detalle y estado de un pedido específico."""
     return PedidoMovilController.get_pedido(pedido_id)
 
+@api_v1_bp.route("/pedidos/<string:pedido_id>/ubicacion", methods=["POST"])
+@jwt_required
+def pedido_set_ubicacion(pedido_id):
+    """Guarda la ubicación GPS capturada por el cliente para un pedido a domicilio (Fase 5)."""
+    return PedidoMovilController.set_ubicacion(pedido_id)
+
 
 # ============================================================
 # ADMIN / COCINA — PEDIDOS MÓVILES  (Fase 3)

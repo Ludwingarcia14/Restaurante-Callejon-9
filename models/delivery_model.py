@@ -12,13 +12,20 @@ class DeliveryOrder:
     @classmethod
     def crear(cls, data):
         doc = {
-            "tipo":              data.get("tipo", "directo"),   # 'comanda' | 'directo'
+            "tipo":              data.get("tipo", "directo"),   # 'comanda' | 'directo' | 'pedido_movil'
             "comanda_id":        ObjectId(data["comanda_id"]) if data.get("comanda_id") else None,
+            "pedido_movil_id":   ObjectId(data["pedido_movil_id"]) if data.get("pedido_movil_id") else None,
+            "cliente_id":        data.get("cliente_id"),  # id del Cliente (colección clientes), si aplica
             "folio":             f"DEL-{datetime.now().strftime('%y%m%d%H%M%S')}",
             "cliente_nombre":    data.get("cliente_nombre", ""),
             "cliente_telefono":  data.get("cliente_telefono", ""),
             "direccion":         data.get("direccion", ""),
             "referencias":       data.get("referencias", ""),
+            # Coordenadas reales del cliente (opcional). direccion sigue siendo el fallback
+            # para pedidos antiguos o cuando el cliente no otorga permiso de GPS.
+            "cliente_lat":                data.get("cliente_lat"),
+            "cliente_lng":                data.get("cliente_lng"),
+            "cliente_ubicacion_accuracy": data.get("cliente_ubicacion_accuracy"),
             "items":             data.get("items", []),
             "total":             float(data.get("total", 0)),
             "estado":            "pendiente",
@@ -37,6 +44,19 @@ class DeliveryOrder:
         }
         res = cls._col().insert_one(doc)
         return str(res.inserted_id)
+
+    @classmethod
+    def set_ubicacion_cliente(cls, delivery_id, lat, lng, accuracy=None):
+        """Guarda/actualiza las coordenadas GPS reales del cliente para esta entrega."""
+        return cls._col().update_one(
+            {"_id": ObjectId(delivery_id)},
+            {"$set": {
+                "cliente_lat": float(lat),
+                "cliente_lng": float(lng),
+                "cliente_ubicacion_accuracy": float(accuracy) if accuracy is not None else None,
+                "updated_at": datetime.utcnow(),
+            }}
+        )
 
     @classmethod
     def get_by_id(cls, delivery_id):

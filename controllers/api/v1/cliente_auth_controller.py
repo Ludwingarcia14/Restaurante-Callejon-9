@@ -37,6 +37,8 @@ class ClienteAuthController:
         email     = sanitize_str(data.get("email", "")).lower()
         password  = data.get("password", "")
         telefono  = sanitize_str(data.get("telefono", ""), 20)
+        # Opcional: solo aplica en despliegues multi-tenant (ver models/cliente_model.py)
+        tenant_id = sanitize_str(data.get("tenant_id", ""), 50) or None
 
         if not nombre:
             return jsonify({"status": "error", "message": "El nombre es requerido"}), 400
@@ -56,12 +58,12 @@ class ClienteAuthController:
 
         try:
             password_hash = PasswordService.hash_password(password)
-            cliente_id = Cliente.create(nombre, apellidos, email, password_hash, telefono)
+            cliente_id = Cliente.create(nombre, apellidos, email, password_hash, telefono, tenant_id=tenant_id)
         except Exception as e:
             logger.error("Error creando cliente: %s", e)
             return jsonify({"status": "error", "message": "Error al crear la cuenta"}), 500
 
-        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente")
+        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente", tenant_id=tenant_id)
 
         try:
             Cliente.update_refresh_token(cliente_id, _hash_token(tokens["refresh_token"]))
@@ -115,7 +117,7 @@ class ClienteAuthController:
             return jsonify({"status": "error", "message": "Credenciales incorrectas"}), 401
 
         cliente_id = str(cliente_doc["_id"])
-        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente")
+        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente", tenant_id=cliente_doc.get("tenant_id"))
 
         try:
             Cliente.update_refresh_token(cliente_id, _hash_token(tokens["refresh_token"]))
@@ -158,7 +160,7 @@ class ClienteAuthController:
         if stored_hash and stored_hash != _hash_token(raw_token):
             return jsonify({"status": "error", "message": "Refresh token ya utilizado o inválido"}), 401
 
-        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente")
+        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente", tenant_id=cliente_doc.get("tenant_id"))
 
         try:
             Cliente.update_refresh_token(cliente_id, _hash_token(tokens["refresh_token"]))
