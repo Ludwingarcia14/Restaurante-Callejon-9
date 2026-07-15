@@ -189,6 +189,7 @@ class AuthController:
         except Exception as e:
             logging.warning(f"⚠️ Error al actualizar token: {e}")
 
+        session.permanent = True
         session["usuario_id"]        = user_id
         session["tenant_id"]         = str(usuario_doc.get("tenant_id", ""))
         session["usuario_nombre"]    = usuario_doc.get("usuario_nombre", "")

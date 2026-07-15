@@ -8,7 +8,7 @@ import sys
 import time
 import socket
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 2. Librerías de Terceros
 from dotenv import load_dotenv
@@ -88,7 +88,8 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 app.config.update(
     SESSION_TYPE="filesystem",
     SESSION_FILE_DIR=SESSION_DIR,
-    SESSION_PERMANENT=False,
+    SESSION_PERMANENT=True,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     SESSION_USE_SIGNER=True,
     SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true",
     SESSION_COOKIE_HTTPONLY=True,
