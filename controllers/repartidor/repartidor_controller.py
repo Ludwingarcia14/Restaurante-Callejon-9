@@ -40,6 +40,45 @@ def _serialize_sensor(doc):
 
 
 # ─────────────────────────────────────────────
+# NOTIFICACIÓN AL CLIENTE (Fase 2 — integración operativa)
+# ─────────────────────────────────────────────
+
+def _notificar_cliente_delivery(delivery_doc: dict):
+    """
+    Si esta entrega proviene del panel Cliente (tiene cliente_id, ver
+    models/delivery_model.py::DeliveryOrder.crear y
+    controllers/api/v1/pedido_movil_controller.py), notifica en tiempo real
+    a la sala 'cliente_{id}' que ya escucha static/js/cliente/pedido_tracking.js.
+
+    Importante: esto NO modifica PedidoMovil.estado. Ese campo es exclusivo
+    del estado de cocina (ver services/cocina_service.py::get_pedidos_movil_pendientes,
+    que filtra por PedidoMovil.estado). El estado de la entrega (asignado/en_camino/
+    entregado) vive únicamente en DeliveryOrder.estado, y se envía al cliente como
+    un evento aparte para no interferir con la cola de Cocina.
+    """
+    cliente_id = delivery_doc.get("cliente_id")
+    if not cliente_id:
+        return  # Entrega creada manualmente por Admin/Mesero, sin cliente de la app
+    try:
+        from extensions import socketio
+        socketio.emit(
+            "delivery_actualizado",
+            {
+                "pedido_id": str(delivery_doc.get("pedido_movil_id")) if delivery_doc.get("pedido_movil_id") else None,
+                "delivery_id": str(delivery_doc["_id"]),
+                "estado": delivery_doc.get("estado"),
+                "repartidor_nombre": delivery_doc.get("repartidor_nombre", ""),
+                "folio": delivery_doc.get("folio", ""),
+                "tiempo_estimado": delivery_doc.get("tiempo_estimado"),
+            },
+            room=f"cliente_{cliente_id}",
+            namespace="/",
+        )
+    except Exception as e:
+        logger.warning("No se pudo notificar delivery al cliente: %s", e)
+
+
+# ─────────────────────────────────────────────
 # VISTAS (HTML)
 # ─────────────────────────────────────────────
 
@@ -158,6 +197,11 @@ class DeliveryAPIController:
 
             nombre = f"{rep.get('usuario_nombre','')} {rep.get('usuario_apellidos','')}".strip()
             DeliveryOrder.asignar_repartidor(delivery_id, repartidor_id, nombre)
+
+            delivery = DeliveryOrder.get_by_id(delivery_id)
+            if delivery:
+                _notificar_cliente_delivery(delivery)
+
             return jsonify({"success": True})
 
         except Exception as e:
@@ -176,8 +220,8 @@ class DeliveryAPIController:
             DeliveryOrder.actualizar_estado(delivery_id, nuevo_estado)
 
             # Notify customer tracking page in real-time
+            delivery = DeliveryOrder.get_by_id(delivery_id)
             try:
-                delivery = DeliveryOrder.get_by_id(delivery_id)
                 folio = (delivery or {}).get("folio", "")
                 if folio:
                     from extensions import socketio
@@ -188,6 +232,10 @@ class DeliveryAPIController:
                     }, room=f"tracking_{folio}")
             except Exception:
                 pass
+
+            # Fase 2 — notificar también a la app del cliente (sala cliente_{id})
+            if delivery:
+                _notificar_cliente_delivery(delivery)
 
             return jsonify({"success": True, "estado": nuevo_estado})
 

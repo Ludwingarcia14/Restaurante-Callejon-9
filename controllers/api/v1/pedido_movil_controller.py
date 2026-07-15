@@ -58,6 +58,31 @@ def _emitir_actualizacion_cliente(cliente_id: str, pedido_doc: dict):
         logger.warning("No se pudo emitir actualización al cliente: %s", e)
 
 
+def _enriquecer_con_delivery(pedido_publico: dict) -> dict:
+    """
+    Si el pedido tiene una entrega asociada (delivery_order_id), agrega un bloque
+    'delivery' de solo lectura con el estado real de la entrega y el repartidor
+    asignado. No modifica PedidoMovil.estado (ver nota en
+    controllers/repartidor/repartidor_controller.py::_notificar_cliente_delivery).
+    """
+    if not pedido_publico.get("delivery_order_id"):
+        pedido_publico["delivery"] = None
+        return pedido_publico
+    try:
+        from models.delivery_model import DeliveryOrder
+        d = DeliveryOrder.get_by_id(pedido_publico["delivery_order_id"])
+        pedido_publico["delivery"] = {
+            "estado": d.get("estado"),
+            "repartidor_nombre": d.get("repartidor_nombre", ""),
+            "tiempo_estimado": d.get("tiempo_estimado"),
+            "folio": d.get("folio"),
+        } if d else None
+    except Exception as e:
+        logger.warning("No se pudo enriquecer pedido con delivery: %s", e)
+        pedido_publico["delivery"] = None
+    return pedido_publico
+
+
 class PedidoMovilController:
 
     # ----------------------------------------------------------
@@ -184,7 +209,7 @@ class PedidoMovilController:
                     "tipo": "pedido_movil",
                     "pedido_movil_id": pedido_id,
                     "cliente_id": cliente_id,
-                    "cliente_nombre": cliente_doc.get("nombre", "") if cliente_doc else "",
+                    "cliente_nombre": f"{cliente_doc.get('nombre','')} {cliente_doc.get('apellidos','')}".strip() if cliente_doc else "",
                     "cliente_telefono": cliente_doc.get("telefono", "") if cliente_doc else "",
                     "direccion": direccion,
                     "referencias": referencias,
@@ -202,7 +227,7 @@ class PedidoMovilController:
         return jsonify({
             "status": "success",
             "message": "Pedido enviado a cocina",
-            "data": PedidoMovil.to_public(pedido_doc),
+            "data": _enriquecer_con_delivery(PedidoMovil.to_public(pedido_doc)),
         }), 201
 
     # ----------------------------------------------------------
@@ -215,7 +240,8 @@ class PedidoMovilController:
         doc = PedidoMovil.find_activo_por_cliente(cliente_id)
         if not doc:
             return jsonify({"status": "success", "data": None, "message": "Sin pedido activo"}), 200
-        return jsonify({"status": "success", "data": PedidoMovil.to_public(doc)}), 200
+        data = _enriquecer_con_delivery(PedidoMovil.to_public(doc))
+        return jsonify({"status": "success", "data": data}), 200
 
     # ----------------------------------------------------------
     # DETALLE DE PEDIDO POR ID
@@ -233,7 +259,7 @@ class PedidoMovilController:
         if doc.get("cliente_id") != cliente_id:
             return jsonify({"status": "error", "message": "Sin permisos"}), 403
 
-        return jsonify({"status": "success", "data": PedidoMovil.to_public(doc)}), 200
+        return jsonify({"status": "success", "data": _enriquecer_con_delivery(PedidoMovil.to_public(doc))}), 200
 
     # ----------------------------------------------------------
     # GUARDAR UBICACIÓN GPS DEL PEDIDO (delivery)

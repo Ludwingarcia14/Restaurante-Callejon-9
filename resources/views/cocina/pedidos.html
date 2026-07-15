@@ -247,21 +247,38 @@
     }
 
     window.actualizarPedidosMovil = async function () {
-        const res = await fetchAPI('/api/cocina/pedidos-movil');
-        if (res.success && res.data.success) {
-            render(res.data.pedidos);
+        try {
+            const res = await fetch('/api/cocina/pedidos-movil', { credentials: 'include' });
+            if (!res.ok) {
+                console.error('GET /api/cocina/pedidos-movil ->', res.status);
+                return;
+            }
+            const data = await res.json();
+            if (data.success) {
+                render(data.pedidos);
+            }
+        } catch (err) {
+            console.error('Error consultando pedidos-movil:', err);
         }
     };
 
     window.cambiarEstadoPedidoMovil = async function (pedidoId, estado) {
-        const res = await fetchAPI('/api/cocina/pedidos-movil/estado', {
-            method: 'POST',
-            body: JSON.stringify({ pedido_id: pedidoId, estado: estado })
-        });
-        if (res.success && res.data.success) {
-            actualizarPedidosMovil();
-        } else {
-            showError && showError('No se pudo actualizar el pedido');
+        try {
+            const res = await fetch('/api/cocina/pedidos-movil/estado', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pedido_id: pedidoId, estado: estado })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                actualizarPedidosMovil();
+            } else {
+                showNotification(data.error || 'No se pudo actualizar el pedido', 'error');
+            }
+        } catch (err) {
+            console.error('Error actualizando pedido-movil:', err);
+            showNotification('No se pudo actualizar el pedido', 'error');
         }
     };
 
