@@ -1,8 +1,8 @@
 ﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Diagnóstico de Datos{% endblock %}
-{% block page_title %}Diagnóstico de Datos{% endblock %}
-{% block page_subtitle %}CRISP-DM · Fase 2 — Entendimiento estadístico de las comandas · últimos 90 días{% endblock %}
+{% block page_title %}<span data-i18n="diag_titulo">Diagnóstico de Datos</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="diag_sub">CRISP-DM · Fase 2 — Entendimiento estadístico de las comandas · últimos 90 días</span>{% endblock %}
 
 {% block navigation %}
 <script>
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Loading -->
 <div id="diag-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-    <i class="bi bi-arrow-repeat animate-spin"></i> Cargando diagnóstico…
+    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="diag_cargando">Cargando diagnóstico…</span>
 </div>
 
 <!-- Contenido -->
@@ -78,9 +78,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Perfil por mesa -->
     <div class="bg-white rounded-xl shadow-sm p-6 mb-6 overflow-auto">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-table text-indigo-500"></i> Perfil Estadístico por Mesa
+            <i class="bi bi-table text-indigo-500"></i> <span data-i18n="diag_perfil">Perfil Estadístico por Mesa</span>
         </h3>
-        <p class="text-xs text-gray-400 mb-4">
+        <p class="text-xs text-gray-400 mb-4" data-i18n="diag_perfil_desc">
             Mín., máx., promedio y desviación estándar del ticket. A mayor desviación, más variabilidad en el gasto.
         </p>
         <div id="diag-tabla-mesas" class="overflow-x-auto"></div>
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Métodos de pago -->
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="bi bi-pie-chart text-indigo-500"></i> Distribución de Métodos de Pago
+            <i class="bi bi-pie-chart text-indigo-500"></i> <span data-i18n="diag_metodos">Distribución de Métodos de Pago</span>
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
             <div class="flex justify-center">
@@ -134,23 +134,23 @@ async function cargar() {
 function renderKpis(d) {
     document.getElementById('diag-kpis').innerHTML = `
         <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-indigo-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Comandas analizadas</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_comandas')}</p>
             <p class="text-3xl font-bold text-gray-800">${d.total_comandas.toLocaleString('es-MX')}</p>
-            <p class="text-xs text-gray-400 mt-1">${d.periodo_dias} días</p>
+            <p class="text-xs text-gray-400 mt-1">${d.periodo_dias} ${t('diag_dias_lbl')}</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-emerald-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Ticket promedio global</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_ticket_g')}</p>
             <p class="text-3xl font-bold text-gray-800">${fmt(d.ticket_global_avg)}</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-orange-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Desviación estándar</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_desv')}</p>
             <p class="text-3xl font-bold text-gray-800">${fmt(d.ticket_global_std)}</p>
-            <p class="text-xs text-gray-400 mt-1">variabilidad global del ticket</p>
+            <p class="text-xs text-gray-400 mt-1">${t('diag_var_global')}</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-blue-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Periodo</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_periodo_lbl')}</p>
             <p class="text-lg font-bold text-gray-800">${d.fecha_inicio || '—'}</p>
-            <p class="text-xs text-gray-400">al ${d.fecha_fin || '—'}</p>
+            <p class="text-xs text-gray-400">${t('diag_al')} ${d.fecha_fin || '—'}</p>
         </div>
     `;
 }
@@ -160,20 +160,20 @@ function renderTabla(porMesa) {
         <table class="w-full text-sm border-collapse">
             <thead>
                 <tr class="border-b-2 border-gray-200 text-xs text-gray-500 uppercase tracking-wide bg-gray-50">
-                    <th class="px-4 py-3 text-left">Mesa</th>
-                    <th class="px-4 py-3 text-right">Registros</th>
-                    <th class="px-4 py-3 text-right">Ticket Mín.</th>
-                    <th class="px-4 py-3 text-right">Ticket Máx.</th>
-                    <th class="px-4 py-3 text-right">Ticket Prom.</th>
-                    <th class="px-4 py-3 text-right">Desv. Est.</th>
-                    <th class="px-4 py-3 text-right">Propina prom.</th>
-                    <th class="px-4 py-3 text-right">Comensales prom.</th>
+                    <th class="px-4 py-3 text-left">${t('m_mesa_word')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_reg')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_min')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_max')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_prom')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_desv')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_prop')}</th>
+                    <th class="px-4 py-3 text-right">${t('diag_th_com')}</th>
                 </tr>
             </thead>
             <tbody>
                 ${porMesa.map(m => `
                     <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                        <td class="px-4 py-3 font-semibold text-gray-800">Mesa ${m.mesa}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-800">${t('m_mesa_word')} ${m.mesa}</td>
                         <td class="px-4 py-3 text-right text-gray-600">${m.registros}</td>
                         <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_min)}</td>
                         <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_max)}</td>

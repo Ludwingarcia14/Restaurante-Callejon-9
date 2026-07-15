@@ -1,7 +1,7 @@
 ﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Mis Propinas{% endblock %}
-{% block page_title %}Control de Propinas{% endblock %}
+{% block page_title %}<span data-i18n="prop_titulo">Control de Propinas</span>{% endblock %}
 
 {% block navigation %}
 <script>
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- RESUMEN -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-green-500">
-        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Total Acumulado</p>
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider" data-i18n="prop_total_acum">Total Acumulado</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="total-propinas-dia" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-piggy-bank text-4xl text-green-500 opacity-20"></i>
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="text-xs text-gray-400 mt-2"><span id="num-servicios">0</span> servicio(s)</p>
     </div>
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
-        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Por Tarjeta (MP)</p>
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider" data-i18n="prop_tarjeta">Por Tarjeta (MP)</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="propinas-tarjeta" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-credit-card text-4xl text-blue-500 opacity-20"></i>
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="text-xs text-gray-400 mt-2"><span id="num-tarjeta">0</span> pago(s)</p>
     </div>
     <div class="bg-white p-6 rounded-xl shadow-md border-b-4 border-orange-500">
-        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider">Efectivo</p>
+        <p class="text-sm text-gray-500 font-bold uppercase tracking-wider" data-i18n="prop_efectivo">Efectivo</p>
         <div class="flex items-center justify-between mt-2">
             <h3 id="propinas-efectivo" class="text-3xl font-black text-gray-800">$0.00</h3>
             <i class="bi bi-cash-stack text-4xl text-orange-500 opacity-20"></i>
@@ -96,30 +96,30 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="mb-8">
     <h3 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
         <i class="bi bi-bar-chart-fill text-[#F2913D]"></i>
-        Análisis de Propinas
+        <span data-i18n="prop_analisis">Análisis de Propinas</span>
     </h3>
 
     <!-- Mini-stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Propina Promedio</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="prop_avg">Propina Promedio</p>
             <p id="stat-propina-avg" class="text-xl font-black text-gray-800">$0.00</p>
-            <p class="text-[10px] text-gray-400 mt-1">por servicio</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="prop_por_serv">por servicio</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Mejor Propina</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="prop_max">Mejor Propina</p>
             <p id="stat-propina-max" class="text-xl font-black text-gray-800">$0.00</p>
-            <p class="text-[10px] text-gray-400 mt-1">en un servicio</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="prop_en_serv">en un servicio</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">% Promedio</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="prop_pct_avg">% Promedio</p>
             <p id="stat-pct-avg" class="text-xl font-black text-gray-800">0%</p>
-            <p class="text-[10px] text-gray-400 mt-1">porcentaje del día</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="prop_pct_dia">porcentaje del día</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Sin Propina</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="prop_sin_prop">Sin Propina</p>
             <p id="stat-sin-propina" class="text-xl font-black text-gray-800">0</p>
-            <p class="text-[10px] text-gray-400 mt-1">servicios</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="prop_serv_lbl">servicios</p>
         </div>
     </div>
 
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-graph-up text-green-500"></i>
-                    Propinas por Hora
+                    <span data-i18n="prop_por_hora">Propinas por Hora</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Línea</span>
             </div>
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-pie-chart text-blue-500"></i>
-                    Por Método de Pago
+                    <span data-i18n="prop_por_metodo">Por Método de Pago</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Dona</span>
             </div>
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
-                    Propina por Mesa
+                    <span data-i18n="prop_por_mesa">Propina por Mesa</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Barras</span>
             </div>
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-calendar-range text-orange-500"></i>
-                    Propinas en el Tiempo
+                    <span data-i18n="prop_en_tiempo">Propinas en el Tiempo</span>
                 </h4>
                 <div class="flex items-center gap-2 flex-wrap">
                     <!-- Selector de mes (solo en modo mes) -->
@@ -206,15 +206,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
                         <button onclick="cambiarRango('dia')" id="btn-dia"
                             class="rango-btn px-3 py-1.5 rounded-md text-[10px] font-bold transition-all text-gray-500 hover:text-gray-700">
-                            Día
+                            <span data-i18n="prop_dia_btn">Día</span>
                         </button>
                         <button onclick="cambiarRango('semana')" id="btn-semana"
                             class="rango-btn px-3 py-1.5 rounded-md text-[10px] font-bold transition-all bg-white text-orange-600 shadow-sm">
-                            Semana
+                            <span data-i18n="prop_semana_btn">Semana</span>
                         </button>
                         <button onclick="cambiarRango('mes')" id="btn-mes"
                             class="rango-btn px-3 py-1.5 rounded-md text-[10px] font-bold transition-all text-gray-500 hover:text-gray-700">
-                            Mes
+                            <span data-i18n="prop_mes_btn">Mes</span>
                         </button>
                     </div>
                 </div>
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Total del período -->
             <div class="flex items-center gap-2 mb-3 px-1">
-                <span class="text-[10px] text-gray-400 uppercase font-bold">Total del período:</span>
+                <span class="text-[10px] text-gray-400 uppercase font-bold" data-i18n="prop_total_per">Total del período:</span>
                 <span id="total-rango" class="text-sm font-black text-orange-600">$0.00</span>
                 <span id="label-rango" class="text-[10px] text-gray-300 font-medium"></span>
             </div>
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
         <h2 class="font-bold text-gray-900 flex items-center gap-2">
             <i class="bi bi-list-check text-[#F2913D]"></i>
-            Desglose por Servicio
+            <span data-i18n="prop_desglose">Desglose por Servicio</span>
         </h2>
         <span id="fecha-actual" class="text-xs font-bold text-gray-400 uppercase"></span>
     </div>
@@ -254,11 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase font-bold">
-                    <th class="p-4">Hora</th>
-                    <th class="p-4">Mesa</th>
-                    <th class="p-4">Porcentaje</th>
-                    <th class="p-4">Método</th>
-                    <th class="p-4 text-right">Propina</th>
+                    <th class="p-4" data-i18n="prop_th_hora">Hora</th>
+                    <th class="p-4" data-i18n="m_mesa_word">Mesa</th>
+                    <th class="p-4" data-i18n="prop_th_pct">Porcentaje</th>
+                    <th class="p-4" data-i18n="prop_th_metodo">Método</th>
+                    <th class="p-4 text-right" data-i18n="prop_th_propina">Propina</th>
                 </tr>
             </thead>
             <tbody id="tabla-propinas-body" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -449,7 +449,7 @@ function graficaPropinaMesa(propinas) {
 
     const porMesa = {};
     propinas.forEach(p => {
-        const m = `Mesa ${p.mesa || 'N/A'}`;
+        const m = `${t('m_mesa_word')} ${p.mesa || 'N/A'}`;
         porMesa[m] = (porMesa[m] || 0) + (p.monto || 0);
     });
 
@@ -519,7 +519,7 @@ async function graficaRango(rango) {
         const hayDatos = dias.some(d => d.total > 0);
 
         document.getElementById('total-rango').textContent = `$${(data.total || 0).toFixed(2)}`;
-        const labels_rango = { dia: 'hoy', semana: 'últimos 7 días', mes: 'este mes' };
+        const labels_rango = { dia: t('prop_lbl_hoy'), semana: t('prop_lbl_semana'), mes: t('prop_lbl_mes') };
         document.getElementById('label-rango').textContent = labels_rango[rango] || '';
 
         if (!hayDatos) { empty.classList.remove('hidden'); return; }
@@ -610,8 +610,8 @@ function renderizarTabla(propinas) {
             <tr>
                 <td colspan="5" class="p-8 text-center text-gray-400">
                     <i class="bi bi-emoji-neutral text-4xl block mb-3 opacity-30"></i>
-                    <p class="font-medium">Aún no hay propinas registradas hoy</p>
-                    <p class="text-xs mt-1">Las propinas aparecerán aquí cuando cierres cuentas</p>
+                    <p class="font-medium">${t('prop_sin_hoy')}</p>
+                    <p class="text-xs mt-1">${t('prop_sin_hint')}</p>
                 </td>
             </tr>
         `;
@@ -637,7 +637,7 @@ function renderizarTabla(propinas) {
         return `
             <tr class="hover:bg-gray-50 transition">
                 <td class="p-4 text-xs text-gray-500 font-mono">${hora}</td>
-                <td class="p-4 font-bold text-gray-700">Mesa ${item.mesa}</td>
+                <td class="p-4 font-bold text-gray-700">${t('m_mesa_word')} ${item.mesa}</td>
                 <td class="p-4 text-gray-600">
                     <span class="bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-bold">
                         ${(item.porcentaje || 0).toFixed(0)}%

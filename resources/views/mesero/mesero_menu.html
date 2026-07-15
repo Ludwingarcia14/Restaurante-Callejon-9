@@ -1,8 +1,8 @@
 ﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Menú - Mesero{% endblock %}
-{% block page_title %}Menú{% endblock %}
-{% block page_subtitle %}Selecciona productos para la comanda{% endblock %}
+{% block page_title %}<span data-i18n="mn_menu">Menú</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="menu_sub">Selecciona productos para la comanda</span>{% endblock %}
 {% block navigation %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         id="busqueda"
         type="text"
         class="input input-bordered w-full md:flex-1"
-        placeholder="Buscar producto..."
+        data-i18n-placeholder="menu_buscar" placeholder="Buscar producto..."
         oninput="renderProductos()"
     >
 </div>
@@ -119,7 +119,7 @@ function renderCategorias() {
     cont.innerHTML = `
         <button class="btn btn-sm ${categoriaActiva==='all'?'btn-primary':'btn-outline'}"
             onclick="setCategoria('all')">
-            Todos
+            ${t('menu_todos')}
         </button>
     `;
 
@@ -154,7 +154,7 @@ function renderProductos() {
     if (filtrados.length === 0) {
         grid.innerHTML = `
             <div class="col-span-full text-center text-gray-500 py-10">
-                No hay productos
+                ${t('menu_no_prod')}
             </div>`;
         return;
     }

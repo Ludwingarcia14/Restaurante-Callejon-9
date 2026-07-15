@@ -3,6 +3,11 @@
    Paleta de Colores Personalizada
    =================================== */
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 :root {
     /* Colores Principales */
     --color-primary: #F2913D;

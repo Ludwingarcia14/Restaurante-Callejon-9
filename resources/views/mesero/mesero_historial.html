@@ -1,7 +1,7 @@
 ﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Mi Historial{% endblock %}
-{% block page_title %}Historial de Cuentas{% endblock %}
+{% block page_title %}<span data-i18n="hist_titulo">Historial de Cuentas</span>{% endblock %}
 
 {% block navigation %}
 <script>
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="bg-white p-4 rounded-xl shadow-md mb-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div>
-            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Período</label>
+            <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block" data-i18n="hist_periodo">Período</label>
             <div class="flex items-center gap-2">
                 <input type="date" id="filtro-inicio" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
                 <span class="text-gray-400 text-xs">–</span>
@@ -87,12 +87,12 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
         <div class="bg-gradient-to-r from-green-50 to-green-100 px-4 py-3 rounded-lg border border-green-200">
-            <span class="text-[10px] font-bold text-green-700 uppercase block">Total del Día</span>
+            <span class="text-[10px] font-bold text-green-700 uppercase block" data-i18n="hist_total_dia">Total del Día</span>
             <span id="total-ventas-historial" class="text-2xl font-black text-green-800">$0.00</span>
         </div>
 
         <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-3 rounded-lg border border-orange-200">
-            <span class="text-[10px] font-bold text-orange-700 uppercase block">Propinas del Día</span>
+            <span class="text-[10px] font-bold text-orange-700 uppercase block" data-i18n="hist_prop_dia">Propinas del Día</span>
             <span id="total-propinas-historial" class="text-2xl font-black text-orange-800">$0.00</span>
         </div>
     </div>
@@ -110,30 +110,30 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="mb-6">
     <h3 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
         <i class="bi bi-bar-chart-fill text-[#F2913D]"></i>
-        Análisis del Día
+        <span data-i18n="hist_analisis">Análisis del Día</span>
     </h3>
 
     <!-- Tarjetas mini-stat -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Ticket Promedio</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="hist_ticket_avg">Ticket Promedio</p>
             <p id="stat-ticket-promedio" class="text-xl font-black text-gray-800">$0.00</p>
-            <p class="text-[10px] text-gray-400 mt-1">por cuenta</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="hist_por_cuenta">por cuenta</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Hora Pico</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="hist_hora_pico">Hora Pico</p>
             <p id="stat-hora-pico" class="text-xl font-black text-gray-800">--:--</p>
-            <p class="text-[10px] text-gray-400 mt-1">más ventas</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="hist_mas_ventas">más ventas</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Mesa Top</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="hist_mesa_top">Mesa Top</p>
             <p id="stat-mesa-top" class="text-xl font-black text-gray-800">--</p>
-            <p class="text-[10px] text-gray-400 mt-1">más activa</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="hist_mas_activa">más activa</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">% Propina Prom.</p>
+            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1" data-i18n="hist_pct_prop">% Propina Prom.</p>
             <p id="stat-propina-prom" class="text-xl font-black text-gray-800">0%</p>
-            <p class="text-[10px] text-gray-400 mt-1">promedio del día</p>
+            <p class="text-[10px] text-gray-400 mt-1" data-i18n="hist_prom_dia">promedio del día</p>
         </div>
     </div>
 
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-graph-up text-[#F2913D]"></i>
-                    Ventas por Día
+                    <span data-i18n="hist_ventas_dia">Ventas por Día</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Línea</span>
             </div>
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
-                    Mesas Más Activas
+                    <span data-i18n="hist_mesas_act">Mesas Más Activas</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Barras</span>
             </div>
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-pie-chart text-[#F2913D]"></i>
-                    Productos Más Pedidos
+                    <span data-i18n="hist_prods_ped">Productos Más Pedidos</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Dona</span>
             </div>
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-center justify-between mb-4">
                 <h4 class="font-bold text-gray-700 flex items-center gap-2">
                     <i class="bi bi-cash-coin text-[#F2913D]"></i>
-                    Propinas por Día
+                    <span data-i18n="hist_prop_dia2">Propinas por Día</span>
                 </h4>
                 <span class="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded">Barras</span>
             </div>
@@ -229,12 +229,12 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- LISTA DE CUENTAS -->
 <h3 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
     <i class="bi bi-receipt text-[#F2913D]"></i>
-    Detalle de Cuentas
+    <span data-i18n="hist_detalle">Detalle de Cuentas</span>
 </h3>
 <div id="contenedor-historial" class="space-y-3">
     <div class="text-center py-10 text-gray-400">
         <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
-        <p class="mt-2 font-medium text-sm">Cargando registros...</p>
+        <p class="mt-2 font-medium text-sm" data-i18n="hist_cargando">Cargando registros...</p>
     </div>
 </div>
 
@@ -269,7 +269,7 @@ function resetFecha() {
     const hace30 = new Date(hoy); hace30.setDate(hoy.getDate() - 30);
     document.getElementById('filtro-inicio').value = fmt(hace30);
     document.getElementById('filtro-fin').value = fmt(hoy);
-    document.getElementById('fecha-seleccionada').textContent = 'Últimos 30 días';
+    document.getElementById('fecha-seleccionada').textContent = t('hist_ultimos30');
 }
 
 async function cargarHistorial() {
@@ -280,7 +280,7 @@ async function cargarHistorial() {
     contenedor.innerHTML = `
         <div class="text-center py-10 text-gray-400">
             <div class="animate-spin inline-block w-12 h-12 border-4 border-gray-200 border-t-[#F2913D] rounded-full mb-4"></div>
-            <p class="font-medium text-sm">Cargando registros...</p>
+            <p class="font-medium text-sm">${t('hist_cargando')}</p>
         </div>
     `;
 
@@ -304,7 +304,7 @@ async function cargarHistorial() {
         contenedor.innerHTML = `
             <div class="text-center py-10 text-red-500">
                 <i class="bi bi-exclamation-triangle text-4xl mb-3 opacity-30"></i>
-                <p class="font-medium">No se pudo cargar el historial</p>
+                <p class="font-medium">${t('hist_error')}</p>
                 <p class="text-xs mt-1 text-gray-400">${error.message}</p>
             </div>
         `;
@@ -357,7 +357,7 @@ function calcularMiniStats(historial) {
     });
     const mesaTop = Object.entries(ventasPorMesa).sort((a, b) => b[1] - a[1])[0];
     document.getElementById('stat-mesa-top').textContent =
-        mesaTop ? `Mesa ${mesaTop[0]}` : '--';
+        mesaTop ? `${t('m_mesa_word')} ${mesaTop[0]}` : '--';
 
     // Propina promedio
     const conPropina = historial.filter(r => r.propina > 0);
@@ -437,7 +437,7 @@ function graficaMesasActivas(historial) {
 
     const porMesa = {};
     historial.forEach(r => {
-        const m = `Mesa ${r.mesa || 'N/A'}`;
+        const m = `${t('m_mesa_word')} ${r.mesa || 'N/A'}`;
         porMesa[m] = (porMesa[m] || 0) + (r.total_final || 0);
     });
 
@@ -610,8 +610,8 @@ function renderizarHistorial(data) {
         contenedor.innerHTML = `
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-inbox text-5xl mb-4 opacity-20"></i>
-                <p class="font-medium">Sin registros para esta fecha</p>
-                <p class="text-xs mt-2">Las cuentas cerradas aparecerán aquí</p>
+                <p class="font-medium">${t('hist_sin_reg')}</p>
+                <p class="text-xs mt-2">${t('hist_sin_hint')}</p>
             </div>
         `;
         return;
@@ -645,7 +645,7 @@ function renderizarHistorial(data) {
                         <i class="bi bi-receipt text-white text-lg"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-gray-800">Mesa ${reg.mesa}</h4>
+                        <h4 class="font-bold text-gray-800">${t('m_mesa_word')} ${reg.mesa}</h4>
                         <p class="text-[10px] text-gray-400 uppercase font-semibold flex items-center gap-2">
                             <i class="bi bi-clock"></i>
                             ${hora}
@@ -663,15 +663,15 @@ function renderizarHistorial(data) {
             </div>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-xs">
                 <div class="text-center">
-                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Comensales</p>
+                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">${t('m_comensales_lbl').replace(':','')}</p>
                     <p class="font-bold text-gray-700">${reg.num_comensales || 0}</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Items</p>
+                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">${t('cmd_items_txt')}</p>
                     <p class="font-bold text-gray-700">${items}</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">Propina</p>
+                    <p class="text-gray-400 uppercase text-[9px] font-bold mb-1">${t('hist_th_prop')}</p>
                     <p class="font-bold text-green-600">+$${propina.toFixed(2)}</p>
                 </div>
             </div>

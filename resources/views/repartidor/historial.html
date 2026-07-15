@@ -1,0 +1,77 @@
+{% extends "layout/layout_repartidor.html" %}
+{% block title %}Historial{% endblock %}
+{% block page_title %}Historial de Entregas{% endblock %}
+{% block page_subtitle %}Tus entregas completadas y canceladas{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Entregas</p>
+        <p class="text-3xl font-bold text-gray-800">{{ stats.total_entregas or 0 }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-sky-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Monto Manejado</p>
+        <p class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(stats.total_ingresos or 0) }}</p>
+    </div>
+</div>
+
+<!-- Tabla historial -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-clock-history text-sky-500"></i> Últimas 50 entregas
+        </h3>
+    </div>
+
+    {% if entregas %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3 text-left">Folio</th>
+                    <th class="px-4 py-3 text-left">Cliente</th>
+                    <th class="px-4 py-3 text-left hidden sm:table-cell">Dirección</th>
+                    <th class="px-4 py-3 text-right">Total</th>
+                    <th class="px-4 py-3 text-center">Estado</th>
+                    <th class="px-4 py-3 text-left hidden md:table-cell">Fecha</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for e in entregas %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-3 font-mono text-xs text-sky-600 font-bold">{{ e.folio }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ e.cliente_nombre }}</td>
+                    <td class="px-4 py-3 text-gray-500 max-w-[180px] truncate hidden sm:table-cell">
+                        {{ e.direccion }}
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-800">
+                        ${{ "%.2f"|format(e.total|float) }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {% if e.estado == 'entregado' %}
+                        <span class="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                            ✓ Entregado
+                        </span>
+                        {% else %}
+                        <span class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                            Cancelado
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
+                        {{ e.updated_at }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="py-16 text-center text-gray-400">
+        <i class="bi bi-clock-history text-5xl block mb-3 opacity-20"></i>
+        <p class="font-medium">Sin historial aún</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

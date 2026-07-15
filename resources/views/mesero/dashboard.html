@@ -1,7 +1,7 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 {% block title %}Panel de Mesero{% endblock %}
-{% block page_title %}Dashboard de Mesero{% endblock %}
-{% block page_subtitle %}Gestión de mesas y atención al cliente{% endblock %}
+{% block page_title %}<span data-i18n="m_dash_titulo">Dashboard de Mesero</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="m_dash_sub">Gestión de mesas y atención al cliente</span>{% endblock %}
 
 {% block navigation %}
 <script>
@@ -48,14 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <i class="bi bi-clipboard-data text-lg"></i>
     <span>Diagnóstico</span>
 </a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i>
-    <span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Proceso de Datos</span>
-</a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i>
     <span>Pareto 80/20</span>
@@ -76,11 +68,11 @@ document.addEventListener('DOMContentLoaded', function() {
     style="background: linear-gradient(135deg, #F2913D 0%, #F2A339 100%);">
     <div class="flex items-start justify-between flex-wrap gap-3">
         <div class="min-w-0">
-            <h2 class="text-xl sm:text-2xl font-bold mb-1">¡Hola, {{ session.usuario_nombre }}! 👋</h2>
+            <h2 class="text-xl sm:text-2xl font-bold mb-1"><span data-i18n="m_hola">¡Hola</span>, {{ session.usuario_nombre }}! 👋</h2>
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm opacity-90">
                 <div class="flex items-center gap-1.5">
                     <i class="bi bi-clock"></i>
-                    <span>Turno: {{ perfil.turno|title if perfil.turno else 'No asignado' }}</span>
+                    <span><span data-i18n="m_turno">Turno</span>: {{ perfil.turno|title if perfil.turno else 'No asignado' }}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <i class="bi bi-person-badge"></i>
@@ -90,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="text-right bg-white bg-opacity-20 px-4 py-2.5 rounded-lg backdrop-blur-sm shrink-0">
             <div class="text-3xl font-bold leading-none">{{ stats.mesas_asignadas|length }}</div>
-            <div class="text-xs uppercase tracking-wider opacity-90 mt-0.5">Mesas</div>
+            <div class="text-xs uppercase tracking-wider opacity-90 mt-0.5" data-i18n="m_mesas_lbl">Mesas</div>
         </div>
     </div>
 </div>
@@ -100,45 +92,45 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#F2913D] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-receipt text-4xl text-[#F2913D]"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="stat-comandas">{{ stats.comandas_activas }}</span>
+            <span class="text-3xl font-bold text-gray-900" id="stat-comandas">{{ stats.comandas_activas }}</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Comandas Activas</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_cmdas_lbl">Comandas Activas</p>
         <p class="text-xs text-[#F2913D] mt-1 font-semibold">
-            <i class="bi bi-clock"></i> En proceso
+            <i class="bi bi-clock"></i> <span data-i18n="m_en_proceso">En proceso</span>
         </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#F2A339] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-grid-3x3 text-4xl text-[#F2A339]"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="mesas-ocupadas">0</span>
+            <span class="text-3xl font-bold text-gray-900" id="mesas-ocupadas">0</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Mesas Ocupadas</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_mesas_ocup">Mesas Ocupadas</p>
         <p class="text-xs text-amber-600 mt-1">
             <i class="bi bi-check-circle"></i> <span id="mesas-libres">{{ stats.mesas_asignadas|length }}</span>
-            disponibles
+            <span data-i18n="m_disponibles">disponibles</span>
         </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-cash-coin text-4xl text-green-500"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="stat-propinas">${{ "%.2f"|format(stats.propinas_dia) }}</span>
+            <span class="text-3xl font-bold text-gray-900" id="stat-propinas">${{ "%.2f"|format(stats.propinas_dia) }}</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Propinas Hoy</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_propinas_hoy">Propinas Hoy</p>
         <p class="text-xs text-green-600 mt-1">
-            <i class="bi bi-arrow-up"></i> {{ perfil.propinas.sugerida if perfil.propinas else 10 }}% sugerido
+            <i class="bi bi-arrow-up"></i> {{ perfil.propinas.sugerida if perfil.propinas else 10 }}% <span data-i18n="m_sugerido">sugerido</span>
         </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#0D0D0D] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
-            <i class="bi bi-graph-up text-4xl text-[#0D0D0D]"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="venta-dia">$0.00</span>
+            <i class="bi bi-graph-up text-4xl text-gray-900"></i>
+            <span class="text-3xl font-bold text-gray-900" id="venta-dia">$0.00</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Venta del Día</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_venta_dia">Venta del Día</p>
         <p class="text-xs text-gray-500 mt-1">
-            <i class="bi bi-star"></i> <span id="num-ordenes">0</span> órdenes
+            <i class="bi bi-star"></i> <span id="num-ordenes">0</span> <span data-i18n="m_ordenes_lbl">órdenes</span>
         </p>
     </div>
 
@@ -149,13 +141,13 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="lg:col-span-2">
         <div class="card bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#F2913D]">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-lg font-bold text-[#0D0D0D] flex items-center gap-2">
+                <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
-                    Mis Mesas
+                    <span data-i18n="m_mis_mesas">Mis Mesas</span>
                 </h2>
                 <div class="flex items-center gap-2">
                     <span class="px-3 py-1 bg-[#F2CA99] bg-opacity-30 text-[#F2913D] rounded-full text-xs font-bold">
-                        {{ stats.mesas_asignadas|length }} ASIGNADAS
+                        {{ stats.mesas_asignadas|length }} <span data-i18n="m_asignadas">ASIGNADAS</span>
                     </span>
                     <button onclick="cargarEstadoMesas()"
                         class="p-2 hover:bg-gray-200 rounded-full transition text-gray-600">
@@ -172,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="icon-container w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 transition">
                             <i class="bi bi-table text-xl"></i>
                         </div>
-                        <p class="font-bold text-[#0D0D0D]">Mesa {{ mesa_num }}</p>
+                        <p class="font-bold text-gray-900"><span data-i18n="m_mesa_word">Mesa</span> {{ mesa_num }}</p>
                         <span class="mesa-status px-2 py-1 text-[10px] rounded-full"></span>
                         <p class="mesa-comensales text-[10px] uppercase tracking-tighter text-gray-400 mt-1 font-bold">
                             Cargando...
@@ -183,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {% else %}
                 <div class="text-center py-12 text-gray-400">
                     <i class="bi bi-inbox text-5xl mb-3 opacity-20"></i>
-                    <p>No tienes mesas asignadas</p>
+                    <p data-i18n="m_sin_mesas">No tienes mesas asignadas</p>
                 </div>
                 {% endif %}
             </div>
@@ -193,9 +185,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="lg:col-span-1">
         <div class="card bg-white rounded-xl shadow-md border-t-4 border-[#0D0D0D]">
             <div class="p-4 border-b bg-gray-50">
-                <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
                     <i class="bi bi-lightning-charge-fill text-[#F2A339]"></i>
-                    Acciones Rápidas
+                    <span data-i18n="m_acc_rapidas">Acciones Rápidas</span>
                 </h2>
             </div>
             <div class="card-body p-4 space-y-3">
@@ -203,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     class="w-full p-4 bg-[#F2913D] text-white rounded-lg hover:bg-[#F2A339] shadow-md transition flex items-center justify-between group">
                     <div class="flex items-center gap-3">
                         <i class="bi bi-plus-circle-fill text-xl"></i>
-                        <span class="font-bold">NUEVA CUENTA</span>
+                        <span class="font-bold" data-i18n="m_nueva_cuenta">NUEVA CUENTA</span>
                     </div>
                     <i class="bi bi-chevron-right group-hover:translate-x-1 transition"></i>
                 </button>
@@ -212,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     class="w-full p-4 bg-white border-2 border-[#F2CA99] text-[#F2913D] rounded-lg hover:bg-[#F2CA99] hover:bg-opacity-20 transition flex items-center justify-between group">
                     <div class="flex items-center gap-3">
                         <i class="bi bi-journal-text text-xl"></i>
-                        <span class="font-bold">VER MENÚ</span>
+                        <span class="font-bold" data-i18n="m_ver_menu_btn">VER MENÚ</span>
                     </div>
                     <i class="bi bi-chevron-right group-hover:translate-x-1 transition"></i>
                 </button>
@@ -221,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     class="w-full p-4 bg-white border-2 border-gray-800 text-gray-800 rounded-lg hover:bg-gray-800 hover:text-white transition flex items-center justify-between group">
                     <div class="flex items-center gap-3">
                         <i class="bi bi-receipt text-xl"></i>
-                        <span class="font-bold">MIS COMANDAS</span>
+                        <span class="font-bold" data-i18n="m_mis_cmdas_btn">MIS COMANDAS</span>
                     </div>
                     <span id="badge-comandas" class="bg-[#F2913D] text-white px-2 py-0.5 rounded text-xs font-bold">
                         {{ stats.comandas_activas }}
@@ -234,11 +226,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div class="card bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#F2A339]">
     <div class="card-header p-4 bg-gray-50 flex justify-between items-center border-b">
-        <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+        <h2 class="font-bold text-gray-900 flex items-center gap-2">
             <i class="bi bi-list-stars text-[#F2913D]"></i>
-            Detalle de Comandas Activas
+            <span data-i18n="m_det_cmdas">Detalle de Comandas Activas</span>
         </h2>
-        <button onclick="actualizarComandas()" class="text-sm font-bold text-[#F2913D] hover:underline">
+        <button onclick="actualizarComandas()" class="text-sm font-bold text-[#F2913D] hover:underline" data-i18n="m_refrescar">
             Refrescar lista
         </button>
     </div>
@@ -246,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="comandas-container">
             <div class="text-center py-10">
                 <div class="animate-spin inline-block w-8 h-8 border-4 border-[#F2CA99] border-t-[#F2913D] rounded-full mb-4"></div>
-                <p class="text-gray-500 font-medium">Sincronizando cocina...</p>
+                <p class="text-gray-500 font-medium" data-i18n="m_sincronizando">Sincronizando cocina...</p>
             </div>
         </div>
     </div>
@@ -256,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="mt-6">
     <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
         <i class="bi bi-graph-up-arrow text-[#F2913D]"></i>
-        Analytics Avanzado
+        <span data-i18n="m_analytics">Analytics Avanzado</span>
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a href="{{ url_for('routes.mesero_pareto') }}"
@@ -268,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div>
                 <p class="font-bold text-gray-800 group-hover:text-amber-600 transition">Pareto 80/20</p>
-                <p class="text-xs text-gray-500">Qué platillos generan el 80% del ingreso</p>
+                <p class="text-xs text-gray-500" data-i18n="m_pareto_desc">Qué platillos generan el 80% del ingreso</p>
             </div>
         </a>
         <a href="{{ url_for('routes.mesero_asociacion') }}"
@@ -280,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div>
                 <p class="font-bold text-gray-800 group-hover:text-purple-600 transition">Asociación</p>
-                <p class="text-xs text-gray-500">Combos que se piden juntos — sugerencias</p>
+                <p class="text-xs text-gray-500" data-i18n="m_asoc_desc">Combos que se piden juntos — sugerencias</p>
             </div>
         </a>
         <a href="{{ url_for('routes.mesero_prediccion') }}"
@@ -292,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div>
                 <p class="font-bold text-gray-800 group-hover:text-sky-600 transition">Predicción</p>
-                <p class="text-xs text-gray-500">Demanda proyectada e ingredientes a prep.</p>
+                <p class="text-xs text-gray-500" data-i18n="m_pred_desc">Demanda proyectada e ingredientes a prep.</p>
             </div>
         </a>
     </div>
@@ -310,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="bg-[#F2913D] text-white p-5 flex items-center justify-between">
             <h3 class="text-xl font-bold flex items-center gap-2 uppercase">
                 <i class="bi bi-house-door-fill"></i>
-                Detalle Mesa <span id="modal-mesa-numero"></span>
+                <span data-i18n="m_detalle_mesa">Detalle Mesa</span> <span id="modal-mesa-numero"></span>
             </h3>
             <button onclick="cerrarModalMesa()" class="hover:bg-black hover:bg-opacity-10 p-1 rounded transition">
                 <i class="bi bi-x-lg text-xl"></i>
@@ -330,8 +322,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <div class="p-5 border-b flex justify-between items-center bg-orange-50">
             <div>
-                <h3 class="text-2xl font-black text-orange-800">Mesa #<span id="menu-mesa-num">--</span></h3>
-                <p class="text-sm text-orange-600/70 font-medium">Selecciona los productos para la comanda</p>
+                <h3 class="text-2xl font-black text-orange-800"><span data-i18n="m_mesa_word">Mesa</span> #<span id="menu-mesa-num">--</span></h3>
+                <p class="text-sm text-orange-600/70 font-medium" data-i18n="m_sel_prod_hint">Selecciona los productos para la comanda</p>
             </div>
             <button onclick="cerrarModalMenu()"
                 class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-400 hover:text-red-500 shadow-sm transition-all text-2xl">&times;</button>
@@ -353,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner">
                 <div class="p-4 border-b bg-gray-50/50 flex items-center gap-2">
                     <i class="bi bi-cart3 text-orange-600"></i>
-                    <h4 class="font-bold text-gray-700 uppercase tracking-wider text-sm">Resumen de Pedido</h4>
+                    <h4 class="font-bold text-gray-700 uppercase tracking-wider text-sm" data-i18n="m_resumen_ped">Resumen de Pedido</h4>
                 </div>
                 <div id="carrito-items" class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div class="text-center text-gray-400 py-10">
@@ -363,13 +355,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="p-5 border-t bg-gray-50">
                     <div class="flex justify-between items-end mb-4">
-                        <span class="text-gray-500 text-sm font-medium">TOTAL A PAGAR</span>
+                        <span class="text-gray-500 text-sm font-medium" data-i18n="m_total_pagar">TOTAL A PAGAR</span>
                         <span id="carrito-total" class="text-3xl font-black text-green-600">$0.00</span>
                     </div>
                     <button onclick="confirmarPedidoCocina()"
                         class="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2 active:scale-95">
                         <i class="bi bi-send-check-fill"></i>
-                        ENVIAR A COCINA
+                        <span data-i18n="m_enviar_cocina">ENVIAR A COCINA</span>
                     </button>
                 </div>
             </div>
@@ -402,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Opciones / ingredientes -->
             <div id="modal-opciones-wrapper" class="mb-4 hidden">
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2" data-i18n="m_personaliza">
                     Personaliza tu pedido
                 </p>
                 <div id="modal-opciones" class="space-y-2"></div>
@@ -410,18 +402,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Nota especial -->
             <div class="mb-4">
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2" data-i18n="m_nota_esp">
                     Nota especial (opcional)
                 </p>
                 <textarea id="modal-nota"
                     class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:border-orange-400 focus:outline-none resize-none"
-                    rows="2" placeholder="Ej: sin sal, término medio..."></textarea>
+                    rows="2" placeholder="Ej: sin sal, término medio..."
+                    data-i18n-placeholder="m_nota_ph"></textarea>
             </div>
 
             <button onclick="agregarDesdeModal()"
                 class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
                 <i class="bi bi-cart-plus-fill text-xl"></i>
-                AGREGAR AL PEDIDO
+                <span data-i18n="m_agregar_ped">AGREGAR AL PEDIDO</span>
             </button>
         </div>
     </div>
@@ -437,12 +430,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="flex items-center justify-between px-5 py-3 bg-gray-50 border-b">
             <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">
                 <i class="bi bi-receipt-cutoff text-[#F2913D] mr-1"></i>
-                Vista Previa del Ticket
+                <span data-i18n="m_ticket_titulo">Vista Previa del Ticket</span>
             </span>
             <div class="flex gap-2 items-center">
                 <button onclick="imprimirTicket()"
                     class="flex items-center gap-1 px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-700 transition">
-                    <i class="bi bi-printer"></i> Imprimir
+                    <i class="bi bi-printer"></i> <span data-i18n="m_imprimir">Imprimir</span>
                 </button>
                 <button onclick="descargarTicketPDF()"
                     class="flex items-center gap-1 px-3 py-1.5 bg-[#F2913D] text-white rounded-lg text-xs font-bold hover:bg-[#F2A339] transition">
@@ -708,8 +701,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (estado === 'ocupada') {
                     ocupadas++;
                     statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700';
-                    statusSpan.textContent = 'OCUPADA';
-                    comensalesP.textContent = `${mesaInfo.comensales || 0} PERSONAS`;
+                    statusSpan.textContent = t('m_ocupada');
+                    comensalesP.textContent = `${mesaInfo.comensales || 0} ${t('m_personas_lbl')}`;
                     comensalesP.classList.remove('text-gray-400');
                     comensalesP.classList.add('text-red-500');
                     card.classList.add('border-red-500', 'bg-red-50');
@@ -717,15 +710,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon.classList.add('text-red-600');
                 } else if (estado === 'reservada') {
                     statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700';
-                    statusSpan.textContent = 'RESERVADA';
-                    comensalesP.textContent = mesaInfo.reserva_hora || 'RESERVA';
+                    statusSpan.textContent = t('m_reservada');
+                    comensalesP.textContent = mesaInfo.reserva_hora || t('m_reservada');
                     card.classList.add('border-blue-400');
                     iconContainer.classList.add('bg-blue-100');
                     icon.classList.add('text-blue-600');
                 } else {
                     statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700';
-                    statusSpan.textContent = 'LIBRE';
-                    comensalesP.textContent = 'SIN CLIENTES';
+                    statusSpan.textContent = t('m_libre');
+                    comensalesP.textContent = t('m_sin_clientes');
                     comensalesP.classList.remove('text-red-500');
                     comensalesP.classList.add('text-gray-400');
                     card.classList.add('border-gray-200');
@@ -756,10 +749,10 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML = `
                 <div class="text-center py-12 text-gray-500">
                     <i class="bi bi-cart-check text-6xl mb-4 block opacity-30"></i>
-                    <p class="text-lg">No hay comandas activas</p>
-                    <p class="text-sm mt-2">Las comandas aparecerán aquí cuando tomes pedidos</p>
+                    <p class="text-lg">${t('m_sin_cmdas')}</p>
+                    <p class="text-sm mt-2">${t('m_cmdas_hint')}</p>
                     <button onclick="mostrarSeleccionMesa()" class="btn btn-primary mt-4">
-                        <i class="bi bi-plus-circle"></i> Crear Nueva Cuenta
+                        <i class="bi bi-plus-circle"></i> ${t('m_crear_cuenta')}
                     </button>
                 </div>
             `;
@@ -779,31 +772,31 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div>
                                 <p class="font-bold text-gray-800">${comanda.folio}</p>
-                                <p class="text-xs text-gray-500">Mesa ${comanda.mesa_numero}</p>
+                                <p class="text-xs text-gray-500">${t('m_mesa_word')} ${comanda.mesa_numero}</p>
                             </div>
                         </div>
                         <span class="badge badge-warning">${tiempoTranscurrido}</span>
                     </div>
                     <div class="space-y-2 text-sm mb-3">
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Comensales:</span>
+                            <span class="text-gray-600">${t('m_comensales_lbl')}</span>
                             <span class="font-semibold">${comanda.num_comensales ?? comanda.comensales ?? 0}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Items:</span>
+                            <span class="text-gray-600">${t('m_items_lbl')}</span>
                             <span class="font-semibold">${comanda.items.length}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Total:</span>
+                            <span class="text-gray-600">${t('m_total_lbl')}</span>
                             <span class="font-bold text-lg text-green-600">$${comanda.total.toFixed(2)}</span>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="verDetalleComanda('${comanda.id}')" class="btn btn-sm btn-secondary">
-                            <i class="bi bi-eye"></i> Ver
+                            <i class="bi bi-eye"></i> ${t('m_ver_btn')}
                         </button>
                         <button onclick="agregarItemsComanda('${comanda.id}')" class="btn btn-sm btn-primary">
-                            <i class="bi bi-plus"></i> Agregar
+                            <i class="bi bi-plus"></i> ${t('m_agregar_btn')}
                         </button>
                     </div>
                 </div>
@@ -853,11 +846,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="bi bi-check-circle text-5xl text-green-600"></i>
                         </div>
-                        <h4 class="text-xl font-bold text-gray-800 mb-2">Mesa Disponible</h4>
-                        <p class="text-sm text-gray-500 mb-6">Capacidad: ${mesa.capacidad || 4} personas</p>
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">${t('m_mesa_disp')}</h4>
+                        <p class="text-sm text-gray-500 mb-6">${t('m_capacidad_lbl')}: ${mesa.capacidad || 4} ${t('m_personas')}</p>
                         <div class="grid grid-cols-2 gap-4">
-                            <button onclick="abrirCuenta('${numeroMesa}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Abrir Cuenta</button>
-                            <button onclick="cerrarModalMesa()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold">Cancelar</button>
+                            <button onclick="abrirCuenta('${numeroMesa}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">${t('m_abrir_cuenta')}</button>
+                            <button onclick="cerrarModalMesa()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold">${t('m_cancelar')}</button>
                         </div>
                     </div>`;
             } else {
@@ -868,19 +861,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 content.innerHTML = `
                     <div class="space-y-4">
                         <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">
-                            <p class="font-black text-orange-900 text-lg uppercase">Mesa Ocupada</p>
+                            <p class="font-black text-orange-900 text-lg uppercase">${t('m_mesa_ocup_tit')}</p>
                             <div class="flex justify-between items-center mt-2">
                                 <div>
-                                    <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Folio</p>
+                                    <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">${t('m_folio_lbl')}</p>
                                     <p class="text-gray-800 font-mono">${folio}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Comensales</p>
-                                    <p class="text-gray-800">${personas} personas</p>
+                                    <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">${t('m_comensales_lbl').replace(':','')}</p>
+                                    <p class="text-gray-800">${personas} ${t('m_personas')}</p>
                                 </div>
                             </div>
                             <div class="mt-4 pt-4 border-t border-orange-200">
-                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Total Acumulado</p>
+                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">${t('m_acumulado_lbl')}</p>
                                 <p class="text-4xl font-black text-gray-900">$${total}</p>
                             </div>
                         </div>
@@ -888,16 +881,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}', true)"
                                     class="w-full bg-[#F2913D] hover:bg-[#F2A339] text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
                                 <i class="bi bi-plus-circle-fill text-xl"></i>
-                                AGREGAR PRODUCTOS AL PEDIDO
+                                ${t('m_agregar_prod')}
                             </button>
                             <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
                                     class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
                                 <i class="bi bi-cash-coin"></i>
-                                CERRAR CUENTA
+                                ${t('m_cerrar_cuenta')}
+                            </button>
+                            <button onclick="abrirDeliveryDesdeComanda('${mesa.cuenta_activa_id}', '${numeroMesa}')"
+                                    class="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-xl font-bold shadow transition flex items-center justify-center gap-2">
+                                <i class="bi bi-truck"></i>
+                                Enviar a Delivery
                             </button>
                             <button onclick="cerrarModalMesa()"
                                     class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
-                                Cerrar Detalle
+                                ${t('m_cerrar_det')}
                             </button>
                         </div>
                     </div>`;
@@ -1096,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML = `
                 <div class="text-center text-gray-400 py-10">
                     <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
-                    <p class="text-xs">Selecciona un producto <br> de la izquierda</p>
+                    <p class="text-xs">${t('m_sel_prod_txt').replace('\\n','<br>')}</p>
                 </div>
             `;
             totalElement.textContent = '$0.00';
@@ -1127,7 +1125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="font-bold text-xs truncate text-gray-500">${item.nombre}</p>
                         ${opcionesHtml}
                         ${notaHtml}
-                        <p class="text-[10px] text-gray-400">$${item.precio.toFixed(2)} × ${item.cantidad} · ya en cocina</p>
+                        <p class="text-[10px] text-gray-400">$${item.precio.toFixed(2)} × ${item.cantidad} · ${t('m_ya_en_cocina')}</p>
                     </div>
                     <span class="text-[10px] text-gray-400 shrink-0 mt-1">🍳</span>
                 `;
@@ -1171,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const itemsNuevos = carrito.filter(item => !item.esExistente);
 
         if (itemsNuevos.length === 0) {
-            return Swal.fire("Sin productos nuevos", "Agrega al menos un producto nuevo al pedido", "warning");
+            return Swal.fire(t('dash_sin_prod_n'), t('dash_agrega_p'), "warning");
         }
 
         showLoading("Enviando a cocina...");
@@ -1183,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const data = await res.json();
             if (data.success) {
-                showSuccess("¡Pedido enviado correctamente!");
+                showSuccess(t('dash_ped_env'));
                 cerrarModalMenu();
                 actualizarComandas();
                 cargarEstadisticasDia();
@@ -1206,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===================================
     async function abrirCuenta(numeroMesa) {
         const { value: numComensales } = await Swal.fire({
-            title: `Mesa ${numeroMesa}`,
+            title: `${t('m_mesa_word')} ${numeroMesa}`,
             input: 'number',
             inputLabel: '¿Cuántos comensales?',
             inputAttributes: { min: 1, max: 20, step: 1 },
@@ -1249,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function mostrarSeleccionMesa() {
         const mesasDisponibles = Object.values(mesasData).filter(m => m.estado === 'disponible');
         if (mesasDisponibles.length === 0) {
-            Swal.fire({ title: 'No hay mesas disponibles', text: 'Todas tus mesas están ocupadas o en limpieza', icon: 'info' });
+            Swal.fire({ title: t('dash_no_mesas_d'), text: t('dash_mesas_ocup2'), icon: 'info' });
             return;
         }
         const opciones = {};
@@ -1294,13 +1292,13 @@ document.addEventListener('DOMContentLoaded', function() {
             itemsHtml = `
                 <div class="text-center text-gray-400 py-12">
                     <i class="bi bi-cart-x text-5xl block mb-3 opacity-30"></i>
-                    <p class="text-sm">Sin productos aún</p>
+                    <p class="text-sm">${t('dash_sin_prod_a')}</p>
                 </div>
             `;
         }
 
         Swal.fire({
-            width: 720,
+            width: 'min(720px, 95vw)',
             showConfirmButton: false,
             showCancelButton: false,
             backdrop: 'rgba(0,0,0,.6)',
@@ -1312,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
                 <div class="bg-orange-600 text-white px-6 pt-8 pb-6 rounded-t-[28px]">
                     <h3 class="text-2xl font-black">${comanda.folio}</h3>
-                    <p class="text-sm opacity-90">Mesa ${comanda.mesa_numero} · ${comanda.num_comensales ?? comanda.comensales ?? 0} personas</p>
+                    <p class="text-sm opacity-90">${t('m_mesa_word')} ${comanda.mesa_numero} · ${comanda.num_comensales ?? comanda.comensales ?? 0} ${t('m_personas')}</p>
                 </div>
                 <div class="p-6 bg-gray-50 max-h-[55vh] overflow-y-auto space-y-3">${itemsHtml}</div>
                 <div class="p-6 bg-white border-t flex justify-between items-center">
@@ -1328,6 +1326,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `
         });
+    }
+
+    // ===================================
+    // ENVIAR COMANDA A DELIVERY
+    // ===================================
+    async function abrirDeliveryDesdeComanda(cuentaId, numMesa) {
+        const { value: formValues } = await Swal.fire({
+            title: '<i class="bi bi-truck"></i> Enviar a Delivery',
+            html: `
+                <div class="text-left space-y-3 mt-2">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Nombre cliente *</label>
+                        <input id="swd-nombre" class="swal2-input" placeholder="Nombre completo" style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Teléfono</label>
+                        <input id="swd-telefono" class="swal2-input" placeholder="55 0000 0000" style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Dirección *</label>
+                        <input id="swd-dir" class="swal2-input" placeholder="Calle, número, colonia" style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Referencias</label>
+                        <input id="swd-ref" class="swal2-input" placeholder="Entre calles, color..." style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                </div>`,
+            width: 'min(480px, 95vw)',
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-truck"></i> Crear pedido delivery',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0ea5e9',
+            preConfirm: () => {
+                const nombre = document.getElementById('swd-nombre').value.trim();
+                const dir    = document.getElementById('swd-dir').value.trim();
+                if (!nombre || !dir) {
+                    Swal.showValidationMessage('Nombre y dirección son requeridos');
+                    return false;
+                }
+                return {
+                    cliente_nombre:   nombre,
+                    cliente_telefono: document.getElementById('swd-telefono').value.trim(),
+                    direccion:        dir,
+                    referencias:      document.getElementById('swd-ref').value.trim(),
+                };
+            }
+        });
+        if (!formValues) return;
+
+        const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+        const body = {
+            tipo:             'comanda',
+            comanda_id:       cuentaId,
+            ...formValues,
+            items:            comanda?.items || [],
+            total:            comanda?.total || 0,
+            metodo_pago:      'efectivo',
+        };
+        const r    = await fetch('/api/delivery/crear', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        if (data.success) {
+            cerrarModalMesa();
+            Swal.fire({ icon: 'success', title: '¡Pedido delivery creado!',
+                        text: 'El admin lo asignará a un repartidor.', timer: 2500, showConfirmButton: false });
+        } else { Swal.fire('Error', data.error, 'error'); }
     }
 
     function agregarItemsComanda(cuentaId) {
@@ -1353,8 +1419,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="bi bi-cash-coin text-2xl"></i>
                             </div>
                             <div class="text-left">
-                                <h3 class="text-xl font-black">Cerrar Cuenta</h3>
-                                <p class="text-sm opacity-90">Mesa ${numeroMesa}</p>
+                                <h3 class="text-xl font-black">${t('dash_cc_tit')}</h3>
+                                <p class="text-sm opacity-90">${t('m_mesa_word')} ${numeroMesa}</p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -1366,33 +1432,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div class="mb-6">
                     <label class="block text-left text-sm font-bold text-gray-700 mb-3">
-                        <i class="bi bi-piggy-bank text-green-600"></i> Propina del Cliente
+                        <i class="bi bi-piggy-bank text-green-600"></i> ${t('dash_propina_cli')}
                     </label>
                     <div class="grid grid-cols-4 gap-2 mb-3">
                         <button type="button" onclick="seleccionarPropina('sin', this)"
                                 class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                            <p class="text-xs font-bold text-gray-500">Sin</p>
+                            <p class="text-xs font-bold text-gray-500">${t('dash_tip_sin')}</p>
                             <p class="text-lg font-black text-gray-700">0%</p>
                         </button>
                         <button type="button" onclick="seleccionarPropina('10', this)"
                                 class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                            <p class="text-xs font-bold text-gray-500">Bueno</p>
+                            <p class="text-xs font-bold text-gray-500">${t('dash_tip_bueno')}</p>
                             <p class="text-lg font-black text-gray-700">10%</p>
                         </button>
                         <button type="button" onclick="seleccionarPropina('15', this)"
                                 class="propina-btn p-3 border-2 border-green-500 bg-green-50 rounded-lg transition text-center propina-seleccionada">
-                            <p class="text-xs font-bold text-green-600">Excelente</p>
+                            <p class="text-xs font-bold text-green-600">${t('dash_tip_excel')}</p>
                             <p class="text-lg font-black text-green-700">15%</p>
                         </button>
                         <button type="button" onclick="seleccionarPropina('20', this)"
                                 class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                            <p class="text-xs font-bold text-gray-500">Increíble</p>
+                            <p class="text-xs font-bold text-gray-500">${t('dash_tip_incr')}</p>
                             <p class="text-lg font-black text-gray-700">20%</p>
                         </button>
                     </div>
                     <button type="button" onclick="togglePropinaCustom()"
                             class="w-full p-2 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition text-sm font-medium">
-                        <i class="bi bi-pencil"></i> Otra cantidad
+                        <i class="bi bi-pencil"></i> ${t('dash_tip_otro')}
                     </button>
                     <div id="custom-propina-container" class="hidden mt-3">
                         <div class="relative">
@@ -1402,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                 <i class="bi bi-percent"></i>
                             </span>
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">PERSONALIZADO</span>
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">${t('dash_personaliz')}</span>
                         </div>
                     </div>
                     <input type="hidden" id="tipo_propina" value="15">
@@ -1420,23 +1486,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div class="mb-6">
                     <label class="block text-left text-sm font-bold text-gray-700 mb-3">
-                        <i class="bi bi-credit-card text-blue-600"></i> Método de Pago
+                        <i class="bi bi-credit-card text-blue-600"></i> ${t('dash_metodo_p')}
                     </label>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" onclick="seleccionarMetodo('efectivo', this)"
                                 class="metodo-btn p-4 border-2 border-orange-500 bg-orange-50 rounded-lg transition text-center metodo-seleccionado">
                             <i class="bi bi-cash-stack text-2xl text-orange-600 block mb-1"></i>
-                            <p class="text-xs font-bold text-orange-700">Efectivo</p>
+                            <p class="text-xs font-bold text-orange-700">${t('dash_efectivo2')}</p>
                         </button>
                         <button type="button" onclick="seleccionarMetodo('tarjeta', this)"
                                 class="metodo-btn p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center">
                             <i class="bi bi-credit-card text-2xl text-gray-400 block mb-1"></i>
-                            <p class="text-xs font-bold text-gray-600">Tarjeta MP</p>
+                            <p class="text-xs font-bold text-gray-600">${t('dash_tarjeta2')}</p>
                         </button>
                         <button type="button" onclick="seleccionarMetodo('transferencia', this)"
                                 class="metodo-btn p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-center">
                             <i class="bi bi-phone text-2xl text-gray-400 block mb-1"></i>
-                            <p class="text-xs font-bold text-gray-600">Transfer</p>
+                            <p class="text-xs font-bold text-gray-600">${t('dash_transfer2')}</p>
                         </button>
                     </div>
                     <input type="hidden" id="metodo_pago" value="efectivo">
@@ -1446,16 +1512,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="flex gap-2">
                         <i class="bi bi-info-circle text-blue-600 mt-0.5"></i>
                         <div class="text-xs text-blue-800">
-                            <p class="font-bold mb-1">💡 Recordatorio</p>
-                            <p>Al cerrar esta cuenta, la mesa quedará disponible automáticamente.</p>
+                            <p class="font-bold mb-1">💡 ${t('dash_recordat')}</p>
+                            <p>${t('dash_recordat_t')}</p>
                         </div>
                     </div>
                 </div>
             `,
-            width: 600,
+            width: 'min(600px, 95vw)',
             showCancelButton: true,
-            confirmButtonText: '<i class="bi bi-check-circle-fill mr-2"></i>Confirmar y Cerrar',
-            cancelButtonText: '<i class="bi bi-x-circle mr-2"></i>Cancelar',
+            confirmButtonText: `<i class="bi bi-check-circle-fill mr-2"></i>${t('dash_confirm_c')}`,
+            cancelButtonText: `<i class="bi bi-x-circle mr-2"></i>${t('dash_cancelar_btn')}`,
             confirmButtonColor: '#16a34a',
             cancelButtonColor: '#6b7280',
             customClass: {
@@ -1662,19 +1728,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return new Promise((resolve, reject) => {
             Swal.fire({
-                title: 'Esperando confirmación del pago',
+                title: t('dash_esp_mp'),
                 html: `
                     <div class="text-center py-4">
                         <div class="animate-spin inline-block w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
-                        <p class="text-gray-600 mb-2">El cliente está completando el pago en Mercado Pago</p>
-                        <p class="text-sm text-gray-500">Esta ventana se cerrará automáticamente cuando el pago sea confirmado</p>
-                        <p class="text-xs text-gray-400 mt-4">Intentos: <span id="polling-contador">0</span> / ${MAX_INTENTOS}</p>
+                        <p class="text-gray-600 mb-2">${t('dash_mp_desc')}</p>
+                        <p class="text-sm text-gray-500">${t('dash_mp_auto')}</p>
+                        <p class="text-xs text-gray-400 mt-4">${t('dash_intentos')} <span id="polling-contador">0</span> / ${MAX_INTENTOS}</p>
                     </div>
                 `,
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 showCancelButton: true,
-                cancelButtonText: 'Cancelar verificación'
+                cancelButtonText: t('dash_cancel_v')
             });
 
             const intervalo = setInterval(async () => {
@@ -1781,14 +1847,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="text-align:center; margin-bottom:16px;">
                     <div style="font-size:28px; margin-bottom:4px;">🍽️</div>
                     <p style="font-size:16px; font-weight:900; letter-spacing:2px; text-transform:uppercase; margin:0;">Callejon 19</p>
-                    <p style="font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:2px; margin:4px 0 0;">Ticket de Venta</p>
+                    <p style="font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:2px; margin:4px 0 0;">${t('dash_tkt_titulo')}</p>
                     <div style="border-top:1px dashed #D1D5DB; margin:10px 0;"></div>
                     <p style="font-size:11px; color:#6B7280; margin:0;">${fechaStr} &nbsp;|&nbsp; ${horaStr}</p>
                 </div>
 
                 <div style="margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
-                        <span style="color:#6B7280;">Folio:</span>
+                        <span style="color:#6B7280;">${t('dash_tkt_folio')}:</span>
                         <span style="font-weight:700;">${datos.folio || 'N/A'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
@@ -1796,11 +1862,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span style="font-weight:700;">${datos.mesa || 'N/A'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
-                        <span style="color:#6B7280;">Atendió:</span>
+                        <span style="color:#6B7280;">${t('dash_tkt_aten')}:</span>
                         <span style="font-weight:700;">${datos.mesero || 'N/A'}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
-                        <span style="color:#6B7280;">Pago:</span>
+                        <span style="color:#6B7280;">${t('dash_tkt_pago')}:</span>
                         <span style="font-weight:700;">${metodoPagoLabel}</span>
                     </div>
                 </div>
@@ -1815,7 +1881,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <div>
                     <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:#4B5563;">
-                        <span>Subtotal:</span>
+                        <span>${t('dash_tkt_sub')}:</span>
                         <span>$${subtotal.toFixed(2)}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:#16A34A;">
@@ -1823,14 +1889,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>+$${propina.toFixed(2)}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:900; color:#111; padding-top:6px; margin-top:4px; border-top:1px solid #E5E7EB;">
-                        <span>TOTAL:</span>
+                        <span>${t('dash_tkt_total')}:</span>
                         <span>$${totalFinal.toFixed(2)}</span>
                     </div>
                 </div>
 
                 <div style="border-top:1px dashed #D1D5DB; margin:16px 0;"></div>
-                <p style="text-align:center; font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:2px; margin:0;">¡Gracias por su visita!</p>
-                <p style="text-align:center; font-size:11px; color:#D1D5DB; margin:4px 0 0;">Vuelva pronto 😊</p>
+                <p style="text-align:center; font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:2px; margin:0;">${t('dash_gracias')}</p>
+                <p style="text-align:center; font-size:11px; color:#D1D5DB; margin:4px 0 0;">${t('dash_vuelva')} 😊</p>
             </div>
         `;
 
@@ -1952,8 +2018,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const ahora = new Date();
         const diff = Math.floor((ahora - inicio) / 60000);
 
-        if (diff < 0) return 'Ahora';
-        if (diff < 1) return 'Ahora';
+        if (diff < 0) return t('dash_ahora');
+        if (diff < 1) return t('dash_ahora');
         if (diff < 60) return `${diff} min`;
 
         const horas = Math.floor(diff / 60);

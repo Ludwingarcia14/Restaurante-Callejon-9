@@ -198,7 +198,8 @@ class MenuController:
         
         try:
             termino = request.args.get('q', '')
-            platillos = Platillo.buscar(termino)
+            rol = session.get("usuario_rol", "2")
+            platillos = Platillo.buscar(termino, solo_disponibles=(rol != "1"))
             
             return jsonify({
                 "success": True,

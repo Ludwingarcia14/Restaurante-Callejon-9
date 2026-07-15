@@ -1,0 +1,16 @@
+{% extends "layout/layout_base.html" %}
+
+{% block navigation %}
+<a href="{{ url_for('routes.dashboard_repartidor') }}" class="nav-link">
+    <i class="bi bi-house-door text-lg"></i>
+    <span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.repartidor_entregas') }}" class="nav-link">
+    <i class="bi bi-bicycle text-lg"></i>
+    <span>Mis Entregas</span>
+</a>
+<a href="{{ url_for('routes.repartidor_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history text-lg"></i>
+    <span>Historial</span>
+</a>
+{% endblock %}

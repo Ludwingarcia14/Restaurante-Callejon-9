@@ -1,8 +1,8 @@
 ﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Segmentación de Mesas — K-Means{% endblock %}
-{% block page_title %}Segmentación de Mesas{% endblock %}
-{% block page_subtitle %}CRISP-DM · Fase 4 — K-Means (k=3) · últimos 90 días{% endblock %}
+{% block page_title %}<span data-i18n="km_titulo">Segmentación de Mesas</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="km_sub">CRISP-DM · Fase 4 — K-Means (k=3) · últimos 90 días</span>{% endblock %}
 
 {% block navigation %}
 <script>
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Resumen cards -->
 <div id="resumen-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div class="col-span-3 flex items-center justify-center h-20 text-gray-400 text-sm gap-2">
-        <i class="bi bi-arrow-repeat animate-spin"></i> Calculando clusters…
+        <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="km_calculando">Calculando clusters…</span>
     </div>
 </div>
 
@@ -75,21 +75,21 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-diagram-3 text-blue-500"></i> Mapa de Clusters
+            <i class="bi bi-diagram-3 text-blue-500"></i> <span data-i18n="km_mapa">Mapa de Clusters</span>
         </h3>
-        <p class="text-xs text-gray-400 mb-4">X = visitas · Y = ticket promedio ($)</p>
+        <p class="text-xs text-gray-400 mb-4" data-i18n="km_eje_xy">X = visitas · Y = ticket promedio ($)</p>
         <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-            <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
+            <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
         </div>
         <canvas id="chartKmeans" style="display:none; max-height:320px;"></canvas>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6 overflow-auto">
         <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="bi bi-table text-green-500"></i> Detalle por Mesa
+            <i class="bi bi-table text-green-500"></i> <span data-i18n="km_detalle">Detalle por Mesa</span>
         </h3>
         <div id="tabla-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-            <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
+            <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
         </div>
         <div id="tabla-mesas" style="display:none;" class="overflow-x-auto"></div>
     </div>
@@ -99,29 +99,29 @@ document.addEventListener('DOMContentLoaded', function() {
 <div id="evaluacion-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
     <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
         <i class="bi bi-speedometer2 text-purple-500"></i>
-        Evaluación del Modelo
+        <span data-i18n="km_evaluacion">Evaluación del Modelo</span>
         <span class="text-xs font-normal text-gray-400 ml-1">CRISP-DM · Fase 5</span>
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="eval-card rounded-lg p-4 text-center eval-purple">
             <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">Silhouette Score</p>
             <p id="eval-sil" class="text-2xl font-bold text-purple-600">—</p>
-            <p class="text-xs text-gray-400 mt-1">Cuán bien separados están los clusters (0?1)</p>
+            <p class="text-xs text-gray-400 mt-1" data-i18n="km_sil_desc">Cuán bien separados están los clusters (0→1)</p>
         </div>
         <div class="eval-card rounded-lg p-4 text-center eval-green">
-            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Inercia (k=3)</p>
+            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1" data-i18n="km_inertia_lbl">Inercia (k=3)</p>
             <p id="eval-inertia" class="text-2xl font-bold text-green-600">—</p>
-            <p class="text-xs text-gray-400 mt-1">Suma de distancias al centroide</p>
+            <p class="text-xs text-gray-400 mt-1" data-i18n="km_inertia_desc">Suma de distancias al centroide</p>
         </div>
         <div class="eval-card rounded-lg p-4 text-center eval-orange">
-            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Mesas analizadas</p>
+            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1" data-i18n="km_mesas_lbl2">Mesas analizadas</p>
             <p id="eval-mesas" class="text-2xl font-bold text-orange-500">—</p>
-            <p class="text-xs text-gray-400 mt-1">Con historial en los últimos 90 días</p>
+            <p class="text-xs text-gray-400 mt-1" data-i18n="km_mesas_90">Con historial en los últimos 90 días</p>
         </div>
     </div>
     <p class="text-sm font-medium text-gray-600 mb-2">
         <i class="bi bi-graph-down-arrow text-gray-400 mr-1"></i>
-        Método del Codo — justificación de k=3
+        <span data-i18n="km_codo">Método del Codo — justificación de k=3</span>
     </p>
     <canvas id="chartElbow" style="max-height:180px;"></canvas>
 </div>
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div id="recomendaciones-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6">
     <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
         <i class="bi bi-lightbulb text-yellow-500"></i>
-        Recomendaciones por Cluster
+        <span data-i18n="km_recomend">Recomendaciones por Cluster</span>
         <span class="text-xs font-normal text-gray-400 ml-1">CRISP-DM · Fase 6</span>
     </h3>
     <div id="recomendaciones-lista" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
@@ -218,8 +218,8 @@ function renderResumen(resumen) {
             </div>
             <div>
                 <p class="text-sm font-semibold" style="color:${c.color};">${c.label}</p>
-                <p class="text-xs mt-0.5" style="color:${textMuted};">${c.num_mesas} mesa${c.num_mesas!==1?'s':''}</p>
-                <p class="text-xs mt-0.5" style="color:${textMuted};">Ticket prom. ${fmt(c.ticket_prom)} · ${c.visitas_prom} visitas/mesa</p>
+                <p class="text-xs mt-0.5" style="color:${textMuted};">${c.num_mesas} ${c.num_mesas!==1?t('km_mesas_pl'):t('km_mesa_sing')}</p>
+                <p class="text-xs mt-0.5" style="color:${textMuted};">${t('km_ticket_prom')} ${fmt(c.ticket_prom)} · ${c.visitas_prom} ${t('km_vis_mesa')}</p>
             </div>
         </div>`;
     }).join('');
@@ -228,7 +228,7 @@ function renderResumen(resumen) {
 function renderScatter(puntos) {
     document.getElementById('chart-loading').style.display = 'none';
     document.getElementById('chartKmeans').style.display = '';
-    const labels = ['Mesas VIP','Mesas Regulares','Mesas Ocasionales'];
+    const labels = [t('km_label_vip'), t('km_label_reg'), t('km_label_ocas')];
     const datasets = [0,1,2].map(cl => ({
         label: labels[cl],
         data: puntos.filter(p=>p.cluster===cl).map(p=>({x:p.x,y:p.y,mesa:p.mesa})),
@@ -247,8 +247,8 @@ function renderScatter(puntos) {
                 tooltip:{callbacks:{label:ctx=>{const p=ctx.raw;return ` ${p.mesa} — ${p.x} visitas, ${fmt(p.y)} ticket`;}}}
             },
             scales:{
-                x:{title:{display:true,text:'Visitas (frecuencia)',font:{size:11}},beginAtZero:true},
-                y:{title:{display:true,text:'Ticket Promedio ($)',font:{size:11}},beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)}}
+                x:{title:{display:true,text:t('km_vis_axis'),font:{size:11}},beginAtZero:true},
+                y:{title:{display:true,text:t('km_ticket_axis'),font:{size:11}},beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)}}
             }
         }
     });
@@ -262,11 +262,11 @@ function renderTabla(puntos) {
         <table class="w-full text-sm border-collapse">
             <thead>
                 <tr class="border-b border-gray-200 text-left text-xs text-gray-500 uppercase tracking-wide">
-                    <th class="px-3 py-2">Mesa</th>
-                    <th class="px-3 py-2 text-center">Cluster</th>
-                    <th class="px-3 py-2 text-center">Visitas</th>
-                    <th class="px-3 py-2 text-right">Ticket Prom.</th>
-                    <th class="px-3 py-2 text-right">Ingreso Total</th>
+                    <th class="px-3 py-2">${t('m_mesa_word')}</th>
+                    <th class="px-3 py-2 text-center">${t('km_th_cluster')}</th>
+                    <th class="px-3 py-2 text-center">${t('km_th_visitas')}</th>
+                    <th class="px-3 py-2 text-right">${t('km_th_ticket')}</th>
+                    <th class="px-3 py-2 text-right">${t('km_th_ingreso')}</th>
                 </tr>
             </thead>
             <tbody>${sorted.map(p=>{

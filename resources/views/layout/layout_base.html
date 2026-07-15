@@ -269,7 +269,7 @@
                      alt="{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }}"
                      class="sidebar-logo">
                 <h2 class="sidebar-title">{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }}</h2>
-                <p class="sidebar-subtitle">Sistema de Restaurante</p>
+                <p class="sidebar-subtitle" data-i18n="sys_subtitle">Sistema de Restaurante</p>
             </div>
             
             <!-- Info del Usuario -->
@@ -290,19 +290,23 @@
                 <div class="sidebar-user-role">
                     {% if session.usuario_rol == '1' %}
                         <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-shield-check"></i> Administrador
+                            <i class="bi bi-shield-check"></i> <span data-i18n="role_admin">Administrador</span>
                         </span>
                     {% elif session.usuario_rol == '2' %}
                         <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-person-badge"></i> Mesero
+                            <i class="bi bi-person-badge"></i> <span data-i18n="role_mesero">Mesero</span>
                         </span>
                     {% elif session.usuario_rol == '3' %}
                         <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-egg-fried"></i> Cocina
+                            <i class="bi bi-egg-fried"></i> <span data-i18n="role_cocina">Cocina</span>
                         </span>
                     {% elif session.usuario_rol == '4' %}
                         <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-box-seam"></i> Inventario
+                            <i class="bi bi-box-seam"></i> <span data-i18n="role_inventario">Inventario</span>
+                        </span>
+                    {% elif session.usuario_rol == '5' %}
+                        <span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">
+                            <i class="bi bi-bicycle"></i> Repartidor
                         </span>
                     {% endif %}
                 </div>
@@ -340,6 +344,12 @@
                     <i class="bi bi-bar-chart-line text-lg"></i>
                     <span>Analytics</span>
                 </a>
+
+                <!-- Delivery -->
+                <a href="{{ url_for('routes.admin_delivery_panel') }}" class="nav-link" id="nav-delivery">
+                    <i class="bi bi-truck text-lg"></i>
+                    <span>Delivery</span>
+                </a>
                 {% endif %}
 
 
@@ -354,20 +364,20 @@
                 <!--  ADMINISTRACION (Solo para Rol 1) -->
                 {% if session.usuario_rol == '1' %}
                 <div class="mt-4 pt-4 border-t border-gray-200">
-                    <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider" data-i18n="section_admin">
                         Administración
                     </p>
-                    
-                    <a href="{{ url_for('routes.admin_backup_view') }}" 
+
+                    <a href="{{ url_for('routes.admin_backup_view') }}"
                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
                         <i class="bi bi-shield-lock text-lg"></i>
-                        <span>Respaldos y Seguridad</span>
+                        <span data-i18n="nav_backup">Respaldos y Seguridad</span>
                     </a>
-                    
-                    <a href="{{ url_for('routes.admin_empleados_lista') }}" 
+
+                    <a href="{{ url_for('routes.admin_empleados_lista') }}"
                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
                         <i class="bi bi-people text-lg"></i>
-                        <span>Gestion de Empleados</span>
+                        <span data-i18n="nav_empleados">Gestion de Empleados</span>
                     </a>
                 </div>
                 {% endif %}
@@ -375,10 +385,18 @@
             
             <!-- Footer del Sidebar -->
             <div class="sidebar-footer">
-                <a href="{{ url_for('routes.logout') }}" 
+                <!-- Toggle idioma (solo visible en móvil, sm+ lo muestra en el header) -->
+                <button onclick="i18nToggle()" class="lang-toggle-btn sm:hidden w-full flex items-center justify-center gap-2 mb-3 py-2 rounded-lg hover:bg-gray-100 transition"
+                        style="border:1.5px solid #e5e7eb;font-size:13px;color:#374151;background:transparent;cursor:pointer;">
+                    <span data-lang-es style="font-weight:700">ES</span>
+                    <span style="opacity:.3">/</span>
+                    <span data-lang-en style="opacity:.42">EN</span>
+                    <span class="text-xs text-gray-400 ml-1" data-i18n="lang_lbl">Idioma</span>
+                </button>
+                <a href="{{ url_for('routes.logout') }}"
                    class="btn btn-error w-full flex items-center justify-center gap-2">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar Sesión</span>
+                    <span data-i18n="btn_logout">Cerrar Sesión</span>
                 </a>
             </div>
             
@@ -405,6 +423,15 @@
                             <i class="bi bi-list text-2xl"></i>
                         </button>
                         
+                        <!-- Toggle Idioma (oculto en móvil, visible sm+) -->
+                        <button onclick="i18nToggle()" class="lang-toggle-btn hidden sm:flex items-center rounded-lg hover:bg-gray-200 transition"
+                                style="gap:2px;padding:4px 10px;border:1.5px solid #e5e7eb;border-radius:20px;font-size:11px;color:#374151;background:transparent;cursor:pointer;"
+                                title="Cambiar idioma / Switch language">
+                            <span data-lang-es style="font-weight:700">ES</span>
+                            <span style="opacity:.3;margin:0 1px">/</span>
+                            <span data-lang-en style="opacity:.42">EN</span>
+                        </button>
+
                         <!-- Toggle Modo Oscuro -->
                         <button onclick="toggleDarkMode()" id="dark-mode-btn"
                                 class="p-2 rounded-lg hover:bg-gray-200 transition text-gray-600"
@@ -425,9 +452,10 @@
                             <div class="navbar-dropdown is-right hidden absolute right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50" id="notification-dropdown">
                                 <!-- Header -->
                                 <div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between rounded-t-lg">
-                                    <h3 class="text-sm font-semibold text-gray-700">Notificaciones</h3>
-                                    <button onclick="marcarTodasLeidas()" 
-                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                    <h3 class="text-sm font-semibold text-gray-700" data-i18n="notif_title">Notificaciones</h3>
+                                    <button onclick="marcarTodasLeidas()"
+                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                            data-i18n="notif_clear">
                                         Limpiar todo
                                     </button>
                                 </div>
@@ -435,7 +463,7 @@
                                 <div id="notification-list">
                                     <div class="px-4 py-8 text-center" id="no-notifications">
                                         <i class="bi bi-bell-slash text-gray-300 text-3xl mb-2"></i>
-                                        <p class="text-sm text-gray-500">No hay notificaciones nuevas</p>
+                                        <p class="text-sm text-gray-500" data-i18n="notif_empty">No hay notificaciones nuevas</p>
                                     </div>
                                 </div>
                             </div>
@@ -474,6 +502,9 @@
          SCRIPTS
          =================================== -->
     
+    <!-- i18n -->
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     

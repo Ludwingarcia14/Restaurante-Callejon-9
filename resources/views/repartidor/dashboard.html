@@ -1,0 +1,200 @@
+{% extends "layout/layout_repartidor.html" %}
+{% block title %}Panel Repartidor{% endblock %}
+{% block page_title %}Panel de Entregas{% endblock %}
+{% block page_subtitle %}Tus pedidos activos y resumen del día{% endblock %}
+
+{% block content %}
+<!-- Banner bienvenida -->
+<div class="p-5 rounded-xl shadow-lg text-white mb-6"
+     style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+    <div class="flex items-start justify-between flex-wrap gap-3">
+        <div class="min-w-0">
+            <h2 class="text-xl sm:text-2xl font-bold mb-1">¡Hola, {{ nombre }}! 🛵</h2>
+            <p class="text-sm opacity-90">Revisa tus entregas asignadas y actualiza su estado.</p>
+        </div>
+        <div class="text-right bg-white bg-opacity-20 px-4 py-2.5 rounded-lg shrink-0">
+            <div class="text-3xl font-bold leading-none" id="stat-activas">{{ activas|length }}</div>
+            <div class="text-xs uppercase tracking-wider opacity-90 mt-0.5">Activas</div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-sky-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Entregas Hoy</p>
+        <p class="text-3xl font-bold text-gray-800">{{ stats.total_entregas or 0 }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Ingresos Generados</p>
+        <p class="text-2xl font-bold text-gray-800">
+            ${{ "%.2f"|format(stats.total_ingresos or 0) }}
+        </p>
+    </div>
+    <div class="col-span-2 md:col-span-1 bg-white p-5 rounded-xl shadow-sm border-l-4 border-orange-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">En Camino</p>
+        <p class="text-3xl font-bold text-gray-800" id="stat-camino">
+            {{ activas | selectattr('estado', 'equalto', 'en_camino') | list | length }}
+        </p>
+    </div>
+</div>
+
+<!-- Entregas activas -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b flex items-center justify-between">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-bicycle text-sky-500 text-lg"></i> Entregas Asignadas
+        </h3>
+        <button onclick="cargarEntregas()"
+                class="p-2 hover:bg-gray-100 rounded-full transition text-gray-500">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+
+    {% set ECSS = {'pendiente':'bg-gray-100 text-gray-600','asignado':'bg-sky-100 text-sky-700','en_camino':'bg-amber-100 text-amber-800','entregado':'bg-emerald-100 text-emerald-700','cancelado':'bg-red-100 text-red-700'} %}
+    {% set ELBL = {'pendiente':'Pendiente','asignado':'Asignado','en_camino':'En camino','entregado':'Entregado','cancelado':'Cancelado'} %}
+    <div id="lista-entregas" class="divide-y divide-gray-100">
+        {% if activas %}
+            {% for e in activas %}
+            <div class="p-5 hover:bg-gray-50 transition" id="entrega-{{ e._id }}">
+                <div class="flex items-start justify-between gap-4 flex-wrap">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="font-mono text-xs font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded">
+                                {{ e.folio }}
+                            </span>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ ECSS.get(e.estado, 'bg-gray-100 text-gray-600') }}">
+                                {{ ELBL.get(e.estado, e.estado) }}
+                            </span>
+                        </div>
+                        <p class="font-semibold text-gray-800 truncate">{{ e.cliente_nombre }}</p>
+                        <p class="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                            <i class="bi bi-geo-alt flex-shrink-0"></i>
+                            <span class="truncate">{{ e.direccion }}</span>
+                        </p>
+                        {% if e.referencias %}
+                        <p class="text-xs text-gray-400 mt-0.5">Ref: {{ e.referencias }}</p>
+                        {% endif %}
+                        {% if e.cliente_telefono %}
+                        <a href="tel:{{ e.cliente_telefono }}"
+                           class="text-xs text-sky-600 hover:underline mt-1 inline-flex items-center gap-1">
+                            <i class="bi bi-telephone"></i> {{ e.cliente_telefono }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="text-right shrink-0">
+                        <p class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(e.total|float) }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">{{ e.metodo_pago }}</p>
+                        <p class="text-xs text-gray-400">~{{ e.tiempo_estimado }} min</p>
+                    </div>
+                </div>
+
+                <!-- Acciones de estado -->
+                <div class="mt-4 flex gap-2 flex-wrap">
+                    {% if e.estado == 'asignado' %}
+                    <button onclick="cambiarEstado('{{ e._id }}', 'en_camino')"
+                            class="flex-1 min-w-[120px] py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-sm font-bold transition flex items-center justify-center gap-1.5">
+                        <i class="bi bi-bicycle"></i> Salir a entregar
+                    </button>
+                    {% elif e.estado == 'en_camino' %}
+                    <button onclick="cambiarEstado('{{ e._id }}', 'entregado')"
+                            class="flex-1 min-w-[120px] py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition flex items-center justify-center gap-1.5">
+                        <i class="bi bi-check-circle"></i> Marcar entregado
+                    </button>
+                    {% endif %}
+                    <button onclick="verDetalles('{{ e._id }}')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <a href="https://maps.google.com/?q={{ e.direccion | urlencode }}" target="_blank"
+                       class="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg text-sm font-medium transition">
+                        <i class="bi bi-map"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="py-16 text-center text-gray-400">
+            <i class="bi bi-inbox text-5xl block mb-3 opacity-30"></i>
+            <p class="font-medium">No tienes entregas activas</p>
+            <p class="text-sm mt-1">El administrador te asignará pedidos pronto.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal detalle entrega -->
+<div id="modal-detalle"
+     class="hidden fixed inset-0 bg-black/70 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm"
+     onclick="if(event.target===this)cerrarDetalle()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="bg-sky-600 text-white p-5 flex items-center justify-between">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <i class="bi bi-receipt"></i> Detalle del Pedido
+            </h3>
+            <button onclick="cerrarDetalle()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition">
+                <i class="bi bi-x text-lg"></i>
+            </button>
+        </div>
+        <div id="detalle-content" class="p-5 max-h-[70vh] overflow-y-auto"></div>
+    </div>
+</div>
+
+<script>
+const ENTREGAS_DATA = {{ activas | tojson }};
+
+async function cambiarEstado(id, nuevoEstado) {
+    const labels = { en_camino: 'saliste a entregar', entregado: 'marcaste como entregado' };
+    const r = await fetch(`/api/delivery/${id}/estado`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado })
+    });
+    const data = await r.json();
+    if (data.success) {
+        Swal.fire({ icon: 'success', title: `¡Listo! ${labels[nuevoEstado] || nuevoEstado}`,
+                    timer: 1800, showConfirmButton: false });
+        setTimeout(() => location.reload(), 1800);
+    } else {
+        Swal.fire('Error', data.error, 'error');
+    }
+}
+
+function verDetalles(id) {
+    const e = ENTREGAS_DATA.find(x => x._id === id);
+    if (!e) return;
+    const itemsHtml = (e.items || []).map(i =>
+        `<div class="flex justify-between text-sm py-1 border-b border-gray-100 last:border-0">
+            <span>${i.nombre} × ${i.cantidad}</span>
+            <span class="font-semibold">$${(parseFloat(i.precio)*parseInt(i.cantidad)).toFixed(2)}</span>
+         </div>`
+    ).join('');
+    document.getElementById('detalle-content').innerHTML = `
+        <div class="space-y-3">
+            <div class="flex items-center gap-2 text-xs text-sky-600 font-bold">${e.folio}</div>
+            <div><p class="text-xs text-gray-400 uppercase tracking-wide">Cliente</p>
+                 <p class="font-semibold">${e.cliente_nombre}</p></div>
+            <div><p class="text-xs text-gray-400 uppercase tracking-wide">Dirección</p>
+                 <p class="font-semibold">${e.direccion}</p>
+                 ${e.referencias ? `<p class="text-xs text-gray-500">Ref: ${e.referencias}</p>` : ''}
+            </div>
+            <div><p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Artículos</p>${itemsHtml}</div>
+            <div class="flex justify-between items-center pt-2 border-t font-bold">
+                <span>Total</span><span class="text-lg text-emerald-600">$${parseFloat(e.total).toFixed(2)}</span>
+            </div>
+            ${e.notas ? `<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                <i class="bi bi-sticky"></i> ${e.notas}</div>` : ''}
+        </div>`;
+    document.getElementById('modal-detalle').classList.remove('hidden');
+}
+
+function cerrarDetalle() {
+    document.getElementById('modal-detalle').classList.add('hidden');
+}
+
+async function cargarEntregas() {
+    location.reload();
+}
+</script>
+{% endblock %}

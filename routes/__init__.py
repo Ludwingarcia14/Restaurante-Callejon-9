@@ -16,6 +16,7 @@ from . import notificaciones_routes # noqa: F401, E402
 from . import settings_routes      # noqa: F401, E402
 from . import pagos_routes         # noqa: F401, E402
 from . import analytics_routes     # noqa: F401, E402
+from . import repartidor_routes    # noqa: F401, E402
 
 
 def register_reports_routes(app):

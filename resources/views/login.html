@@ -380,39 +380,53 @@ input:focus {
 	</style>
 </head>
 <body>
-	<div class="login-wrapper">
-		<!-- Formulario -->
-		<div class="login-side">
-			<div class="login-container">
-				<div class="logo-section">
-					<img src="/static/img/callejon9.jpeg" alt="Logo Callejón 19" class="logo-img" />
-					<h1>Callejón 19</h1>
-					<p class="subtitle">Sistema de Gestión de Restaurante</p>
-				</div>
+
+<!-- Botón idioma (esquina superior derecha) -->
+<button onclick="i18nToggle()" class="lang-toggle-btn"
+        style="position:fixed;top:1rem;right:1rem;z-index:100;display:flex;align-items:center;gap:2px;
+               padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:20px;background:#fff;
+               cursor:pointer;font-family:'Poppins',sans-serif;font-size:12px;color:#374151;
+               box-shadow:0 1px 4px rgba(0,0,0,.08);transition:border-color .2s;"
+        title="Cambiar idioma / Switch language">
+    <span data-lang-es style="font-weight:700">ES</span>
+    <span style="opacity:.3;margin:0 1px">/</span>
+    <span data-lang-en style="opacity:.42">EN</span>
+</button>
+
+<div class="login-wrapper">
+	<!-- Formulario -->
+	<div class="login-side">
+		<div class="login-container">
+			<div class="logo-section">
+				<img src="/static/img/callejon9.jpeg" alt="Logo Callejón 19" class="logo-img" />
+				<h1>Callejón 19</h1>
+				<p class="subtitle" data-i18n="login_subtitle">Sistema de Gestión de Restaurante</p>
+			</div>
 
 				<div id="error-msg" class="alert-error"></div>
 
 				<form id="loginForm" method="post" novalidate>
 					<div class="input-group">
-						<label class="input-label" for="emailInput">Correo electrónico</label>
+						<label class="input-label" for="emailInput" data-i18n="login_email">Correo electrónico</label>
 						<div class="input-wrapper">
 							<svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
 								<polyline points="22,6 12,13 2,6"></polyline>
 							</svg>
-							<input 
-								type="email" 
-								name="email" 
-								placeholder="tu@email.com" 
-								required 
-								id="emailInput" 
-								autocomplete="email" 
+							<input
+								type="email"
+								name="email"
+								placeholder="tu@email.com"
+								required
+								id="emailInput"
+								autocomplete="email"
+								data-i18n-placeholder="login_ph_email"
 							/>
 						</div>
 					</div>
 					
 					<div class="input-group">
-						<label class="input-label" for="passwordInput">Contraseña</label>
+						<label class="input-label" for="passwordInput" data-i18n="login_password">Contraseña</label>
 						<div class="input-wrapper">
 							<svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -430,7 +444,7 @@ input:focus {
 					</div>
 					
 					<button type="submit" id="loginButton">
-						<span class="btn-text">Iniciar Sesión</span>
+						<span class="btn-text" data-i18n="login_btn">Iniciar Sesión</span>
 						<span class="spinner"></span>
 					</button>
 				</form>
@@ -444,6 +458,7 @@ input:focus {
 		</div>
 	</div>
 
+	<script src="/static/js/i18n.js"></script>
 	<script>
 		const form = document.getElementById("loginForm");
 		const button = document.getElementById("loginButton");
@@ -468,12 +483,12 @@ input:focus {
 
 		function setFormLoading(isLoading) {
 			if (isLoading) {
-				btnText.textContent = "Verificando...";
+				btnText.textContent = t('login_loading');
 				spinner.style.display = "inline-block";
 				button.disabled = true;
 				errorMsgDiv.classList.remove('show');
 			} else {
-				btnText.textContent = "Iniciar Sesión";
+				btnText.textContent = t('login_btn');
 				spinner.style.display = "none";
 				button.disabled = false;
 			}
@@ -487,7 +502,7 @@ input:focus {
 			const password = document.getElementById("passwordInput").value;
 
 			if (!email || !password) {
-				showErrorMessage("Por favor completa todos los campos");
+				showErrorMessage(t('login_err_empty'));
 				setFormLoading(false);
 				return;
 			}
@@ -530,7 +545,7 @@ input:focus {
 				}
 			} catch (error) {
 				console.error('Error de red:', error);
-				showErrorMessage("Error de conexión. Verifica tu red.");
+				showErrorMessage(t('login_err_net'));
 				setFormLoading(false);
 			}
 		});

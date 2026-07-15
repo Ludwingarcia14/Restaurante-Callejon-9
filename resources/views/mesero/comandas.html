@@ -1,8 +1,8 @@
-{% extends "layout/layout_mesero.html" %}
+﻿{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Mis Comandas - Mesero{% endblock %}
-{% block page_title %}Gestión de Comandas{% endblock %}
-{% block page_subtitle %}Comandas activas y cuentas cerradas{% endblock %}
+{% block page_title %}<span data-i18n="cmd_titulo">Gestión de Comandas</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="cmd_sub">Comandas activas y cuentas cerradas</span>{% endblock %}
 
 
 {% block navigation %}
@@ -52,14 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <i class="bi bi-clipboard-data text-lg"></i>
     <span>Diagnóstico</span>
 </a>
-<a href="{{ url_for('routes.mesero_metodologia') }}" class="nav-link">
-    <i class="bi bi-book text-lg"></i>
-    <span>Metodología</span>
-</a>
-<a href="{{ url_for('routes.mesero_etl') }}" class="nav-link">
-    <i class="bi bi-arrow-left-right text-lg"></i>
-    <span>Proceso de Datos</span>
-</a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i>
     <span>Pareto 80/20</span>
@@ -79,11 +71,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ================= COMANDAS ACTIVAS ================= -->
 <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
     <div>
-        <h2 class="text-2xl font-bold text-gray-800">Comandas Activas</h2>
-        <p class="text-gray-500">Pedidos en proceso</p>
+        <h2 class="text-2xl font-bold text-gray-800" data-i18n="m_cmdas_lbl">Comandas Activas</h2>
+        <p class="text-gray-500" data-i18n="m_en_proceso">Pedidos en proceso</p>
     </div>
     <button onclick="cargarComandas()" class="btn btn-primary">
-        <i class="bi bi-arrow-clockwise"></i> Actualizar
+        <i class="bi bi-arrow-clockwise"></i> <span data-i18n="m_refrescar_btn">Actualizar</span>
     </button>
 </div>
 
@@ -91,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
      class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12"></div>
 
 <!-- ================= HISTORIAL ================= -->
-<h3 class="text-xl font-bold text-gray-800 mb-4">
+<h3 class="text-xl font-bold text-gray-800 mb-4" data-i18n="cmd_historial">
     Historial de Cuentas Cerradas
 </h3>
 
@@ -100,17 +92,17 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="card-body">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <label class="text-sm font-semibold text-gray-600">Desde</label>
+                <label class="text-sm font-semibold text-gray-600" data-i18n="cmd_desde">Desde</label>
                 <input id="filtro-desde" type="date"
                        class="input input-bordered w-full">
             </div>
             <div>
-                <label class="text-sm font-semibold text-gray-600">Hasta</label>
+                <label class="text-sm font-semibold text-gray-600" data-i18n="cmd_hasta">Hasta</label>
                 <input id="filtro-hasta" type="date"
                        class="input input-bordered w-full">
             </div>
             <div>
-                <label class="text-sm font-semibold text-gray-600">Mesa</label>
+                <label class="text-sm font-semibold text-gray-600" data-i18n="m_mesa_word">Mesa</label>
                 <input id="filtro-mesa" type="number" min="1"
                        placeholder="Ej. 3"
                        class="input input-bordered w-full">
@@ -118,11 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-end gap-2">
                 <button onclick="aplicarFiltros()"
                         class="btn btn-success w-full">
-                    <i class="bi bi-funnel"></i> Filtrar
+                    <i class="bi bi-funnel"></i> <span data-i18n="cmd_filtrar">Filtrar</span>
                 </button>
                 <button onclick="limpiarFiltros()"
                         class="btn btn-outline w-full">
-                    Limpiar
+                    <span data-i18n="cmd_limpiar">Limpiar</span>
                 </button>
             </div>
         </div>
@@ -139,10 +131,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <table class="table w-full">
             <thead class="bg-gray-50">
                 <tr>
-                    <th>Folio</th>
-                    <th>Mesa</th>
-                    <th>Total</th>
-                    <th>Fecha</th>
+                    <th data-i18n="cmd_folio">Folio</th>
+                    <th data-i18n="m_mesa_word">Mesa</th>
+                    <th data-i18n="cmd_total_th">Total</th>
+                    <th data-i18n="cmd_fecha">Fecha</th>
                 </tr>
             </thead>
             <tbody id="historial-tabla"></tbody>
@@ -158,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="bg-green-600 text-white p-4 flex justify-between">
             <div>
                 <h3 class="text-xl font-bold" id="modal-folio"></h3>
-                <p>Mesa <span id="modal-mesa"></span></p>
+                <p><span data-i18n="m_mesa_word">Mesa</span> <span id="modal-mesa"></span></p>
             </div>
             <button onclick="cerrarModal()" class="text-xl">✕</button>
         </div>
@@ -189,7 +181,7 @@ async function cargarComandas() {
     if (!data.success || data.comandas.length === 0) {
         grid.innerHTML = `
             <div class="col-span-full text-center text-gray-500 py-16">
-                No hay comandas activas
+                ${t('cmd_no_activas')}
             </div>`;
         return;
     }
@@ -205,8 +197,8 @@ async function cargarComandas() {
                     <span class="font-bold">${c.folio}</span>
                     <span class="badge badge-info">${c.estado}</span>
                 </div>
-                <p class="text-sm text-gray-500">Mesa ${c.mesa_numero}</p>
-                <p class="text-sm">${(c.items || []).length} items</p>
+                <p class="text-sm text-gray-500">${t('m_mesa_word')} ${c.mesa_numero}</p>
+                <p class="text-sm">${(c.items || []).length} ${t('cmd_items_txt')}</p>
                 <p class="font-bold text-green-600 mt-2">
                     $${c.total.toFixed(2)}
                 </p>
@@ -230,7 +222,7 @@ function verComanda(id) {
             </div>
         `).join('')}
         <div class="flex justify-between mt-4 font-bold text-lg">
-            <span>Total</span>
+            <span>${t('cmd_total_modal')}</span>
             <span class="text-green-600">$${c.total.toFixed(2)}</span>
         </div>
     `;
@@ -299,10 +291,11 @@ function renderHistorial(lista) {
     const tabla = document.getElementById('historial-tabla');
 
     if (!lista.length) {
-        cards.innerHTML = tabla.innerHTML = `
+        cards.innerHTML = '';
+        tabla.innerHTML = `
             <tr>
                 <td colspan="4" class="text-center text-gray-500 py-6">
-                    Sin resultados
+                    ${t('cmd_sin_result')}
                 </td>
             </tr>`;
         return;
@@ -314,7 +307,7 @@ function renderHistorial(lista) {
             <div class="card-body">
                 <div class="flex justify-between">
                     <span class="font-bold">${c.folio}</span>
-                    <span class="text-sm text-gray-500">Mesa ${c.mesa}</span>
+                    <span class="text-sm text-gray-500">${t('m_mesa_word')} ${c.mesa}</span>
                 </div>
                 <p class="text-green-600 font-bold mt-2">
                     $${c.total.toFixed(2)}
@@ -330,7 +323,7 @@ function renderHistorial(lista) {
     tabla.innerHTML = lista.map(c => `
         <tr>
             <td>${c.folio}</td>
-            <td>Mesa ${c.mesa}</td>
+            <td>${t('m_mesa_word')} ${c.mesa}</td>
             <td class="font-bold text-green-600">$${c.total.toFixed(2)}</td>
             <td>${new Date(c.fecha).toLocaleString('es-MX')}</td>
         </tr>

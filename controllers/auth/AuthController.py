@@ -65,7 +65,7 @@ class AuthController:
 
             # 3. Validar rol permitido
             rol = str(usuario_doc.get("usuario_rol", ""))
-            if rol not in ["1", "2", "3", "4"]:
+            if rol not in ["1", "2", "3", "4", "5"]:
                 return jsonify({
                     "status": "error",
                     "message": "No tienes permisos para acceder al sistema"
@@ -129,7 +129,8 @@ class AuthController:
                 "1": "dashboard_admin",
                 "2": "dashboard_mesero",
                 "3": "dashboard_cocina",
-                "4": "dashboard_inventario"
+                "4": "dashboard_inventario",
+                "5": "dashboard_repartidor",
             }
             endpoint = rol_endpoints.get(rol)
 
@@ -270,7 +271,8 @@ class AuthController:
             "1": "dashboard_admin",
             "2": "dashboard_mesero",
             "3": "dashboard_cocina",
-            "4": "dashboard_inventario"
+            "4": "dashboard_inventario",
+            "5": "dashboard_repartidor",
         }
         endpoint = rol_endpoints.get(rol, "dashboard_admin")
         dashboard_url = url_for(f"routes.{endpoint}")

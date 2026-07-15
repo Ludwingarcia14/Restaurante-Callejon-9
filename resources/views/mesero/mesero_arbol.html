@@ -2,7 +2,7 @@
 
 {% block title %}Random Forest{% endblock %}
 {% block page_title %}Random Forest{% endblock %}
-{% block page_subtitle %}CRISP-DM · Fase 4 — 200 árboles entrenados sobre clusters K-Means{% endblock %}
+{% block page_subtitle %}<span data-i18n="ar_sub">CRISP-DM · Fase 4 — 200 árboles entrenados sobre clusters K-Means</span>{% endblock %}
 
 {% block navigation %}
 <script>
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Loading -->
 <div id="arbol-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-    <i class="bi bi-arrow-repeat animate-spin"></i> Entrenando Random Forest (200 árboles)…
+    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="ar_entrenando">Entrenando Random Forest (200 árboles)…</span>
 </div>
 
 <!-- Contenido principal -->
@@ -76,9 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Importancia de variables -->
     <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-bar-chart-horizontal text-emerald-500"></i> Importancia de Variables
+            <i class="bi bi-bar-chart-horizontal text-emerald-500"></i> <span data-i18n="ar_importancia">Importancia de Variables</span>
         </h3>
-        <p class="text-xs text-gray-400 mb-5">¿Qué variable influye más en la clasificación de las mesas?</p>
+        <p class="text-xs text-gray-400 mb-5" data-i18n="ar_imp_desc">¿Qué variable influye más en la clasificación de las mesas?</p>
 
         <div class="w-full mb-6" style="max-height:200px;">
             <canvas id="chartImportancias"></canvas>
@@ -92,11 +92,10 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Árbol representativo -->
     <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-code-slash text-emerald-500"></i> Árbol Representativo del Bosque
+            <i class="bi bi-code-slash text-emerald-500"></i> <span data-i18n="ar_arbol_rep">Árbol Representativo del Bosque</span>
         </h3>
         <p class="text-xs text-gray-400 mb-4">
-            El árbol individual cuyas importancias más se acercan al promedio del bosque
-            (<code class="bg-gray-100 px-1 rounded">max_depth=3</code>).
+            <span data-i18n="ar_arbol_desc">El árbol individual cuyas importancias más se acercan al promedio del bosque (max_depth=3).</span>
         </p>
         <pre id="arbol-reglas"
              class="text-sm p-5 rounded-xl overflow-x-auto leading-7"
@@ -125,7 +124,7 @@ async function cargar() {
 
         if (!d.arbol) {
             document.getElementById('arbol-loading').innerHTML =
-                '<span class="text-yellow-500 text-sm"><i class="bi bi-exclamation-triangle"></i> No hay datos suficientes para el árbol.</span>';
+                `<span class="text-yellow-500 text-sm"><i class="bi bi-exclamation-triangle"></i> ${t('ar_sin_datos')}</span>`;
             return;
         }
 
@@ -146,19 +145,19 @@ function renderMetricas(arbol) {
     const oob = arbol.oob_score !== undefined ? (arbol.oob_score * 100).toFixed(1) + '%' : 'N/A';
     document.getElementById('rf-metricas').innerHTML = `
         <div class="rounded-lg p-4 text-center" style="background:#f0fdf4; border:1px solid #86efac;">
-            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Árboles entrenados</p>
+            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">${t('ar_n_arboles')}</p>
             <p class="text-3xl font-bold text-green-700">${arbol.n_estimators}</p>
             <p class="text-xs text-gray-400 mt-1">Random Forest (max_depth=3)</p>
         </div>
         <div class="rounded-lg p-4 text-center" style="background:#f5f3ff; border:1px solid #c4b5fd;">
             <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">OOB Score</p>
             <p class="text-3xl font-bold text-purple-700">${oob}</p>
-            <p class="text-xs text-gray-400 mt-1">Precisión estimada fuera de bolsa</p>
+            <p class="text-xs text-gray-400 mt-1">${t('ar_oob_desc')}</p>
         </div>
         <div class="rounded-lg p-4 text-center" style="background:#fff7ed; border:1px solid #fed7aa;">
             <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Features</p>
             <p class="text-3xl font-bold text-orange-600">${arbol.feature_importances.length}</p>
-            <p class="text-xs text-gray-400 mt-1">Variables con importancia distribuida</p>
+            <p class="text-xs text-gray-400 mt-1">${t('ar_feats_desc')}</p>
         </div>
     `;
 }
@@ -189,7 +188,7 @@ function renderImportancias(imp) {
                 x: {
                     max: 1,
                     ticks: { callback: v => pct(v) },
-                    title: { display: true, text: 'Importancia relativa', font: { size: 10 } }
+                    title: { display: true, text: t('ar_imp_rel'), font: { size: 10 } }
                 },
                 y: { grid: { display: false } }
             }

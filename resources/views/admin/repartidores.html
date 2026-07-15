@@ -1,0 +1,256 @@
+{% extends "layout/layout_base.html" %}
+{% block title %}Gestión de Repartidores{% endblock %}
+{% block page_title %}Repartidores{% endblock %}
+{% block page_subtitle %}Gestiona tu equipo de delivery{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <a href="{{ url_for('routes.admin_delivery_panel') }}"
+       class="flex items-center gap-2 text-sm text-gray-500 hover:text-sky-600 transition">
+        <i class="bi bi-arrow-left"></i> Panel de Delivery
+    </a>
+    <button onclick="abrirModalNuevo()"
+            class="flex items-center gap-2 px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold shadow transition">
+        <i class="bi bi-plus-lg"></i> Nuevo Repartidor
+    </button>
+</div>
+
+<!-- Lista de repartidores -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-person-badge text-sky-500"></i>
+            Equipo de Repartidores (<span id="total-count">{{ repartidores|length }}</span>)
+        </h3>
+    </div>
+
+    {% if repartidores %}
+    <div class="divide-y divide-gray-100" id="lista-repartidores">
+        {% for r in repartidores %}
+        <div class="p-5 flex items-center justify-between gap-4 flex-wrap hover:bg-gray-50 transition"
+             id="rep-{{ r._id }}">
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
+                    {{ (r.usuario_nombre or 'R')[0]|upper }}
+                </div>
+                <div class="min-w-0">
+                    <p class="font-semibold text-gray-800">
+                        {{ r.usuario_nombre }} {{ r.usuario_apellidos }}
+                    </p>
+                    <p class="text-sm text-gray-500">{{ r.usuario_email }}</p>
+                    <div class="flex items-center gap-3 mt-1 flex-wrap">
+                        {% if r.vehiculo %}
+                        <span class="text-xs text-gray-400 flex items-center gap-1">
+                            <i class="bi bi-bicycle"></i> {{ r.vehiculo }}
+                        </span>
+                        {% endif %}
+                        {% if r.telefono %}
+                        <a href="tel:{{ r.telefono }}" class="text-xs text-sky-600 hover:underline flex items-center gap-1">
+                            <i class="bi bi-telephone"></i> {{ r.telefono }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="text-xs font-semibold px-3 py-1 rounded-full
+                    {% if r.usuario_status == 1 %}bg-emerald-100 text-emerald-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                    {% if r.usuario_status == 1 %}● Activo{% else %}○ Inactivo{% endif %}
+                </span>
+                <button data-rep="{{ r | tojson | e }}"
+                        onclick="abrirModalEditar(JSON.parse(this.dataset.rep))"
+                        class="p-2 text-gray-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button onclick="eliminarRepartidor('{{ r._id }}', '{{ r.usuario_nombre }}')"
+                        class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="py-16 text-center text-gray-400">
+        <i class="bi bi-person-plus text-5xl block mb-3 opacity-20"></i>
+        <p class="font-medium">Sin repartidores registrados</p>
+        <button onclick="abrirModalNuevo()"
+                class="mt-4 px-5 py-2 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition text-sm">
+            Agregar primero
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal nuevo / editar repartidor -->
+<div id="modal-repartidor"
+     class="hidden fixed inset-0 bg-black/70 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm"
+     onclick="if(event.target===this)cerrarModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="bg-sky-600 text-white p-5 flex items-center justify-between">
+            <h3 class="font-bold text-lg flex items-center gap-2" id="modal-titulo">
+                <i class="bi bi-person-plus"></i> Nuevo Repartidor
+            </h3>
+            <button onclick="cerrarModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30">
+                <i class="bi bi-x text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <input type="hidden" id="rep-id">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Nombre *</label>
+                    <input id="rep-nombre" type="text" placeholder="Nombre"
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Apellidos</label>
+                    <input id="rep-apellidos" type="text" placeholder="Apellidos"
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Email *</label>
+                <input id="rep-email" type="email" placeholder="correo@ejemplo.com"
+                       class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Contraseña <span id="lbl-clave">(requerida)</span></label>
+                <input id="rep-clave" type="password" placeholder="Contraseña de acceso"
+                       class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Teléfono</label>
+                    <input id="rep-telefono" type="tel" placeholder="55 1234 5678"
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Vehículo</label>
+                    <input id="rep-vehiculo" type="text" placeholder="Moto, Bici..."
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Notas</label>
+                <textarea id="rep-notas" rows="2" placeholder="Información adicional..."
+                          class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none resize-none"></textarea>
+            </div>
+            <div id="rep-status-row" class="hidden flex items-center gap-3">
+                <label class="text-xs font-bold text-gray-500 uppercase">Estado</label>
+                <select id="rep-status" class="border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-sky-400 focus:outline-none">
+                    <option value="1">Activo</option>
+                    <option value="0">Inactivo</option>
+                </select>
+            </div>
+        </div>
+        <div class="p-5 border-t flex gap-3">
+            <button onclick="cerrarModal()"
+                    class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition">
+                Cancelar
+            </button>
+            <button onclick="guardarRepartidor()"
+                    class="flex-1 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold transition">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let editandoId = null;
+
+function abrirModalNuevo() {
+    editandoId = null;
+    document.getElementById('modal-titulo').innerHTML = '<i class="bi bi-person-plus"></i> Nuevo Repartidor';
+    document.getElementById('lbl-clave').textContent = '(requerida)';
+    document.getElementById('rep-status-row').classList.add('hidden');
+    ['rep-id','rep-nombre','rep-apellidos','rep-email','rep-clave','rep-telefono','rep-vehiculo','rep-notas'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('modal-repartidor').classList.remove('hidden');
+}
+
+function abrirModalEditar(r) {
+    editandoId = r._id;
+    document.getElementById('modal-titulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Repartidor';
+    document.getElementById('lbl-clave').textContent = '(dejar vacío para no cambiar)';
+    document.getElementById('rep-status-row').classList.remove('hidden');
+    document.getElementById('rep-id').value         = r._id || '';
+    document.getElementById('rep-nombre').value     = r.usuario_nombre || '';
+    document.getElementById('rep-apellidos').value  = r.usuario_apellidos || '';
+    document.getElementById('rep-email').value      = r.usuario_email || '';
+    document.getElementById('rep-clave').value      = '';
+    document.getElementById('rep-telefono').value   = r.telefono || '';
+    document.getElementById('rep-vehiculo').value   = r.vehiculo || '';
+    document.getElementById('rep-notas').value      = r.notas || '';
+    document.getElementById('rep-status').value     = String(r.usuario_status ?? 1);
+    document.getElementById('modal-repartidor').classList.remove('hidden');
+}
+
+function cerrarModal() {
+    document.getElementById('modal-repartidor').classList.add('hidden');
+}
+
+async function guardarRepartidor() {
+    const nombre = document.getElementById('rep-nombre').value.trim();
+    const email  = document.getElementById('rep-email').value.trim();
+    const clave  = document.getElementById('rep-clave').value;
+
+    if (!nombre || !email) {
+        return Swal.fire('Campos requeridos', 'Nombre y email son obligatorios.', 'warning');
+    }
+    if (!editandoId && !clave) {
+        return Swal.fire('Contraseña requerida', 'Debes asignar una contraseña al nuevo repartidor.', 'warning');
+    }
+
+    const body = {
+        usuario_nombre:    nombre,
+        usuario_apellidos: document.getElementById('rep-apellidos').value.trim(),
+        usuario_email:     email,
+        telefono:          document.getElementById('rep-telefono').value.trim(),
+        vehiculo:          document.getElementById('rep-vehiculo').value.trim(),
+        notas:             document.getElementById('rep-notas').value.trim(),
+    };
+    if (clave) body.usuario_clave = clave;
+    if (editandoId) body.usuario_status = parseInt(document.getElementById('rep-status').value);
+
+    const url    = editandoId ? `/api/repartidores/${editandoId}` : '/api/repartidores/crear';
+    const method = editandoId ? 'PUT' : 'POST';
+
+    const r    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await r.json();
+
+    if (data.success) {
+        cerrarModal();
+        Swal.fire({ icon: 'success', title: editandoId ? 'Actualizado' : 'Repartidor creado',
+                    timer: 1600, showConfirmButton: false });
+        setTimeout(() => location.reload(), 1600);
+    } else {
+        Swal.fire('Error', data.error, 'error');
+    }
+}
+
+async function eliminarRepartidor(uid, nombre) {
+    const { isConfirmed } = await Swal.fire({
+        title: `¿Desactivar a ${nombre}?`,
+        text: 'El repartidor quedará inactivo y no podrá iniciar sesión.',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonText: 'Sí, desactivar', cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ef4444',
+    });
+    if (!isConfirmed) return;
+
+    const r    = await fetch(`/api/repartidores/${uid}`, { method: 'DELETE' });
+    const data = await r.json();
+    if (data.success) {
+        document.getElementById(`rep-${uid}`)?.remove();
+        Swal.fire({ icon: 'success', title: 'Desactivado', timer: 1500, showConfirmButton: false });
+    } else {
+        Swal.fire('Error', data.error, 'error');
+    }
+}
+</script>
+{% endblock %}

@@ -3,6 +3,7 @@ from flask import session, render_template
 from controllers.auth.AuthController import login_required, rol_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.cocina.cocinaController import CocinaController
+from controllers.cocina.platillos_no_disponibles_controller import PlatillosNoDisponiblesController
 
 @routes_bp.route("/dashboard/cocina")
 @login_required
@@ -118,7 +119,7 @@ def api_platillos_no_disponibles_historial():
 def api_marcar_no_disponible():
     return PlatillosNoDisponiblesController.marcar_no_disponible()
 
-@routes_bp.route('/api/cocina/platillos/no-disponibles/reactivar/<int:platillo_id>', methods=['POST'])
+@routes_bp.route('/api/cocina/platillos/no-disponibles/reactivar/<platillo_id>', methods=['POST'])
 @login_required
 @rol_required(['1', '3'])
 def api_reactivar_platillo(platillo_id):
