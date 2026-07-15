@@ -53,6 +53,12 @@
                         <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ ESTADO_CSS.get(p.estado, 'bg-gray-100 text-gray-600') }}">
                             {{ ESTADO_LBL.get(p.estado, p.estado) }}
                         </span>
+                        <a href="{{ url_for('routes.seguimiento_pedido', folio=p.folio) }}"
+                           target="_blank"
+                           class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200 transition"
+                           title="Página de rastreo del cliente">
+                            <i class="bi bi-broadcast-pin"></i> Rastrear
+                        </a>
                     </div>
                     <p class="font-semibold text-gray-800">{{ p.cliente_nombre }}</p>
                     <p class="text-sm text-gray-500 flex items-center gap-1">

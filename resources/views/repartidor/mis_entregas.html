@@ -85,6 +85,11 @@
                class="px-4 py-3 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-xl font-medium transition flex items-center gap-1.5">
                 <i class="bi bi-map"></i> Mapa
             </a>
+            <button onclick="compartirRastreo('{{ e.folio }}')"
+                    class="px-4 py-3 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-xl font-medium transition flex items-center gap-1.5"
+                    title="Compartir link de rastreo con el cliente">
+                <i class="bi bi-broadcast-pin"></i> Compartir
+            </button>
         </div>
     </div>
     {% endfor %}
@@ -114,6 +119,27 @@ async function cambiarEstado(id, nuevoEstado, btn) {
     } else {
         btn.disabled = false;
         Swal.fire('Error', data.error, 'error');
+    }
+}
+
+function compartirRastreo(folio) {
+    const url = `${location.origin}/seguimiento/${folio}`;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Rastrea tu pedido — Callejón 9',
+            text: `Sigue tu pedido ${folio} en tiempo real:`,
+            url,
+        }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            Swal.fire({
+                icon: 'success', timer: 2000, showConfirmButton: false,
+                title: '¡Enlace copiado!',
+                text: 'Compártelo con tu cliente.',
+            });
+        }).catch(() => {
+            Swal.fire({ title: 'Link de rastreo', text: url, icon: 'info' });
+        });
     }
 }
 </script>

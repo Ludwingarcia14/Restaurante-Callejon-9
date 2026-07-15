@@ -9,6 +9,7 @@ from controllers.repartidor.repartidor_controller import (
     SensorViewController,
     SensorAPIController,
     AdminMonitorController,
+    TrackingController,
 )
 
 # ── Vistas Repartidor (Rol 5) ────────────────────────────────
@@ -149,3 +150,8 @@ def admin_notificar_vista():
 @rol_required(['1'])
 def api_admin_notificar():
     return AdminMonitorController.notificar_enviar()
+
+# ── Tracking público (sin auth) ───────────────────────────────
+@routes_bp.route("/seguimiento/<folio>")
+def seguimiento_pedido(folio):
+    return TrackingController.seguimiento(folio)

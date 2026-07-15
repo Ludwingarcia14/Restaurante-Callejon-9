@@ -174,6 +174,21 @@ class DeliveryAPIController:
                 return jsonify({"success": False, "error": "Estado inválido"}), 400
 
             DeliveryOrder.actualizar_estado(delivery_id, nuevo_estado)
+
+            # Notify customer tracking page in real-time
+            try:
+                delivery = DeliveryOrder.get_by_id(delivery_id)
+                folio = (delivery or {}).get("folio", "")
+                if folio:
+                    from extensions import socketio
+                    socketio.emit("estado_update", {
+                        "estado": nuevo_estado,
+                        "folio": folio,
+                        "ts": datetime.utcnow().strftime("%H:%M"),
+                    }, room=f"tracking_{folio}")
+            except Exception:
+                pass
+
             return jsonify({"success": True, "estado": nuevo_estado})
 
         except Exception as e:
@@ -322,15 +337,34 @@ class SensorAPIController:
             SensorData.guardar(data)
 
             from extensions import socketio
-            socketio.emit("sensor_update", {
+            ts = datetime.utcnow().strftime("%H:%M:%S")
+            payload = {
                 "repartidor_id":     data["repartidor_id"],
                 "repartidor_nombre": data["repartidor_nombre"],
                 "lat":               data.get("lat"),
                 "lon":               data.get("lon"),
                 "battery":           data.get("battery"),
                 "pasos":             data.get("pasos"),
-                "ts":                datetime.utcnow().strftime("%H:%M:%S"),
-            }, room="admin_monitor")
+                "ts":                ts,
+            }
+            socketio.emit("sensor_update", payload, room="admin_monitor")
+
+            # Broadcast location to each active delivery tracking room
+            try:
+                activas = DeliveryOrder.listar_por_repartidor(data["repartidor_id"], solo_activos=True)
+                loc_payload = {
+                    "lat": data.get("lat"),
+                    "lon": data.get("lon"),
+                    "repartidor_nombre": data["repartidor_nombre"],
+                    "ts": ts,
+                }
+                for d in activas:
+                    folio = d.get("folio", "")
+                    if folio:
+                        socketio.emit("location_update", loc_payload, room=f"tracking_{folio}")
+            except Exception:
+                pass
+
             return jsonify({"success": True})
         except Exception as e:
             logger.error("sensor recibir: %s", e)
@@ -391,6 +425,7 @@ class AdminMonitorController:
 
     @staticmethod
     def notificar_enviar():
+
         try:
             data = request.get_json(force=True) or {}
             mensaje       = (data.get("mensaje") or "").strip()
@@ -416,3 +451,36 @@ class AdminMonitorController:
         except Exception as e:
             logger.error("notificar error: %s", e)
             return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────
+# TRACKING PÚBLICO — Cliente rastrea su pedido
+# ─────────────────────────────────────────────
+
+class TrackingController:
+
+    @staticmethod
+    def seguimiento(folio):
+        folio = folio.upper()
+        delivery = DeliveryOrder.get_by_folio(folio)
+        if not delivery:
+            return render_template("tracking/no_encontrado.html", folio=folio), 404
+
+        d = _serialize(delivery)
+
+        # Posición inicial: última lectura del repartidor asignado
+        init_lat, init_lon = 19.2812, -99.6563
+        repartidor_id = d.get("repartidor_id", "")
+        if repartidor_id:
+            ultima = SensorData.ultimo_por_repartidor(repartidor_id)
+            if ultima:
+                init_lat = ultima.get("lat", init_lat)
+                init_lon = ultima.get("lon", init_lon)
+
+        return render_template(
+            "tracking/seguimiento.html",
+            delivery=d,
+            folio=folio,
+            init_lat=init_lat,
+            init_lon=init_lon,
+        )

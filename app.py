@@ -225,6 +225,14 @@ def on_join_repartidor(repartidor_id):
         join_room("repartidores_global")
         print(f"[SALA] Repartidor {rid} unido a sala personal y global")
 
+@socketio.on("join_tracking")
+def on_join_tracking(folio):
+    """Cliente se une a la sala de tracking de su pedido."""
+    f = str(folio).upper() if folio else ""
+    if f:
+        join_room(f"tracking_{f}")
+        print(f"[SALA] Cliente unido a tracking: {f}")
+
 # ================================
 # API DOCS
 # ================================

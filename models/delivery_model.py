@@ -43,6 +43,10 @@ class DeliveryOrder:
         return cls._col().find_one({"_id": ObjectId(delivery_id)})
 
     @classmethod
+    def get_by_folio(cls, folio):
+        return cls._col().find_one({"folio": folio.upper()})
+
+    @classmethod
     def asignar_repartidor(cls, delivery_id, repartidor_id, repartidor_nombre):
         return cls._col().update_one(
             {"_id": ObjectId(delivery_id)},
