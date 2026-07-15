@@ -230,6 +230,16 @@ class RolPermisos:
             "gestiona_proveedores": True,
             "ver_costos": True,
             "recibe_alertas_stock": True
+        },
+        "5": {
+            "nombre": "Repartidor",
+            "modulos": ["dashboard", "entregas", "historial"],
+            "puede_crear": False,
+            "puede_editar": False,
+            "puede_eliminar": False,
+            "puede_ver_reportes": False,
+            "gestiona_entregas": True,
+            "actualiza_estados": True,
         }
     }
     

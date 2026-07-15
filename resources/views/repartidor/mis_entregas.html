@@ -1,0 +1,146 @@
+{% extends "layout/layout_repartidor.html" %}
+{% block title %}Mis Entregas{% endblock %}
+{% block page_title %}Mis Entregas Activas{% endblock %}
+{% block page_subtitle %}Pedidos en curso asignados a ti{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+{% if entregas %}
+    {% for e in entregas %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden" id="card-{{ e._id }}">
+
+        <!-- Cabecera de la entrega -->
+        <div class="flex items-center justify-between px-5 py-3
+                    {% if e.estado == 'en_camino' %}bg-amber-50 border-l-4 border-amber-400
+                    {% else %}bg-sky-50 border-l-4 border-sky-400{% endif %}">
+            <div class="flex items-center gap-3">
+                <span class="font-mono text-sm font-bold text-sky-700">{{ e.folio }}</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full
+                    {% if e.estado == 'en_camino' %}bg-amber-100 text-amber-800
+                    {% else %}bg-sky-100 text-sky-800{% endif %}">
+                    {% if e.estado == 'en_camino' %}🚴 En camino{% else %}📋 Asignado{% endif %}
+                </span>
+            </div>
+            <span class="text-xl font-black text-gray-800">${{ "%.2f"|format(e.total|float) }}</span>
+        </div>
+
+        <!-- Info cliente + dirección -->
+        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Cliente</p>
+                <p class="font-semibold text-gray-800">{{ e.cliente_nombre }}</p>
+                {% if e.cliente_telefono %}
+                <a href="tel:{{ e.cliente_telefono }}"
+                   class="text-sm text-sky-600 hover:underline inline-flex items-center gap-1 mt-1">
+                    <i class="bi bi-telephone"></i> {{ e.cliente_telefono }}
+                </a>
+                {% endif %}
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Dirección</p>
+                <p class="font-semibold text-gray-800">{{ e.direccion }}</p>
+                {% if e.referencias %}
+                <p class="text-xs text-gray-500 mt-0.5">Ref: {{ e.referencias }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Items colapsable -->
+        <div class="px-5 pb-2">
+            <details class="text-sm">
+                <summary class="cursor-pointer text-gray-500 hover:text-gray-700 font-medium py-1">
+                    Ver artículos ({{ e['items']|length }})
+                </summary>
+                <div class="mt-2 space-y-1 pl-2 border-l-2 border-gray-200">
+                    {% for item in e['items'] %}
+                    <div class="flex justify-between text-sm py-0.5">
+                        <span class="text-gray-700">{{ item.nombre }} × {{ item.cantidad }}</span>
+                        <span class="font-medium">${{ "%.2f"|format((item.precio|float)*(item.cantidad|int)) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+        </div>
+
+        {% if e.notas %}
+        <div class="mx-5 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+            <i class="bi bi-sticky"></i> {{ e.notas }}
+        </div>
+        {% endif %}
+
+        <!-- Acciones -->
+        <div class="px-5 pb-5 flex gap-2 flex-wrap">
+            {% if e.estado == 'asignado' %}
+            <button onclick="cambiarEstado('{{ e._id }}', 'en_camino', this)"
+                    class="flex-1 min-w-[140px] py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2">
+                <i class="bi bi-bicycle"></i> Salir a entregar
+            </button>
+            {% elif e.estado == 'en_camino' %}
+            <button onclick="cambiarEstado('{{ e._id }}', 'entregado', this)"
+                    class="flex-1 min-w-[140px] py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2">
+                <i class="bi bi-check-circle-fill"></i> Entregado
+            </button>
+            {% endif %}
+            <a href="https://maps.google.com/?q={{ e.direccion | urlencode }}" target="_blank"
+               class="px-4 py-3 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-xl font-medium transition flex items-center gap-1.5">
+                <i class="bi bi-map"></i> Mapa
+            </a>
+            <button onclick="compartirRastreo('{{ e.folio }}')"
+                    class="px-4 py-3 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-xl font-medium transition flex items-center gap-1.5"
+                    title="Compartir link de rastreo con el cliente">
+                <i class="bi bi-broadcast-pin"></i> Compartir
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="bg-white rounded-xl shadow-sm py-20 text-center text-gray-400">
+        <i class="bi bi-bicycle text-6xl block mb-4 opacity-20"></i>
+        <p class="text-lg font-medium">Sin entregas activas</p>
+        <p class="text-sm mt-1">El administrador te asignará pedidos pronto.</p>
+    </div>
+{% endif %}
+</div>
+
+<script>
+async function cambiarEstado(id, nuevoEstado, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i>';
+    const r = await fetch(`/api/delivery/${id}/estado`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado })
+    });
+    const data = await r.json();
+    if (data.success) {
+        Swal.fire({ icon: 'success', timer: 1500, showConfirmButton: false,
+                    title: nuevoEstado === 'entregado' ? '¡Entregado!' : '¡En camino!' });
+        setTimeout(() => location.reload(), 1600);
+    } else {
+        btn.disabled = false;
+        Swal.fire('Error', data.error, 'error');
+    }
+}
+
+function compartirRastreo(folio) {
+    const url = `${location.origin}/seguimiento/${folio}`;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Rastrea tu pedido — Callejón 9',
+            text: `Sigue tu pedido ${folio} en tiempo real:`,
+            url,
+        }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            Swal.fire({
+                icon: 'success', timer: 2000, showConfirmButton: false,
+                title: '¡Enlace copiado!',
+                text: 'Compártelo con tu cliente.',
+            });
+        }).catch(() => {
+            Swal.fire({ title: 'Link de rastreo', text: url, icon: 'info' });
+        });
+    }
+}
+</script>
+{% endblock %}

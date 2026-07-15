@@ -1,0 +1,1427 @@
+openapi: 3.0.3
+info:
+  title: Restaurante Callejón 9 — API
+  description: |
+    API REST del sistema de gestión del Restaurante Callejón 9.
+
+    ## Autenticación
+    Todos los endpoints protegidos requieren sesión activa (cookie de sesión Flask).
+    Para uso desde app móvil se recomienda mantener la cookie de sesión en cada request.
+
+    ## Roles
+    - **1** — Administrador
+    - **2** — Mesero
+    - **3** — Cocina
+    - **4** — Inventario
+  version: 1.0.0
+
+servers:
+  - url: https://restaurante-callejon-9-production.up.railway.app
+    description: Producción
+  - url: http://localhost:5000
+    description: Local
+
+tags:
+  - name: Auth
+  - name: Menu
+  - name: Comandas
+  - name: Cocina
+  - name: Ventas
+  - name: Cuentas
+  - name: Pagos
+  - name: Propinas
+  - name: Notificaciones
+  - name: Analytics
+  - name: Empleados
+  - name: Settings
+
+paths:
+
+  # ─────────────────────────────────────────────
+  # AUTH
+  # ─────────────────────────────────────────────
+  /login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: admin@callejon9.com
+                password:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/me:
+    get:
+      tags: [Auth]
+      summary: Obtener usuario autenticado
+      responses:
+        "200":
+          description: Datos del usuario en sesión
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  usuario_id:
+                    type: string
+                  nombre:
+                    type: string
+                  rol:
+                    type: integer
+                  socket_token:
+                    type: string
+
+  /api/2fa/setup:
+    post:
+      tags: [Auth]
+      summary: Configurar autenticación de dos factores
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                  enum: [app, email]
+      responses:
+        "200":
+          description: 2FA configurado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  secret_key:
+                    type: string
+                  qr_image:
+                    type: string
+                    description: Base64 del QR (solo para tipo=app)
+
+  /api/2fa/verify:
+    post:
+      tags: [Auth]
+      summary: Verificar código 2FA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp_code]
+              properties:
+                otp_code:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/2fa/disable:
+    post:
+      tags: [Auth]
+      summary: Desactivar 2FA
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  # ─────────────────────────────────────────────
+  # MENÚ
+  # ─────────────────────────────────────────────
+  /api/menu:
+    get:
+      tags: [Menu]
+      summary: Obtener menú disponible
+      description: Roles permitidos — 1, 2
+      responses:
+        "200":
+          description: Lista de platillos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  menu:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Platillo"
+
+  /api/menu/crear:
+    post:
+      tags: [Menu]
+      summary: Crear platillo (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatilloInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/CreatedWithId"
+
+  /api/menu/{platillo_id}:
+    get:
+      tags: [Menu]
+      summary: Detalle de un platillo
+      parameters:
+        - $ref: "#/components/parameters/platillo_id"
+      responses:
+        "200":
+          description: Platillo encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  platillo:
+                    $ref: "#/components/schemas/Platillo"
+
+  /api/menu/{platillo_id}/toggle:
+    post:
+      tags: [Menu]
+      summary: Activar/desactivar platillo (Admin)
+      parameters:
+        - $ref: "#/components/parameters/platillo_id"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/menu/buscar:
+    get:
+      tags: [Menu]
+      summary: Buscar platillos
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resultados de búsqueda
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  platillos:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Platillo"
+
+  /api/categorias:
+    get:
+      tags: [Menu]
+      summary: Obtener categorías del menú
+      responses:
+        "200":
+          description: Lista de categorías
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  categorias:
+                    type: array
+                    items:
+                      type: object
+
+  # ─────────────────────────────────────────────
+  # COMANDAS (Mesero)
+  # ─────────────────────────────────────────────
+  /api/mesero/cuenta/abrir:
+    post:
+      tags: [Comandas]
+      summary: Abrir cuenta en una mesa
+      description: Rol 2 (Mesero)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [numero_mesa, num_comensales]
+              properties:
+                numero_mesa:
+                  type: integer
+                  example: 5
+                num_comensales:
+                  type: integer
+                  example: 4
+      responses:
+        "200":
+          description: Cuenta abierta
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cuenta_id:
+                    type: string
+                  message:
+                    type: string
+
+  /api/mesero/comandas/activas:
+    get:
+      tags: [Comandas]
+      summary: Comandas activas del mesero
+      description: Rol 2
+      responses:
+        "200":
+          description: Lista de comandas activas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  comandas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comanda"
+                  total:
+                    type: integer
+
+  /api/mesero/comandas/cerradas:
+    get:
+      tags: [Comandas]
+      summary: Historial de comandas cerradas del mesero
+      description: Rol 2
+      responses:
+        "200":
+          description: Comandas cerradas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  comandas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comanda"
+
+  /api/mesero/comanda/{cuenta_id}/items:
+    post:
+      tags: [Comandas]
+      summary: Agregar items a una comanda
+      description: Rol 2 — envía pedido a cocina
+      parameters:
+        - $ref: "#/components/parameters/cuenta_id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ItemPedido"
+      responses:
+        "200":
+          description: Items enviados a cocina
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  total:
+                    type: number
+                  items_count:
+                    type: integer
+                  items_nuevos:
+                    type: array
+                    items:
+                      type: object
+
+  /api/mesero/cuenta/{cuenta_id}/cerrar:
+    post:
+      tags: [Comandas]
+      summary: Cerrar cuenta y registrar pago
+      description: Rol 2
+      parameters:
+        - $ref: "#/components/parameters/cuenta_id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metodo_pago, tipo_propina]
+              properties:
+                metodo_pago:
+                  type: string
+                  enum: [efectivo, tarjeta, mercadopago]
+                tipo_propina:
+                  type: string
+                  enum: [sin, 10, 15, 20, custom]
+                custom_porcentaje:
+                  type: number
+                  example: 12.5
+      responses:
+        "200":
+          description: Cuenta cerrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  total_final:
+                    type: number
+                  propina:
+                    type: number
+
+  /api/mesero/cuenta/{cuenta_id}/estado-pago:
+    get:
+      tags: [Comandas]
+      summary: Verificar estado de pago de una cuenta
+      parameters:
+        - $ref: "#/components/parameters/cuenta_id"
+      responses:
+        "200":
+          description: Estado del pago
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: string
+                    enum: [approved, pending]
+                  total:
+                    type: number
+                  propina:
+                    type: number
+                  metodo_pago:
+                    type: string
+
+  /api/mesero/mesas/estado:
+    get:
+      tags: [Comandas]
+      summary: Estado de todas las mesas
+      description: Rol 2
+      responses:
+        "200":
+          description: Lista de mesas con su estado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  mesas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Mesa"
+
+  /api/mesero/mesa/{numero}:
+    get:
+      tags: [Comandas]
+      summary: Detalle de una mesa
+      parameters:
+        - name: numero
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Detalle de mesa y comanda activa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  mesa:
+                    $ref: "#/components/schemas/Mesa"
+                  comanda:
+                    $ref: "#/components/schemas/Comanda"
+
+  /api/mesero/estadisticas/dia:
+    get:
+      tags: [Comandas]
+      summary: Estadísticas del día del mesero
+      description: Rol 2
+      responses:
+        "200":
+          description: Estadísticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  estadisticas:
+                    type: object
+
+  # ─────────────────────────────────────────────
+  # COCINA
+  # ─────────────────────────────────────────────
+  /api/cocina/pedidos/pendientes:
+    get:
+      tags: [Cocina]
+      summary: Pedidos pendientes de preparar
+      description: Roles 1, 3
+      responses:
+        "200":
+          description: Lista de pedidos pendientes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PedidosResponse"
+
+  /api/cocina/pedidos/en-proceso:
+    get:
+      tags: [Cocina]
+      summary: Pedidos en preparación
+      description: Roles 1, 3
+      responses:
+        "200":
+          $ref: "#/components/responses/PedidosList"
+
+  /api/cocina/pedidos/listos:
+    get:
+      tags: [Cocina]
+      summary: Pedidos listos para entregar
+      description: Roles 1, 3
+      responses:
+        "200":
+          $ref: "#/components/responses/PedidosList"
+
+  /api/cocina/pedido/iniciar:
+    post:
+      tags: [Cocina]
+      summary: Iniciar preparación de items
+      description: Roles 1, 3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComandaItemsInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/cocina/pedido/listo:
+    post:
+      tags: [Cocina]
+      summary: Marcar items como listos
+      description: Roles 1, 3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComandaItemsInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/cocina/pedido/entregado:
+    post:
+      tags: [Cocina]
+      summary: Marcar items como entregados
+      description: Roles 1, 2, 3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComandaItemsInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/cocina/estadisticas:
+    get:
+      tags: [Cocina]
+      summary: Estadísticas generales de cocina
+      description: Roles 1, 3
+      responses:
+        "200":
+          description: Estadísticas de cocina
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  estadisticas:
+                    type: object
+
+  /api/cocina/charts/top-platillos:
+    get:
+      tags: [Cocina]
+      summary: Top platillos más pedidos
+      description: Roles 1, 3
+      responses:
+        "200":
+          description: Ranking de platillos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+
+  # ─────────────────────────────────────────────
+  # PROPINAS
+  # ─────────────────────────────────────────────
+  /api/mesero/propinas/hoy:
+    get:
+      tags: [Propinas]
+      summary: Propinas del día del mesero
+      description: Rol 2
+      responses:
+        "200":
+          description: Datos de propinas de hoy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  total_propinas:
+                    type: number
+                  num_comandas:
+                    type: integer
+
+  /api/mesero/propinas/rango:
+    get:
+      tags: [Propinas]
+      summary: Propinas por rango de tiempo
+      description: Rol 2
+      parameters:
+        - name: rango
+          in: query
+          schema:
+            type: string
+            enum: [semana, mes, custom]
+            default: semana
+        - name: mes
+          in: query
+          schema:
+            type: string
+            example: "2026-05"
+      responses:
+        "200":
+          description: Propinas del rango
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  total_propinas:
+                    type: number
+                  detalle:
+                    type: array
+                    items:
+                      type: object
+
+  # ─────────────────────────────────────────────
+  # VENTAS
+  # ─────────────────────────────────────────────
+  /api/ventas:
+    get:
+      tags: [Ventas]
+      summary: Listar ventas con filtros
+      description: Roles 1, 2
+      parameters:
+        - name: estado
+          in: query
+          schema:
+            type: string
+            enum: [pendiente, completada, cancelada]
+        - name: fecha_inicio
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: fecha_fin
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Lista de ventas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  ventas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Venta"
+
+  /api/ventas/estadisticas:
+    get:
+      tags: [Ventas]
+      summary: Estadísticas de ventas del día
+      description: Roles 1, 2
+      responses:
+        "200":
+          description: Estadísticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: object
+
+  /api/ventas/{venta_id}/completar:
+    post:
+      tags: [Ventas]
+      summary: Completar una venta
+      description: Roles 1, 2
+      parameters:
+        - $ref: "#/components/parameters/venta_id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metodo_pago:
+                  type: string
+                  enum: [efectivo, tarjeta, mercadopago]
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/ventas/{venta_id}/cancelar:
+    post:
+      tags: [Ventas]
+      summary: Cancelar una venta (Admin)
+      parameters:
+        - $ref: "#/components/parameters/venta_id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motivo:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/cuentas:
+    get:
+      tags: [Cuentas]
+      summary: Cuentas abiertas
+      description: Roles 1, 2
+      responses:
+        "200":
+          description: Lista de cuentas abiertas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cuentas:
+                    type: array
+                    items:
+                      type: object
+
+  /api/corte/generar:
+    post:
+      tags: [Ventas]
+      summary: Generar corte de caja (Admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notas:
+                  type: string
+      responses:
+        "200":
+          description: Corte generado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  corte_id:
+                    type: string
+
+  # ─────────────────────────────────────────────
+  # PAGOS — MERCADOPAGO
+  # ─────────────────────────────────────────────
+  /api/pago/crear/{cuenta_id}:
+    post:
+      tags: [Pagos]
+      summary: Crear preferencia de pago en MercadoPago
+      description: Rol 2 — devuelve el link de pago
+      parameters:
+        - $ref: "#/components/parameters/cuenta_id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo_propina:
+                  type: string
+                  enum: [sin, 10, 15, 20, custom]
+                custom_porcentaje:
+                  type: number
+      responses:
+        "200":
+          description: Link de pago generado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  init_point:
+                    type: string
+                    description: URL de pago de MercadoPago
+                  preference_id:
+                    type: string
+
+  /api/pago/verificar:
+    get:
+      tags: [Pagos]
+      summary: Verificar estado de pago
+      description: Rol 2
+      parameters:
+        - name: cuenta_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Estado del pago
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: string
+                    enum: [approved, rejected, pending]
+                  total:
+                    type: number
+                  propina:
+                    type: number
+                  payment_id:
+                    type: string
+
+  /api/webhook/mercadopago:
+    post:
+      tags: [Pagos]
+      summary: Webhook de notificaciones de MercadoPago
+      description: Endpoint público — llamado por MercadoPago
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK
+
+  # ─────────────────────────────────────────────
+  # NOTIFICACIONES
+  # ─────────────────────────────────────────────
+  /api/notificaciones:
+    get:
+      tags: [Notificaciones]
+      summary: Todas las notificaciones del usuario
+      responses:
+        "200":
+          description: Lista de notificaciones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notificaciones:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notificacion"
+                  total:
+                    type: integer
+
+  /api/notificaciones/no-leidas:
+    get:
+      tags: [Notificaciones]
+      summary: Notificaciones no leídas
+      responses:
+        "200":
+          description: Notificaciones pendientes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notificaciones:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notificacion"
+                  count:
+                    type: integer
+
+  /api/notificaciones/contador:
+    get:
+      tags: [Notificaciones]
+      summary: Contador de notificaciones no leídas
+      responses:
+        "200":
+          description: Contador
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+
+  /api/notificaciones/{id}/leida:
+    put:
+      tags: [Notificaciones]
+      summary: Marcar notificación como leída
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/notificaciones/marcar-todas-leidas:
+    post:
+      tags: [Notificaciones]
+      summary: Marcar todas las notificaciones como leídas
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  # ─────────────────────────────────────────────
+  # ANALYTICS
+  # ─────────────────────────────────────────────
+  /api/analytics/kpis:
+    get:
+      tags: [Analytics]
+      summary: KPIs generales (Admin)
+      responses:
+        "200":
+          description: KPIs del negocio
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  kpis:
+                    type: object
+
+  /api/analytics/top-platillos:
+    get:
+      tags: [Analytics]
+      summary: Top platillos más vendidos (Admin)
+      responses:
+        "200":
+          description: Ranking de platillos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+
+  /api/analytics/ventas-por-dia:
+    get:
+      tags: [Analytics]
+      summary: Ventas agrupadas por día (Admin)
+      responses:
+        "200":
+          description: Ventas por día
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+
+  /api/analytics/metodos-pago:
+    get:
+      tags: [Analytics]
+      summary: Distribución de métodos de pago (Admin)
+      responses:
+        "200":
+          description: Métodos de pago
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/analytics/horas-pico:
+    get:
+      tags: [Analytics]
+      summary: Horas con más ventas (Admin)
+      responses:
+        "200":
+          description: Horas pico
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/analytics/rendimiento-meseros:
+    get:
+      tags: [Analytics]
+      summary: Rendimiento por mesero (Admin)
+      responses:
+        "200":
+          description: Estadísticas por mesero
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ─────────────────────────────────────────────
+  # EMPLEADOS
+  # ─────────────────────────────────────────────
+  /api/empleados/todos:
+    get:
+      tags: [Empleados]
+      summary: Listar todos los empleados (Admin)
+      responses:
+        "200":
+          description: Lista de empleados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  empleados:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Empleado"
+
+  /api/empleados/{empleado_id}/detalle:
+    get:
+      tags: [Empleados]
+      summary: Detalle de un empleado (Admin)
+      parameters:
+        - $ref: "#/components/parameters/empleado_id"
+      responses:
+        "200":
+          description: Empleado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  empleado:
+                    $ref: "#/components/schemas/Empleado"
+
+  /api/empleados/{empleado_id}/actualizar:
+    post:
+      tags: [Empleados]
+      summary: Actualizar datos de un empleado (Admin)
+      parameters:
+        - $ref: "#/components/parameters/empleado_id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Empleado"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  /api/empleados/{empleado_id}/eliminar:
+    post:
+      tags: [Empleados]
+      summary: Eliminar empleado (Admin)
+      parameters:
+        - $ref: "#/components/parameters/empleado_id"
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+  # ─────────────────────────────────────────────
+  # SETTINGS
+  # ─────────────────────────────────────────────
+  /api/usuario/actualizar:
+    post:
+      tags: [Settings]
+      summary: Actualizar datos del usuario en sesión
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                apellidos:
+                  type: string
+                telefono:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessOrError"
+
+# ─────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────
+components:
+  parameters:
+    cuenta_id:
+      name: cuenta_id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "6651f2a3b4c5d6e7f8a9b0c1"
+
+    venta_id:
+      name: venta_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    platillo_id:
+      name: platillo_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    empleado_id:
+      name: empleado_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: No autorizado — sesión requerida
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: No autorizado
+
+    SuccessOrError:
+      description: Resultado de la operación
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SuccessMessage"
+
+    CreatedWithId:
+      description: Recurso creado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+              id:
+                type: string
+
+    PedidosList:
+      description: Lista de pedidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PedidosResponse"
+
+  schemas:
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    Platillo:
+      type: object
+      properties:
+        _id:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        precio:
+          type: number
+        categoria:
+          type: string
+        disponible:
+          type: boolean
+        imagen:
+          type: string
+
+    PlatilloInput:
+      type: object
+      required: [nombre, precio]
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        precio:
+          type: number
+        categoria_id:
+          type: string
+        imagen:
+          type: string
+
+    ItemPedido:
+      type: object
+      required: [id, cantidad]
+      properties:
+        id:
+          type: string
+          description: ID del platillo
+        nombre:
+          type: string
+        precio:
+          type: number
+        cantidad:
+          type: integer
+        notas:
+          type: string
+
+    Comanda:
+      type: object
+      properties:
+        _id:
+          type: string
+        numero_mesa:
+          type: integer
+        mesero_nombre:
+          type: string
+        num_comensales:
+          type: integer
+        estado:
+          type: string
+          enum: [abierta, cerrada, pagada]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemPedido"
+        total:
+          type: number
+        propina:
+          type: number
+        total_final:
+          type: number
+        metodo_pago:
+          type: string
+        fecha_apertura:
+          type: string
+          format: date-time
+
+    Mesa:
+      type: object
+      properties:
+        numero:
+          type: integer
+        estado:
+          type: string
+          enum: [libre, ocupada]
+        num_comensales:
+          type: integer
+        cuenta_activa_id:
+          type: string
+
+    Venta:
+      type: object
+      properties:
+        _id:
+          type: string
+        mesa_nombre:
+          type: string
+        mesero_nombre:
+          type: string
+        total:
+          type: number
+        estado:
+          type: string
+          enum: [pendiente, completada, cancelada]
+        metodo_pago:
+          type: string
+        fecha:
+          type: string
+          format: date-time
+
+    Notificacion:
+      type: object
+      properties:
+        _id:
+          type: string
+        tipo:
+          type: string
+        mensaje:
+          type: string
+        leida:
+          type: boolean
+        fecha:
+          type: string
+          format: date-time
+
+    Empleado:
+      type: object
+      properties:
+        _id:
+          type: string
+        nombre:
+          type: string
+        apellidos:
+          type: string
+        email:
+          type: string
+        rol:
+          type: integer
+        telefono:
+          type: string
+        activo:
+          type: boolean
+
+    PedidosResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        pedidos:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+
+    ComandaItemsInput:
+      type: object
+      required: [comanda_id, item_ids]
+      properties:
+        comanda_id:
+          type: string
+        item_ids:
+          type: array
+          items:
+            type: string

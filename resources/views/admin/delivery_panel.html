@@ -1,0 +1,360 @@
+{% extends "layout/layout_base.html" %}
+{% block title %}Panel Delivery{% endblock %}
+{% block page_title %}Panel de Delivery{% endblock %}
+{% block page_subtitle %}Gestión de pedidos a domicilio{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div class="flex gap-2">
+        <a href="{{ url_for('routes.admin_repartidores') }}"
+           class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:border-sky-400 hover:text-sky-600 rounded-xl text-sm font-medium transition">
+            <i class="bi bi-person-badge"></i> Repartidores
+        </a>
+        <button onclick="cargarPedidos()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-medium transition">
+            <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+    </div>
+    <button onclick="abrirModalNuevoPedido()"
+            class="flex items-center gap-2 px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold shadow transition">
+        <i class="bi bi-plus-lg"></i> Nuevo Pedido Delivery
+    </button>
+</div>
+
+<!-- KPIs -->
+<div id="kpis-delivery" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-300 animate-pulse h-20"></div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-300 animate-pulse h-20"></div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-300 animate-pulse h-20"></div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-300 animate-pulse h-20"></div>
+</div>
+
+<!-- Lista pedidos activos -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b flex items-center justify-between">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-truck text-sky-500"></i> Pedidos Activos
+        </h3>
+        <span id="badge-total" class="bg-sky-100 text-sky-700 text-xs font-bold px-3 py-1 rounded-full">
+            {{ pedidos|length }}
+        </span>
+    </div>
+
+    {% set ESTADO_CSS = {'pendiente':'bg-gray-100 text-gray-600','asignado':'bg-sky-100 text-sky-700','en_camino':'bg-amber-100 text-amber-800','entregado':'bg-emerald-100 text-emerald-700','cancelado':'bg-red-100 text-red-700'} %}
+    {% set ESTADO_LBL = {'pendiente':'Pendiente','asignado':'Asignado','en_camino':'En camino','entregado':'Entregado','cancelado':'Cancelado'} %}
+    <div id="lista-pedidos" class="divide-y divide-gray-100">
+        {% if pedidos %}
+            {% for p in pedidos %}
+            <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4
+                        hover:bg-gray-50 transition" id="ped-{{ p._id }}">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="font-mono text-xs font-bold text-sky-600">{{ p.folio }}</span>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ ESTADO_CSS.get(p.estado, 'bg-gray-100 text-gray-600') }}">
+                            {{ ESTADO_LBL.get(p.estado, p.estado) }}
+                        </span>
+                        <a href="{{ url_for('routes.seguimiento_pedido', folio=p.folio) }}"
+                           target="_blank"
+                           class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200 transition"
+                           title="Página de rastreo del cliente">
+                            <i class="bi bi-broadcast-pin"></i> Rastrear
+                        </a>
+                    </div>
+                    <p class="font-semibold text-gray-800">{{ p.cliente_nombre }}</p>
+                    <p class="text-sm text-gray-500 flex items-center gap-1">
+                        <i class="bi bi-geo-alt flex-shrink-0"></i>
+                        <span class="truncate max-w-[240px]">{{ p.direccion }}</span>
+                    </p>
+                    {% if p.repartidor_nombre %}
+                    <p class="text-xs text-sky-600 mt-1 flex items-center gap-1">
+                        <i class="bi bi-person-fill"></i> {{ p.repartidor_nombre }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3 shrink-0 flex-wrap">
+                    <span class="text-2xl font-black text-gray-800">${{ "%.2f"|format(p.total|float) }}</span>
+                    {% if not p.repartidor_id and p.estado == 'pendiente' %}
+                    <button onclick="abrirAsignar('{{ p._id }}')"
+                            class="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold transition">
+                        <i class="bi bi-person-plus"></i> Asignar
+                    </button>
+                    {% elif p.estado == 'asignado' %}
+                    <button onclick="abrirAsignar('{{ p._id }}')"
+                            class="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-xl text-sm font-medium transition">
+                        <i class="bi bi-pencil"></i> Reasignar
+                    </button>
+                    {% endif %}
+                    <button onclick="cancelarPedido('{{ p._id }}')"
+                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="py-16 text-center text-gray-400">
+            <i class="bi bi-truck text-5xl block mb-3 opacity-20"></i>
+            <p class="font-medium">Sin pedidos de delivery activos</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: asignar repartidor -->
+<div id="modal-asignar"
+     class="hidden fixed inset-0 bg-black/70 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm"
+     onclick="if(event.target===this)cerrarAsignar()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div class="bg-sky-600 text-white p-5 flex items-center justify-between">
+            <h3 class="font-bold text-lg"><i class="bi bi-person-plus"></i> Asignar Repartidor</h3>
+            <button onclick="cerrarAsignar()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="p-5">
+            <input type="hidden" id="asignar-delivery-id">
+            <label class="text-xs font-bold text-gray-500 uppercase block mb-2">Repartidor disponible</label>
+            <select id="select-repartidor"
+                    class="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:border-sky-400 focus:outline-none mb-4">
+                {% for r in repartidores %}
+                <option value="{{ r._id }}">{{ r.usuario_nombre }} {{ r.usuario_apellidos }}
+                    {% if r.vehiculo %} · {{ r.vehiculo }}{% endif %}
+                </option>
+                {% else %}
+                <option disabled>Sin repartidores activos</option>
+                {% endfor %}
+            </select>
+            <button onclick="confirmarAsignacion()"
+                    class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold transition">
+                Confirmar Asignación
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: nuevo pedido delivery -->
+<div id="modal-nuevo-pedido"
+     class="hidden fixed inset-0 bg-black/70 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm"
+     onclick="if(event.target===this)cerrarNuevoPedido()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="bg-sky-600 text-white p-5 flex items-center justify-between">
+            <h3 class="font-bold text-lg"><i class="bi bi-plus-circle"></i> Nuevo Pedido Delivery</h3>
+            <button onclick="cerrarNuevoPedido()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Nombre cliente *</label>
+                    <input id="nd-cliente" type="text" placeholder="Nombre completo"
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Teléfono</label>
+                    <input id="nd-telefono" type="tel" placeholder="55 0000 0000"
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Dirección *</label>
+                <input id="nd-direccion" type="text" placeholder="Calle, número, colonia"
+                       class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Referencias</label>
+                <input id="nd-referencias" type="text" placeholder="Entre calles, color de casa..."
+                       class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+            </div>
+
+            <!-- Items del pedido -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Artículos *</label>
+                    <button onclick="agregarItem()" type="button"
+                            class="text-xs text-sky-600 font-bold hover:underline flex items-center gap-1">
+                        <i class="bi bi-plus"></i> Agregar
+                    </button>
+                </div>
+                <div id="items-container" class="space-y-2">
+                    <div class="item-row flex gap-2 items-center">
+                        <input type="text" placeholder="Platillo"
+                               class="flex-1 min-w-0 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-sky-400 focus:outline-none item-nombre">
+                        <input type="number" placeholder="$" min="0" step="0.01"
+                               class="w-16 border-2 border-gray-200 rounded-xl px-2 py-2 text-sm focus:border-sky-400 focus:outline-none item-precio">
+                        <input type="number" placeholder="×" min="1" value="1"
+                               class="w-12 border-2 border-gray-200 rounded-xl px-2 py-2 text-sm focus:border-sky-400 focus:outline-none item-cantidad">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Pago</label>
+                    <select id="nd-pago" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">T. estimado (min)</label>
+                    <input id="nd-tiempo" type="number" value="30" min="5" max="120"
+                           class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Notas</label>
+                <textarea id="nd-notas" rows="2" placeholder="Instrucciones especiales..."
+                          class="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none resize-none"></textarea>
+            </div>
+        </div>
+        <div class="p-5 border-t flex gap-3">
+            <button onclick="cerrarNuevoPedido()"
+                    class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition">
+                Cancelar
+            </button>
+            <button onclick="crearPedidoDelivery()"
+                    class="flex-1 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold transition">
+                Crear Pedido
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    cargarKPIs();
+});
+
+async function cargarKPIs() {
+    const r = await fetch('/api/delivery/pendientes');
+    const data = await r.json();
+    if (!data.success) return;
+    const pedidos = data.pedidos || [];
+    const counts = { pendiente:0, asignado:0, en_camino:0 };
+    let total = 0;
+    pedidos.forEach(p => { counts[p.estado] = (counts[p.estado]||0)+1; total += parseFloat(p.total||0); });
+    document.getElementById('kpis-delivery').innerHTML = `
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Pendientes</p>
+            <p class="text-3xl font-bold text-gray-800">${counts.pendiente}</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-sky-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Asignados</p>
+            <p class="text-3xl font-bold text-gray-800">${counts.asignado}</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">En camino</p>
+            <p class="text-3xl font-bold text-gray-800">${counts.en_camino}</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-400">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total activo</p>
+            <p class="text-2xl font-bold text-gray-800">$${total.toFixed(2)}</p>
+        </div>`;
+}
+
+async function cargarPedidos() { location.reload(); }
+
+// ── Asignar repartidor ───────────────────────────────────────
+function abrirAsignar(deliveryId) {
+    document.getElementById('asignar-delivery-id').value = deliveryId;
+    document.getElementById('modal-asignar').classList.remove('hidden');
+}
+function cerrarAsignar() {
+    document.getElementById('modal-asignar').classList.add('hidden');
+}
+async function confirmarAsignacion() {
+    const deliveryId = document.getElementById('asignar-delivery-id').value;
+    const repartidorId = document.getElementById('select-repartidor').value;
+    if (!repartidorId) return;
+    const r = await fetch(`/api/delivery/${deliveryId}/asignar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repartidor_id: repartidorId })
+    });
+    const data = await r.json();
+    if (data.success) {
+        cerrarAsignar();
+        Swal.fire({ icon: 'success', title: '¡Asignado!', timer: 1500, showConfirmButton: false });
+        setTimeout(() => location.reload(), 1600);
+    } else { Swal.fire('Error', data.error, 'error'); }
+}
+
+// ── Nuevo pedido ─────────────────────────────────────────────
+function abrirModalNuevoPedido() {
+    document.getElementById('modal-nuevo-pedido').classList.remove('hidden');
+}
+function cerrarNuevoPedido() {
+    document.getElementById('modal-nuevo-pedido').classList.add('hidden');
+}
+function agregarItem() {
+    const row = document.createElement('div');
+    row.className = 'item-row flex gap-2 items-center';
+    row.innerHTML = `
+        <input type="text" placeholder="Platillo"
+               class="flex-1 min-w-0 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-sky-400 focus:outline-none item-nombre">
+        <input type="number" placeholder="$" min="0" step="0.01"
+               class="w-16 border-2 border-gray-200 rounded-xl px-2 py-2 text-sm focus:border-sky-400 focus:outline-none item-precio">
+        <input type="number" placeholder="×" min="1" value="1"
+               class="w-12 border-2 border-gray-200 rounded-xl px-2 py-2 text-sm focus:border-sky-400 focus:outline-none item-cantidad">
+        <button onclick="this.parentElement.remove()" type="button" class="shrink-0 text-red-400 hover:text-red-600 p-1">
+            <i class="bi bi-x-circle"></i>
+        </button>`;
+    document.getElementById('items-container').appendChild(row);
+}
+async function crearPedidoDelivery() {
+    const cliente = document.getElementById('nd-cliente').value.trim();
+    const dir     = document.getElementById('nd-direccion').value.trim();
+    if (!cliente || !dir) return Swal.fire('Campos requeridos', 'Cliente y dirección son obligatorios.', 'warning');
+
+    const items = [...document.querySelectorAll('.item-row')].map(row => ({
+        nombre:   row.querySelector('.item-nombre').value.trim(),
+        precio:   parseFloat(row.querySelector('.item-precio').value) || 0,
+        cantidad: parseInt(row.querySelector('.item-cantidad').value) || 1,
+    })).filter(i => i.nombre);
+
+    if (!items.length) return Swal.fire('Sin artículos', 'Agrega al menos un artículo.', 'warning');
+
+    const body = {
+        tipo: 'directo',
+        cliente_nombre:   cliente,
+        cliente_telefono: document.getElementById('nd-telefono').value.trim(),
+        direccion:        dir,
+        referencias:      document.getElementById('nd-referencias').value.trim(),
+        items,
+        metodo_pago:      document.getElementById('nd-pago').value,
+        tiempo_estimado:  parseInt(document.getElementById('nd-tiempo').value) || 30,
+        notas:            document.getElementById('nd-notas').value.trim(),
+    };
+
+    const r    = await fetch('/api/delivery/crear', { method:'POST',
+        headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await r.json();
+    if (data.success) {
+        cerrarNuevoPedido();
+        Swal.fire({ icon:'success', title:'¡Pedido creado!', timer:1600, showConfirmButton:false });
+        setTimeout(() => location.reload(), 1700);
+    } else { Swal.fire('Error', data.error, 'error'); }
+}
+
+// ── Cancelar pedido ──────────────────────────────────────────
+async function cancelarPedido(id) {
+    const { isConfirmed } = await Swal.fire({
+        title: '¿Cancelar pedido?', icon: 'warning',
+        showCancelButton: true, confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'No', confirmButtonColor: '#ef4444'
+    });
+    if (!isConfirmed) return;
+    const r    = await fetch(`/api/delivery/${id}/estado`, { method:'PUT',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify({estado:'cancelado'}) });
+    const data = await r.json();
+    if (data.success) {
+        document.getElementById(`ped-${id}`)?.remove();
+        Swal.fire({ icon:'success', title:'Pedido cancelado', timer:1500, showConfirmButton:false });
+    } else { Swal.fire('Error', data.error, 'error'); }
+}
+</script>
+{% endblock %}

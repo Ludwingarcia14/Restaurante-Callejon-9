@@ -1,0 +1,221 @@
+﻿{% extends "layout/layout_mesero.html" %}
+{% block title %}Pareto 80/20{% endblock %}
+{% block page_title %}Pareto 80/20{% endblock %}
+{% block page_subtitle %}<span data-i18n="par_sub">¿Qué platillos generan el 80% de los ingresos?</span>{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link"><i class="bi bi-house-door text-lg"></i><span>Inicio</span></a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link"><i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span></a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link"><i class="bi bi-journal-text text-lg"></i><span>Menú</span></a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link"><i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span></a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link"><i class="bi bi-clock-history text-lg"></i><span>Historial</span></a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link active"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">
+  <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+      <i class="bi bi-bar-chart-steps text-2xl"></i>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold mb-1" data-i18n="par_banner_tit">Análisis Pareto 80/20 — Rentabilidad</h2>
+      <p class="text-sm opacity-85" data-i18n="par_banner_desc">El 20% de los platillos genera el 80% de los ingresos. Identifica cuáles son para priorizar sugerencias a los comensales.</p>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4">
+  <div class="flex items-center gap-2">
+    <label class="text-xs font-semibold text-gray-500 uppercase" data-i18n="hist_periodo">Período</label>
+    <select id="sel-dias" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+      <option value="30">30 días</option><option value="60">60 días</option>
+      <option value="90" selected>90 días</option><option value="180">6 meses</option>
+    </select>
+  </div>
+  <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#d97706;">
+    <i class="bi bi-arrow-clockwise mr-1"></i><span data-i18n="m_refrescar_btn">Actualizar</span>
+  </button>
+  <span id="estado" class="text-xs text-gray-400"></span>
+</div>
+
+<div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_calculando">Calculando…</span>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+      <i class="bi bi-bar-chart-fill text-amber-500"></i> <span data-i18n="par_curva">Curva de Pareto</span>
+      <span class="text-xs font-normal text-gray-400" data-i18n="par_barras_desc">Barras = ingreso · Línea = acumulado %</span>
+    </h3>
+    <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
+    </div>
+    <canvas id="chartPareto" style="display:none; max-height:320px;"></canvas>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm p-6 overflow-auto">
+    <div class="flex items-center justify-between mb-3 gap-4">
+      <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2 shrink-0">
+        <i class="bi bi-table text-amber-500"></i> <span data-i18n="par_detalle">Detalle por Platillo</span>
+      </h3>
+      <div id="pareto-slider-wrap" class="flex items-center gap-2 flex-1 max-w-xs" style="display:none!important;">
+        <i class="bi bi-funnel text-amber-400 text-xs shrink-0"></i>
+        <input id="pareto-slider" type="range" min="1" max="50" value="10"
+               class="flex-1 accent-amber-400" style="cursor:pointer;">
+        <span class="text-xs font-semibold text-amber-600 whitespace-nowrap">
+          Top <span id="pareto-slider-val">10</span>/<span id="pareto-slider-max">—</span>
+        </span>
+      </div>
+    </div>
+    <div id="tabla-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
+    </div>
+    <div id="tabla-pareto" style="display:none;" class="overflow-x-auto"></div>
+  </div>
+</div>
+
+<div id="insight-panel" style="display:none;" class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800">
+  <p class="font-semibold mb-1"><i class="bi bi-lightbulb mr-1 text-amber-500"></i><span data-i18n="par_interpret">Interpretación</span></p>
+  <p id="insight-texto"></p>
+</div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.animate-spin{animation:spin 1s linear infinite}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartPareto;
+function fmt(v){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);}
+async function cargar(){
+  const dias=document.getElementById('sel-dias').value;
+  document.getElementById('estado').textContent='Calculando…';
+  ['chart-loading','tabla-loading'].forEach(id=>{document.getElementById(id).style.display='flex';});
+  if(chartPareto)chartPareto.destroy();
+  document.getElementById('chartPareto').style.display='none';
+  document.getElementById('tabla-pareto').style.display='none';
+  document.getElementById('insight-panel').style.display='none';
+  try{
+    const r=await fetch(`/api/analytics/pareto?dias=${dias}`);
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    renderKPIs(d);renderGrafico(d);renderTabla(d);renderInsight(d);
+    document.getElementById('estado').textContent=`${d.total_platillos} ${t('par_platillos')} · ${d.periodo_dias} ${t('par_dias')}`;
+  }catch(e){
+    document.getElementById('estado').textContent='Error: '+e.message;
+    ['chart-loading','tabla-loading'].forEach(id=>{document.getElementById(id).innerHTML=`<span class="text-red-400 text-sm">${e.message}</span>`;});
+  }
+}
+function renderKPIs(d){
+  const n80=d.n_pareto,total=d.total_platillos;
+  const ing80=d.platillos.filter(p=>p.es_pareto).reduce((a,b)=>a+b.ingreso,0);
+  const kpis=[
+    {label:t('par_ing_total'),val:fmt(d.total_ingreso),icon:'bi-currency-dollar',color:'#d97706'},
+    {label:t('par_plat_clave'),val:`${n80} de ${total}`,icon:'bi-star-fill',color:'#f59e0b'},
+    {label:t('par_ing_top'),val:fmt(ing80),icon:'bi-graph-up-arrow',color:'#10b981'},
+    {label:t('par_pct_clave'),val:`${d.pct_platillos_clave}%`,icon:'bi-pie-chart-fill',color:'#6366f1'},
+  ];
+  document.getElementById('kpi-cards').innerHTML=kpis.map(k=>`
+    <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:${k.color}20;">
+        <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
+      </div>
+      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
+    </div>`).join('');
+}
+function renderGrafico(d){
+  document.getElementById('chart-loading').style.display='none';
+  document.getElementById('chartPareto').style.display='';
+  const top=d.platillos.slice(0,20);
+  chartPareto=new Chart(document.getElementById('chartPareto'),{
+    data:{labels:top.map(p=>p.platillo.length>16?p.platillo.slice(0,14)+'…':p.platillo),datasets:[
+      {type:'bar',label:'Ingreso ($)',data:top.map(p=>p.ingreso),backgroundColor:top.map(p=>p.es_pareto?'#f59e0b':'#d1d5db'),yAxisID:'y'},
+      {type:'line',label:'Acumulado (%)',data:top.map(p=>p.pct_acumulado),borderColor:'#dc2626',pointRadius:3,tension:0.3,yAxisID:'y2',fill:false},
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:12}},
+      tooltip:{callbacks:{label:ctx=>ctx.dataset.type==='bar'?` ${fmt(ctx.raw)}`:`${ctx.raw}%`}}},
+      scales:{y:{position:'left',ticks:{callback:v=>'$'+v.toFixed(0)}},
+        y2:{position:'right',max:100,ticks:{callback:v=>v+'%'},grid:{drawOnChartArea:false}},
+        x:{ticks:{font:{size:9},maxRotation:40,minRotation:30}}}}
+  });
+}
+let _paretoData = [];
+function renderTabla(d){
+  _paretoData = d.platillos;
+  document.getElementById('tabla-loading').style.display='none';
+  document.getElementById('tabla-pareto').style.display='';
+
+  const slider = document.getElementById('pareto-slider');
+  const wrap   = document.getElementById('pareto-slider-wrap');
+  const total  = _paretoData.length;
+  const def    = Math.min(10, total);
+  slider.max   = total;
+  slider.value = def;
+  document.getElementById('pareto-slider-max').textContent = total;
+  document.getElementById('pareto-slider-val').textContent = def;
+  wrap.style.display = total > 1 ? 'flex' : 'none';
+
+  slider.oninput = () => {
+    const n = parseInt(slider.value);
+    document.getElementById('pareto-slider-val').textContent = n;
+    _renderParetoRows(n);
+  };
+  _renderParetoRows(def);
+}
+function _renderParetoRows(n){
+  const dark = document.documentElement.classList.contains('dark');
+  const rows = _paretoData.slice(0, n);
+  const hoverBg   = dark ? '#2e231a' : '#f9fafb';
+  const paretoBg  = dark ? 'rgba(245,158,11,0.1)' : '#fffbeb';
+  const borderCol = dark ? '#3a2c20' : '#f3f4f6';
+  const textMain  = dark ? '#e8ddd4' : '#1f2937';
+  const textMut   = dark ? '#80685a' : '#9ca3af';
+  document.getElementById('tabla-pareto').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead><tr class="border-b text-left uppercase tracking-wide" style="border-color:${borderCol};color:${textMut};">
+        <th class="px-2 py-2">#</th><th class="px-2 py-2">${t('par_th_platillo')}</th>
+        <th class="px-2 py-2 text-right">${t('par_th_ingreso')}</th><th class="px-2 py-2 text-right">${t('par_th_acum')}</th>
+        <th class="px-2 py-2 text-center">${t('par_th_top')}</th>
+      </tr></thead>
+      <tbody>${rows.map(p=>`
+        <tr class="border-b" style="border-color:${borderCol};background:${p.es_pareto?paretoBg:'transparent'};"
+            onmouseover="this.style.background='${p.es_pareto?paretoBg:hoverBg}'"
+            onmouseout="this.style.background='${p.es_pareto?paretoBg:'transparent'}'">
+          <td class="px-2 py-1.5" style="color:${textMut};">${p.rank}</td>
+          <td class="px-2 py-1.5 font-medium" style="color:${textMain};">${p.platillo}</td>
+          <td class="px-2 py-1.5 text-right" style="color:${textMain};">${fmt(p.ingreso)}</td>
+          <td class="px-2 py-1.5 text-right"><span class="font-semibold" style="color:${p.pct_acumulado<=80?'#d97706':textMut};">${p.pct_acumulado}%</span></td>
+          <td class="px-2 py-1.5 text-center">${p.es_pareto?'<i class="bi bi-star-fill text-amber-400"></i>':'<span style="color:'+textMut+';">—</span>'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+function renderInsight(d){
+  const ing80=d.platillos.filter(p=>p.es_pareto).reduce((a,b)=>a+b.ingreso,0);
+  const pctIng=Math.round(ing80/d.total_ingreso*100);
+  const top3=d.platillos.slice(0,3).map(p=>p.platillo).join(', ');
+  document.getElementById('insight-texto').textContent=
+    `El ${d.pct_platillos_clave}% de los platillos (${d.n_pareto} de ${d.total_platillos}) genera el ${pctIng}% del ingreso. `+
+    `Recomiéndalos activamente: ${top3}.`;
+  document.getElementById('insight-panel').style.display='';
+}
+cargar();
+</script>
+{% endblock %}

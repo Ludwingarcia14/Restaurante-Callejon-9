@@ -85,6 +85,7 @@
         
         #notification-dropdown {
             width: 380px;
+            max-width: calc(100vw - 1rem);
             max-height: 500px;
             overflow-y: auto;
         }
@@ -125,168 +126,106 @@
             border-radius: 3px;
         }
         
-        /* ESTILOS PARA EL SIDEBAR */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            width: 260px;
-            background: #211913; /* espresso calido */
-            color: #f5ece4;
-            border-right: 1px solid #3a2c20;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 1000;
-            transition: transform 0.3s ease;
+        /* Sidebar responsive (mobile) */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
         }
+
         /* Texto legible sobre el espresso */
         .sidebar .sidebar-title,
         .sidebar .sidebar-user-name { color: #f7efe7; }
         .sidebar .sidebar-subtitle,
         .sidebar .sidebar-user-role { color: rgba(247,239,231,0.65) !important; }
         .sidebar .text-gray-400 { color: rgba(247,239,231,0.5) !important; }
-        .sidebar .border-gray-200,
         .sidebar .border-t { border-color: rgba(255,255,255,0.09) !important; }
-        
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
-            }
-        }
-        
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.09);
-            background: #1c150f;
-            flex-shrink: 0;
-        }
 
-        .sidebar-user {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.09);
-            flex-shrink: 0;
-        }
-        
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem 0;
-        }
-        
-        .sidebar-nav::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .sidebar-nav::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 3px;
-        }
-        
-        .sidebar-nav::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
-        }
-        
-        .sidebar-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid rgba(255,255,255,0.09);
-            flex-shrink: 0;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            color: rgba(247,239,231,0.72);
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover {
-            background: rgba(255,255,255,0.07);
-            color: #ffffff;
-        }
-
-        .nav-link.active {
-            background: color-mix(in srgb, var(--color-primary) 16%, transparent);
-            color: var(--color-primary);
-            border-right: 3px solid var(--color-primary);
-            font-weight: 600;
-        }
-        
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            min-height: 100vh;
-            background: #fdf8f3; /* crema cálido en vez de gris frío */
-        }
-        
-        @media (max-width: 1024px) {
-            .main-content {
-                margin-left: 0;
-            }
-        }
-        
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-        
-        @media (max-width: 1024px) {
-            .sidebar-overlay.active {
-                display: block;
-            }
-        }
-
-        /* ── Dark Mode ── */
+        /* ── Dark Mode — paleta cálida espresso ── */
+        html.dark { --color-dark: #f7efe7; --gray-800: #e8ddd4; --gray-900: #f7efe7; --gray-700: #c5b5a4; --gray-600: #a08878; }
         html.dark body { background-color: #18120e; color: #ece4dd; }
+        html.dark .text-black { color: #f7efe7 !important; }
+        html.dark [class~="text-[#0D0D0D]"] { color: #f7efe7 !important; }
+        /* Sidebar: ya es espresso, solo reforzar bordes */
         html.dark .sidebar { background: #211913 !important; border-color: #3a2c20 !important; }
-        html.dark .sidebar-header, html.dark .sidebar-user, html.dark .sidebar-footer { border-color: #334155 !important; }
+        html.dark .sidebar-header, html.dark .sidebar-user, html.dark .sidebar-footer { border-color: rgba(255,255,255,0.09) !important; }
         html.dark .nav-link { color: rgba(247,239,231,0.72); }
         html.dark .nav-link:hover { background: rgba(255,255,255,0.07); color: #ffffff; }
         html.dark .nav-link.active { background: color-mix(in srgb, var(--color-primary) 18%, transparent); color: var(--color-primary); border-color: var(--color-primary); }
-        html.dark .sidebar-user-name { color: #f1f5f9; }
+        html.dark .sidebar-user-name { color: #f7efe7; }
+        /* Fondos */
+        html.dark .main-content { background: #18120e !important; }
         html.dark .page-header { background: #241b14 !important; border-color: #3a2c20 !important; }
         html.dark .page-content { background: #18120e; }
         html.dark .bg-white { background-color: #241b14 !important; }
         html.dark .bg-gray-50 { background-color: #241b14 !important; }
         html.dark .bg-gray-100 { background-color: #18120e !important; }
         html.dark .bg-gray-200 { background-color: #3a2c20 !important; }
+        /* Tarjetas */
         html.dark .card { background: #241b14 !important; border-color: #3a2c20 !important; }
         html.dark .card-header { background: #1e1611 !important; border-color: #3a2c20 !important; }
-        html.dark .card-title { color: #f1f5f9 !important; }
-        html.dark .card-subtitle { color: #94a3b8 !important; }
-        html.dark .text-gray-800, html.dark .text-gray-900 { color: #f1f5f9 !important; }
-        html.dark .text-gray-700 { color: #e2e8f0 !important; }
-        html.dark .text-gray-600 { color: #cbd5e1 !important; }
-        html.dark .text-gray-500 { color: #94a3b8 !important; }
-        html.dark .text-gray-400 { color: #64748b !important; }
-        html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border { border-color: #334155 !important; }
+        html.dark .card-body { background: #241b14; }
+        html.dark .card-title { color: #f7efe7 !important; }
+        html.dark .card-subtitle { color: #a08878 !important; }
+        /* Texto — tonos crema cálidos, sin azul */
+        html.dark .text-gray-800, html.dark .text-gray-900 { color: #f7efe7 !important; }
+        html.dark .text-gray-700 { color: #e8ddd4 !important; }
+        html.dark .text-gray-600 { color: #c5b5a4 !important; }
+        html.dark .text-gray-500 { color: #a08878 !important; }
+        html.dark .text-gray-400 { color: #80685a !important; }
+        /* Bordes */
+        html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border { border-color: #3a2c20 !important; }
+        html.dark .border-t, html.dark .border-b, html.dark .border-r, html.dark .border-l { border-color: #3a2c20 !important; }
+        html.dark .divide-y > * { border-color: #3a2c20 !important; }
+        /* Sombras */
         html.dark .shadow-sm, html.dark .shadow-md { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
-        html.dark input, html.dark select, html.dark textarea { background-color: #334155 !important; color: #f1f5f9 !important; border-color: #475569 !important; }
-        html.dark input::placeholder { color: #94a3b8; }
-        html.dark table thead { background-color: #1e293b !important; }
-        html.dark table thead th { color: #94a3b8 !important; }
-        html.dark table tbody tr { border-color: #334155 !important; }
+        /* Formularios */
+        html.dark input, html.dark select, html.dark textarea { background-color: #3a2c20 !important; color: #f7efe7 !important; border-color: #4a3a2b !important; }
+        html.dark input::placeholder, html.dark textarea::placeholder { color: #80685a; }
+        html.dark input:focus, html.dark select:focus, html.dark textarea:focus { border-color: var(--color-primary) !important; outline: none; box-shadow: 0 0 0 2px rgba(242,145,61,0.2); }
+        /* Tablas */
+        html.dark table thead { background-color: #1e1611 !important; }
+        html.dark table thead th { color: #a08878 !important; border-color: #3a2c20 !important; }
+        html.dark table tbody tr { border-color: #3a2c20 !important; }
         html.dark table tbody tr:hover { background-color: #2e231a !important; }
+        html.dark table tbody td { color: #e8ddd4; border-color: #3a2c20 !important; }
+        /* Botones secundarios y outline en modo oscuro */
+        html.dark .btn-secondary { background: rgba(242,145,61,0.1) !important; border-color: rgba(242,145,61,0.35) !important; color: #F2913D !important; }
+        html.dark .btn-secondary:hover { background: rgba(242,145,61,0.2) !important; border-color: var(--color-primary) !important; }
+        html.dark .btn-outline { border-color: var(--color-primary) !important; color: var(--color-primary) !important; }
+        /* Notificaciones */
+        html.dark #notification-dropdown { background: #241b14 !important; border-color: #3a2c20 !important; }
+        html.dark .notification-item { border-color: #3a2c20 !important; color: #e8ddd4; }
+        html.dark .notification-item:hover { background-color: #2e231a !important; }
+        html.dark .notification-item.unread { background-color: rgba(242,145,61,0.08) !important; border-left-color: var(--color-primary) !important; }
+        /* Estados de color Tailwind en dark mode */
+        html.dark .bg-red-50   { background-color: #2a1515 !important; }
+        html.dark .bg-red-100  { background-color: #311a1a !important; }
+        html.dark .bg-red-200  { background-color: #3d2020 !important; }
+        html.dark .text-red-700, html.dark .text-red-600 { color: #f87171 !important; }
+        html.dark .text-red-500 { color: #ef4444 !important; }
+        html.dark .border-red-500 { border-color: rgba(239,68,68,0.6) !important; }
+        html.dark .bg-green-50  { background-color: #12201a !important; }
+        html.dark .bg-green-100 { background-color: #162a1e !important; }
+        html.dark .text-green-700, html.dark .text-green-600 { color: #4ade80 !important; }
+        html.dark .border-green-400, html.dark .border-green-500 { border-color: rgba(74,222,128,0.55) !important; }
+        html.dark .bg-blue-50   { background-color: #111c2a !important; }
+        html.dark .bg-blue-100  { background-color: #152033 !important; }
+        html.dark .text-blue-700, html.dark .text-blue-600 { color: #60a5fa !important; }
+        html.dark .bg-yellow-50  { background-color: #201a0e !important; }
+        html.dark .bg-yellow-100 { background-color: #282010 !important; }
+        html.dark .bg-orange-50  { background-color: #241709 !important; }
+        html.dark .bg-orange-100 { background-color: #2e1d0b !important; }
+        html.dark .bg-purple-50  { background-color: #1a1229 !important; }
+        html.dark .bg-purple-100 { background-color: #201531 !important; }
     </style>
 
     <!-- Escala de marca derivada del color primario (alimenta utilidades brand-*/orange-*) -->
@@ -337,7 +276,7 @@
                      alt="{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }}"
                      class="sidebar-logo">
                 <h2 class="sidebar-title">{{ tenant.nombre if tenant and tenant.nombre else 'Callejón 9' }}</h2>
-                <p class="sidebar-subtitle">Sistema de Restaurante</p>
+                <p class="sidebar-subtitle" data-i18n="sys_subtitle">Sistema de Restaurante</p>
             </div>
             
             <!-- Info del Usuario -->
@@ -358,19 +297,23 @@
                 <div class="sidebar-user-role">
                     {% if session.usuario_rol == '1' %}
                         <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-shield-check"></i> Administrador
+                            <i class="bi bi-shield-check"></i> <span data-i18n="role_admin">Administrador</span>
                         </span>
                     {% elif session.usuario_rol == '2' %}
                         <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-person-badge"></i> Mesero
+                            <i class="bi bi-person-badge"></i> <span data-i18n="role_mesero">Mesero</span>
                         </span>
                     {% elif session.usuario_rol == '3' %}
                         <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-egg-fried"></i> Cocina
+                            <i class="bi bi-egg-fried"></i> <span data-i18n="role_cocina">Cocina</span>
                         </span>
                     {% elif session.usuario_rol == '4' %}
                         <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-box-seam"></i> Inventario
+                            <i class="bi bi-box-seam"></i> <span data-i18n="role_inventario">Inventario</span>
+                        </span>
+                    {% elif session.usuario_rol == '5' %}
+                        <span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">
+                            <i class="bi bi-bicycle"></i> Repartidor
                         </span>
                     {% endif %}
                 </div>
@@ -378,6 +321,7 @@
             
             <!-- Navegacion Principal -->
             <nav class="sidebar-nav">
+                {% if session.usuario_rol == '1' %}
                 <!-- Dashboard -->
                 <a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link" id="nav-dashboard">
                     <i class="bi bi-speedometer2 text-lg"></i>
@@ -402,6 +346,38 @@
                     <span>Reportes y Analítica</span>
                 </a>
 
+                <!-- Analytics -->
+                <a href="{{ url_for('routes.analytics_index') }}" class="nav-link" id="nav-analytics">
+                    <i class="bi bi-bar-chart-line text-lg"></i>
+                    <span>Analytics</span>
+                </a>
+
+                <!-- Delivery -->
+                <a href="{{ url_for('routes.admin_delivery_panel') }}" class="nav-link" id="nav-delivery">
+                    <i class="bi bi-truck text-lg"></i>
+                    <span>Delivery</span>
+                </a>
+
+                <!-- Wearables -->
+                <a href="{{ url_for('routes.admin_repartidores') }}" class="nav-link" id="nav-repartidores">
+                    <i class="bi bi-smartwatch text-lg"></i>
+                    <span>Wearables</span>
+                </a>
+                <a href="{{ url_for('routes.admin_monitor_sensores') }}" class="nav-link" id="nav-monitor">
+                    <i class="bi bi-broadcast text-lg"></i>
+                    <span>Monitor Tiempo Real</span>
+                </a>
+                <a href="{{ url_for('routes.admin_notificar_vista') }}" class="nav-link" id="nav-notificar">
+                    <i class="bi bi-send text-lg"></i>
+                    <span>Notificar Dispositivos</span>
+                </a>
+                <a href="{{ url_for('routes.admin_eventos_historial') }}" class="nav-link" id="nav-eventos">
+                    <i class="bi bi-journal-text text-lg"></i>
+                    <span>Historial Eventos</span>
+                </a>
+                {% endif %}
+
+
                 <!-- Configuración -->
                 <a href="{{ url_for('routes.settings') }}" class="nav-link" id="nav-settings">
                     <i class="bi bi-gear text-lg"></i>
@@ -409,24 +385,24 @@
                 </a>
 
                 {% block navigation %}{% endblock %}
-                
+
                 <!--  ADMINISTRACION (Solo para Rol 1) -->
                 {% if session.usuario_rol == '1' %}
                 <div class="mt-4 pt-4 border-t border-gray-200">
-                    <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <p class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider" data-i18n="section_admin">
                         Administración
                     </p>
-                    
-                    <a href="{{ url_for('routes.admin_backup_view') }}" 
+
+                    <a href="{{ url_for('routes.admin_backup_view') }}"
                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
                         <i class="bi bi-shield-lock text-lg"></i>
-                        <span>Respaldos y Seguridad</span>
+                        <span data-i18n="nav_backup">Respaldos y Seguridad</span>
                     </a>
-                    
-                    <a href="{{ url_for('routes.admin_empleados_lista') }}" 
+
+                    <a href="{{ url_for('routes.admin_empleados_lista') }}"
                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition">
                         <i class="bi bi-people text-lg"></i>
-                        <span>Gestion de Empleados</span>
+                        <span data-i18n="nav_empleados">Gestion de Empleados</span>
                     </a>
                 </div>
                 {% endif %}
@@ -434,10 +410,18 @@
             
             <!-- Footer del Sidebar -->
             <div class="sidebar-footer">
-                <a href="{{ url_for('routes.logout') }}" 
+                <!-- Toggle idioma (solo visible en móvil, sm+ lo muestra en el header) -->
+                <button onclick="i18nToggle()" class="lang-toggle-btn sm:hidden w-full flex items-center justify-center gap-2 mb-3 py-2 rounded-lg hover:bg-gray-100 transition"
+                        style="border:1.5px solid #e5e7eb;font-size:13px;color:#374151;background:transparent;cursor:pointer;">
+                    <span data-lang-es style="font-weight:700">ES</span>
+                    <span style="opacity:.3">/</span>
+                    <span data-lang-en style="opacity:.42">EN</span>
+                    <span class="text-xs text-gray-400 ml-1" data-i18n="lang_lbl">Idioma</span>
+                </button>
+                <a href="{{ url_for('routes.logout') }}"
                    class="btn btn-error w-full flex items-center justify-center gap-2">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar Sesión</span>
+                    <span data-i18n="btn_logout">Cerrar Sesión</span>
                 </a>
             </div>
             
@@ -450,20 +434,29 @@
             
             <!-- Header de la Pagina -->
             <header class="page-header">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="page-title">{% block page_title %}Panel de Control{% endblock %}</h1>
-                        <p class="page-subtitle">{% block page_subtitle %}Bienvenido al sistema{% endblock %}</p>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <h1 class="page-title truncate">{% block page_title %}Panel de Control{% endblock %}</h1>
+                        <p class="page-subtitle truncate">{% block page_subtitle %}Bienvenido al sistema{% endblock %}</p>
                     </div>
-                    
+
                     <!-- Controles del Header -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                         <!-- Boton de Menu Movil -->
                         <button id="sidebarToggle" 
                                 class="lg:hidden p-2 rounded-lg hover:bg-gray-200 transition">
                             <i class="bi bi-list text-2xl"></i>
                         </button>
                         
+                        <!-- Toggle Idioma (oculto en móvil, visible sm+) -->
+                        <button onclick="i18nToggle()" class="lang-toggle-btn hidden sm:flex items-center rounded-lg hover:bg-gray-200 transition"
+                                style="gap:2px;padding:4px 10px;border:1.5px solid #e5e7eb;border-radius:20px;font-size:11px;color:#374151;background:transparent;cursor:pointer;"
+                                title="Cambiar idioma / Switch language">
+                            <span data-lang-es style="font-weight:700">ES</span>
+                            <span style="opacity:.3;margin:0 1px">/</span>
+                            <span data-lang-en style="opacity:.42">EN</span>
+                        </button>
+
                         <!-- Toggle Modo Oscuro -->
                         <button onclick="toggleDarkMode()" id="dark-mode-btn"
                                 class="p-2 rounded-lg hover:bg-gray-200 transition text-gray-600"
@@ -484,9 +477,10 @@
                             <div class="navbar-dropdown is-right hidden absolute right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50" id="notification-dropdown">
                                 <!-- Header -->
                                 <div class="bg-gray-50 px-4 py-3 border-b flex items-center justify-between rounded-t-lg">
-                                    <h3 class="text-sm font-semibold text-gray-700">Notificaciones</h3>
-                                    <button onclick="marcarTodasLeidas()" 
-                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                    <h3 class="text-sm font-semibold text-gray-700" data-i18n="notif_title">Notificaciones</h3>
+                                    <button onclick="marcarTodasLeidas()"
+                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                            data-i18n="notif_clear">
                                         Limpiar todo
                                     </button>
                                 </div>
@@ -494,7 +488,7 @@
                                 <div id="notification-list">
                                     <div class="px-4 py-8 text-center" id="no-notifications">
                                         <i class="bi bi-bell-slash text-gray-300 text-3xl mb-2"></i>
-                                        <p class="text-sm text-gray-500">No hay notificaciones nuevas</p>
+                                        <p class="text-sm text-gray-500" data-i18n="notif_empty">No hay notificaciones nuevas</p>
                                     </div>
                                 </div>
                             </div>
@@ -533,6 +527,9 @@
          SCRIPTS
          =================================== -->
     
+    <!-- i18n -->
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     
@@ -561,10 +558,11 @@
             toggleSidebar();
         });
         sidebarOverlay?.addEventListener('click', toggleSidebar);
-        
+
         // Cerrar sidebar al hacer clic fuera en movil
         document.getElementById('mainContent')?.addEventListener('click', function(e) {
             if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
                 if (sidebar.classList.contains('active')) {
                     sidebar.classList.remove('active');
                     appContainer.classList.remove('sidebar-active');
@@ -573,6 +571,44 @@
             }
         });
         
+        // Tema de gráficas Chart.js
+        function applyChartTheme(isDark) {
+            if (typeof Chart === 'undefined') return;
+            const text   = isDark ? '#a08878' : '#6b7280';
+            const grid   = isDark ? 'rgba(58,44,32,0.5)' : 'rgba(229,231,235,0.8)';
+            const ttBg   = isDark ? '#241b14' : 'rgba(255,255,255,0.97)';
+            const ttTitle= isDark ? '#f7efe7' : '#111827';
+            const ttBody = isDark ? '#c5b5a4' : '#374151';
+            const ttBord = isDark ? '#3a2c20' : '#e5e7eb';
+            // Defaults globales (aplican a gráficas futuras también)
+            Chart.defaults.color = text;
+            Chart.defaults.borderColor = grid;
+            Chart.defaults.plugins.tooltip.backgroundColor = ttBg;
+            Chart.defaults.plugins.tooltip.titleColor = ttTitle;
+            Chart.defaults.plugins.tooltip.bodyColor = ttBody;
+            Chart.defaults.plugins.tooltip.borderColor = ttBord;
+            Chart.defaults.plugins.tooltip.borderWidth = 1;
+            // Defaults de ejes para gráficas creadas async (post-fetch)
+            ['linear','logarithmic','category','time','timeseries','radialLinear'].forEach(t => {
+                const sc = Chart.defaults.scales?.[t];
+                if (!sc) return;
+                sc.ticks = sc.ticks || {};  sc.ticks.color = text;
+                sc.grid  = sc.grid  || {};  sc.grid.color  = grid;
+            });
+            // Actualizar instancias existentes en pantalla
+            Object.values(Chart.instances || {}).forEach(c => {
+                if (c.options.scales)
+                    Object.values(c.options.scales).forEach(s => {
+                        if (s.ticks) s.ticks.color = text;
+                        if (s.grid)  s.grid.color  = grid;
+                    });
+                const p = c.options.plugins;
+                if (p?.legend?.labels) p.legend.labels.color = text;
+                if (p?.tooltip) Object.assign(p.tooltip, { backgroundColor:ttBg, titleColor:ttTitle, bodyColor:ttBody, borderColor:ttBord, borderWidth:1 });
+                c.update('none');
+            });
+        }
+
         // Toggle Dark Mode
         function toggleDarkMode() {
             const html = document.documentElement;
@@ -581,6 +617,7 @@
             document.getElementById('dark-mode-icon').className = isDark
                 ? 'bi bi-sun-fill text-xl'
                 : 'bi bi-moon-stars-fill text-xl';
+            applyChartTheme(isDark);
         }
 
         // Apply saved theme immediately
@@ -595,6 +632,10 @@
                 const icon = document.getElementById('dark-mode-icon');
                 if (icon) icon.className = 'bi bi-sun-fill text-xl';
             }
+        });
+        // Aplicar tema de gráficas tras cargar todo (charts se crean en extra_js)
+        window.addEventListener('load', function() {
+            applyChartTheme(document.documentElement.classList.contains('dark'));
         });
         
         // Marcar link activo en navegacion
@@ -668,11 +709,14 @@
         }
     </script>
     
+    <!-- Modales (fuera de main-content para evitar stacking context) -->
+    {% block modals %}{% endblock %}
+
     <!-- Scripts Adicionales -->
     {% block extra_js %}{% endblock %}
 
     <!-- Barra de navegación inferior (móvil) -->
     {% block bottom_nav %}{% endblock %}
-    
+
 </body>
 </html>

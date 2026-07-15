@@ -101,13 +101,53 @@
         /* ── Notificaciones ── */
         @keyframes pulse-badge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
         .notification-badge { animation: pulse-badge 2s infinite; }
-        #notification-dropdown { width: 380px; max-height: 500px; overflow-y: auto; }
+        #notification-dropdown { width: 380px; max-width: calc(100vw - 1rem); max-height: 500px; overflow-y: auto; }
         #notification-dropdown::-webkit-scrollbar       { width: 6px; }
         #notification-dropdown::-webkit-scrollbar-track { background: #f1f1f1; }
         #notification-dropdown::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
         .notification-item { padding: 0.75rem 1rem; border-bottom: 1px solid #f5f5f5; transition: background-color 0.2s; cursor: pointer; }
         .notification-item:hover  { background-color: #f9fafb; }
         .notification-item.unread { background-color: #eff6ff; border-left: 3px solid #3b82f6; }
+
+        /* ── Mobile Sidebar ── */
+        .inv-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 18;
+        }
+        .inv-overlay.active { display: block; }
+
+        @media (max-width: 1023px) {
+            aside {
+                transform: translateX(-100%) !important;
+                transition: transform 0.3s ease;
+            }
+            aside.active {
+                transform: translateX(0) !important;
+            }
+            main {
+                margin-left: 0 !important;
+            }
+            header {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+        }
+        @media (max-width: 640px) {
+            .inv-page-content { padding: 1rem !important; }
+            header { height: auto !important; min-height: 3.5rem; padding-top: 0.625rem; padding-bottom: 0.625rem; }
+            header h1 { font-size: 1.0625rem !important; }
+            header p  { font-size: 0.75rem !important; display: -webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+            #notification-dropdown {
+                position: fixed !important;
+                right: 0.5rem !important;
+                left: 0.5rem !important;
+                width: auto !important;
+                top: 3.75rem !important;
+            }
+        }
 
         /* ── Dark Mode (cálido, coherente con el admin) ── */
         html.dark body { background-color: #18120e; color: #ece4dd; }
@@ -127,6 +167,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-gray-100 min-h-screen">
+
+<div class="inv-overlay" id="invOverlay"></div>
 
 <div class="flex min-h-screen">
 
@@ -193,7 +235,7 @@
                 <p class="text-xs lg:text-sm text-gray-600 truncate">{% block page_subtitle %}Gestión de almacén e insumos{% endblock %}</p>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 flex-shrink-0">
                 <!-- Botón tema -->
                 <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 transition">
                     <i class="bi bi-moon text-xl text-gray-600" id="theme-icon"></i>
@@ -254,12 +296,48 @@
 <script src="{{ url_for('static', filename='js/notificaciones_header.js') }}"></script>
 
 <script>
+    // ── Tema de gráficas Chart.js ────────────────────────────
+    function applyChartTheme(isDark) {
+        if (typeof Chart === 'undefined') return;
+        const text   = isDark ? '#a08878' : '#6b7280';
+        const grid   = isDark ? 'rgba(58,44,32,0.5)' : 'rgba(229,231,235,0.8)';
+        const ttBg   = isDark ? '#241b14' : 'rgba(255,255,255,0.97)';
+        const ttTitle= isDark ? '#f7efe7' : '#111827';
+        const ttBody = isDark ? '#c5b5a4' : '#374151';
+        const ttBord = isDark ? '#3a2c20' : '#e5e7eb';
+        Chart.defaults.color = text;
+        Chart.defaults.borderColor = grid;
+        Chart.defaults.plugins.tooltip.backgroundColor = ttBg;
+        Chart.defaults.plugins.tooltip.titleColor = ttTitle;
+        Chart.defaults.plugins.tooltip.bodyColor = ttBody;
+        Chart.defaults.plugins.tooltip.borderColor = ttBord;
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        ['linear','logarithmic','category','time','timeseries','radialLinear'].forEach(t => {
+            const sc = Chart.defaults.scales?.[t];
+            if (!sc) return;
+            sc.ticks = sc.ticks || {};  sc.ticks.color = text;
+            sc.grid  = sc.grid  || {};  sc.grid.color  = grid;
+        });
+        Object.values(Chart.instances || {}).forEach(c => {
+            if (c.options.scales)
+                Object.values(c.options.scales).forEach(s => {
+                    if (s.ticks) s.ticks.color = text;
+                    if (s.grid)  s.grid.color  = grid;
+                });
+            const p = c.options.plugins;
+            if (p?.legend?.labels) p.legend.labels.color = text;
+            if (p?.tooltip) Object.assign(p.tooltip, { backgroundColor:ttBg, titleColor:ttTitle, bodyColor:ttBody, borderColor:ttBord, borderWidth:1 });
+            c.update('none');
+        });
+    }
+
     // ── Tema (sin backend) ───────────────────────────────────
     function toggleTheme() {
         const isDark = document.documentElement.classList.toggle('dark');
         const icon   = document.getElementById('theme-icon');
         if (icon) icon.className = isDark ? 'bi bi-sun text-xl text-gray-600' : 'bi bi-moon text-xl text-gray-600';
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        applyChartTheme(isDark);
     }
     (function() {
         if (localStorage.getItem('theme') === 'dark') {
@@ -270,6 +348,9 @@
             });
         }
     })();
+    window.addEventListener('load', function() {
+        applyChartTheme(document.documentElement.classList.contains('dark'));
+    });
 
     // ── Dropdown notificaciones ──────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
@@ -281,6 +362,31 @@
         });
         document.addEventListener('click', function () {
             dropdown.classList.add('hidden');
+        });
+    });
+
+    // ── Sidebar móvil ────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggle  = document.getElementById('invSidebarToggle');
+        const overlay = document.getElementById('invOverlay');
+        const sidebar = document.getElementById('invSidebar');
+
+        function openSidebar()  { sidebar.classList.add('active');    overlay.classList.add('active'); }
+        function closeSidebar() { sidebar.classList.remove('active'); overlay.classList.remove('active'); }
+        function toggleSidebar(){ sidebar.classList.contains('active') ? closeSidebar() : openSidebar(); }
+
+        toggle?.addEventListener('click',  function(e){ e.stopPropagation(); toggleSidebar(); });
+        overlay?.addEventListener('click', closeSidebar);
+
+        document.querySelector('main')?.addEventListener('click', function() {
+            if (window.innerWidth < 1024 && sidebar.classList.contains('active')) closeSidebar();
+        });
+
+        // Cerrar sidebar al navegar (en móvil el click en un nav-link cambia de página)
+        document.querySelectorAll('#invSidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 1024) closeSidebar();
+            });
         });
     });
 

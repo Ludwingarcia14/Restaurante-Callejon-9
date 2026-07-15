@@ -81,7 +81,7 @@
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
             <i class="bi bi-arrow-left-right text-green-500"></i>
-            Movimientos del Último Mes
+            Historial de Movimientos (últimos 30 días)
         </h3>
         <canvas id="chartMovimientos" style="max-height: 240px;"></canvas>
     </div>
@@ -150,25 +150,24 @@ new Chart(document.getElementById('chartCategorias'), {
     }
 });
 
-// Chart 3: Barras — Movimientos del mes por tipo
+// Chart 3: Líneas — Historial de movimientos por día
 new Chart(document.getElementById('chartMovimientos'), {
-    type: 'bar',
+    type: 'line',
     data: {
         labels: chartMovData.labels,
-        datasets: [{
-            label: 'Movimientos',
-            data: chartMovData.data,
-            backgroundColor: chartMovData.colors.map(c => c + 'cc'),
-            borderColor: chartMovData.colors,
-            borderWidth: 1,
-            borderRadius: 6
-        }]
+        datasets: [
+            { label: 'Entradas',  data: chartMovData.entrada, borderColor: '#22c55e', backgroundColor: '#22c55e22', tension: 0.3, fill: true, pointRadius: 3 },
+            { label: 'Salidas',   data: chartMovData.salida,  borderColor: '#f97316', backgroundColor: '#f9731622', tension: 0.3, fill: true, pointRadius: 3 },
+            { label: 'Mermas',    data: chartMovData.merma,   borderColor: '#ef4444', backgroundColor: '#ef444422', tension: 0.3, fill: true, pointRadius: 3 },
+            { label: 'Ajustes',   data: chartMovData.ajuste,  borderColor: '#3b82f6', backgroundColor: '#3b82f622', tension: 0.3, fill: true, pointRadius: 3 },
+        ]
     },
     options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
         scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { ticks: { maxTicksLimit: 10 } }
         }
     }
 });

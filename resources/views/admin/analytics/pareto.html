@@ -1,0 +1,230 @@
+{% extends "layout/layout_base.html" %}
+{% block title %}Análisis Pareto 80/20{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-7xl mx-auto">
+
+  <!-- Cabecera -->
+  <div class="mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-bar-chart-steps text-2xl"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold mb-1">Análisis Pareto 80/20 — Rentabilidad de Platillos</h2>
+        <p class="text-sm opacity-85">Identifica qué platillos generan el 80% de los ingresos. Redirige el menú y la operación hacia los más rentables.</p>
+      </div>
+      <a href="{{ url_for('routes.analytics_index') }}" class="ml-auto text-white opacity-70 hover:opacity-100 text-sm flex items-center gap-1">
+        <i class="bi bi-arrow-left"></i> Analytics
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-gray-500 uppercase">Período</label>
+      <select id="sel-dias" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+        <option value="30">Últimos 30 días</option>
+        <option value="60">Últimos 60 días</option>
+        <option value="90" selected>Últimos 90 días</option>
+        <option value="180">Últimos 6 meses</option>
+      </select>
+    </div>
+    <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#d97706;">
+      <i class="bi bi-arrow-clockwise mr-1"></i>Actualizar
+    </button>
+    <span id="estado" class="text-xs text-gray-400"></span>
+  </div>
+
+  <!-- KPI cards -->
+  <div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
+      <i class="bi bi-arrow-repeat animate-spin"></i> Calculando…
+    </div>
+  </div>
+
+  <!-- Gráfico Pareto + tabla -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <i class="bi bi-bar-chart-fill text-amber-500"></i> Curva de Pareto
+        <span class="text-xs font-normal text-gray-400">Barras = ingreso · Línea = acumulado %</span>
+      </h3>
+      <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+        <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
+      </div>
+      <canvas id="chartPareto" style="display:none; max-height:320px;"></canvas>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6 overflow-auto">
+      <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <i class="bi bi-table text-amber-500"></i> Detalle por Platillo
+      </h3>
+      <div id="tabla-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
+        <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
+      </div>
+      <div id="tabla-pareto" class="overflow-x-auto" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Insight -->
+  <div id="insight-panel" style="display:none;"
+       class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800">
+    <p class="font-semibold mb-1"><i class="bi bi-lightbulb mr-1 text-amber-500"></i>Interpretación del análisis</p>
+    <p id="insight-texto"></p>
+  </div>
+
+</div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.animate-spin{animation:spin 1s linear infinite}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartPareto;
+
+function fmt(v){return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);}
+
+async function cargar(){
+  const dias = document.getElementById('sel-dias').value;
+  document.getElementById('estado').textContent = 'Calculando…';
+  ['chart-loading','tabla-loading'].forEach(id=>{
+    document.getElementById(id).style.display='flex';
+  });
+  if(chartPareto) chartPareto.destroy();
+  document.getElementById('chartPareto').style.display='none';
+  document.getElementById('tabla-pareto').style.display='none';
+  document.getElementById('insight-panel').style.display='none';
+
+  try{
+    const r = await fetch(`/api/analytics/pareto?dias=${dias}`);
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+
+    renderKPIs(d);
+    renderGrafico(d);
+    renderTabla(d);
+    renderInsight(d);
+    document.getElementById('estado').textContent = `${d.total_platillos} platillos · ${d.periodo_dias} días`;
+  }catch(e){
+    document.getElementById('estado').textContent = 'Error: '+e.message;
+    ['chart-loading','tabla-loading'].forEach(id=>{
+      document.getElementById(id).innerHTML=`<span class="text-red-400 text-sm">${e.message}</span>`;
+    });
+  }
+}
+
+function renderKPIs(d){
+  const n80 = d.n_pareto;
+  const total = d.total_platillos;
+  const ing80 = d.platillos.filter(p=>p.es_pareto).reduce((a,b)=>a+b.ingreso,0);
+  const kpis = [
+    {label:'Ingreso Total',val:fmt(d.total_ingreso),icon:'bi-currency-dollar',color:'#d97706'},
+    {label:'Platillos Clave (80%)',val:`${n80} de ${total}`,icon:'bi-star-fill',color:'#f59e0b'},
+    {label:'Ingreso del Top 20%',val:fmt(ing80),icon:'bi-graph-up-arrow',color:'#10b981'},
+    {label:'% Platillos clave',val:`${d.pct_platillos_clave}%`,icon:'bi-pie-chart-fill',color:'#6366f1'},
+  ];
+  document.getElementById('kpi-cards').innerHTML = kpis.map(k=>`
+    <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+           style="background:${k.color}20;">
+        <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500">${k.label}</p>
+        <p class="text-base font-bold text-gray-800">${k.val}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderGrafico(d){
+  document.getElementById('chart-loading').style.display='none';
+  document.getElementById('chartPareto').style.display='';
+
+  const top = d.platillos.slice(0,20);
+  const labels  = top.map(p=>p.platillo.length>18?p.platillo.slice(0,16)+'…':p.platillo);
+  const ingresos= top.map(p=>p.ingreso);
+  const acumulado=top.map(p=>p.pct_acumulado);
+  const colores  = top.map(p=>p.es_pareto?'#f59e0b':'#d1d5db');
+
+  chartPareto = new Chart(document.getElementById('chartPareto'),{
+    data:{
+      labels,
+      datasets:[
+        {type:'bar',label:'Ingreso ($)',data:ingresos,backgroundColor:colores,yAxisID:'y'},
+        {type:'line',label:'Acumulado (%)',data:acumulado,borderColor:'#dc2626',pointRadius:3,
+         tension:0.3,yAxisID:'y2',fill:false},
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:12}},
+        tooltip:{callbacks:{
+          label:ctx=>ctx.dataset.type==='bar'?` ${fmt(ctx.raw)}`:`${ctx.raw}%`
+        }}
+      },
+      scales:{
+        y:{position:'left',ticks:{callback:v=>'$'+v.toFixed(0)}},
+        y2:{position:'right',max:100,ticks:{callback:v=>v+'%'},grid:{drawOnChartArea:false}},
+        x:{ticks:{font:{size:10},maxRotation:40,minRotation:30}},
+      }
+    }
+  });
+}
+
+function renderTabla(d){
+  document.getElementById('tabla-loading').style.display='none';
+  document.getElementById('tabla-pareto').style.display='';
+  document.getElementById('tabla-pareto').innerHTML=`
+    <table class="w-full text-xs border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200 text-left text-gray-500 uppercase tracking-wide">
+          <th class="px-2 py-2">#</th>
+          <th class="px-2 py-2">Platillo</th>
+          <th class="px-2 py-2 text-right">Ingreso</th>
+          <th class="px-2 py-2 text-right">% Indiv.</th>
+          <th class="px-2 py-2 text-right">% Acum.</th>
+          <th class="px-2 py-2 text-center">Pareto</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${d.platillos.map(p=>`
+          <tr class="hover:bg-gray-50 border-b border-gray-100 ${p.es_pareto?'bg-amber-50':''}">
+            <td class="px-2 py-1.5 text-gray-400">${p.rank}</td>
+            <td class="px-2 py-1.5 font-medium text-gray-800">${p.platillo}</td>
+            <td class="px-2 py-1.5 text-right">${fmt(p.ingreso)}</td>
+            <td class="px-2 py-1.5 text-right text-gray-500">${p.pct_ingreso}%</td>
+            <td class="px-2 py-1.5 text-right">
+              <span class="font-semibold ${p.pct_acumulado<=80?'text-amber-600':'text-gray-400'}">${p.pct_acumulado}%</span>
+            </td>
+            <td class="px-2 py-1.5 text-center">
+              ${p.es_pareto?'<i class="bi bi-star-fill text-amber-400"></i>':'<span class="text-gray-300">—</span>'}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderInsight(d){
+  const n = d.n_pareto;
+  const total = d.total_platillos;
+  const pct = d.pct_platillos_clave;
+  const ing80 = d.platillos.filter(p=>p.es_pareto).reduce((a,b)=>a+b.ingreso,0);
+  const pctIng = total>0?Math.round(ing80/d.total_ingreso*100):0;
+  const top3 = d.platillos.slice(0,3).map(p=>p.platillo).join(', ');
+  document.getElementById('insight-texto').textContent =
+    `El ${pct}% de los platillos (${n} de ${total}) generan el ${pctIng}% del ingreso total (${fmt(d.total_ingreso)}). ` +
+    `Los 3 más rentables son: ${top3}. ` +
+    `Considera priorizar estos platillos en el menú visual, en las sugerencias de los meseros y en el inventario de ingredientes.`;
+  document.getElementById('insight-panel').style.display='';
+}
+
+cargar();
+</script>
+{% endblock %}

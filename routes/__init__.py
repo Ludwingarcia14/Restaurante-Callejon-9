@@ -6,7 +6,6 @@ from flask import Blueprint
 
 routes_bp = Blueprint("routes", __name__)
 
-# Importar todos los módulos de rutas (registran sus rutas en routes_bp)
 from . import auth_routes          # noqa: F401, E402
 from . import admin_routes         # noqa: F401, E402
 from . import mesero_routes        # noqa: F401, E402
@@ -17,8 +16,10 @@ from . import notificaciones_routes # noqa: F401, E402
 from . import settings_routes      # noqa: F401, E402
 from . import pagos_routes         # noqa: F401, E402
 import routes.cliente_routes
+from . import analytics_routes     # noqa: F401, E402
+from . import repartidor_routes    # noqa: F401, E402
+
 
 def register_reports_routes(app):
-    """Registra las rutas de reportes en la aplicación"""
     from controllers.reports.reports_controller import reports_bp
     app.register_blueprint(reports_bp)

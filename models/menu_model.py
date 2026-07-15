@@ -111,7 +111,8 @@ class Platillo:
     @classmethod
     def find_disponibles(cls):
         """Obtiene solo platillos disponibles"""
-        platillos = list(cls.collection.find({"disponible": True}).sort('nombre', 1))
+        campos = {"nombre": 1, "descripcion": 1, "categoria": 1, "precio": 1, "imagen": 1, "disponible": 1}
+        platillos = list(cls.collection.find({"disponible": True}, campos).sort('nombre', 1))
         
         for platillo in platillos:
             platillo['categoria_nombre'] = cls.NOMBRE_CATEGORIAS.get(
@@ -190,7 +191,7 @@ class Platillo:
         return result.deleted_count > 0
     
     @classmethod
-    def buscar(cls, termino):
+    def buscar(cls, termino, solo_disponibles=True):
         """Busca platillos por nombre o descripción"""
         query = {
             "$or": [
@@ -198,6 +199,8 @@ class Platillo:
                 {"descripcion": {"$regex": termino, "$options": "i"}}
             ]
         }
+        if solo_disponibles:
+            query["disponible"] = True
         platillos = list(cls.collection.find(query).sort('nombre', 1))
         
         for platillo in platillos:

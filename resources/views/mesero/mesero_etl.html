@@ -1,0 +1,962 @@
+﻿{% extends "layout/layout_mesero.html" %}
+
+{% block title %}Proceso de Datos — ETL{% endblock %}
+{% block page_title %}Proceso de Datos{% endblock %}
+{% block page_subtitle %}ETL — Cómo se extraen, transforman y cargan los datos del restaurante{% endblock %}
+
+{% block navigation %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const sec = document.querySelector('.sidebar-nav .border-t');
+    if (sec) sec.style.display = 'none';
+});
+</script>
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
+</a>
+<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
+    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
+</a>
+<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
+    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
+</a>
+<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
+    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
+</a>
+<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
+    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
+</a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
+    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
+    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
+    <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>
+</a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
+    <i class="bi bi-share text-lg"></i><span>Asociación</span>
+</a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
+    <i class="bi bi-graph-up text-lg"></i><span>Predicción</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- CABECERA -->
+<div class="mb-8 p-6 rounded-2xl text-white"
+     style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+    <div class="flex items-start gap-4">
+        <div class="w-14 h-14 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-arrow-left-right text-3xl"></i>
+        </div>
+        <div>
+            <h2 class="text-xl font-bold mb-1">ETL — Extract, Transform, Load</h2>
+            <p class="text-sm opacity-85">
+                Antes de que el sistema pueda segmentar mesas o entrenar modelos, los datos
+                de las comandas deben pasar por un proceso de <strong>extracción, transformación y carga</strong>.
+                Este documento explica exactamente qué pasa con los datos desde que se guardan en MongoDB
+                hasta que se convierten en los clusters que ves en el dashboard.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- MAPA ETL -->
+<div class="flex items-center gap-1 mb-8 overflow-x-auto pb-2">
+    {% set etapas = [
+        ('#0ea5e9', 'bi-database-down',  'E', 'Extract'),
+        ('#8b5cf6', 'bi-gear-wide',      'T', 'Transform'),
+        ('#10b981', 'bi-box-arrow-in-right', 'L', 'Load'),
+    ] %}
+    {% for color, icon, letra, nombre in etapas %}
+    <div class="flex items-center gap-1 flex-shrink-0">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
+                 style="background:{{ color }};">{{ letra }}</div>
+            <span class="text-xs text-gray-500 mt-1 font-semibold">{{ nombre }}</span>
+        </div>
+        {% if not loop.last %}
+        <div class="w-12 h-0.5 bg-gray-200 mb-4 flex-shrink-0"></div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- CONTEXTO: ¿ETL O ELT? -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#0f172a;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-10 flex items-center justify-center">
+            <i class="bi bi-question-circle text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Contexto</p>
+            <h3 class="text-white font-bold text-base">¿ETL o ELT? — Por qué este proyecto usa ETL</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-sky-500 text-white text-xs flex items-center justify-center font-bold">✓</span>
+                    ETL (este proyecto)
+                </h4>
+                <p class="text-sm text-gray-600 mb-3">
+                    Los datos se <strong>extraen</strong> de MongoDB con filtros aplicados desde el inicio,
+                    se <strong>transforman</strong> en memoria (normalización, clustering, modelado)
+                    y el resultado se <strong>carga</strong> directamente al cliente como JSON.
+                    Nunca se persiste el resultado intermedio en ninguna base de datos.
+                </p>
+                <div class="rounded-lg p-3 text-xs bg-sky-50 border border-sky-100 text-sky-700">
+                    <strong>Flujo:</strong> MongoDB → RAM (NumPy) → JSON al navegador
+                </div>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-gray-300 text-white text-xs flex items-center justify-center font-bold">✗</span>
+                    ELT (no aplica aquí)
+                </h4>
+                <p class="text-sm text-gray-600 mb-3">
+                    En ELT los datos crudos se cargan primero a un <em>data warehouse</em>
+                    (como BigQuery o Snowflake) y la transformación ocurre dentro del almacén
+                    con SQL o Spark. Requiere infraestructura de datos dedicada que no existe en este proyecto.
+                </p>
+                <div class="rounded-lg p-3 text-xs bg-gray-50 border border-gray-200 text-gray-500">
+                    <strong>Flujo ELT:</strong> Fuente → Data Warehouse → Transform con SQL/Spark
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 p-3 rounded-lg text-sm bg-amber-50 border border-amber-100">
+            <i class="bi bi-lightbulb text-amber-500 mr-1"></i>
+            <strong class="text-amber-700">Clave:</strong>
+            <span class="text-amber-600"> el ETL de este proyecto es <em>online</em> y <em>stateless</em> —
+            se recalcula completamente en cada petición a <code class="bg-white px-1 rounded">/api/mesero/kmeans</code>,
+            usando siempre los últimos 90 días de comandas.</span>
+        </div>
+    </div>
+</div>
+
+<!-- EXTRACT -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#0ea5e9;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-database-down text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-sky-100 uppercase tracking-wider font-semibold">E — Extract</p>
+            <h3 class="text-white font-bold text-base">Extracción de datos desde MongoDB</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-5">
+            La extracción lee la colección <code class="bg-gray-100 px-1 rounded">comandas</code>
+            y aplica tres filtros simultáneos: por mesero, por estado y por ventana de tiempo.
+            Solo entran al pipeline los servicios <em>completamente cerrados</em> de los últimos 90 días.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-person-check text-sky-500"></i>
+                    <span class="text-sm font-semibold text-gray-700">Filtro 1 — Mesero</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Solo comandas del mesero autenticado en la sesión actual.
+                    Cada mesero ve exclusivamente sus propias mesas.
+                </p>
+                <code class="text-xs text-sky-600 bg-white px-2 py-1 rounded mt-2 block border border-sky-100">
+                    "mesero_id": mesero_oid
+                </code>
+            </div>
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-check2-circle text-sky-500"></i>
+                    <span class="text-sm font-semibold text-gray-700">Filtro 2 — Estado</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Solo comandas finalizadas. Las abiertas o canceladas no
+                    representan un ingreso real y distorsionarían el análisis.
+                </p>
+                <code class="text-xs text-sky-600 bg-white px-2 py-1 rounded mt-2 block border border-sky-100">
+                    "estado": {"$in": ["pagada", "cerrada"]}
+                </code>
+            </div>
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-calendar-range text-sky-500"></i>
+                    <span class="text-sm font-semibold text-gray-700">Filtro 3 — Ventana</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Solo los últimos 90 días. Ventana deslizante: siempre refleja
+                    el comportamiento reciente, ignorando datos históricos muy antiguos.
+                </p>
+                <code class="text-xs text-sky-600 bg-white px-2 py-1 rounded mt-2 block border border-sky-100">
+                    "fecha_cierre": {"$gte": hace_90_dias}
+                </code>
+            </div>
+        </div>
+
+        <!-- Código extracción -->
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+            <div class="flex items-center justify-between px-4 py-2 bg-sky-50 border-b border-sky-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-code-slash text-sky-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Código de extracción</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 38</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># Calcular ventana de 90 días desde hoy</span><br>
+                hace_n_dias = datetime.now() - timedelta(days=<span style="color:#f472b6;">90</span>)<br>
+                mesero_oid  = ObjectId(mesero_id)<br>
+                <br>
+                <span style="color:#94a3b8;"># Pipeline de extracción + pre-agrupación en MongoDB</span><br>
+                pipeline = [<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$match"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"mesero_id"</span>:    mesero_oid,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"estado"</span>:       { <span style="color:#38bdf8;">"$in"</span>: [<span style="color:#86efac;">"pagada"</span>, <span style="color:#86efac;">"cerrada"</span>] },<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"fecha_cierre"</span>: { <span style="color:#38bdf8;">"$gte"</span>: hace_n_dias }<br>
+                &nbsp;&nbsp;} },<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$group"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"_id"</span>:             <span style="color:#86efac;">"$mesa_numero"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"num_visitas"</span>:     { <span style="color:#38bdf8;">"$sum"</span>:       <span style="color:#f472b6;">1</span> },<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"ticket_promedio"</span>: { <span style="color:#38bdf8;">"$avg"</span>:       <span style="color:#86efac;">"$total"</span> },<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"ticket_std"</span>:      { <span style="color:#38bdf8;">"$stdDevPop"</span>: <span style="color:#86efac;">"$total"</span> },<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"ingreso_total"</span>:   { <span style="color:#38bdf8;">"$sum"</span>:       <span style="color:#86efac;">"$total"</span> },<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"propina_promedio"</span>:{ <span style="color:#38bdf8;">"$avg"</span>:       <span style="color:#86efac;">"$propina"</span> }<br>
+                &nbsp;&nbsp;} },<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$match"</span>: { <span style="color:#38bdf8;">"num_visitas"</span>: { <span style="color:#38bdf8;">"$gte"</span>: <span style="color:#f472b6;">1</span> } } },<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$sort"</span>:  { <span style="color:#38bdf8;">"ingreso_total"</span>: <span style="color:#f472b6;">-1</span> } }<br>
+                ]<br>
+                <br>
+                <span style="color:#94a3b8;"># Ejecutar y cargar en memoria</span><br>
+                mesas_raw = list(db.comandas.aggregate(pipeline))
+            </div>
+            <div class="px-4 py-2 bg-sky-50 text-xs text-gray-600">
+                El <code class="bg-white px-1 rounded border border-sky-100">$group</code> colapsa N comandas de la misma mesa en 1 fila —
+                la extracción ya llega pre-agrupada por mesa, no en bruto comanda a comanda.
+                Esto reduce el volumen de datos que pasa a la fase de transformación.
+            </div>
+        </div>
+
+        <!-- Guardia mínimo de mesas -->
+        <div class="rounded-xl overflow-hidden border border-gray-100 mt-4">
+            <div class="flex items-center justify-between px-4 py-2 bg-red-50 border-b border-red-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-shield-exclamation text-red-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Guardia de datos mínimos</span>
+                    <span class="text-xs text-gray-500">— K-Means requiere al menos 3 mesas</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 63</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#fb923c;">if</span> len(mesas_raw) &lt; <span style="color:#f472b6;">3</span>:<br>
+                &nbsp;&nbsp;<span style="color:#fb923c;">return</span> {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"puntos"</span>: [],<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"aviso"</span>: <span style="color:#86efac;">"Se necesitan al menos 3 mesas con historial para segmentar."</span><br>
+                &nbsp;&nbsp;}
+            </div>
+            <div class="px-4 py-2 bg-red-50 text-xs text-gray-600">
+                Si el mesero tiene menos de 3 mesas con comandas en la ventana de 90 días,
+                el pipeline se interrumpe aquí — K-Means no puede crear 3 clusters con menos de 3 puntos.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TRANSFORM -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#8b5cf6;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-gear-wide text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-violet-200 uppercase tracking-wider font-semibold">T — Transform</p>
+            <h3 class="text-white font-bold text-base">Transformación en memoria — 5 pasos</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-6">
+            Los documentos MongoDB no pueden entrar directamente al modelo de Machine Learning.
+            Deben pasar por cinco transformaciones que los convierten en matrices numéricas
+            listas para <code class="bg-gray-100 px-1 rounded">scikit-learn</code>.
+        </p>
+
+        <!-- Paso T1: BSON → NumPy -->
+        <div class="rounded-xl overflow-hidden border border-gray-100 mb-4">
+            <div class="flex items-center justify-between px-4 py-2 bg-violet-50 border-b border-violet-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-violet-500 text-white text-xs font-bold flex items-center justify-center">T1</span>
+                    <span class="text-sm font-semibold text-gray-700">Conversión de formato</span>
+                    <span class="text-xs text-gray-500">— de documentos BSON a matrices NumPy</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 69</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># Entrada: lista de dicts MongoDB (BSON)</span><br>
+                <span style="color:#94a3b8;"># mesas_raw = [{"_id": 3, "num_visitas": 45, "ticket_promedio": 162.5, ...}]</span><br>
+                <br>
+                <span style="color:#94a3b8;"># Matriz para K-Means → shape (n_mesas, 2)</span><br>
+                X_kmeans = np.array([<br>
+                &nbsp;&nbsp;[ float(m[<span style="color:#86efac;">"num_visitas"</span>]), float(m[<span style="color:#86efac;">"ticket_promedio"</span>]) ]<br>
+                &nbsp;&nbsp;<span style="color:#fb923c;">for</span> m <span style="color:#fb923c;">in</span> mesas_raw<br>
+                ])<br>
+                <br>
+                <span style="color:#94a3b8;"># Matriz para Random Forest → shape (n_mesas, 3)</span><br>
+                X_arbol = np.array([<br>
+                &nbsp;&nbsp;[ float(m[<span style="color:#86efac;">"num_visitas"</span>]),<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;float(m[<span style="color:#86efac;">"ticket_promedio"</span>]),<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;float(m.get(<span style="color:#86efac;">"ticket_std"</span>) <span style="color:#fb923c;">or</span> <span style="color:#f472b6;">0</span>) ]  <span style="color:#94a3b8;"># None → 0</span><br>
+                &nbsp;&nbsp;<span style="color:#fb923c;">for</span> m <span style="color:#fb923c;">in</span> mesas_raw<br>
+                ])
+            </div>
+            <div class="px-4 py-2 bg-violet-50 text-xs text-gray-600">
+                El <code class="bg-white px-1 rounded border border-violet-100">float()</code> explícito evita errores de tipo con
+                <code class="bg-white px-1 rounded border border-violet-100">Decimal128</code> de MongoDB que NumPy no acepta directamente.
+                K-Means usa 2 features (visualizables en scatter), el RF usa 3 (agrega variabilidad del ticket).
+            </div>
+        </div>
+
+        <!-- Paso T2: Manejo de nulos -->
+        <div class="rounded-xl overflow-hidden border border-gray-100 mb-4">
+            <div class="flex items-center justify-between px-4 py-2 bg-yellow-50 border-b border-yellow-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-yellow-500 text-white text-xs font-bold flex items-center justify-center">T2</span>
+                    <span class="text-sm font-semibold text-gray-700">Manejo de valores nulos</span>
+                    <span class="text-xs text-gray-500">— <code>$stdDevPop</code> devuelve null cuando solo hay 1 comanda</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 80</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># Problema: si una mesa tiene exactamente 1 comanda,</span><br>
+                <span style="color:#94a3b8;"># $stdDevPop devuelve None (no se puede calcular desviación de 1 valor)</span><br>
+                <br>
+                <span style="color:#94a3b8;"># Solución: reemplazar None con 0 (variabilidad nula = ticket constante)</span><br>
+                float(m.get(<span style="color:#86efac;">"ticket_std"</span>) <span style="color:#fb923c;">or</span> <span style="color:#f472b6;">0</span>)<br>
+                <br>
+                <span style="color:#94a3b8;"># El "or 0" cubre dos casos:</span><br>
+                <span style="color:#94a3b8;">#   m.get("ticket_std") → None   (mesa con 1 comanda)  → 0</span><br>
+                <span style="color:#94a3b8;">#   m.get("ticket_std") → 0.0    (todas iguales)       → 0</span>
+            </div>
+            <div class="px-4 py-2 bg-yellow-50 text-xs text-gray-600">
+                Una mesa con variabilidad 0 significa que siempre genera el mismo ticket — comportamiento predecible.
+                Es un dato válido, no un error a eliminar.
+            </div>
+        </div>
+
+        <!-- Paso T3: Normalización -->
+        <div class="rounded-xl overflow-hidden border border-gray-100 mb-4">
+            <div class="flex items-center justify-between px-4 py-2 bg-emerald-50 border-b border-emerald-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">T3</span>
+                    <span class="text-sm font-semibold text-gray-700">Normalización — StandardScaler</span>
+                    <span class="text-xs text-gray-500">— igualar escalas entre frecuencia y ticket</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 85</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># Sin normalización: ticket (ej. 350 MXN) dominaría sobre</span><br>
+                <span style="color:#94a3b8;"># frecuencia (ej. 8 visitas) solo por ser un número más grande</span><br>
+                <br>
+                scaler   = StandardScaler()<br>
+                X_scaled = scaler.fit_transform(X_kmeans)<br>
+                <br>
+                <span style="color:#94a3b8;"># Antes:  Frecuencia ∈ [2..80],    Ticket ∈ [120..480]</span><br>
+                <span style="color:#94a3b8;"># Después: ambas variables ∈ [-2..+2] aprox. (media=0, std=1)</span><br>
+                <br>
+                <span style="color:#94a3b8;"># ⚠ Solo para K-Means — el Random Forest NO necesita normalización</span><br>
+                <span style="color:#94a3b8;">#   (los árboles de decisión son scale-invariant)</span>
+            </div>
+            <div class="px-4 py-2 bg-emerald-50 text-xs text-gray-600">
+                <strong>Z-score:</strong> cada valor se transforma en
+                <em>(valor − media) / desviación_estándar</em>.
+                El <code class="bg-white px-1 rounded border border-emerald-100">scaler</code> se guarda en memoria
+                para poder hacer <code class="bg-white px-1 rounded border border-emerald-100">inverse_transform</code>
+                después y recuperar los centroides en las unidades originales.
+            </div>
+        </div>
+
+        <!-- Paso T4: K-Means -->
+        <div class="rounded-xl overflow-hidden border border-gray-100 mb-4">
+            <div class="flex items-center justify-between px-4 py-2 bg-blue-50 border-b border-blue-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">T4</span>
+                    <span class="text-sm font-semibold text-gray-700">Clustering — K-Means</span>
+                    <span class="text-xs text-gray-500">— asignar cada mesa a un segmento</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_kmeans_service.py · línea 88</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                k  = min(<span style="color:#f472b6;">3</span>, len(mesas_raw))  <span style="color:#94a3b8;"># k=3, o menos si hay pocas mesas</span><br>
+                km = KMeans(n_clusters=k, random_state=<span style="color:#f472b6;">42</span>, n_init=<span style="color:#f472b6;">10</span>)<br>
+                km.fit(X_scaled)<br>
+                <br>
+                <span style="color:#94a3b8;"># Reordenar clusters para que 0=VIP, 1=Regular, 2=Ocasional</span><br>
+                <span style="color:#94a3b8;"># (K-Means asigna IDs aleatorios en cada ejecución)</span><br>
+                centroids_orig = scaler.inverse_transform(km.cluster_centers_)<br>
+                orden          = np.argsort(centroids_orig[:, <span style="color:#f472b6;">0</span>] + centroids_orig[:, <span style="color:#f472b6;">1</span>])[::-<span style="color:#f472b6;">1</span>]<br>
+                remap          = { old: new <span style="color:#fb923c;">for</span> new, old <span style="color:#fb923c;">in</span> enumerate(orden) }<br>
+                labels_remap   = np.array([remap[l] <span style="color:#fb923c;">for</span> l <span style="color:#fb923c;">in</span> km.labels_])
+            </div>
+            <div class="px-4 py-2 bg-blue-50 text-xs text-gray-600">
+                El reordenamiento ordena los centroides por
+                <code class="bg-white px-1 rounded border border-blue-100">visitas + ticket</code> descendente.
+                El cluster con mayor suma siempre queda como 0 (VIP), garantizando etiquetas consistentes
+                entre diferentes ejecuciones.
+            </div>
+        </div>
+
+        <!-- Paso T5: Random Forest -->
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+            <div class="flex items-center justify-between px-4 py-2 bg-purple-50 border-b border-purple-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">T5</span>
+                    <span class="text-sm font-semibold text-gray-700">Modelado supervisado — Random Forest</span>
+                    <span class="text-xs text-gray-500">— aprender las reglas de clasificación</span>
+                </div>
+                <code class="text-xs text-gray-400">services/mesero_randomforest_service.py · línea 14</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># labels_remap = salida de K-Means → úsala como variable objetivo (y)</span><br>
+                rf = RandomForestClassifier(<br>
+                &nbsp;&nbsp;n_estimators=<span style="color:#f472b6;">200</span>,   <span style="color:#94a3b8;"># 200 árboles en el bosque</span><br>
+                &nbsp;&nbsp;max_depth=<span style="color:#f472b6;">3</span>,      <span style="color:#94a3b8;"># profundidad máxima (evita sobreajuste)</span><br>
+                &nbsp;&nbsp;random_state=<span style="color:#f472b6;">42</span>,  <span style="color:#94a3b8;"># reproducibilidad</span><br>
+                &nbsp;&nbsp;oob_score=<span style="color:#f472b6;">True</span>    <span style="color:#94a3b8;"># validación Out-Of-Bag sin conjunto de prueba</span><br>
+                )<br>
+                rf.fit(X_arbol, labels_remap)  <span style="color:#94a3b8;"># X: (n_mesas, 3), y: [0,1,2,...]</span><br>
+                <br>
+                <span style="color:#94a3b8;"># Árbol representativo: el más cercano al promedio de importancias</span><br>
+                imp_mean = rf.feature_importances_<br>
+                diffs    = [float(np.sum((t.feature_importances_ - imp_mean)**<span style="color:#f472b6;">2</span>)) <span style="color:#fb923c;">for</span> t <span style="color:#fb923c;">in</span> rf.estimators_]<br>
+                arbol_rep = rf.estimators_[int(np.argmin(diffs))]
+            </div>
+            <div class="px-4 py-2 bg-purple-50 text-xs text-gray-600">
+                El Random Forest aprende las etiquetas que generó K-Means (pipeline híbrido no supervisado → supervisado).
+                El árbol representativo se selecciona por mínima distancia al promedio de importancias,
+                no el de mayor accuracy — así las reglas que se muestran son las más <em>típicas</em> del bosque.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- LOAD -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:#10b981;">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+            <i class="bi bi-box-arrow-in-right text-white text-lg"></i>
+        </div>
+        <div>
+            <p class="text-xs text-emerald-100 uppercase tracking-wider font-semibold">L — Load</p>
+            <h3 class="text-white font-bold text-base">Carga — el resultado como JSON al cliente</h3>
+        </div>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-5">
+            El resultado final no se guarda en ninguna base de datos. Se construye un objeto Python
+            y se serializa como JSON directamente al navegador del mesero.
+            Chart.js lo renderiza en tiempo real sin ninguna capa de caché intermedia.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Estructura de la respuesta</h4>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-start gap-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <code class="text-emerald-600 font-bold w-24 flex-shrink-0">puntos</code>
+                        <span class="text-gray-600">Lista de mesas con cluster, coordenadas x/y, color y recomendación</span>
+                    </div>
+                    <div class="flex items-start gap-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <code class="text-emerald-600 font-bold w-24 flex-shrink-0">resumen</code>
+                        <span class="text-gray-600">Estadísticas por cluster: count, ticket promedio, ingreso total</span>
+                    </div>
+                    <div class="flex items-start gap-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <code class="text-emerald-600 font-bold w-24 flex-shrink-0">evaluacion</code>
+                        <span class="text-gray-600">Silhouette Score, Inercia, curva Elbow para k=1..5</span>
+                    </div>
+                    <div class="flex items-start gap-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <code class="text-emerald-600 font-bold w-24 flex-shrink-0">arbol</code>
+                        <span class="text-gray-600">Feature importances, reglas del árbol representativo, OOB Score</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">¿Por qué no se persiste?</h4>
+                <div class="space-y-2 text-sm text-gray-600">
+                    <div class="flex items-start gap-2">
+                        <i class="bi bi-arrow-repeat text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                        <span>Los datos cambian con cada comanda nueva — persistir el resultado lo haría obsoleto casi de inmediato.</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="bi bi-lightning text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                        <span>Con 8 mesas el pipeline tarda menos de 200ms — recalcular es más rápido que leer caché.</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="bi bi-shield-check text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                        <span>Sin estado almacenado no hay desincronización entre el modelo y los datos reales.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Código load -->
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+            <div class="flex items-center justify-between px-4 py-2 bg-emerald-50 border-b border-emerald-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-code-slash text-emerald-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Código de carga — construcción y entrega del JSON</span>
+                </div>
+                <code class="text-xs text-gray-400">controllers/mesero/kmeans_controller.py · línea 16</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># Enriquecimiento: agregar metadatos visuales a cada mesa</span><br>
+                puntos = []<br>
+                <span style="color:#fb923c;">for</span> i, m <span style="color:#fb923c;">in</span> enumerate(mesas_raw):<br>
+                &nbsp;&nbsp;cl   = int(labels_remap[i])<br>
+                &nbsp;&nbsp;meta = _CLUSTER_META[cl]  <span style="color:#94a3b8;"># color, label, recomendación por cluster</span><br>
+                &nbsp;&nbsp;puntos.append({<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"mesa"</span>:           nombres[i],<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"x"</span>:              round(float(m[<span style="color:#86efac;">"num_visitas"</span>]), <span style="color:#f472b6;">2</span>),<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"y"</span>:              round(float(m[<span style="color:#86efac;">"ticket_promedio"</span>]), <span style="color:#f472b6;">2</span>),<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"cluster"</span>:        cl,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"label"</span>:          meta[<span style="color:#86efac;">"label"</span>],   <span style="color:#94a3b8;"># "VIP", "Regular", "Ocasional"</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"color"</span>:          meta[<span style="color:#86efac;">"color"</span>],<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#86efac;">"recomendacion"</span>: meta[<span style="color:#86efac;">"recomendacion"</span>]<br>
+                &nbsp;&nbsp;})<br>
+                <br>
+                <span style="color:#94a3b8;"># Retornar como JSON — sin guardar en BD</span><br>
+                resultado = MeseroKMeansService.segmentar_mesas(mesero_id)<br>
+                <span style="color:#fb923c;">return</span> jsonify({ <span style="color:#86efac;">"success"</span>: <span style="color:#f472b6;">True</span>, **resultado })
+            </div>
+            <div class="px-4 py-2 bg-emerald-50 text-xs text-gray-600">
+                El operador <code class="bg-white px-1 rounded border border-emerald-100">**resultado</code> desempaqueta el dict del servicio
+                directamente en el JSON de respuesta — el controlador no interpreta el resultado, solo lo entrega.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DIAGRAMA COMPLETO -->
+<div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <h3 class="text-base font-semibold text-gray-700 mb-5 flex items-center gap-2">
+        <i class="bi bi-diagram-2 text-gray-500"></i> Pipeline ETL completo — de comanda a cluster
+    </h3>
+    <div class="space-y-3">
+        {% set pasos = [
+            ('#dbeafe', '#3b82f6', 'bi-database', 'MongoDB · db.comandas', '$match + $group + $sort', 'E'),
+            ('#ede9fe', '#8b5cf6', 'bi-arrow-left-right', 'RAM · mesas_raw → NumPy', 'BSON → float, None → 0', 'T1–T2'),
+            ('#dcfce7', '#16a34a', 'bi-symmetry-horizontal', 'StandardScaler', 'Z-score (solo K-Means)', 'T3'),
+            ('#fef3c7', '#d97706', 'bi-diagram-3', 'KMeans(k=3)', 'fit(X_scaled) + remap labels', 'T4'),
+            ('#f5f3ff', '#7c3aed', 'bi-tree', 'RandomForestClassifier(200)', 'fit(X_arbol, labels)', 'T5'),
+            ('#f0fdf4', '#15803d', 'bi-braces', 'JSON response', 'jsonify({puntos, resumen, evaluacion, arbol})', 'L'),
+        ] %}
+        {% for bg, color, icon, titulo, detalle, etapa in pasos %}
+        <div class="flex items-center gap-4 p-3 rounded-xl border"
+             style="background:{{ bg }}; border-color:{{ color }}40;">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                 style="background:{{ color }}20;">
+                <i class="bi {{ icon }}" style="color:{{ color }};"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-800">{{ titulo }}</p>
+                <p class="text-xs text-gray-500">{{ detalle }}</p>
+            </div>
+            <span class="text-xs font-bold px-2 py-1 rounded-full flex-shrink-0"
+                  style="background:{{ color }}20; color:{{ color }};">{{ etapa }}</span>
+        </div>
+        {% if not loop.last %}
+        <div class="flex justify-start pl-6">
+            <i class="bi bi-arrow-down text-gray-300"></i>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ENDPOINTS -->
+<div class="bg-white rounded-2xl shadow-sm p-6">
+    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <i class="bi bi-plug text-gray-500"></i> Endpoints que ejecutan el ETL
+    </h3>
+    <div class="space-y-2 text-xs font-mono">
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+            <span class="text-gray-700">/api/mesero/kmeans</span>
+            <span class="text-gray-400 font-sans ml-auto">Pipeline completo E→T→L (K-Means + RF)</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-sans font-semibold">GET</span>
+            <span class="text-gray-700">/api/mesero/kmeans/diagnostico</span>
+            <span class="text-gray-400 font-sans ml-auto">Solo E→T estadístico (sin clustering)</span>
+        </div>
+    </div>
+    <p class="text-xs text-gray-400 mt-3">
+        Ambos endpoints requieren sesión activa con rol 2 (mesero).
+        El pipeline se ejecuta completamente en cada petición — no hay caché.
+    </p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- LOS OTROS 3 ANÁLISIS                                              -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+
+<div class="mt-10 mb-6 flex items-center gap-4">
+    <div class="flex-1 h-px bg-gray-200"></div>
+    <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Los otros 3 análisis</span>
+    <div class="flex-1 h-px bg-gray-200"></div>
+</div>
+
+<p class="text-sm text-gray-500 mb-8 text-center">
+    Además del pipeline K-Means + Random Forest, el sistema ejecuta tres análisis independientes,
+    cada uno con su propio proceso ETL adaptado al objetivo de cada modelo.
+</p>
+
+<!-- ─── PARETO ──────────────────────────────────────────────────────── -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#d97706,#f59e0b);">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-bar-chart-steps text-white text-lg"></i>
+        </div>
+        <div class="flex-1">
+            <p class="text-xs text-amber-100 uppercase tracking-wider font-semibold">Análisis 1</p>
+            <h3 class="text-white font-bold text-base">Pareto 80/20 — Rentabilidad de Platillos</h3>
+        </div>
+        <a href="{{ url_for('routes.mesero_pareto') }}"
+           class="text-xs bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-1.5 rounded-lg transition font-semibold">
+            Ver análisis
+        </a>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-6">
+            Identifica qué platillos generan el 80% de los ingresos. La regla de Pareto aplicada a un menú
+            permite priorizar sugerencias: si el mesero recomienda activamente los platillos del top 20%,
+            maximiza el ingreso por comanda sin necesidad de ampliar el menú.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-xl p-4 bg-amber-50 border border-amber-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">E</span>
+                    <span class="text-sm font-semibold text-gray-700">Extracción</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Aggregate sobre <code class="bg-white px-1 rounded border border-amber-100">ventas</code>:
+                    desanida el array <code class="bg-white px-1 rounded">items</code> con <code class="bg-white px-1 rounded">$unwind</code>
+                    y agrupa por nombre de platillo sumando ingresos. Filtra por los últimos N días.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-amber-50 border border-amber-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">T</span>
+                    <span class="text-sm font-semibold text-gray-700">Transformación</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Ordena por ingreso descendente. Calcula el porcentaje acumulado con suma corrida.
+                    Marca cada platillo con <code class="bg-white px-1 rounded">es_pareto=True</code>
+                    mientras el acumulado no supere el 80%.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-amber-50 border border-amber-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-yellow-500 text-white text-xs font-bold flex items-center justify-center">L</span>
+                    <span class="text-sm font-semibold text-gray-700">Carga</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    JSON con lista de platillos ordenada, cada uno con rank, ingreso, % individual y acumulado,
+                    bandera <code class="bg-white px-1 rounded">es_pareto</code>. La curva de Pareto
+                    se construye en Chart.js con doble eje.
+                </p>
+            </div>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+            <div class="flex items-center justify-between px-4 py-2 bg-amber-50 border-b border-amber-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-code-slash text-amber-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Núcleo del cálculo — acumulado y umbral 80%</span>
+                </div>
+                <code class="text-xs text-gray-400">services/analytics/pareto_service.py</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                pipeline = [<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$match"</span>: { <span style="color:#38bdf8;">"fecha"</span>: { <span style="color:#38bdf8;">"$gte"</span>: hace_n_dias } } },<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$unwind"</span>: <span style="color:#86efac;">"$items"</span> },  <span style="color:#94a3b8;"># desanidar cada producto de cada venta</span><br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$group"</span>: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"_id"</span>:     <span style="color:#86efac;">"$items.nombre"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#38bdf8;">"ingreso"</span>: { <span style="color:#38bdf8;">"$sum"</span>: <span style="color:#86efac;">"$items.subtotal"</span> }<br>
+                &nbsp;&nbsp;} },<br>
+                &nbsp;&nbsp;{ <span style="color:#38bdf8;">"$sort"</span>: { <span style="color:#38bdf8;">"ingreso"</span>: <span style="color:#f472b6;">-1</span> } }<br>
+                ]<br>
+                <br>
+                <span style="color:#94a3b8;"># Calcular acumulado y marcar umbral 80%</span><br>
+                total_ing = sum(p[<span style="color:#86efac;">"ingreso"</span>] <span style="color:#fb923c;">for</span> p <span style="color:#fb923c;">in</span> platillos)<br>
+                acum = <span style="color:#f472b6;">0</span><br>
+                <span style="color:#fb923c;">for</span> p <span style="color:#fb923c;">in</span> platillos:<br>
+                &nbsp;&nbsp;acum += p[<span style="color:#86efac;">"ingreso"</span>]<br>
+                &nbsp;&nbsp;p[<span style="color:#86efac;">"pct_acumulado"</span>] = round(acum / total_ing * <span style="color:#f472b6;">100</span>, <span style="color:#f472b6;">1</span>)<br>
+                &nbsp;&nbsp;p[<span style="color:#86efac;">"es_pareto"</span>]     = acum &lt;= total_ing * <span style="color:#f472b6;">0.80</span>
+            </div>
+            <div class="px-4 py-2 bg-amber-50 text-xs text-gray-600">
+                No se usa scikit-learn — es aritmética pura sobre los resultados del aggregate.
+                El umbral del 80% es paramétrico: se puede ajustar sin reentrenar ningún modelo.
+                Endpoint: <code class="bg-white px-1 rounded border border-amber-100">GET /api/analytics/pareto?dias=90</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── ASOCIACIÓN ────────────────────────────────────────────────── -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#7c3aed,#8b5cf6);">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-share text-white text-lg"></i>
+        </div>
+        <div class="flex-1">
+            <p class="text-xs text-violet-200 uppercase tracking-wider font-semibold">Análisis 2</p>
+            <h3 class="text-white font-bold text-base">Reglas de Asociación — Market Basket (Apriori)</h3>
+        </div>
+        <a href="{{ url_for('routes.mesero_asociacion') }}"
+           class="text-xs bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-1.5 rounded-lg transition font-semibold">
+            Ver análisis
+        </a>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-4">
+            Descubre qué platillos se piden juntos con mayor frecuencia aplicando el algoritmo Apriori.
+            Cada venta se trata como una "canasta" de productos. El resultado son reglas del tipo
+            <em>"si piden X → también piden Y"</em> con tres métricas de confiabilidad.
+        </p>
+
+        <div class="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
+            <div>
+                <strong class="text-purple-700">Soporte</strong><br>
+                Fracción de transacciones que contienen ambos platillos.
+                <code class="bg-white px-1 rounded">soporte(A,B) = P(A ∩ B)</code>
+            </div>
+            <div>
+                <strong class="text-purple-700">Confianza</strong><br>
+                Probabilidad de B dado A.
+                <code class="bg-white px-1 rounded">conf(A→B) = P(A ∩ B) / P(A)</code>
+            </div>
+            <div>
+                <strong class="text-purple-700">Lift</strong><br>
+                Cuánto más probable es la asociación vs. azar.
+                <code class="bg-white px-1 rounded">lift = conf / P(B)</code>. Lift &gt; 1 = real.
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-xl p-4 bg-purple-50 border border-purple-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">E</span>
+                    <span class="text-sm font-semibold text-gray-700">Extracción</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Lee <code class="bg-white px-1 rounded">ventas.items</code> de los últimos N días.
+                    Cada documento de venta se convierte en una lista de nombres de platillos
+                    (una "transacción"). Las ventas con un solo ítem se descartan.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-purple-50 border border-purple-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-violet-500 text-white text-xs font-bold flex items-center justify-center">T</span>
+                    <span class="text-sm font-semibold text-gray-700">Transformación</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    <strong>1.</strong> <code class="bg-white px-1 rounded">TransactionEncoder</code> convierte las listas
+                    en una matriz binaria (1 si el platillo está en la venta, 0 si no).<br>
+                    <strong>2.</strong> <code class="bg-white px-1 rounded">apriori()</code> calcula conjuntos frecuentes.<br>
+                    <strong>3.</strong> <code class="bg-white px-1 rounded">association_rules()</code> genera las reglas.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-purple-50 border border-purple-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-fuchsia-500 text-white text-xs font-bold flex items-center justify-center">L</span>
+                    <span class="text-sm font-semibold text-gray-700">Carga</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    JSON con las reglas ordenadas por lift descendente.
+                    Cada regla incluye antecedente, consecuente, soporte, confianza, lift
+                    y una descripción legible. Se limita a top 20 para no saturar la vista.
+                </p>
+            </div>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+            <div class="flex items-center justify-between px-4 py-2 bg-purple-50 border-b border-purple-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-code-slash text-purple-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Pipeline mlxtend — de transacciones a reglas</span>
+                </div>
+                <code class="text-xs text-gray-400">services/analytics/asociacion_service.py</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># E: construir lista de transacciones desde ventas.items</span><br>
+                transacciones = [<br>
+                &nbsp;&nbsp;list({ it[<span style="color:#86efac;">"nombre"</span>] <span style="color:#fb923c;">for</span> it <span style="color:#fb923c;">in</span> v[<span style="color:#86efac;">"items"</span>] })<br>
+                &nbsp;&nbsp;<span style="color:#fb923c;">for</span> v <span style="color:#fb923c;">in</span> ventas <span style="color:#fb923c;">if</span> len(v[<span style="color:#86efac;">"items"</span>]) &gt;= <span style="color:#f472b6;">2</span><br>
+                ]  <span style="color:#94a3b8;"># ventas con 2 o más productos distintos</span><br>
+                <br>
+                <span style="color:#94a3b8;"># T1: codificar como matriz binaria (platillo x transacción)</span><br>
+                te = TransactionEncoder()<br>
+                te_arr = te.fit_transform(transacciones)<br>
+                df = pd.DataFrame(te_arr, columns=te.columns_)<br>
+                <br>
+                <span style="color:#94a3b8;"># T2: conjuntos frecuentes con soporte mínimo</span><br>
+                freq = apriori(df, min_support=<span style="color:#f472b6;">0.04</span>, use_colnames=<span style="color:#f472b6;">True</span>)<br>
+                <br>
+                <span style="color:#94a3b8;"># T3: generar reglas con confianza mínima, ordenar por lift</span><br>
+                reglas = association_rules(freq, metric=<span style="color:#86efac;">"confidence"</span>, min_threshold=<span style="color:#f472b6;">0.25</span>)<br>
+                reglas = reglas.sort_values(<span style="color:#86efac;">"lift"</span>, ascending=<span style="color:#f472b6;">False</span>).head(<span style="color:#f472b6;">20</span>)
+            </div>
+            <div class="px-4 py-2 bg-purple-50 text-xs text-gray-600">
+                Si no hay suficientes transacciones (&lt;10) o ninguna regla supera los umbrales,
+                el servicio devuelve un <code class="bg-white px-1 rounded border border-purple-100">aviso</code>
+                explicativo en lugar de una lista vacía.
+                Endpoint: <code class="bg-white px-1 rounded border border-purple-100">GET /api/analytics/asociacion?soporte=0.04&amp;confianza=0.25</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── PREDICCIÓN ────────────────────────────────────────────────── -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div class="px-6 py-4 flex items-center gap-3" style="background:linear-gradient(90deg,#0284c7,#0ea5e9);">
+        <div class="w-9 h-9 rounded-lg bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-graph-up text-white text-lg"></i>
+        </div>
+        <div class="flex-1">
+            <p class="text-xs text-sky-100 uppercase tracking-wider font-semibold">Análisis 3</p>
+            <h3 class="text-white font-bold text-base">Predicción de Demanda — Gradient Boosting</h3>
+        </div>
+        <a href="{{ url_for('routes.mesero_prediccion') }}"
+           class="text-xs bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-1.5 rounded-lg transition font-semibold">
+            Ver análisis
+        </a>
+    </div>
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-6">
+            Proyecta la demanda diaria (número de pedidos) para los próximos días usando un modelo
+            de Gradient Boosting entrenado sobre el historial de ventas. A diferencia de los análisis
+            anteriores, aquí el modelo <strong>aprende de patrones temporales</strong>: día de semana,
+            mes, temporada alta, y si es fin de semana.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center">E</span>
+                    <span class="text-sm font-semibold text-gray-700">Extracción</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Agrupa <code class="bg-white px-1 rounded">ventas</code> por fecha (día),
+                    contando el número de pedidos por día.
+                    Genera una serie temporal diaria con hasta 90 días de historial.
+                    Días sin ventas se rellenan con 0 para no romper la continuidad.
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center">T</span>
+                    <span class="text-sm font-semibold text-gray-700">Transformación</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    Extrae 5 <em>features</em> de cada fecha:
+                    <code class="bg-white px-1 rounded">weekday</code> (0-6),
+                    <code class="bg-white px-1 rounded">month</code> (1-12),
+                    <code class="bg-white px-1 rounded">is_weekend</code>,
+                    <code class="bg-white px-1 rounded">is_high_season</code> (Dic-Feb),
+                    <code class="bg-white px-1 rounded">day_of_month</code>.
+                    Entrena con todo menos los últimos 7 días (holdout de validación).
+                </p>
+            </div>
+            <div class="rounded-xl p-4 bg-sky-50 border border-sky-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">L</span>
+                    <span class="text-sm font-semibold text-gray-700">Carga</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                    JSON con predicciones por día (pedidos estimados, ingreso proyectado, día de semana),
+                    historial de los últimos 30 días para la gráfica,
+                    métricas del modelo (MAE, RMSE, R²)
+                    e ingredientes estimados del top 15 de platillos más vendidos.
+                </p>
+            </div>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border border-gray-100 mb-4">
+            <div class="flex items-center justify-between px-4 py-2 bg-sky-50 border-b border-sky-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-code-slash text-sky-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Feature engineering + entrenamiento</span>
+                </div>
+                <code class="text-xs text-gray-400">services/analytics/prediccion_service.py</code>
+            </div>
+            <div class="p-4" style="background:#0f172a; color:#e2e8f0; font-family:monospace; font-size:0.78rem; line-height:1.9;">
+                <span style="color:#94a3b8;"># T: construir features de cada fecha del historial</span><br>
+                <span style="color:#fb923c;">def</span> <span style="color:#93c5fd;">_features</span>(fecha):<br>
+                &nbsp;&nbsp;<span style="color:#fb923c;">return</span> [<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;fecha.weekday(),                         <span style="color:#94a3b8;"># 0=Lun … 6=Dom</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;fecha.month,                             <span style="color:#94a3b8;"># 1–12</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#f472b6;">1</span> <span style="color:#fb923c;">if</span> fecha.weekday() &gt;= <span style="color:#f472b6;">5</span> <span style="color:#fb923c;">else</span> <span style="color:#f472b6;">0</span>,     <span style="color:#94a3b8;"># is_weekend</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#f472b6;">1</span> <span style="color:#fb923c;">if</span> fecha.month <span style="color:#fb923c;">in</span> (<span style="color:#f472b6;">12</span>,<span style="color:#f472b6;">1</span>,<span style="color:#f472b6;">2</span>) <span style="color:#fb923c;">else</span> <span style="color:#f472b6;">0</span>, <span style="color:#94a3b8;"># is_high_season</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;fecha.day,                               <span style="color:#94a3b8;"># día del mes</span><br>
+                &nbsp;&nbsp;]<br>
+                <br>
+                X = [_features(d) <span style="color:#fb923c;">for</span> d <span style="color:#fb923c;">in</span> fechas_hist]<br>
+                y = [conteo_por_dia[d] <span style="color:#fb923c;">for</span> d <span style="color:#fb923c;">in</span> fechas_hist]<br>
+                <br>
+                modelo = GradientBoostingRegressor(<br>
+                &nbsp;&nbsp;n_estimators=<span style="color:#f472b6;">200</span>, max_depth=<span style="color:#f472b6;">3</span>,<br>
+                &nbsp;&nbsp;learning_rate=<span style="color:#f472b6;">0.05</span>, subsample=<span style="color:#f472b6;">0.8</span>, random_state=<span style="color:#f472b6;">42</span><br>
+                )<br>
+                modelo.fit(X[:-<span style="color:#f472b6;">7</span>], y[:-<span style="color:#f472b6;">7</span>])  <span style="color:#94a3b8;"># train sin los últimos 7 días</span><br>
+                y_val = modelo.predict(X[-<span style="color:#f472b6;">7</span>:])   <span style="color:#94a3b8;"># validar en esos 7 días (holdout)</span>
+            </div>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border border-gray-100">
+            <div class="flex items-center justify-between px-4 py-2 bg-sky-50 border-b border-sky-100">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-rulers text-sky-500 text-sm"></i>
+                    <span class="text-sm font-semibold text-gray-700">Métricas de evaluación</span>
+                </div>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="rounded-lg p-3 bg-sky-50 border border-sky-100">
+                    <code class="text-sky-700 font-bold">MAE</code><br>
+                    <span class="text-gray-600">Error absoluto medio. "El modelo se equivoca en promedio X pedidos por día."
+                    MAE bajo = predicciones más precisas.</span>
+                </div>
+                <div class="rounded-lg p-3 bg-sky-50 border border-sky-100">
+                    <code class="text-sky-700 font-bold">RMSE</code><br>
+                    <span class="text-gray-600">Raíz del error cuadrático medio. Penaliza más los errores grandes.
+                    Útil para detectar días donde el modelo falla mucho.</span>
+                </div>
+                <div class="rounded-lg p-3 bg-sky-50 border border-sky-100">
+                    <code class="text-sky-700 font-bold">R²</code><br>
+                    <span class="text-gray-600">Coeficiente de determinación. R²=1 es perfecto, R²=0 equivale a predecir
+                    siempre la media, R²&lt;0 el modelo es peor que la media.</span>
+                </div>
+            </div>
+            <div class="px-4 py-3 bg-sky-50 border-t border-sky-100 text-xs text-gray-600">
+                <i class="bi bi-info-circle text-sky-400 mr-1"></i>
+                Con pocos días de historial (menos de 30) el modelo tiene poca señal — las métricas
+                serán malas y el servicio lo indica con un <code class="bg-white px-1 rounded border border-sky-100">aviso</code>.
+                Endpoint: <code class="bg-white px-1 rounded border border-sky-100">GET /api/analytics/prediccion?dias_historial=90&amp;dias_futuro=7</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

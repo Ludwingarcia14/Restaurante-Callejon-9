@@ -86,37 +86,16 @@ class VentasController:
         """Vista de corte de caja"""
         if "usuario_id" not in session:
             return redirect(url_for("routes.login"))
-        
-        # Obtener ventas de hoy
+
+        from services.venta_service import VentaService
         ventas_hoy = Venta.find_hoy()
-        
-        # Calcular estadísticas
-        stats = {
-            "total_ventas": sum(v.get("total", 0) for v in ventas_hoy),
-            "num_transacciones": len(ventas_hoy),
-            "efectivo": 0,
-            "tarjeta": 0,
-            "transferencia": 0,
-            "propinas": sum(v.get("propina", 0) for v in ventas_hoy)
-        }
-        
-        # Agrupar por método de pago
-        for venta in ventas_hoy:
-            metodo = venta.get("metodo_pago", "efectivo")
-            if metodo == "efectivo":
-                stats["efectivo"] += venta.get("total", 0)
-            elif metodo == "tarjeta":
-                stats["tarjeta"] += venta.get("total", 0)
-            elif metodo == "transferencia":
-                stats["transferencia"] += venta.get("total", 0)
-        
-        # Obtener últimos cortes
+        stats = VentaService.calcular_stats_ventas(ventas_hoy)
         ultimos_cortes = CorteCaja.find_all()[:5]
-        
+
         return render_template("admin/ventas/corte_caja.html",
-                             stats=stats,
-                             ventas=ventas_hoy,
-                             ultimos_cortes=ultimos_cortes)
+                               stats=stats,
+                               ventas=ventas_hoy,
+                               ultimos_cortes=ultimos_cortes)
     
     # ============================================
     # API: VENTAS
@@ -428,47 +407,23 @@ class VentasController:
         """API: Genera un corte de caja"""
         if "usuario_id" not in session:
             return jsonify({"success": False, "message": "No autorizado"}), 401
-        
+
         try:
-            # Obtener ventas de hoy
-            ventas_hoy = Venta.find_hoy()
-            
-            # Calcular totales
-            total_ventas = sum(v.get("total", 0) for v in ventas_hoy)
-            total_efectivo = sum(v.get("total", 0) for v in ventas_hoy if v.get("metodo_pago") == "efectivo")
-            total_tarjeta = sum(v.get("total", 0) for v in ventas_hoy if v.get("metodo_pago") == "tarjeta")
-            total_transferencia = sum(v.get("total", 0) for v in ventas_hoy if v.get("metodo_pago") == "transferencia")
-            total_propinas = sum(v.get("propina", 0) for v in ventas_hoy)
-            
-            # Crear el corte
-            data = {
-                "usuario_id": session.get("usuario_id"),
-                "usuario_nombre": session.get("usuario_nombre", ""),
-                "fecha_inicio": datetime.now().replace(hour=0, minute=0, second=0),
-                "fecha_fin": datetime.utcnow(),
-                "ventas": [str(v.get("_id")) for v in ventas_hoy],
-                "total_ventas": total_ventas,
-                "total_efectivo": total_efectivo,
-                "total_tarjeta": total_tarjeta,
-                "total_transferencia": total_transferencia,
-                "total_propinas": total_propinas,
-                "num_transacciones": len(ventas_hoy),
-                "notas": request.get_json().get("notas", "") if request.get_json() else ""
-            }
-            
-            corte_id = CorteCaja.create(data)
-            
+            from services.venta_service import VentaService
+            notas = (request.get_json() or {}).get("notas", "")
+            corte_id = VentaService.generar_corte(
+                session.get("usuario_id"),
+                session.get("usuario_nombre", ""),
+                notas
+            )
             return jsonify({
                 "success": True,
                 "message": "Corte de caja generado correctamente",
                 "corte_id": corte_id
             })
         except Exception as e:
-            logger.error(f"Error en api_generar_corte: {str(e)}")
-            return jsonify({
-                "success": False,
-                "message": "Error interno del servidor"
-            }), 500
+            logger.error("Error en api_generar_corte: %s", str(e))
+            return jsonify({"success": False, "message": "Error interno del servidor"}), 500
     
     @staticmethod
     def api_get_cortes():

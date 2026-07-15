@@ -1,0 +1,496 @@
+{% extends "layout/layout_repartidor.html" %}
+{% block title %}Mapa de Entregas{% endblock %}
+{% block page_title %}Mapa en Vivo{% endblock %}
+{% block page_subtitle %}Tu posición y entregas en tiempo real{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+    /* Mapa ocupa todo el espacio disponible */
+    .page-content { padding: 0 !important; overflow: hidden; }
+    #map-wrapper {
+        position: relative;
+        width: 100%;
+        height: calc(100vh - 130px);
+        min-height: 400px;
+    }
+    #rep-map { width: 100%; height: 100%; }
+
+    /* Marcador repartidor */
+    .marker-yo {
+        width: 46px; height: 46px; border-radius: 50%;
+        background: linear-gradient(135deg,#f97316,#dc2626);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; color: white;
+        box-shadow: 0 0 0 0 rgba(249,115,22,.7);
+        animation: pulseRep 2.4s infinite;
+    }
+    @keyframes pulseRep {
+        0%   { box-shadow: 0 0 0 0   rgba(249,115,22,.7); }
+        60%  { box-shadow: 0 0 0 18px rgba(249,115,22,0); }
+        100% { box-shadow: 0 0 0 0   rgba(249,115,22,0); }
+    }
+
+    /* Panel inferior */
+    #bottom-panel {
+        position: absolute; bottom: 0; left: 0; right: 0; z-index: 500;
+    }
+    #cards-scroll {
+        display: flex; gap: 12px; overflow-x: auto; padding: 12px 16px 16px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        background: transparent;
+        /* hide scrollbar */
+        scrollbar-width: none;
+    }
+    #cards-scroll::-webkit-scrollbar { display: none; }
+
+    .delivery-card {
+        flex: 0 0 calc(100% - 32px);
+        max-width: 380px;
+        scroll-snap-align: start;
+        background: white; border-radius: 20px;
+        box-shadow: 0 -2px 20px rgba(0,0,0,.15), 0 4px 24px rgba(0,0,0,.12);
+        overflow: hidden;
+    }
+    .card-header {
+        padding: 12px 16px 8px;
+        display: flex; align-items: center; gap: 10px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .card-folio {
+        font-family: monospace; font-size: 12px; font-weight: 700; color: #0284c7;
+        background: #e0f2fe; padding: 3px 8px; border-radius: 6px;
+    }
+    .card-estado {
+        font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+        margin-left: auto;
+    }
+    .estado-asignado  { background:#dbeafe; color:#1d4ed8; }
+    .estado-en_camino { background:#fff7ed; color:#ea580c; animation: badgePulse 2s infinite; }
+    .estado-entregado { background:#dcfce7; color:#16a34a; }
+    @keyframes badgePulse {
+        50% { box-shadow: 0 0 0 4px rgba(249,115,22,.2); }
+    }
+
+    .card-body { padding: 10px 16px 6px; }
+    .card-cliente { font-size: 15px; font-weight: 700; color: #111827; }
+    .card-dir { font-size: 12px; color: #6b7280; display: flex; align-items: flex-start; gap: 4px; margin-top: 2px; }
+    .card-total { font-size: 22px; font-weight: 900; color: #111827; }
+    .card-eta   { font-size: 11px; color: #9ca3af; }
+
+    .card-actions {
+        display: flex; gap: 8px; padding: 8px 16px 14px;
+    }
+    .btn-accion {
+        flex: 1; padding: 11px; border-radius: 12px; border: none;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        transition: all .18s; text-decoration: none;
+    }
+    .btn-primary   { background:#f97316; color:white; }
+    .btn-primary:hover   { background:#ea580c; }
+    .btn-success   { background:#10b981; color:white; }
+    .btn-success:hover   { background:#059669; }
+    .btn-secondary { background:#f3f4f6; color:#374151; }
+    .btn-secondary:hover { background:#e5e7eb; }
+    .btn-sm { flex: 0 0 auto; padding: 11px 14px; }
+
+    /* Sin entregas */
+    .no-entregas-overlay {
+        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: white; border-radius: 20px; padding: 20px 28px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.15); text-align: center;
+        min-width: 260px; z-index: 500;
+    }
+
+    /* Floating controls */
+    #map-controls {
+        position: absolute; top: 12px; right: 12px; z-index: 500;
+        display: flex; flex-direction: column; gap: 8px;
+    }
+    .map-btn {
+        width: 40px; height: 40px; border-radius: 12px; border: none;
+        background: white; box-shadow: 0 2px 12px rgba(0,0,0,.15);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; cursor: pointer; transition: all .18s;
+        color: #374151;
+    }
+    .map-btn:hover { background: #f97316; color: white; }
+
+    /* GPS badge */
+    #gps-badge {
+        position: absolute; top: 12px; left: 12px; z-index: 500;
+        background: white; border-radius: 12px; padding: 7px 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.15);
+        font-size: 12px; font-weight: 600; color: #374151;
+        display: flex; align-items: center; gap: 6px;
+    }
+    #gps-dot {
+        width: 8px; height: 8px; border-radius: 50%; background: #9ca3af;
+        flex-shrink: 0; transition: background .3s;
+    }
+    #gps-dot.active { background: #10b981; animation: gpsPulse 2s infinite; }
+    @keyframes gpsPulse {
+        50% { opacity: .4; }
+    }
+
+    /* KPI flotante */
+    #kpi-bar {
+        position: absolute; top: 60px; left: 12px; z-index: 500;
+        display: flex; gap: 6px;
+    }
+    .kpi-chip {
+        background: white; border-radius: 10px; padding: 5px 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.12);
+        font-size: 11px; color: #6b7280; font-weight: 600;
+    }
+    .kpi-chip span { font-size: 14px; font-weight: 900; color: #111827; display: block; }
+
+    /* Ruta line */
+    .route-line { stroke-dasharray: 8,6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="map-wrapper">
+
+    <!-- Mapa -->
+    <div id="rep-map"></div>
+
+    <!-- GPS badge -->
+    <div id="gps-badge">
+        <div id="gps-dot"></div>
+        <span id="gps-text">Localizando…</span>
+    </div>
+
+    <!-- KPI chips -->
+    <div id="kpi-bar">
+        <div class="kpi-chip">
+            <span id="kpi-activas">{{ activas|length }}</span>activas
+        </div>
+        <div class="kpi-chip">
+            <span id="kpi-entregas">{{ stats.total_entregas or 0 }}</span>hoy
+        </div>
+    </div>
+
+    <!-- Controles flotantes -->
+    <div id="map-controls">
+        <button class="map-btn" onclick="centrarEnMi()" title="Mi ubicación">
+            <i class="bi bi-crosshair2"></i>
+        </button>
+        <button class="map-btn" onclick="verTodo()" title="Ver todo">
+            <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+    </div>
+
+    <!-- Panel inferior -->
+    <div id="bottom-panel">
+        {% if activas %}
+        <div id="cards-scroll">
+            {% for e in activas %}
+            <div class="delivery-card" id="card-{{ e._id }}" data-id="{{ e._id }}" data-folio="{{ e.folio }}"
+                 data-dir="{{ e.direccion }}" data-estado="{{ e.estado }}">
+                <div class="card-header">
+                    <span class="card-folio">{{ e.folio }}</span>
+                    <span class="card-estado estado-{{ e.estado }}">
+                        {% if e.estado == 'asignado' %}Asignado
+                        {% elif e.estado == 'en_camino' %}En camino 🔥
+                        {% elif e.estado == 'entregado' %}Entregado ✅
+                        {% else %}{{ e.estado }}{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="flex items-start justify-between gap-2">
+                        <div style="flex:1;min-width:0;">
+                            <div class="card-cliente">{{ e.cliente_nombre }}</div>
+                            <div class="card-dir">
+                                <i class="bi bi-geo-alt-fill" style="color:#f97316;font-size:13px;margin-top:1px;flex-shrink:0;"></i>
+                                <span>{{ e.direccion }}{% if e.referencias %} — {{ e.referencias }}{% endif %}</span>
+                            </div>
+                            {% if e.cliente_telefono %}
+                            <a href="tel:{{ e.cliente_telefono }}" style="font-size:11px;color:#0284c7;text-decoration:none;margin-top:3px;display:inline-flex;align-items:center;gap:3px;">
+                                <i class="bi bi-telephone"></i> {{ e.cliente_telefono }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <div class="card-total">${{ "%.0f"|format(e.total|float) }}</div>
+                            <div class="card-eta">~{{ e.tiempo_estimado }} min</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    {% if e.estado == 'asignado' %}
+                    <button class="btn-accion btn-primary" onclick="cambiarEstado('{{ e._id }}','en_camino',this)">
+                        <i class="bi bi-bicycle"></i> Salir a entregar
+                    </button>
+                    {% elif e.estado == 'en_camino' %}
+                    <button class="btn-accion btn-success" onclick="cambiarEstado('{{ e._id }}','entregado',this)">
+                        <i class="bi bi-check-circle-fill"></i> Entregado
+                    </button>
+                    {% endif %}
+                    <a class="btn-accion btn-secondary btn-sm" id="nav-btn-{{ e._id }}"
+                       href="https://maps.google.com/?q={{ e.direccion | urlencode }}&travelmode=driving"
+                       target="_blank" title="Navegar">
+                        <i class="bi bi-arrow-right-circle-fill" style="color:#f97316;font-size:18px;"></i>
+                    </a>
+                    <button class="btn-accion btn-secondary btn-sm" onclick="centrarEnDestino('{{ e._id }}')" title="Ver en mapa">
+                        <i class="bi bi-map" style="font-size:15px;"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-entregas-overlay">
+            <div style="font-size:40px;margin-bottom:8px;">🛵</div>
+            <p style="font-weight:700;color:#111827;font-size:15px;">Sin entregas activas</p>
+            <p style="font-size:12px;color:#9ca3af;margin-top:4px;">El admin te asignará pedidos pronto.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Datos del servidor ──────────────────────────────────────────
+const ENTREGAS = {{ activas | tojson }};
+const REP_ID   = "{{ session.usuario_id }}";
+
+// ── Mapa ────────────────────────────────────────────────────────
+const map = L.map('rep-map', {
+    zoomControl: false,
+    attributionControl: false,
+}).setView([19.2812, -99.6563], 14);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 19,
+}).addTo(map);
+L.control.attribution({ prefix: false })
+    .addAttribution('© <a href="https://osm.org/copyright">OpenStreetMap</a>')
+    .addTo(map);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// ── Marcador del repartidor ─────────────────────────────────────
+const iconYo = L.divIcon({
+    className: '',
+    html: '<div class="marker-yo">🛵</div>',
+    iconSize: [46, 46], iconAnchor: [23, 23], popupAnchor: [0, -26],
+});
+let markerYo = null;
+let posActual = null;
+
+// ── Marcadores de destinos ──────────────────────────────────────
+const destMarkers = {};  // keyed by e._id
+const destCoords  = {};  // keyed by e._id → [lat,lon]
+let routeLine = null;
+
+function iconDestino(idx, estado) {
+    const colores = { asignado:'#0284c7', en_camino:'#f97316', entregado:'#10b981' };
+    const c = colores[estado] || '#6b7280';
+    return L.divIcon({
+        className: '',
+        html: `<div style="position:relative;width:36px;height:44px;">
+            <div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:${c};
+                        transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.25);">
+            </div>
+            <span style="position:absolute;top:5px;left:50%;transform:translateX(-50%);
+                         color:white;font-weight:900;font-size:13px;">${idx + 1}</span>
+        </div>`,
+        iconSize: [36, 44], iconAnchor: [18, 44], popupAnchor: [0, -44],
+    });
+}
+
+// Geocodificar dirección con Nominatim
+async function geocodificar(direccion) {
+    try {
+        const q = encodeURIComponent(direccion + ', Toluca, Estado de México, México');
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=es`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await r.json();
+        if (data.length) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    } catch {}
+    return null;
+}
+
+async function cargarDestinos() {
+    for (let i = 0; i < ENTREGAS.length; i++) {
+        const e = ENTREGAS[i];
+        const coords = await geocodificar(e.direccion);
+        if (!coords) continue;
+        destCoords[e._id] = coords;
+        const m = L.marker(coords, { icon: iconDestino(i, e.estado) })
+            .addTo(map)
+            .bindPopup(`
+                <div style="min-width:160px;font-size:13px;">
+                    <b>${e.folio}</b><br>
+                    <span style="color:#6b7280;">${e.cliente_nombre}</span><br>
+                    <span style="font-size:11px;color:#9ca3af;">${e.direccion}</span>
+                </div>`);
+        destMarkers[e._id] = m;
+    }
+    if (Object.keys(destCoords).length) verTodo();
+}
+
+// ── GPS en tiempo real ──────────────────────────────────────────
+let gpsFrecuencia = 0;
+
+function onPosicion(pos) {
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    posActual = [lat, lon];
+
+    // Actualizar / crear marcador
+    if (markerYo) {
+        markerYo.setLatLng(posActual);
+    } else {
+        markerYo = L.marker(posActual, { icon: iconYo, zIndexOffset: 1000 })
+            .addTo(map)
+            .bindPopup('<b>Tú estás aquí</b>');
+        map.setView(posActual, 15);
+    }
+
+    // Badge GPS
+    document.getElementById('gps-dot').classList.add('active');
+    document.getElementById('gps-text').textContent =
+        `${lat.toFixed(5)}° ${lon.toFixed(5)}°`;
+
+    // Actualizar línea de ruta al destino activo
+    dibujarRuta();
+
+    // Enviar posición al servidor (admin + tracking clientes) cada 10s
+    gpsFrecuencia++;
+    if (gpsFrecuencia % 2 === 0) {  // watchPosition dispara cada ~5s, enviamos cada ~10s
+        enviarPosicion(lat, lon);
+    }
+}
+
+function onErrorGPS(err) {
+    document.getElementById('gps-text').textContent = 'GPS no disponible';
+    console.warn('GPS error:', err.message);
+}
+
+if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(onPosicion, onErrorGPS, {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000,
+    });
+} else {
+    document.getElementById('gps-text').textContent = 'GPS no soportado';
+}
+
+// ── Enviar posición al servidor ─────────────────────────────────
+let batActual = null;
+(async () => {
+    if ('getBattery' in navigator) {
+        try {
+            const b = await navigator.getBattery();
+            batActual = Math.round(b.level * 100);
+            b.addEventListener('levelchange', () => { batActual = Math.round(b.level * 100); });
+        } catch {}
+    }
+})();
+
+async function enviarPosicion(lat, lon) {
+    try {
+        await fetch('/api/sensor/enviar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat, lon, battery: batActual || 0, pasos: 0 }),
+        });
+    } catch {}
+}
+
+// ── Ruta al destino activo ──────────────────────────────────────
+function dibujarRuta() {
+    if (!posActual) return;
+
+    // Buscar entrega en_camino primero, si no asignado
+    const activa = ENTREGAS.find(e => e.estado === 'en_camino') ||
+                   ENTREGAS.find(e => e.estado === 'asignado');
+    if (!activa || !destCoords[activa._id]) {
+        if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+        return;
+    }
+
+    const dest = destCoords[activa._id];
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.polyline([posActual, dest], {
+        color: '#f97316', weight: 4, opacity: 0.7,
+        dashArray: '10 8', className: 'route-line',
+    }).addTo(map);
+}
+
+// ── Controles de mapa ───────────────────────────────────────────
+function centrarEnMi() {
+    if (posActual) map.flyTo(posActual, 16, { duration: 1 });
+}
+function centrarEnDestino(id) {
+    if (destCoords[id]) map.flyTo(destCoords[id], 16, { duration: 1 });
+    else Swal.fire({ icon:'info', title:'Geocodificando…',
+                     text:'Espera mientras localizamos la dirección.', timer:2000, showConfirmButton:false });
+}
+function verTodo() {
+    const puntos = [];
+    if (posActual) puntos.push(posActual);
+    Object.values(destCoords).forEach(c => puntos.push(c));
+    if (puntos.length > 1) map.fitBounds(puntos, { padding: [60, 60], maxZoom: 16 });
+    else if (puntos.length === 1) map.flyTo(puntos[0], 15);
+}
+
+// ── Cambiar estado de entrega ───────────────────────────────────
+async function cambiarEstado(id, nuevoEstado, btn) {
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;display:inline-block;"></i>';
+
+    const r = await fetch(`/api/delivery/${id}/estado`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado }),
+    });
+    const data = await r.json();
+    if (data.success) {
+        const msgs = { en_camino: '¡Sal a entregar! El cliente ya sabe que vas en camino.', entregado: '🎉 ¡Entrega completada!' };
+        Swal.fire({ icon: 'success', title: msgs[nuevoEstado] || '¡Listo!', timer: 2000, showConfirmButton: false });
+        // Actualizar marcador del mapa
+        const idx = ENTREGAS.findIndex(e => e._id === id);
+        if (idx >= 0) {
+            ENTREGAS[idx].estado = nuevoEstado;
+            if (destMarkers[id]) destMarkers[id].setIcon(iconDestino(idx, nuevoEstado));
+        }
+        setTimeout(() => location.reload(), 2100);
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = original;
+        Swal.fire('Error', data.error, 'error');
+    }
+}
+
+// ── Socket.IO: escuchar actualizaciones del admin ───────────────
+const socket = io();
+socket.on('connect', () => socket.emit('join_repartidor', REP_ID));
+socket.on('notificacion_wearable', d => {
+    const colores = { info:'#3b82f6', alerta:'#f59e0b', urgente:'#ef4444' };
+    Swal.fire({
+        icon: 'info', title: '📢 ' + (d.de || 'Admin'),
+        text: d.mensaje, timer: 8000, showConfirmButton: true,
+        confirmButtonText: 'OK',
+        background: '#fff',
+        color: '#111827',
+    });
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Callejón 9 — ' + (d.de || 'Admin'), { body: d.mensaje });
+    }
+});
+
+// ── Init ────────────────────────────────────────────────────────
+cargarDestinos();
+</script>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}

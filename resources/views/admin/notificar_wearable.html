@@ -1,0 +1,231 @@
+{% extends "layout/layout_base.html" %}
+{% block title %}Notificar Dispositivos{% endblock %}
+{% block page_title %}Notificar Dispositivos Wearable{% endblock %}
+{% block page_subtitle %}Envía mensajes en tiempo real a uno o todos los repartidores{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+<!-- Formulario de notificación -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-6 border-b">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-send-fill text-sky-500 text-lg"></i>
+            Enviar Notificación
+        </h3>
+        <p class="text-sm text-gray-500 mt-1">El mensaje llegará en tiempo real al dispositivo del repartidor.</p>
+    </div>
+    <div class="p-6 space-y-5">
+
+        <!-- Destinatario -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="bi bi-smartwatch mr-1"></i> Destinatario
+            </label>
+            <select id="sel-repartidor"
+                    class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition">
+                <option value="">📢 Todos los dispositivos</option>
+                {% for r in repartidores %}
+                <option value="{{ r._id }}">
+                    🛵 {{ r.usuario_nombre }} {{ r.usuario_apellidos or '' }}
+                    {% if r.vehiculo %} — {{ r.vehiculo }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Tipo de notificación -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="bi bi-tag mr-1"></i> Tipo
+            </label>
+            <div class="grid grid-cols-3 gap-3">
+                <label class="tipo-btn cursor-pointer">
+                    <input type="radio" name="tipo" value="info" class="sr-only" checked>
+                    <div class="tipo-card border-2 border-sky-200 bg-sky-50 text-sky-700 rounded-xl p-3 text-center transition hover:border-sky-400">
+                        <i class="bi bi-info-circle-fill text-2xl block mb-1"></i>
+                        <span class="text-xs font-bold">Información</span>
+                    </div>
+                </label>
+                <label class="tipo-btn cursor-pointer">
+                    <input type="radio" name="tipo" value="alerta" class="sr-only">
+                    <div class="tipo-card border-2 border-gray-200 bg-gray-50 text-gray-500 rounded-xl p-3 text-center transition hover:border-amber-400">
+                        <i class="bi bi-exclamation-triangle-fill text-2xl block mb-1"></i>
+                        <span class="text-xs font-bold">Alerta</span>
+                    </div>
+                </label>
+                <label class="tipo-btn cursor-pointer">
+                    <input type="radio" name="tipo" value="urgente" class="sr-only">
+                    <div class="tipo-card border-2 border-gray-200 bg-gray-50 text-gray-500 rounded-xl p-3 text-center transition hover:border-red-400">
+                        <i class="bi bi-exclamation-octagon-fill text-2xl block mb-1"></i>
+                        <span class="text-xs font-bold">Urgente</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Mensaje -->
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="bi bi-chat-text mr-1"></i> Mensaje
+            </label>
+            <textarea id="txt-mensaje" rows="3"
+                      placeholder="Escribe el mensaje para el dispositivo..."
+                      class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition resize-none"></textarea>
+            <p class="text-xs text-gray-400 mt-1 text-right">
+                <span id="char-count">0</span>/200 caracteres
+            </p>
+        </div>
+
+        <!-- Mensajes rápidos -->
+        <div>
+            <p class="text-xs text-gray-500 font-medium mb-2">Mensajes rápidos:</p>
+            <div class="flex flex-wrap gap-2">
+                {% set plantillas = [
+                    'Nueva entrega asignada, revisa tu app.',
+                    'Confirma recepción del pedido.',
+                    'El cliente está esperando, apresúrate.',
+                    'Regresa a la base cuando termines.',
+                    'Llama al cliente antes de llegar.',
+                ] %}
+                {% for p in plantillas %}
+                <button onclick="usarPlantilla(this)"
+                        data-msg="{{ p }}"
+                        class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-sky-100 hover:text-sky-700 text-gray-600 rounded-lg transition">
+                    {{ p[:35] }}{% if p|length > 35 %}…{% endif %}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Botón enviar -->
+        <button id="btn-enviar" onclick="enviarNotificacion()"
+                class="w-full py-4 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-bold rounded-xl shadow transition-all flex items-center justify-center gap-2.5 text-base">
+            <i class="bi bi-send-fill"></i> Enviar Notificación
+        </button>
+    </div>
+</div>
+
+<!-- Historial de esta sesión -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2 text-sm">
+            <i class="bi bi-clock-history text-gray-400"></i> Enviadas en esta sesión
+        </h3>
+    </div>
+    <div id="lista-enviadas" class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+        <div id="enviadas-empty" class="py-8 text-center text-gray-400 text-sm">
+            <i class="bi bi-send text-3xl block mb-2 opacity-20"></i>
+            Ninguna notificación enviada aún
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+const tipoClases = {
+    info:    'border-sky-400 bg-sky-50 text-sky-700',
+    alerta:  'border-amber-400 bg-amber-50 text-amber-700',
+    urgente: 'border-red-500 bg-red-50 text-red-700',
+};
+const tipoIconos = {
+    info: 'info-circle-fill text-sky-500',
+    alerta: 'exclamation-triangle-fill text-amber-500',
+    urgente: 'exclamation-octagon-fill text-red-500',
+};
+
+// Highlight tipo seleccionado
+document.querySelectorAll('.tipo-btn input').forEach(radio => {
+    radio.addEventListener('change', () => actualizarTipoUI());
+});
+function actualizarTipoUI() {
+    document.querySelectorAll('.tipo-btn').forEach(btn => {
+        const radio = btn.querySelector('input');
+        const card  = btn.querySelector('.tipo-card');
+        const estiloActivo = {
+            info:    'border-sky-400 bg-sky-50 text-sky-700',
+            alerta:  'border-amber-400 bg-amber-50 text-amber-700',
+            urgente: 'border-red-500 bg-red-50 text-red-700',
+        }[radio.value];
+        if (radio.checked) {
+            card.className = `tipo-card border-2 ${estiloActivo} rounded-xl p-3 text-center transition`;
+        } else {
+            card.className = 'tipo-card border-2 border-gray-200 bg-gray-50 text-gray-500 rounded-xl p-3 text-center transition hover:border-gray-300';
+        }
+    });
+}
+
+// Contador caracteres
+document.getElementById('txt-mensaje').addEventListener('input', e => {
+    const n = e.target.value.length;
+    document.getElementById('char-count').textContent = n;
+    if (n > 200) e.target.value = e.target.value.slice(0, 200);
+});
+
+function usarPlantilla(btn) {
+    document.getElementById('txt-mensaje').value = btn.dataset.msg;
+    document.getElementById('char-count').textContent = btn.dataset.msg.length;
+}
+
+async function enviarNotificacion() {
+    const mensaje      = document.getElementById('txt-mensaje').value.trim();
+    const repartidor   = document.getElementById('sel-repartidor').value;
+    const tipo         = document.querySelector('input[name="tipo"]:checked')?.value || 'info';
+
+    if (!mensaje) {
+        Swal.fire({ icon: 'warning', title: 'Mensaje vacío', text: 'Escribe un mensaje antes de enviar.', timer: 2000, showConfirmButton: false });
+        return;
+    }
+
+    const btn = document.getElementById('btn-enviar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Enviando...';
+
+    try {
+        const r = await fetch('/api/admin/notificar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mensaje, repartidor_id: repartidor || null, tipo }),
+        });
+        const d = await r.json();
+        if (d.success) {
+            Swal.fire({ icon: 'success', title: '¡Enviado!', timer: 1800, showConfirmButton: false });
+            agregarEnviada({ mensaje, tipo, repartidor, ts: new Date().toLocaleTimeString() });
+            document.getElementById('txt-mensaje').value = '';
+            document.getElementById('char-count').textContent = '0';
+        } else {
+            Swal.fire('Error', d.error, 'error');
+        }
+    } catch {
+        Swal.fire('Error', 'Sin conexión al servidor', 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send-fill"></i> Enviar Notificación';
+}
+
+function agregarEnviada({ mensaje, tipo, repartidor, ts }) {
+    document.getElementById('enviadas-empty').classList.add('hidden');
+    const selEl = document.getElementById('sel-repartidor');
+    const dest  = repartidor
+        ? selEl.options[selEl.selectedIndex]?.text?.trim() || repartidor.slice(0, 8)
+        : '📢 Todos';
+    const el = document.createElement('div');
+    el.className = 'px-4 py-3 flex items-start gap-3';
+    el.innerHTML = `
+        <i class="bi bi-${tipoIconos[tipo] || 'info-circle-fill text-sky-500'} mt-0.5 shrink-0"></i>
+        <div class="min-w-0 flex-1">
+            <p class="text-sm text-gray-800 font-medium">${mensaje}</p>
+            <p class="text-xs text-gray-400 mt-0.5">${dest} · ${ts}</p>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full shrink-0
+            ${tipo === 'urgente' ? 'bg-red-100 text-red-600' :
+              tipo === 'alerta'  ? 'bg-amber-100 text-amber-600' :
+                                   'bg-sky-100 text-sky-600'}">
+            ${tipo}
+        </span>`;
+    document.getElementById('lista-enviadas').prepend(el);
+}
+</script>
+{% endblock %}

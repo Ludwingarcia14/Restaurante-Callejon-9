@@ -3,6 +3,7 @@ from flask import session, render_template
 from controllers.auth.AuthController import login_required, rol_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.cocina.cocinaController import CocinaController
+from controllers.cocina.platillos_no_disponibles_controller import PlatillosNoDisponiblesController
 
 @routes_bp.route("/dashboard/cocina")
 @login_required
@@ -71,3 +72,67 @@ def api_cocina_marcar_entregado():
 @rol_required(['1', '3'])
 def api_cocina_estadisticas():
     return CocinaController.obtener_estadisticas_cocina()
+
+@routes_bp.route("/api/cocina/charts/top-platillos", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_top_platillos():
+    return CocinaController.get_top_platillos()
+
+@routes_bp.route("/api/cocina/charts/kmeans", methods=["GET"])
+@login_required
+@rol_required(['1', '3'])
+def api_cocina_kmeans():
+    return CocinaController.get_kmeans_platillos()
+
+# ============================================
+# RUTAS PARA PLATILLOS NO DISPONIBLES
+# ============================================
+
+@routes_bp.route('/cocina/platillos/no-disponibles')          # ← routes_bp, no cocina_bp
+@login_required
+@rol_required(['3'])
+def vista_platillos_no_disponibles():
+    return render_template('cocina/platillos_no_disponibles.html')
+
+@routes_bp.route('/api/cocina/platillos/no-disponibles/todos')  # ← prefijo /api/cocina/
+@login_required
+@rol_required(['1', '3'])
+def api_platillos_no_disponibles_todos():
+    return PlatillosNoDisponiblesController.obtener_todos()
+
+@routes_bp.route('/api/cocina/platillos/no-disponibles/activos')
+@login_required
+@rol_required(['1', '3'])
+def api_platillos_no_disponibles_activos():
+    return PlatillosNoDisponiblesController.obtener_activos()
+
+@routes_bp.route('/api/cocina/platillos/no-disponibles/historial')
+@login_required
+@rol_required(['1', '3'])
+def api_platillos_no_disponibles_historial():
+    return PlatillosNoDisponiblesController.obtener_historial()
+
+@routes_bp.route('/api/cocina/platillos/no-disponibles/marcar', methods=['POST'])
+@login_required
+@rol_required(['1', '3'])
+def api_marcar_no_disponible():
+    return PlatillosNoDisponiblesController.marcar_no_disponible()
+
+@routes_bp.route('/api/cocina/platillos/no-disponibles/reactivar/<platillo_id>', methods=['POST'])
+@login_required
+@rol_required(['1', '3'])
+def api_reactivar_platillo(platillo_id):
+    return PlatillosNoDisponiblesController.reactivar_platillo(platillo_id)
+
+@routes_bp.route('/api/cocina/platillos/activos')
+@login_required
+@rol_required(['1', '3'])
+def api_platillos_activos():
+    return PlatillosNoDisponiblesController.obtener_platillos_activos()
+
+@routes_bp.route('/api/cocina/platillos/no-disponibles/estadisticas')
+@login_required
+@rol_required(['1', '3'])
+def api_no_disponibles_estadisticas():
+    return PlatillosNoDisponiblesController.get_estadisticas()

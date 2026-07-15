@@ -1,0 +1,1 @@
+from controllers.cocina.platillos_no_disponibles_controller import PlatillosNoDisponiblesController as PlatillosNoDisponiblesService  # noqa: F401

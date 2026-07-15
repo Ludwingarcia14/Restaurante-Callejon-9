@@ -223,6 +223,43 @@ def api_analytics_meseros():
 def api_analytics_ventas_mesa():
     return AnalyticsController.get_ventas_por_mesa()
 
+# ── Analytics avanzado: Pareto, Asociación, Predicción ───
+@routes_bp.route("/admin/analytics/pareto")
+@login_required
+@rol_required(['1'])
+def analytics_pareto():
+    return AnalyticsController.vista_pareto()
+
+@routes_bp.route("/api/analytics/pareto")
+@login_required
+@rol_required(['1', '2'])
+def api_analytics_pareto():
+    return AnalyticsController.get_pareto()
+
+@routes_bp.route("/admin/analytics/asociacion")
+@login_required
+@rol_required(['1'])
+def analytics_asociacion():
+    return AnalyticsController.vista_asociacion()
+
+@routes_bp.route("/api/analytics/asociacion")
+@login_required
+@rol_required(['1', '2'])
+def api_analytics_asociacion():
+    return AnalyticsController.get_asociacion()
+
+@routes_bp.route("/admin/analytics/prediccion")
+@login_required
+@rol_required(['1'])
+def analytics_prediccion():
+    return AnalyticsController.vista_prediccion()
+
+@routes_bp.route("/api/analytics/prediccion")
+@login_required
+@rol_required(['1', '2'])
+def api_analytics_prediccion():
+    return AnalyticsController.get_prediccion()
+
 # ── Backup y Seguridad ────────────────────────────────────
 @routes_bp.route('/admin/backup', methods=['GET'])
 @login_required

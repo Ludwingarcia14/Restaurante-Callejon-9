@@ -1,62 +1,88 @@
-{% extends "layout/layout_mesero.html" %}
-
+﻿{% extends "layout/layout_mesero.html" %}
 {% block title %}Panel de Mesero{% endblock %}
-{% block page_title %}Dashboard de Mesero{% endblock %}
-{% block page_subtitle %}Gestión de mesas y atención al cliente{% endblock %}
+{% block page_title %}<span data-i18n="m_dash_titulo">Dashboard de Mesero</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="m_dash_sub">Gestión de mesas y atención al cliente</span>{% endblock %}
 
 {% block navigation %}
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link active">
-    <i class="bi bi-house-door"></i>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const linksAdmin = ['nav-dashboard', 'nav-menu', 'nav-ventas', 'nav-reportes', 'nav-analytics'];
+    linksAdmin.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const adminSection = document.querySelector('.sidebar-nav .border-t');
+    if (adminSection) adminSection.style.display = 'none';
+});
+</script>
+
+<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
+    <i class="bi bi-house-door text-lg"></i>
     <span>Inicio</span>
 </a>
-
-<a href="{{ url_for('routes.mesero_mesas') }}" class="nav-link">
-    <i class="bi bi-grid-3x3"></i>
-    <span>Mis Mesas</span>
-</a>
-
 <a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt"></i>
+    <i class="bi bi-receipt text-lg"></i>
     <span>Comandas Activas</span>
 </a>
-
 <a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text"></i>
+    <i class="bi bi-journal-text text-lg"></i>
     <span>Menú</span>
 </a>
-
 <a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
-    <i class="bi bi-cash-coin"></i>
+    <i class="bi bi-cash-coin text-lg"></i>
     <span>Propinas del Día</span>
 </a>
-
 <a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
-    <i class="bi bi-clock-history"></i>
+    <i class="bi bi-clock-history text-lg"></i>
     <span>Historial</span>
+</a>
+<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
+    <i class="bi bi-diagram-3 text-lg"></i>
+    <span>Segmentación</span>
+</a>
+<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
+    <i class="bi bi-tree text-lg"></i>
+    <span>Random Forest</span>
+</a>
+<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
+    <i class="bi bi-clipboard-data text-lg"></i>
+    <span>Diagnóstico</span>
+</a>
+<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
+    <i class="bi bi-bar-chart-steps text-lg"></i>
+    <span>Pareto 80/20</span>
+</a>
+<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
+    <i class="bi bi-share text-lg"></i>
+    <span>Asociación</span>
+</a>
+<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
+    <i class="bi bi-graph-up text-lg"></i>
+    <span>Predicción</span>
 </a>
 {% endblock %}
 
 {% block content %}
 
-<div class="p-6 rounded-xl shadow-lg text-white mb-6"
+<div class="p-5 rounded-xl shadow-lg text-white mb-6"
     style="background: linear-gradient(135deg, #F2913D 0%, #F2A339 100%);">
-    <div class="flex items-center justify-between">
-        <div>
-            <h2 class="text-2xl font-bold mb-2">¡Hola, {{ session.usuario_nombre }}! 👋</h2>
-            <div class="flex items-center gap-4 text-sm opacity-90">
-                <div class="flex items-center gap-2">
+    <div class="flex items-start justify-between flex-wrap gap-3">
+        <div class="min-w-0">
+            <h2 class="text-xl sm:text-2xl font-bold mb-1"><span data-i18n="m_hola">¡Hola</span>, {{ session.usuario_nombre }}! 👋</h2>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm opacity-90">
+                <div class="flex items-center gap-1.5">
                     <i class="bi bi-clock"></i>
-                    <span>Turno: {{ perfil.turno|title if perfil.turno else 'No asignado' }}</span>
+                    <span><span data-i18n="m_turno">Turno</span>: {{ perfil.turno|title if perfil.turno else 'No asignado' }}</span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                     <i class="bi bi-person-badge"></i>
                     <span>ID: {{ perfil.numero_empleado if perfil.numero_empleado else 'N/A' }}</span>
                 </div>
             </div>
         </div>
-        <div class="text-right bg-white bg-opacity-20 p-3 rounded-lg backdrop-blur-sm">
-            <div class="text-3xl font-bold">{{ stats.mesas_asignadas|length }}</div>
-            <div class="text-xs uppercase tracking-wider opacity-90">Mesas Asignadas</div>
+        <div class="text-right bg-white bg-opacity-20 px-4 py-2.5 rounded-lg backdrop-blur-sm shrink-0">
+            <div class="text-3xl font-bold leading-none">{{ stats.mesas_asignadas|length }}</div>
+            <div class="text-xs uppercase tracking-wider opacity-90 mt-0.5" data-i18n="m_mesas_lbl">Mesas</div>
         </div>
     </div>
 </div>
@@ -66,46 +92,45 @@
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#F2913D] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-receipt text-4xl text-[#F2913D]"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="stat-comandas">{{ stats.comandas_activas }}</span>
+            <span class="text-3xl font-bold text-gray-900" id="stat-comandas">{{ stats.comandas_activas }}</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Comandas Activas</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_cmdas_lbl">Comandas Activas</p>
         <p class="text-xs text-[#F2913D] mt-1 font-semibold">
-            <i class="bi bi-clock"></i> En proceso
+            <i class="bi bi-clock"></i> <span data-i18n="m_en_proceso">En proceso</span>
         </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#F2A339] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-grid-3x3 text-4xl text-[#F2A339]"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="mesas-ocupadas">0</span>
+            <span class="text-3xl font-bold text-gray-900" id="mesas-ocupadas">0</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Mesas Ocupadas</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_mesas_ocup">Mesas Ocupadas</p>
         <p class="text-xs text-amber-600 mt-1">
             <i class="bi bi-check-circle"></i> <span id="mesas-libres">{{ stats.mesas_asignadas|length }}</span>
-            disponibles
+            <span data-i18n="m_disponibles">disponibles</span>
         </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
             <i class="bi bi-cash-coin text-4xl text-green-500"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="stat-propinas">${{ "%.2f"|format(stats.propinas_dia)
-                }}</span>
+            <span class="text-3xl font-bold text-gray-900" id="stat-propinas">${{ "%.2f"|format(stats.propinas_dia) }}</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Propinas Hoy</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_propinas_hoy">Propinas Hoy</p>
         <p class="text-xs text-green-600 mt-1">
-            <i class="bi bi-arrow-up"></i> {{ perfil.propinas.sugerida if perfil.propinas else 10 }}% sugerido
+            <i class="bi bi-arrow-up"></i> {{ perfil.propinas.sugerida if perfil.propinas else 10 }}% <span data-i18n="m_sugerido">sugerido</span>
         </p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#0D0D0D] hover:shadow-lg transition">
         <div class="flex items-center justify-between mb-2">
-            <i class="bi bi-graph-up text-4xl text-[#0D0D0D]"></i>
-            <span class="text-3xl font-bold text-[#0D0D0D]" id="venta-dia">$0.00</span>
+            <i class="bi bi-graph-up text-4xl text-gray-900"></i>
+            <span class="text-3xl font-bold text-gray-900" id="venta-dia">$0.00</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Venta del Día</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="m_venta_dia">Venta del Día</p>
         <p class="text-xs text-gray-500 mt-1">
-            <i class="bi bi-star"></i> <span id="num-ordenes">0</span> órdenes
+            <i class="bi bi-star"></i> <span id="num-ordenes">0</span> <span data-i18n="m_ordenes_lbl">órdenes</span>
         </p>
     </div>
 
@@ -116,13 +141,13 @@
     <div class="lg:col-span-2">
         <div class="card bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#F2913D]">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-lg font-bold text-[#0D0D0D] flex items-center gap-2">
+                <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <i class="bi bi-grid-3x3 text-[#F2913D]"></i>
-                    Mis Mesas
+                    <span data-i18n="m_mis_mesas">Mis Mesas</span>
                 </h2>
                 <div class="flex items-center gap-2">
                     <span class="px-3 py-1 bg-[#F2CA99] bg-opacity-30 text-[#F2913D] rounded-full text-xs font-bold">
-                        {{ stats.mesas_asignadas|length }} ASIGNADAS
+                        {{ stats.mesas_asignadas|length }} <span data-i18n="m_asignadas">ASIGNADAS</span>
                     </span>
                     <button onclick="cargarEstadoMesas()"
                         class="p-2 hover:bg-gray-200 rounded-full transition text-gray-600">
@@ -136,16 +161,11 @@
                     {% for mesa_num in stats.mesas_asignadas %}
                     <div class="mesa-card border-2 border-gray-200 rounded-xl p-4 transition cursor-pointer text-center group"
                         data-mesa="{{ mesa_num }}" onclick="verMesa('{{ mesa_num }}')">
-
-                        <div
-                            class="icon-container w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 transition">
+                        <div class="icon-container w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 transition">
                             <i class="bi bi-table text-xl"></i>
                         </div>
-
-                        <p class="font-bold text-[#0D0D0D]">Mesa {{ mesa_num }}</p>
-
+                        <p class="font-bold text-gray-900"><span data-i18n="m_mesa_word">Mesa</span> {{ mesa_num }}</p>
                         <span class="mesa-status px-2 py-1 text-[10px] rounded-full"></span>
-
                         <p class="mesa-comensales text-[10px] uppercase tracking-tighter text-gray-400 mt-1 font-bold">
                             Cargando...
                         </p>
@@ -155,7 +175,7 @@
                 {% else %}
                 <div class="text-center py-12 text-gray-400">
                     <i class="bi bi-inbox text-5xl mb-3 opacity-20"></i>
-                    <p>No tienes mesas asignadas</p>
+                    <p data-i18n="m_sin_mesas">No tienes mesas asignadas</p>
                 </div>
                 {% endif %}
             </div>
@@ -165,18 +185,17 @@
     <div class="lg:col-span-1">
         <div class="card bg-white rounded-xl shadow-md border-t-4 border-[#0D0D0D]">
             <div class="p-4 border-b bg-gray-50">
-                <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
                     <i class="bi bi-lightning-charge-fill text-[#F2A339]"></i>
-                    Acciones Rápidas
+                    <span data-i18n="m_acc_rapidas">Acciones Rápidas</span>
                 </h2>
             </div>
             <div class="card-body p-4 space-y-3">
-
                 <button onclick="mostrarSeleccionMesa()"
                     class="w-full p-4 bg-[#F2913D] text-white rounded-lg hover:bg-[#F2A339] shadow-md transition flex items-center justify-between group">
                     <div class="flex items-center gap-3">
                         <i class="bi bi-plus-circle-fill text-xl"></i>
-                        <span class="font-bold">NUEVA CUENTA</span>
+                        <span class="font-bold" data-i18n="m_nueva_cuenta">NUEVA CUENTA</span>
                     </div>
                     <i class="bi bi-chevron-right group-hover:translate-x-1 transition"></i>
                 </button>
@@ -185,7 +204,7 @@
                     class="w-full p-4 bg-white border-2 border-[#F2CA99] text-[#F2913D] rounded-lg hover:bg-[#F2CA99] hover:bg-opacity-20 transition flex items-center justify-between group">
                     <div class="flex items-center gap-3">
                         <i class="bi bi-journal-text text-xl"></i>
-                        <span class="font-bold">VER MENÚ</span>
+                        <span class="font-bold" data-i18n="m_ver_menu_btn">VER MENÚ</span>
                     </div>
                     <i class="bi bi-chevron-right group-hover:translate-x-1 transition"></i>
                 </button>
@@ -194,13 +213,12 @@
                     class="w-full p-4 bg-white border-2 border-gray-800 text-gray-800 rounded-lg hover:bg-gray-800 hover:text-white transition flex items-center justify-between group">
                     <div class="flex items-center gap-3">
                         <i class="bi bi-receipt text-xl"></i>
-                        <span class="font-bold">MIS COMANDAS</span>
+                        <span class="font-bold" data-i18n="m_mis_cmdas_btn">MIS COMANDAS</span>
                     </div>
                     <span id="badge-comandas" class="bg-[#F2913D] text-white px-2 py-0.5 rounded text-xs font-bold">
                         {{ stats.comandas_activas }}
                     </span>
                 </button>
-
             </div>
         </div>
     </div>
@@ -208,33 +226,83 @@
 
 <div class="card bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-[#F2A339]">
     <div class="card-header p-4 bg-gray-50 flex justify-between items-center border-b">
-        <h2 class="font-bold text-[#0D0D0D] flex items-center gap-2">
+        <h2 class="font-bold text-gray-900 flex items-center gap-2">
             <i class="bi bi-list-stars text-[#F2913D]"></i>
-            Detalle de Comandas Activas
+            <span data-i18n="m_det_cmdas">Detalle de Comandas Activas</span>
         </h2>
-        <button onclick="actualizarComandas()" class="text-sm font-bold text-[#F2913D] hover:underline">
+        <button onclick="actualizarComandas()" class="text-sm font-bold text-[#F2913D] hover:underline" data-i18n="m_refrescar">
             Refrescar lista
         </button>
     </div>
     <div class="card-body p-6">
         <div id="comandas-container">
             <div class="text-center py-10">
-                <div
-                    class="animate-spin inline-block w-8 h-8 border-4 border-[#F2CA99] border-t-[#F2913D] rounded-full mb-4">
-                </div>
-                <p class="text-gray-500 font-medium">Sincronizando cocina...</p>
+                <div class="animate-spin inline-block w-8 h-8 border-4 border-[#F2CA99] border-t-[#F2913D] rounded-full mb-4"></div>
+                <p class="text-gray-500 font-medium" data-i18n="m_sincronizando">Sincronizando cocina...</p>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Analytics avanzado -->
+<div class="mt-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <i class="bi bi-graph-up-arrow text-[#F2913D]"></i>
+        <span data-i18n="m_analytics">Analytics Avanzado</span>
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ url_for('routes.mesero_pareto') }}"
+           class="flex items-center gap-4 p-5 bg-white rounded-xl shadow-sm border-l-4 hover:shadow-md transition group"
+           style="border-color:#f59e0b;">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:#fef3c7;">
+                <i class="bi bi-bar-chart-steps text-2xl" style="color:#d97706;"></i>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 group-hover:text-amber-600 transition">Pareto 80/20</p>
+                <p class="text-xs text-gray-500" data-i18n="m_pareto_desc">Qué platillos generan el 80% del ingreso</p>
+            </div>
+        </a>
+        <a href="{{ url_for('routes.mesero_asociacion') }}"
+           class="flex items-center gap-4 p-5 bg-white rounded-xl shadow-sm border-l-4 hover:shadow-md transition group"
+           style="border-color:#8b5cf6;">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:#ede9fe;">
+                <i class="bi bi-share text-2xl" style="color:#7c3aed;"></i>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 group-hover:text-purple-600 transition">Asociación</p>
+                <p class="text-xs text-gray-500" data-i18n="m_asoc_desc">Combos que se piden juntos — sugerencias</p>
+            </div>
+        </a>
+        <a href="{{ url_for('routes.mesero_prediccion') }}"
+           class="flex items-center gap-4 p-5 bg-white rounded-xl shadow-sm border-l-4 hover:shadow-md transition group"
+           style="border-color:#0ea5e9;">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:#e0f2fe;">
+                <i class="bi bi-graph-up text-2xl" style="color:#0284c7;"></i>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 group-hover:text-sky-600 transition">Predicción</p>
+                <p class="text-xs text-gray-500" data-i18n="m_pred_desc">Demanda proyectada e ingredientes a prep.</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- =============================== -->
+<!-- MODAL DETALLE MESA               -->
+<!-- =============================== -->
 <div id="modalMesa"
-    class="hidden fixed inset-0 bg-[#0D0D0D] bg-opacity-80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    class="hidden fixed inset-0 bg-[#0D0D0D] bg-opacity-80 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         <div class="bg-[#F2913D] text-white p-5 flex items-center justify-between">
             <h3 class="text-xl font-bold flex items-center gap-2 uppercase">
                 <i class="bi bi-house-door-fill"></i>
-                Detalle Mesa <span id="modal-mesa-numero"></span>
+                <span data-i18n="m_detalle_mesa">Detalle Mesa</span> <span id="modal-mesa-numero"></span>
             </h3>
             <button onclick="cerrarModalMesa()" class="hover:bg-black hover:bg-opacity-10 p-1 rounded transition">
                 <i class="bi bi-x-lg text-xl"></i>
@@ -244,31 +312,28 @@
         </div>
     </div>
 </div>
+
+<!-- =============================== -->
+<!-- MODAL MENÚ / CARRITO             -->
+<!-- =============================== -->
 <div id="modalMenu"
-    class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
+    class="hidden fixed inset-0 bg-black/60 z-[1100] flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[95vh] md:h-[85vh] flex flex-col overflow-hidden">
 
         <div class="p-5 border-b flex justify-between items-center bg-orange-50">
             <div>
-                <h3 class="text-2xl font-black text-orange-800">Mesa #<span id="menu-mesa-num">--</span></h3>
-                <p class="text-sm text-orange-600/70 font-medium">Selecciona los productos para la comanda</p>
+                <h3 class="text-2xl font-black text-orange-800"><span data-i18n="m_mesa_word">Mesa</span> #<span id="menu-mesa-num">--</span></h3>
+                <p class="text-sm text-orange-600/70 font-medium" data-i18n="m_sel_prod_hint">Selecciona los productos para la comanda</p>
             </div>
             <button onclick="cerrarModalMenu()"
                 class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-400 hover:text-red-500 shadow-sm transition-all text-2xl">&times;</button>
         </div>
 
         <div class="flex flex-1 overflow-hidden flex-col md:flex-row">
-
             <div class="flex-1 p-4 overflow-y-auto bg-gray-50/50">
-                <div class="mb-4 flex gap-2 overflow-x-auto pb-2">
-                    <button
-                        class="px-4 py-2 bg-orange-500 text-white rounded-full text-xs font-bold whitespace-nowrap">Todos</button>
-                    <button
-                        class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">Platillos</button>
-                    <button
-                        class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">Bebidas</button>
+                <div class="mb-4 flex gap-2 overflow-x-auto pb-2" id="categorias-container">
+                    <button class="px-4 py-2 bg-orange-500 text-white rounded-full text-xs font-bold whitespace-nowrap">Todos</button>
                 </div>
-
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="lista-productos-grid">
                     <div class="animate-pulse flex flex-col items-center p-4 bg-white rounded-xl shadow-sm">
                         <div class="w-12 h-12 bg-gray-200 rounded-full mb-2"></div>
@@ -280,32 +345,116 @@
             <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner">
                 <div class="p-4 border-b bg-gray-50/50 flex items-center gap-2">
                     <i class="bi bi-cart3 text-orange-600"></i>
-                    <h4 class="font-bold text-gray-700 uppercase tracking-wider text-sm">Resumen de Pedido</h4>
+                    <h4 class="font-bold text-gray-700 uppercase tracking-wider text-sm" data-i18n="m_resumen_ped">Resumen de Pedido</h4>
                 </div>
-
                 <div id="carrito-items" class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div class="text-center text-gray-400 py-10">
                         <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
                         <p class="text-xs">Selecciona un producto <br> de la izquierda</p>
                     </div>
                 </div>
-
                 <div class="p-5 border-t bg-gray-50">
                     <div class="flex justify-between items-end mb-4">
-                        <span class="text-gray-500 text-sm font-medium">TOTAL A PAGAR</span>
+                        <span class="text-gray-500 text-sm font-medium" data-i18n="m_total_pagar">TOTAL A PAGAR</span>
                         <span id="carrito-total" class="text-3xl font-black text-green-600">$0.00</span>
                     </div>
-
                     <button onclick="confirmarPedidoCocina()"
                         class="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2 active:scale-95">
                         <i class="bi bi-send-check-fill"></i>
-                        ENVIAR A COCINA
+                        <span data-i18n="m_enviar_cocina">ENVIAR A COCINA</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- =============================== -->
+<!-- MODAL PRODUCTO CON OPCIONES      -->
+<!-- =============================== -->
+<div id="modal-producto"
+    class="hidden fixed inset-0 bg-black/70 z-[1200] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+        <!-- Imagen -->
+        <div class="relative h-48 bg-gray-100">
+            <img id="modal-img" src="" alt=""
+                class="w-full h-full object-cover">
+            <button onclick="cerrarModalProducto()"
+                class="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center text-gray-400 hover:text-red-500 text-xl transition">
+                &times;
+            </button>
+        </div>
+
+        <!-- Info -->
+        <div class="p-5">
+            <h3 id="modal-nombre" class="text-xl font-black text-gray-800 mb-1"></h3>
+            <p id="modal-desc" class="text-sm text-gray-500 mb-2"></p>
+            <p id="modal-precio" class="text-2xl font-black text-orange-600 mb-4"></p>
+
+            <!-- Opciones / ingredientes -->
+            <div id="modal-opciones-wrapper" class="mb-4 hidden">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2" data-i18n="m_personaliza">
+                    Personaliza tu pedido
+                </p>
+                <div id="modal-opciones" class="space-y-2"></div>
+            </div>
+
+            <!-- Nota especial -->
+            <div class="mb-4">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2" data-i18n="m_nota_esp">
+                    Nota especial (opcional)
+                </p>
+                <textarea id="modal-nota"
+                    class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:border-orange-400 focus:outline-none resize-none"
+                    rows="2" placeholder="Ej: sin sal, término medio..."
+                    data-i18n-placeholder="m_nota_ph"></textarea>
+            </div>
+
+            <button onclick="agregarDesdeModal()"
+                class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                <i class="bi bi-cart-plus-fill text-xl"></i>
+                <span data-i18n="m_agregar_ped">AGREGAR AL PEDIDO</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =============================== -->
+<!-- MODAL TICKET                     -->
+<!-- =============================== -->
+<div id="modalTicket"
+    class="hidden fixed inset-0 bg-black/70 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+        <div class="flex items-center justify-between px-5 py-3 bg-gray-50 border-b">
+            <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <i class="bi bi-receipt-cutoff text-[#F2913D] mr-1"></i>
+                <span data-i18n="m_ticket_titulo">Vista Previa del Ticket</span>
+            </span>
+            <div class="flex gap-2 items-center">
+                <button onclick="imprimirTicket()"
+                    class="flex items-center gap-1 px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-gray-700 transition">
+                    <i class="bi bi-printer"></i> <span data-i18n="m_imprimir">Imprimir</span>
+                </button>
+                <button onclick="descargarTicketPDF()"
+                    class="flex items-center gap-1 px-3 py-1.5 bg-[#F2913D] text-white rounded-lg text-xs font-bold hover:bg-[#F2A339] transition">
+                    <i class="bi bi-download"></i> PDF
+                </button>
+                <button onclick="cerrarModalTicket()"
+                    class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-500 transition text-xl leading-none">
+                    &times;
+                </button>
+            </div>
+        </div>
+
+        <div id="ticket-contenido"
+            class="p-6 bg-white overflow-y-auto"
+            style="max-height: 80vh; font-family: 'Courier New', Courier, monospace;">
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -317,11 +466,12 @@
     let comandasActivas = [];
     const API_BASE = '/api/mesero';
 
-    // 🔥 CACHE Y OPTIMIZACIÓN
     let menuCache = null;
     let menuCargando = false;
     let carrito = [];
     let cuentaActivaId = null;
+    let productos = [];
+    let categoriaActiva = 'all';
 
     // ===================================
     // INICIALIZACIÓN
@@ -329,94 +479,76 @@
     document.addEventListener('DOMContentLoaded', function () {
         console.log('Dashboard Mesero inicializado');
 
-  // 🔥 DETECTAR SI VIENE DE UN PAGO EXITOSO
-    const urlParams = new URLSearchParams(window.location.search);
-    const pagoStatus = urlParams.get('pago');
-    const pagoError = urlParams.get('error');
-    const total = urlParams.get('total');
+        const urlParams = new URLSearchParams(window.location.search);
+        const pagoStatus = urlParams.get('pago');
+        const pagoError = urlParams.get('error');
+        const total = urlParams.get('total');
 
-    if (pagoStatus === 'exitoso') {
-        Swal.fire({
-            icon: 'success',
-            title: '¡Pago Exitoso!',
-            html: `
-                <div class="text-center">
-                    <i class="bi bi-check-circle text-6xl text-green-500 mb-4"></i>
-                    <p class="text-lg">Cuenta cerrada correctamente</p>
-                    ${total ? `<p class="text-2xl font-bold text-green-600 mt-2">Total: $${total}</p>` : ''}
-                </div>
-            `,
-            timer: 3000,
-            showConfirmButton: false
-        });
-        
-        // Limpiar URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (pagoStatus === 'fallido') {
-        Swal.fire({
-            icon: 'error',
-            title: 'Pago Rechazado',
-            text: 'El pago fue rechazado. Por favor intenta nuevamente.',
-            confirmButtonColor: '#F2913D'
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (pagoStatus === 'pendiente') {
-        Swal.fire({
-            icon: 'info',
-            title: 'Pago Pendiente',
-            text: 'El pago está siendo procesado. Te notificaremos cuando se complete.',
-            confirmButtonColor: '#F2913D'
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (pagoError) {
-        let errorMsg = 'Ocurrió un error al procesar el pago';
-        
-        if (pagoError === 'cuenta_no_encontrada') {
-            errorMsg = 'No se encontró la cuenta';
-        } else if (pagoError === 'pago_rejected') {
-            errorMsg = 'El pago fue rechazado';
-        } else if (pagoError === 'pago_pending') {
-            errorMsg = 'El pago está pendiente de confirmación';
+        if (pagoStatus === 'exitoso') {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Pago Exitoso!',
+                html: `
+                    <div class="text-center">
+                        <i class="bi bi-check-circle text-6xl text-green-500 mb-4"></i>
+                        <p class="text-lg">Cuenta cerrada correctamente</p>
+                        ${total ? `<p class="text-2xl font-bold text-green-600 mt-2">Total: $${total}</p>` : ''}
+                    </div>
+                `,
+                timer: 3000,
+                showConfirmButton: false
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (pagoStatus === 'fallido') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Pago Rechazado',
+                text: 'El pago fue rechazado. Por favor intenta nuevamente.',
+                confirmButtonColor: '#F2913D'
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (pagoStatus === 'pendiente') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Pago Pendiente',
+                text: 'El pago está siendo procesado. Te notificaremos cuando se complete.',
+                confirmButtonColor: '#F2913D'
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (pagoError) {
+            let errorMsg = 'Ocurrió un error al procesar el pago';
+            if (pagoError === 'cuenta_no_encontrada') errorMsg = 'No se encontró la cuenta';
+            else if (pagoError === 'pago_rejected') errorMsg = 'El pago fue rechazado';
+            else if (pagoError === 'pago_pending') errorMsg = 'El pago está pendiente de confirmación';
+
+            Swal.fire({ icon: 'error', title: 'Error', text: errorMsg, confirmButtonColor: '#F2913D' });
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-        
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: errorMsg,
-            confirmButtonColor: '#F2913D'
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
 
-    // 🔥 PRECARGAR MENÚ EN SEGUNDO PLANO
-    precargarMenu();
-
-    // Cargar datos iniciales
-    cargarEstadoMesas();
-    actualizarComandas();
-    cargarEstadisticasDia();
-
-    // Actualizar cada 30 segundos
-    setInterval(() => {
+        precargarMenu();
         cargarEstadoMesas();
         actualizarComandas();
         cargarEstadisticasDia();
-    }, 30000);
-});
+        cargarMenu();
 
+        setInterval(() => {
+            cargarEstadoMesas();
+            actualizarComandas();
+            cargarEstadisticasDia();
+        }, 30000);
+    });
 
     // ===================================
-    // 🔥 PRECARGA DE MENÚ
+    // PRECARGA DE MENÚ
     // ===================================
     async function precargarMenu() {
         if (menuCache || menuCargando) return;
         menuCargando = true;
-
         try {
             const res = await fetch('/api/menu');
             const data = await res.json();
-            if (data.success && data.menu) {
-                menuCache = data.menu;
+            if (data.success && data.platillos) {
+                menuCache = data.platillos;
                 console.log('✅ Menú precargado:', menuCache.length, 'productos');
             }
         } catch (e) {
@@ -426,6 +558,60 @@
         }
     }
 
+    function renderCategorias(productosLista) {
+        const cont = document.getElementById('categorias-container');
+        if (!cont) return;
+        const categorias = [...new Set(productosLista.map(p => p.categoria_nombre))];
+
+        cont.innerHTML = `
+        <button
+            onclick="filtrarCategoria('all')"
+            class="px-4 py-2 bg-orange-500 text-white rounded-full text-xs font-bold whitespace-nowrap">
+            Todos
+        </button>
+        `;
+
+        categorias.forEach(cat => {
+            cont.innerHTML += `
+            <button
+                onclick="filtrarCategoria('${cat}')"
+                class="px-4 py-2 bg-white border text-gray-600 rounded-full text-xs font-bold whitespace-nowrap">
+                ${cat}
+            </button>
+            `;
+        });
+    }
+
+    function filtrarCategoria(cat) {
+        categoriaActiva = cat;
+
+        // Resetear todos los botones
+        document.querySelectorAll('#categorias-container button').forEach(btn => {
+            btn.classList.remove('bg-orange-500', 'text-white');
+            btn.classList.add('bg-white', 'text-gray-600');
+        });
+
+        // Activar el botón clickeado
+        event.target.classList.remove('bg-white', 'text-gray-600');
+        event.target.classList.add('bg-orange-500', 'text-white');
+
+        const filtrados = cat === 'all'
+            ? productos
+            : productos.filter(p => p.categoria_nombre === cat);
+
+        renderizarProductos(filtrados, document.getElementById('lista-productos-grid'));
+    }
+
+    async function cargarMenu() {
+        const res = await fetch('/api/menu');
+        const data = await res.json();
+        if (!data.success) return;
+        productos = data.platillos;
+        menuCache = data.platillos;
+        renderCategorias(productos);
+        renderizarProductos(productos, document.getElementById('lista-productos-grid'));
+    }
+
     // ===================================
     // CARGA DE DATOS DESDE LA API
     // ===================================
@@ -433,7 +619,6 @@
         try {
             const response = await fetch(`${API_BASE}/mesas/estado`);
             const data = await response.json();
-
             if (data.success) {
                 mesasData = data.mesas;
                 actualizarVisualizacionMesas();
@@ -445,58 +630,29 @@
         }
     }
 
-async function cargarEstadisticasDia() {
-    try {
-        console.log('🔄 Cargando estadísticas del día...');
-        
-        const response = await fetch(`${API_BASE}/estadisticas/dia`);
-        const data = await response.json();
+    async function cargarEstadisticasDia() {
+        try {
+            const response = await fetch(`${API_BASE}/estadisticas/dia`);
+            const data = await response.json();
 
-        console.log('📊 Respuesta de estadísticas:', data);
+            if (data.success && data.estadisticas) {
+                const stats = data.estadisticas;
+                const venta = stats.venta_dia ?? 0;
+                const propinas = stats.propinas_dia ?? 0;
+                const ordenes = stats.num_ordenes ?? 0;
 
-        if (data.success && data.estadisticas) {
-            const stats = data.estadisticas;
+                const ventaElement = document.getElementById('venta-dia');
+                const propinasElement = document.getElementById('stat-propinas');
+                const ordenesElement = document.getElementById('num-ordenes');
 
-            const venta = stats.venta_dia ?? 0;
-            const propinas = stats.propinas_dia ?? 0;
-            const ordenes = stats.num_ordenes ?? 0;
-
-            console.log('💰 Venta del día:', venta);
-            console.log('💵 Propinas del día:', propinas);
-            console.log('📝 Número de órdenes:', ordenes);
-
-            // Actualizar elementos en el DOM
-            const ventaElement = document.getElementById('venta-dia');
-            const propinasElement = document.getElementById('stat-propinas');
-            const ordenesElement = document.getElementById('num-ordenes');
-
-            if (ventaElement) {
-                ventaElement.textContent = `$${Number(venta).toFixed(2)}`;
-                console.log('✅ Venta actualizada en DOM');
-            } else {
-                console.error('❌ No se encontró elemento venta-dia');
+                if (ventaElement) ventaElement.textContent = `$${Number(venta).toFixed(2)}`;
+                if (propinasElement) propinasElement.textContent = `$${Number(propinas).toFixed(2)}`;
+                if (ordenesElement) ordenesElement.textContent = ordenes;
             }
-
-            if (propinasElement) {
-                propinasElement.textContent = `$${Number(propinas).toFixed(2)}`;
-                console.log('✅ Propinas actualizadas en DOM');
-            } else {
-                console.error('❌ No se encontró elemento stat-propinas');
-            }
-
-            if (ordenesElement) {
-                ordenesElement.textContent = ordenes;
-                console.log('✅ Órdenes actualizadas en DOM');
-            } else {
-                console.error('❌ No se encontró elemento num-ordenes');
-            }
-        } else {
-            console.error('❌ Error en la respuesta:', data.error || 'Sin datos');
+        } catch (error) {
+            console.error('❌ Error al cargar estadísticas:', error);
         }
-    } catch (error) {
-        console.error('❌ Error al cargar estadísticas:', error);
     }
-}
 
     async function actualizarComandas() {
         try {
@@ -507,14 +663,11 @@ async function cargarEstadisticasDia() {
                 comandasActivas = data.comandas;
                 renderizarComandas();
 
-                // Actualizar número en el card superior
                 const statComandas = document.getElementById('stat-comandas');
                 if (statComandas) statComandas.textContent = data.total;
 
-                // Actualizar badge en el botón lateral
                 const badgeComandas = document.getElementById('badge-comandas');
                 if (badgeComandas) badgeComandas.textContent = data.total;
-
             } else {
                 console.error('Error al cargar comandas:', data.error);
             }
@@ -538,7 +691,6 @@ async function cargarEstadisticasDia() {
             const iconContainer = card.querySelector('.icon-container');
             const icon = iconContainer.querySelector('i');
 
-            // Reset de clases básicas
             card.classList.remove('border-red-500', 'border-gray-200', 'bg-red-50', 'border-blue-400');
             iconContainer.classList.remove('bg-green-100', 'bg-red-100', 'bg-gray-100', 'bg-blue-100');
             icon.classList.remove('text-red-600', 'text-green-600', 'text-gray-600', 'text-blue-600');
@@ -549,26 +701,24 @@ async function cargarEstadisticasDia() {
                 if (estado === 'ocupada') {
                     ocupadas++;
                     statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700';
-                    statusSpan.textContent = 'OCUPADA';
-                    comensalesP.textContent = `${mesaInfo.comensales || 0} PERSONAS`;
+                    statusSpan.textContent = t('m_ocupada');
+                    comensalesP.textContent = `${mesaInfo.comensales || 0} ${t('m_personas_lbl')}`;
                     comensalesP.classList.remove('text-gray-400');
                     comensalesP.classList.add('text-red-500');
                     card.classList.add('border-red-500', 'bg-red-50');
                     iconContainer.classList.add('bg-red-100');
                     icon.classList.add('text-red-600');
-
                 } else if (estado === 'reservada') {
                     statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700';
-                    statusSpan.textContent = 'RESERVADA';
-                    comensalesP.textContent = mesaInfo.reserva_hora || 'RESERVA';
+                    statusSpan.textContent = t('m_reservada');
+                    comensalesP.textContent = mesaInfo.reserva_hora || t('m_reservada');
                     card.classList.add('border-blue-400');
                     iconContainer.classList.add('bg-blue-100');
                     icon.classList.add('text-blue-600');
-
                 } else {
                     statusSpan.className = 'mesa-status px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700';
-                    statusSpan.textContent = 'LIBRE';
-                    comensalesP.textContent = 'SIN CLIENTES';
+                    statusSpan.textContent = t('m_libre');
+                    comensalesP.textContent = t('m_sin_clientes');
                     comensalesP.classList.remove('text-red-500');
                     comensalesP.classList.add('text-gray-400');
                     card.classList.add('border-gray-200');
@@ -576,13 +726,11 @@ async function cargarEstadisticasDia() {
                     icon.classList.add('text-green-600');
                 }
             } else {
-                console.error(`Error: No hay data para la mesa ${numeroMesa}`, mesasData);
                 statusSpan.textContent = 'N/A';
                 comensalesP.textContent = 'SIN DATOS';
             }
         });
 
-        // Actualizar contadores
         const totalMesas = mesasCards.length;
         const mesasOcupadasElement = document.getElementById('mesas-ocupadas');
         const mesasLibresElement = document.getElementById('mesas-libres');
@@ -599,16 +747,15 @@ async function cargarEstadisticasDia() {
 
         if (comandasActivas.length === 0) {
             container.innerHTML = `
-            <div class="text-center py-12 text-gray-500">
-                <i class="bi bi-cart-check text-6xl mb-4 block opacity-30"></i>
-                <p class="text-lg">No hay comandas activas</p>
-                <p class="text-sm mt-2">Las comandas aparecerán aquí cuando tomes pedidos</p>
-                <button onclick="mostrarSeleccionMesa()" class="btn btn-primary mt-4">
-                    <i class="bi bi-plus-circle"></i>
-                    Crear Nueva Cuenta
-                </button>
-            </div>
-        `;
+                <div class="text-center py-12 text-gray-500">
+                    <i class="bi bi-cart-check text-6xl mb-4 block opacity-30"></i>
+                    <p class="text-lg">${t('m_sin_cmdas')}</p>
+                    <p class="text-sm mt-2">${t('m_cmdas_hint')}</p>
+                    <button onclick="mostrarSeleccionMesa()" class="btn btn-primary mt-4">
+                        <i class="bi bi-plus-circle"></i> ${t('m_crear_cuenta')}
+                    </button>
+                </div>
+            `;
             return;
         }
 
@@ -617,45 +764,43 @@ async function cargarEstadisticasDia() {
         comandasActivas.forEach(comanda => {
             const tiempoTranscurrido = calcularTiempoTranscurrido(comanda.fecha_apertura);
             html += `
-            <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 hover:shadow-md transition">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <i class="bi bi-receipt text-orange-600"></i>
+                <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <i class="bi bi-receipt text-orange-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800">${comanda.folio}</p>
+                                <p class="text-xs text-gray-500">${t('m_mesa_word')} ${comanda.mesa_numero}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="font-bold text-gray-800">${comanda.folio}</p>
-                            <p class="text-xs text-gray-500">Mesa ${comanda.mesa_numero}</p>
+                        <span class="badge badge-warning">${tiempoTranscurrido}</span>
+                    </div>
+                    <div class="space-y-2 text-sm mb-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">${t('m_comensales_lbl')}</span>
+                            <span class="font-semibold">${comanda.num_comensales ?? comanda.comensales ?? 0}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">${t('m_items_lbl')}</span>
+                            <span class="font-semibold">${comanda.items.length}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">${t('m_total_lbl')}</span>
+                            <span class="font-bold text-lg text-green-600">$${comanda.total.toFixed(2)}</span>
                         </div>
                     </div>
-                    <span class="badge badge-warning">${tiempoTranscurrido}</span>
-                </div>
-                
-                <div class="space-y-2 text-sm mb-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Comensales:</span>
-                        <span class="font-semibold">${comanda.num_comensales ?? comanda.comensales ?? 0}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Items:</span>
-                        <span class="font-semibold">${comanda.items.length}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Total:</span>
-                        <span class="font-bold text-lg text-green-600">$${comanda.total.toFixed(2)}</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="verDetalleComanda('${comanda.id}')" class="btn btn-sm btn-secondary">
+                            <i class="bi bi-eye"></i> ${t('m_ver_btn')}
+                        </button>
+                        <button onclick="agregarItemsComanda('${comanda.id}')" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus"></i> ${t('m_agregar_btn')}
+                        </button>
                     </div>
                 </div>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="verDetalleComanda('${comanda.id}')" class="btn btn-sm btn-secondary">
-                    <i class="bi bi-eye"></i> Ver
-                    </button>
-                    <button onclick="agregarItemsComanda('${comanda.id}')" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus"></i> Agregar
-                    </button>
-                </div>
-            </div>
-        `;
+            `;
         });
 
         html += '</div>';
@@ -663,34 +808,32 @@ async function cargarEstadisticasDia() {
     }
 
     // ===================================
-    // 🔥 GESTIÓN DE MESAS (OPTIMIZADO)
+    // GESTIÓN DE MESAS
     // ===================================
     async function verMesa(numeroMesa) {
         const modal = document.getElementById('modalMesa');
         const content = document.getElementById('modal-mesa-content');
 
-        // 🔥 MOSTRAR MODAL INMEDIATAMENTE CON LOADING
         document.getElementById('modal-mesa-numero').textContent = numeroMesa;
         content.innerHTML = `
-        <div class="text-center py-12">
-            <div class="animate-spin inline-block w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
-            <p class="text-gray-500 font-medium">Cargando información...</p>
-        </div>
-    `;
+            <div class="text-center py-12">
+                <div class="animate-spin inline-block w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
+                <p class="text-gray-500 font-medium">Cargando información...</p>
+            </div>
+        `;
         modal.classList.remove('hidden');
 
-        // 🔥 CARGAR DATOS EN SEGUNDO PLANO
         try {
             const response = await fetch(`${API_BASE}/mesa/${numeroMesa}`);
             const data = await response.json();
 
             if (!data.success) {
                 content.innerHTML = `
-                <div class="text-center py-8 text-red-500">
-                    <i class="bi bi-exclamation-triangle text-5xl mb-3"></i>
-                    <p>${data.error || 'Error al cargar mesa'}</p>
-                </div>
-            `;
+                    <div class="text-center py-8 text-red-500">
+                        <i class="bi bi-exclamation-triangle text-5xl mb-3"></i>
+                        <p>${data.error || 'Error al cargar mesa'}</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -699,68 +842,72 @@ async function cargarEstadisticasDia() {
 
             if (mesa.estado === 'libre' || mesa.estado === 'disponible') {
                 content.innerHTML = `
-                <div class="text-center py-8">
-                    <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="bi bi-check-circle text-5xl text-green-600"></i>
-                    </div>
-                    <h4 class="text-xl font-bold text-gray-800 mb-2">Mesa Disponible</h4>
-                    <p class="text-sm text-gray-500 mb-6">Capacidad: ${mesa.capacidad || 4} personas</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button onclick="abrirCuenta('${numeroMesa}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Abrir Cuenta</button>
-                        <button onclick="cerrarModalMesa()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold">Cancelar</button>
-                    </div>
-                </div>`;
+                    <div class="text-center py-8">
+                        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="bi bi-check-circle text-5xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">${t('m_mesa_disp')}</h4>
+                        <p class="text-sm text-gray-500 mb-6">${t('m_capacidad_lbl')}: ${mesa.capacidad || 4} ${t('m_personas')}</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="abrirCuenta('${numeroMesa}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">${t('m_abrir_cuenta')}</button>
+                            <button onclick="cerrarModalMesa()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold">${t('m_cancelar')}</button>
+                        </div>
+                    </div>`;
             } else {
                 const total = comanda ? Number(comanda.total).toFixed(2) : "0.00";
                 const folio = comanda ? comanda.folio : 'Generando...';
                 const personas = comanda?.num_comensales ?? comanda?.comensales ?? mesa?.num_comensales ?? 0;
 
                 content.innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">
-                        <p class="font-black text-orange-900 text-lg uppercase">Mesa Ocupada</p>
-                        <div class="flex justify-between items-center mt-2">
-                            <div>
-                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Folio</p>
-                                <p class="text-gray-800 font-mono">${folio}</p>
+                    <div class="space-y-4">
+                        <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-xl">
+                            <p class="font-black text-orange-900 text-lg uppercase">${t('m_mesa_ocup_tit')}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <div>
+                                    <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">${t('m_folio_lbl')}</p>
+                                    <p class="text-gray-800 font-mono">${folio}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">${t('m_comensales_lbl').replace(':','')}</p>
+                                    <p class="text-gray-800">${personas} ${t('m_personas')}</p>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Comensales</p>
-                                <p class="text-gray-800">${personas} personas</p>
+                            <div class="mt-4 pt-4 border-t border-orange-200">
+                                <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">${t('m_acumulado_lbl')}</p>
+                                <p class="text-4xl font-black text-gray-900">$${total}</p>
                             </div>
                         </div>
-                        <div class="mt-4 pt-4 border-t border-orange-200">
-                            <p class="text-xs text-orange-700 font-bold uppercase tracking-widest">Total Acumulado</p>
-                            <p class="text-4xl font-black text-gray-900">$${total}</p>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}', true)"
+                                    class="w-full bg-[#F2913D] hover:bg-[#F2A339] text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+                                <i class="bi bi-plus-circle-fill text-xl"></i>
+                                ${t('m_agregar_prod')}
+                            </button>
+                            <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+                                <i class="bi bi-cash-coin"></i>
+                                ${t('m_cerrar_cuenta')}
+                            </button>
+                            <button onclick="abrirDeliveryDesdeComanda('${mesa.cuenta_activa_id}', '${numeroMesa}')"
+                                    class="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-xl font-bold shadow transition flex items-center justify-center gap-2">
+                                <i class="bi bi-truck"></i>
+                                Enviar a Delivery
+                            </button>
+                            <button onclick="cerrarModalMesa()"
+                                    class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
+                                ${t('m_cerrar_det')}
+                            </button>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-3">
-                        <button onclick="abrirModalMenu('${numeroMesa}', '${mesa.cuenta_activa_id}', true)" 
-                                class="w-full bg-[#F2913D] hover:bg-[#F2A339] text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
-                            <i class="bi bi-plus-circle-fill text-xl"></i>
-                            AGREGAR PRODUCTOS AL PEDIDO
-                        </button>
-                        <button onclick="cerrarCuenta('${mesa.cuenta_activa_id}', '${numeroMesa}')"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
-                            <i class="bi bi-cash-coin"></i>
-                            CERRAR CUENTA
-                        </button>
-                        <button onclick="cerrarModalMesa()" 
-                                class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
-                            Cerrar Detalle
-                        </button>
-                    </div>
-                </div>`;
+                    </div>`;
             }
         } catch (error) {
             console.error('Error al cargar mesa:', error);
             content.innerHTML = `
-            <div class="text-center py-8 text-red-500">
-                <i class="bi bi-wifi-off text-5xl mb-3"></i>
-                <p>Error de conexión</p>
-            </div>
-        `;
+                <div class="text-center py-8 text-red-500">
+                    <i class="bi bi-wifi-off text-5xl mb-3"></i>
+                    <p>Error de conexión</p>
+                </div>
+            `;
         }
     }
 
@@ -769,7 +916,7 @@ async function cargarEstadisticasDia() {
     }
 
     // ===================================
-    // 🔥 MODAL DE MENÚ (OPTIMIZADO)
+    // MODAL DE MENÚ
     // ===================================
     async function abrirModalMenu(numMesa, idCuenta, cargarItemsExistentes = false) {
         const modal = document.getElementById('modalMenu');
@@ -781,11 +928,8 @@ async function cargarEstadisticasDia() {
             return;
         }
 
-        // 🔥 MOSTRAR MODAL INMEDIATAMENTE
         labelMesa.textContent = numMesa;
         modal.classList.remove('hidden');
-
-        // Configurar carrito
         cuentaActivaId = idCuenta;
 
         if (cargarItemsExistentes && cuentaActivaId) {
@@ -795,25 +939,23 @@ async function cargarEstadisticasDia() {
         }
         renderizarCarrito();
 
-        // 🔥 USAR CACHE O CARGAR
         if (menuCache && menuCache.length > 0) {
-            console.log('✅ Usando menú en cache');
+            renderCategorias(menuCache);
             renderizarProductos(menuCache, grid);
         } else {
-            console.log('⏳ Cargando menú desde servidor...');
             grid.innerHTML = `
-            <div class="col-span-full text-center py-12">
-                <div class="animate-spin inline-block w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
-                <p class="text-gray-500 font-medium">Cargando productos...</p>
-            </div>
-        `;
-
+                <div class="col-span-full text-center py-12">
+                    <div class="animate-spin inline-block w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
+                    <p class="text-gray-500 font-medium">Cargando productos...</p>
+                </div>
+            `;
             try {
                 const res = await fetch('/api/menu');
                 const data = await res.json();
-
-                if (data.success && data.menu) {
-                    menuCache = data.menu;
+                if (data.success && data.platillos) {
+                    menuCache = data.platillos;
+                    productos = data.platillos;
+                    renderCategorias(menuCache);
                     renderizarProductos(menuCache, grid);
                 } else {
                     grid.innerHTML = '<p class="text-red-500 col-span-full text-center py-8">Error al cargar el menú</p>';
@@ -825,126 +967,221 @@ async function cargarEstadisticasDia() {
         }
     }
 
-    // 🔥 RENDERIZADO OPTIMIZADO CON DOCUMENTFRAGMENT
-    function renderizarProductos(productos, grid) {
+    function renderizarProductos(productosLista, grid) {
         const fragment = document.createDocumentFragment();
 
-        productos.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'p-4 border rounded-xl hover:bg-orange-50 cursor-pointer transition flex justify-between items-center';
-            div.onclick = () => agregarAlCarrito(p._id, p.nombre, p.precio);
-            div.innerHTML = `
-            <div>
-                <p class="font-bold text-gray-800">${p.nombre}</p>
-                <p class="text-sm text-orange-600 font-bold">$${p.precio.toFixed(2)}</p>
-            </div>
-            <i class="bi bi-plus-circle-fill text-orange-400 text-xl"></i>
-        `;
-            fragment.appendChild(div);
-        });
+        productosLista
+            .filter(p => p.disponible === true)
+            .forEach(p => {
+                const div = document.createElement('div');
+                div.className = `
+                    p-4 border rounded-xl hover:bg-orange-50 cursor-pointer
+                    transition flex flex-col items-center gap-2
+                `;
+
+                div.onclick = () => abrirModalProducto(p);
+
+                div.innerHTML = `
+                    <img
+                        src="${p.imagen || '/static/images/menu/default.jpg'}"
+                        alt="${p.nombre}"
+                        class="w-16 h-16 object-cover rounded-full"
+                    >
+                    <p class="font-bold text-gray-800 text-center">${p.nombre}</p>
+                    <p class="text-sm text-orange-600 font-bold">
+                        $${p.precio.toFixed(2)}
+                    </p>
+                `;
+
+                fragment.appendChild(div);
+            });
 
         grid.innerHTML = '';
         grid.appendChild(fragment);
     }
 
+    // ===================================
+    // MODAL PRODUCTO CON OPCIONES
+    // ===================================
+    function abrirModalProducto(p) {
+        window.productoSeleccionado = p;
+
+        document.getElementById('modal-img').src =
+            p.imagen || '/static/images/menu/default.jpg';
+        document.getElementById('modal-nombre').innerText = p.nombre;
+        document.getElementById('modal-desc').innerText = p.descripcion || '';
+        document.getElementById('modal-precio').innerText = `$${p.precio.toFixed(2)}`;
+        document.getElementById('modal-nota').value = '';
+
+        const wrapper = document.getElementById('modal-opciones-wrapper');
+        if (p.ingredientes && p.ingredientes.length > 0) {
+            renderOpciones(p.ingredientes);
+            wrapper.classList.remove('hidden');
+        } else {
+            wrapper.classList.add('hidden');
+            document.getElementById('modal-opciones').innerHTML = '';
+        }
+
+        document.getElementById('modal-producto').classList.remove('hidden');
+    }
+
+    function cerrarModalProducto() {
+        document.getElementById('modal-producto').classList.add('hidden');
+        window.productoSeleccionado = null;
+    }
+
+    function renderOpciones(ingredientes) {
+        const cont = document.getElementById('modal-opciones');
+        cont.innerHTML = ingredientes.map(ing => `
+            <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" value="${ing}" checked
+                    class="w-4 h-4 accent-orange-500">
+                <span class="text-sm text-gray-700">Con <strong>${ing}</strong></span>
+            </label>
+        `).join('');
+    }
+
+    function obtenerOpcionesSeleccionadas() {
+        return Array.from(
+            document.querySelectorAll('#modal-opciones input:checked')
+        ).map(i => i.value);
+    }
+
+    function agregarDesdeModal() {
+        const opciones = obtenerOpcionesSeleccionadas();
+        const nota = document.getElementById('modal-nota').value.trim();
+
+        agregarAlCarrito(
+            productoSeleccionado._id,
+            productoSeleccionado.nombre,
+            productoSeleccionado.precio,
+            opciones,
+            nota
+        );
+
+        cerrarModalProducto();
+    }
+
     async function cargarItemsExistentesEnCarrito(cuentaId) {
         const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
-
         if (!comanda || !comanda.items) {
             carrito = [];
             return;
         }
-
+        // Solo guardamos los existentes como referencia visual, no para reenviar
         carrito = comanda.items.map(item => ({
             id: item.producto_id || item.id || item._id,
             nombre: item.nombre,
             precio: item.precio,
-            cantidad: item.cantidad
+            cantidad: item.cantidad,
+            opciones: item.opciones || [],
+            nota: item.nota || '',
+            esExistente: true  // 👈 MARCA los items que ya están en cocina
         }));
-
-        console.log('✅ Items existentes cargados:', carrito);
     }
 
-    function agregarAlCarrito(id, nombre, precio) {
-        const itemExistente = carrito.find(i => i.id === id);
-        if (itemExistente) {
-            itemExistente.cantidad++;
-        } else {
-            carrito.push({ id, nombre, precio, cantidad: 1 });
-        }
+    function agregarAlCarrito(id, nombre, precio, opciones = [], nota = '') {
+        carrito.push({ id, nombre, precio, cantidad: 1, opciones, nota });
         renderizarCarrito();
     }
 
     function renderizarCarrito() {
         const container = document.getElementById('carrito-items');
         const totalElement = document.getElementById('carrito-total');
-        let total = 0;
+        let totalNuevo = 0;
 
         if (carrito.length === 0) {
             container.innerHTML = `
-            <div class="text-center text-gray-400 py-10">
-                <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
-                <p class="text-xs">Selecciona un producto <br> de la izquierda</p>
-            </div>
-        `;
+                <div class="text-center text-gray-400 py-10">
+                    <i class="bi bi-plus-circle text-4xl block mb-2 opacity-20"></i>
+                    <p class="text-xs">${t('m_sel_prod_txt').replace('\\n','<br>')}</p>
+                </div>
+            `;
             totalElement.textContent = '$0.00';
             return;
         }
 
-        // 🔥 USAR FRAGMENT PARA MEJOR PERFORMANCE
         const fragment = document.createDocumentFragment();
 
         carrito.forEach((item, index) => {
             const subtotal = item.precio * item.cantidad;
-            total += subtotal;
+            if (!item.esExistente) totalNuevo += subtotal;
+
+            const opcionesHtml = item.opciones && item.opciones.length
+                ? `<p class="text-[10px] text-orange-500">${item.opciones.map(o => `✓ ${o}`).join(' · ')}</p>`
+                : '';
+
+            const notaHtml = item.nota
+                ? `<p class="text-[10px] text-blue-400 italic">📝 ${item.nota}</p>`
+                : '';
 
             const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-2 bg-white rounded-lg shadow-sm border border-gray-100';
-            div.innerHTML = `
-            <div class="flex-1">
-                <p class="font-bold text-xs">${item.nombre}</p>
-                <p class="text-[10px] text-gray-500">$${item.precio.toFixed(2)} x ${item.cantidad}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="modificarCantidad(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">-</button>
-                <span class="text-xs font-bold">${item.cantidad}</span>
-                <button onclick="modificarCantidad(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded text-gray-600">+</button>
-            </div>
-        `;
+
+            if (item.esExistente) {
+                // Items ya en cocina: solo lectura, fondo gris
+                div.className = 'flex justify-between items-start p-2 bg-gray-50 rounded-lg border border-dashed border-gray-200 gap-2 opacity-60';
+                div.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-xs truncate text-gray-500">${item.nombre}</p>
+                        ${opcionesHtml}
+                        ${notaHtml}
+                        <p class="text-[10px] text-gray-400">$${item.precio.toFixed(2)} × ${item.cantidad} · ${t('m_ya_en_cocina')}</p>
+                    </div>
+                    <span class="text-[10px] text-gray-400 shrink-0 mt-1">🍳</span>
+                `;
+            } else {
+                // Items nuevos: editables
+                div.className = 'flex justify-between items-start p-2 bg-white rounded-lg shadow-sm border border-orange-200 gap-2';
+                div.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-xs truncate">${item.nombre}</p>
+                        ${opcionesHtml}
+                        ${notaHtml}
+                        <p class="text-[10px] text-gray-500">$${item.precio.toFixed(2)} × ${item.cantidad}</p>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="modificarCantidad(${index}, -1)"
+                            class="w-6 h-6 bg-gray-100 rounded text-gray-600 font-bold text-sm">−</button>
+                        <span class="text-xs font-bold w-4 text-center">${item.cantidad}</span>
+                        <button onclick="modificarCantidad(${index}, 1)"
+                            class="w-6 h-6 bg-orange-100 rounded text-orange-600 font-bold text-sm">+</button>
+                    </div>
+                `;
+            }
+
             fragment.appendChild(div);
         });
 
         container.innerHTML = '';
         container.appendChild(fragment);
-        totalElement.textContent = `$${total.toFixed(2)}`;
+        // El total solo muestra lo nuevo a enviar
+        totalElement.textContent = `$${totalNuevo.toFixed(2)}`;
     }
 
     function modificarCantidad(index, cambio) {
         carrito[index].cantidad += cambio;
-        if (carrito[index].cantidad <= 0) {
-            carrito.splice(index, 1);
-        }
+        if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
         renderizarCarrito();
     }
 
     async function confirmarPedidoCocina() {
-        if (carrito.length === 0) {
-            return Swal.fire("Carrito vacío", "Agrega al menos un producto", "warning");
+        // Solo enviar items NUEVOS (no los que ya existían)
+        const itemsNuevos = carrito.filter(item => !item.esExistente);
+
+        if (itemsNuevos.length === 0) {
+            return Swal.fire(t('dash_sin_prod_n'), t('dash_agrega_p'), "warning");
         }
 
         showLoading("Enviando a cocina...");
-
         try {
             const res = await fetch(`${API_BASE}/comanda/${cuentaActivaId}/items`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ items: carrito })
+                body: JSON.stringify({ items: itemsNuevos })  // 👈 Solo los nuevos
             });
-
             const data = await res.json();
-
             if (data.success) {
-                showSuccess("¡Pedido enviado correctamente!");
+                showSuccess(t('dash_ped_env'));
                 cerrarModalMenu();
                 actualizarComandas();
                 cargarEstadisticasDia();
@@ -967,7 +1204,7 @@ async function cargarEstadisticasDia() {
     // ===================================
     async function abrirCuenta(numeroMesa) {
         const { value: numComensales } = await Swal.fire({
-            title: `Mesa ${numeroMesa}`,
+            title: `${t('m_mesa_word')} ${numeroMesa}`,
             input: 'number',
             inputLabel: '¿Cuántos comensales?',
             inputAttributes: { min: 1, max: 20, step: 1 },
@@ -980,37 +1217,22 @@ async function cargarEstadisticasDia() {
         if (numComensales) {
             try {
                 showLoading('Iniciando comanda...');
-
                 const response = await fetch(`${API_BASE}/cuenta/abrir`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        numero_mesa: numeroMesa,
-                        num_comensales: parseInt(numComensales)
-                    })
+                    body: JSON.stringify({ numero_mesa: numeroMesa, num_comensales: parseInt(numComensales) })
                 });
-
                 const data = await response.json();
                 hideLoading();
 
                 if (data.success) {
                     cuentaActivaId = data.cuenta_id;
-
-                    Swal.fire({
-                        title: '¡Éxito!',
-                        text: 'Cuenta abierta correctamente',
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-
+                    Swal.fire({ title: '¡Éxito!', text: 'Cuenta abierta correctamente', icon: 'success', timer: 1500, showConfirmButton: false });
                     cerrarModalMesa();
                     await cargarEstadoMesas();
                     actualizarComandas();
                     cargarEstadisticasDia();
-
                     abrirModalMenu(numeroMesa, data.cuenta_id);
-
                 } else {
                     showError(data.error || 'Error al abrir cuenta');
                 }
@@ -1024,21 +1246,14 @@ async function cargarEstadisticasDia() {
 
     function mostrarSeleccionMesa() {
         const mesasDisponibles = Object.values(mesasData).filter(m => m.estado === 'disponible');
-
         if (mesasDisponibles.length === 0) {
-            Swal.fire({
-                title: 'No hay mesas disponibles',
-                text: 'Todas tus mesas están ocupadas o en limpieza',
-                icon: 'info'
-            });
+            Swal.fire({ title: t('dash_no_mesas_d'), text: t('dash_mesas_ocup2'), icon: 'info' });
             return;
         }
-
         const opciones = {};
         mesasDisponibles.forEach(mesa => {
             opciones[mesa.numero] = `Mesa ${mesa.numero} (${mesa.capacidad} personas)`;
         });
-
         Swal.fire({
             title: 'Selecciona una mesa',
             input: 'select',
@@ -1048,676 +1263,782 @@ async function cargarEstadisticasDia() {
             confirmButtonText: 'Abrir cuenta',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
-            if (result.isConfirmed && result.value) {
-                abrirCuenta(result.value);
-            }
+            if (result.isConfirmed && result.value) abrirCuenta(result.value);
         });
     }
 
     // ===================================
     // ACCIONES RÁPIDAS
     // ===================================
-    function verMenu() {
-        window.location.href = "{{ url_for('routes.mesero_menu') }}";
-    }
-
-    function verComandas() {
-        window.location.href = "{{ url_for('routes.mesero_comandas') }}";
-    }
+    function verMenu() { window.location.href = "{{ url_for('routes.mesero_menu') }}"; }
+    function verComandas() { window.location.href = "{{ url_for('routes.mesero_comandas') }}"; }
 
     async function verDetalleComanda(cuentaId) {
         const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
-
-        if (!comanda) {
-            showError('No se encontró la comanda');
-            return;
-        }
+        if (!comanda) { showError('No se encontró la comanda'); return; }
 
         let itemsHtml = '';
         if (comanda.items && comanda.items.length > 0) {
             itemsHtml = comanda.items.map(item => `
-            <div class="flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm border">
-                <div>
-                    <p class="font-bold text-gray-800 text-sm">${item.nombre}</p>
-                    <p class="text-xs text-gray-500">
-                        $${item.precio.toFixed(2)} × ${item.cantidad}
-                    </p>
+                <div class="flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm border">
+                    <div>
+                        <p class="font-bold text-gray-800 text-sm">${item.nombre}</p>
+                        <p class="text-xs text-gray-500">$${item.precio.toFixed(2)} × ${item.cantidad}</p>
+                    </div>
+                    <p class="font-black text-green-600 text-lg">$${(item.precio * item.cantidad).toFixed(2)}</p>
                 </div>
-                <p class="font-black text-green-600 text-lg">
-                    $${(item.precio * item.cantidad).toFixed(2)}
-                </p>
-            </div>
-        `).join('');
+            `).join('');
         } else {
             itemsHtml = `
-            <div class="text-center text-gray-400 py-12">
-                <i class="bi bi-cart-x text-5xl block mb-3 opacity-30"></i>
-                <p class="text-sm">Sin productos aún</p>
-            </div>
-        `;
+                <div class="text-center text-gray-400 py-12">
+                    <i class="bi bi-cart-x text-5xl block mb-3 opacity-30"></i>
+                    <p class="text-sm">${t('dash_sin_prod_a')}</p>
+                </div>
+            `;
         }
 
         Swal.fire({
-            width: 720,
+            width: 'min(720px, 95vw)',
             showConfirmButton: false,
             showCancelButton: false,
             backdrop: 'rgba(0,0,0,.6)',
-            customClass: {
-                popup: 'rounded-[28px] overflow-hidden relative'
-            },
+            customClass: { popup: 'rounded-[28px] overflow-hidden relative' },
             html: `
-            <button 
-                onclick="Swal.close()"
-                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 transition flex items-center justify-center text-2xl z-50">
-                &times;
-            </button>
-
-            <div class="bg-orange-600 text-white px-6 pt-8 pb-6 rounded-t-[28px]">
-                <h3 class="text-2xl font-black">${comanda.folio}</h3>
-                <p class="text-sm opacity-90">
-                    Mesa ${comanda.mesa_numero} · 
-                    ${comanda.num_comensales ?? comanda.comensales ?? 0} personas
-                </p>
-            </div>
-
-            <div class="p-6 bg-gray-50 max-h-[55vh] overflow-y-auto space-y-3">
-                ${itemsHtml}
-            </div>
-
-            <div class="p-6 bg-white border-t flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-bold text-gray-500 uppercase">Total</p>
-                    <p class="text-4xl font-black text-green-600">
-                        $${comanda.total.toFixed(2)}
-                    </p>
-                </div>
-
-                <button 
-                    onclick="agregarItemsComanda('${cuentaId}')"
-                    class="px-6 py-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-lg transition flex items-center gap-2">
-                    <i class="bi bi-plus-circle-fill text-xl"></i>
-                    Agregar productos
+                <button onclick="Swal.close()"
+                    class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md text-gray-400 hover:text-red-500 transition flex items-center justify-center text-2xl z-50">
+                    &times;
                 </button>
-            </div>
-        `
+                <div class="bg-orange-600 text-white px-6 pt-8 pb-6 rounded-t-[28px]">
+                    <h3 class="text-2xl font-black">${comanda.folio}</h3>
+                    <p class="text-sm opacity-90">${t('m_mesa_word')} ${comanda.mesa_numero} · ${comanda.num_comensales ?? comanda.comensales ?? 0} ${t('m_personas')}</p>
+                </div>
+                <div class="p-6 bg-gray-50 max-h-[55vh] overflow-y-auto space-y-3">${itemsHtml}</div>
+                <div class="p-6 bg-white border-t flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase">Total</p>
+                        <p class="text-4xl font-black text-green-600">$${comanda.total.toFixed(2)}</p>
+                    </div>
+                    <button onclick="agregarItemsComanda('${cuentaId}')"
+                        class="px-6 py-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-lg transition flex items-center gap-2">
+                        <i class="bi bi-plus-circle-fill text-xl"></i>
+                        Agregar productos
+                    </button>
+                </div>
+            `
         });
+    }
+
+    // ===================================
+    // ENVIAR COMANDA A DELIVERY
+    // ===================================
+    async function abrirDeliveryDesdeComanda(cuentaId, numMesa) {
+        const { value: formValues } = await Swal.fire({
+            title: '<i class="bi bi-truck"></i> Enviar a Delivery',
+            html: `
+                <div class="text-left space-y-3 mt-2">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Nombre cliente *</label>
+                        <input id="swd-nombre" class="swal2-input" placeholder="Nombre completo" style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Teléfono</label>
+                        <input id="swd-telefono" class="swal2-input" placeholder="55 0000 0000" style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Dirección *</label>
+                        <input id="swd-dir" class="swal2-input" placeholder="Calle, número, colonia" style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Referencias</label>
+                        <input id="swd-ref" class="swal2-input" placeholder="Entre calles, color..." style="margin:0;width:100%;font-size:14px;">
+                    </div>
+                </div>`,
+            width: 'min(480px, 95vw)',
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-truck"></i> Crear pedido delivery',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0ea5e9',
+            preConfirm: () => {
+                const nombre = document.getElementById('swd-nombre').value.trim();
+                const dir    = document.getElementById('swd-dir').value.trim();
+                if (!nombre || !dir) {
+                    Swal.showValidationMessage('Nombre y dirección son requeridos');
+                    return false;
+                }
+                return {
+                    cliente_nombre:   nombre,
+                    cliente_telefono: document.getElementById('swd-telefono').value.trim(),
+                    direccion:        dir,
+                    referencias:      document.getElementById('swd-ref').value.trim(),
+                };
+            }
+        });
+        if (!formValues) return;
+
+        const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+        const body = {
+            tipo:             'comanda',
+            comanda_id:       cuentaId,
+            ...formValues,
+            items:            comanda?.items || [],
+            total:            comanda?.total || 0,
+            metodo_pago:      'efectivo',
+        };
+        const r    = await fetch('/api/delivery/crear', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        if (data.success) {
+            cerrarModalMesa();
+            Swal.fire({ icon: 'success', title: '¡Pedido delivery creado!',
+                        text: 'El admin lo asignará a un repartidor.', timer: 2500, showConfirmButton: false });
+        } else { Swal.fire('Error', data.error, 'error'); }
     }
 
     function agregarItemsComanda(cuentaId) {
         const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
-
-        if (!comanda) {
-            showError('No se encontró la comanda');
-            return;
-        }
-
+        if (!comanda) { showError('No se encontró la comanda'); return; }
         abrirModalMenu(comanda.mesa_numero, cuentaId, true);
     }
 
-async function cerrarCuenta(cuentaId, numeroMesa) {
-    
-    // 🔥 Obtener datos de la comanda para mostrar el total
-    const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
-    const totalCuenta = comanda ? comanda.total : 0;
-    
-    Swal.fire({
-        title: false,
-        html: `
-            <!-- HEADER -->
-            <div class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-5 -mt-6 -mx-6 mb-6 rounded-t-xl">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <i class="bi bi-cash-coin text-2xl"></i>
+    // ===================================
+    // CERRAR CUENTA
+    // ===================================
+    async function cerrarCuenta(cuentaId, numeroMesa) {
+        const comanda = comandasActivas.find(c => c.id == cuentaId || c._id == cuentaId);
+        const totalCuenta = comanda ? comanda.total : 0;
+
+        Swal.fire({
+            title: false,
+            html: `
+                <div class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-5 -mt-6 -mx-6 mb-6 rounded-t-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="bi bi-cash-coin text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-xl font-black">${t('dash_cc_tit')}</h3>
+                                <p class="text-sm opacity-90">${t('m_mesa_word')} ${numeroMesa}</p>
+                            </div>
                         </div>
-                        <div class="text-left">
-                            <h3 class="text-xl font-black">Cerrar Cuenta</h3>
-                            <p class="text-sm opacity-90">Mesa ${numeroMesa}</p>
+                        <div class="text-right">
+                            <p class="text-xs opacity-75 uppercase tracking-wider">Total</p>
+                            <p class="text-3xl font-black">$${totalCuenta.toFixed(2)}</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-xs opacity-75 uppercase tracking-wider">Total</p>
-                        <p class="text-3xl font-black">$${totalCuenta.toFixed(2)}</p>
-                    </div>
                 </div>
-            </div>
 
-            <!-- PROPINA SECTION -->
-            <div class="mb-6">
-                <label class="block text-left text-sm font-bold text-gray-700 mb-3">
-                    <i class="bi bi-piggy-bank text-green-600"></i>
-                    Propina del Cliente
-                </label>
-                
-                <!-- Botones de propina rápida -->
-                <div class="grid grid-cols-4 gap-2 mb-3">
-                    <button type="button" onclick="seleccionarPropina('sin', this)" 
-                            class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                        <p class="text-xs font-bold text-gray-500">Sin</p>
-                        <p class="text-lg font-black text-gray-700">0%</p>
+                <div class="mb-6">
+                    <label class="block text-left text-sm font-bold text-gray-700 mb-3">
+                        <i class="bi bi-piggy-bank text-green-600"></i> ${t('dash_propina_cli')}
+                    </label>
+                    <div class="grid grid-cols-4 gap-2 mb-3">
+                        <button type="button" onclick="seleccionarPropina('sin', this)"
+                                class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
+                            <p class="text-xs font-bold text-gray-500">${t('dash_tip_sin')}</p>
+                            <p class="text-lg font-black text-gray-700">0%</p>
+                        </button>
+                        <button type="button" onclick="seleccionarPropina('10', this)"
+                                class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
+                            <p class="text-xs font-bold text-gray-500">${t('dash_tip_bueno')}</p>
+                            <p class="text-lg font-black text-gray-700">10%</p>
+                        </button>
+                        <button type="button" onclick="seleccionarPropina('15', this)"
+                                class="propina-btn p-3 border-2 border-green-500 bg-green-50 rounded-lg transition text-center propina-seleccionada">
+                            <p class="text-xs font-bold text-green-600">${t('dash_tip_excel')}</p>
+                            <p class="text-lg font-black text-green-700">15%</p>
+                        </button>
+                        <button type="button" onclick="seleccionarPropina('20', this)"
+                                class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
+                            <p class="text-xs font-bold text-gray-500">${t('dash_tip_incr')}</p>
+                            <p class="text-lg font-black text-gray-700">20%</p>
+                        </button>
+                    </div>
+                    <button type="button" onclick="togglePropinaCustom()"
+                            class="w-full p-2 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition text-sm font-medium">
+                        <i class="bi bi-pencil"></i> ${t('dash_tip_otro')}
                     </button>
-                    <button type="button" onclick="seleccionarPropina('10', this)" 
-                            class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                        <p class="text-xs font-bold text-gray-500">Bueno</p>
-                        <p class="text-lg font-black text-gray-700">10%</p>
-                    </button>
-                    <button type="button" onclick="seleccionarPropina('15', this)" 
-                            class="propina-btn p-3 border-2 border-green-500 bg-green-50 rounded-lg transition text-center propina-seleccionada">
-                        <p class="text-xs font-bold text-green-600">Excelente</p>
-                        <p class="text-lg font-black text-green-700">15%</p>
-                    </button>
-                    <button type="button" onclick="seleccionarPropina('20', this)" 
-                            class="propina-btn p-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
-                        <p class="text-xs font-bold text-gray-500">Increíble</p>
-                        <p class="text-lg font-black text-gray-700">20%</p>
-                    </button>
-                </div>
-                
-                <!-- Propina personalizada -->
-                <button type="button" onclick="togglePropinaCustom()" 
-                        class="w-full p-2 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-green-500 hover:text-green-600 transition text-sm font-medium">
-                    <i class="bi bi-pencil"></i> Otra cantidad
-                </button>
-                
-                <div id="custom-propina-container" class="hidden mt-3">
-                    <div class="relative">
-                        <input type="number" id="custom_propina" 
-                               class="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none text-lg font-bold text-center"
-                               placeholder="0" min="0" max="30" step="0.5">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <i class="bi bi-percent"></i>
-                        </span>
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
-                            PERSONALIZADO
-                        </span>
+                    <div id="custom-propina-container" class="hidden mt-3">
+                        <div class="relative">
+                            <input type="number" id="custom_propina"
+                                   class="w-full pl-10 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none text-lg font-bold text-center"
+                                   placeholder="0" min="0" max="30" step="0.5">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="bi bi-percent"></i>
+                            </span>
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">${t('dash_personaliz')}</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="tipo_propina" value="15">
+                    <div id="propina-preview" class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">Propina calculada:</span>
+                            <span class="font-black text-green-700 text-lg">+$${(totalCuenta * 0.15).toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs mt-1 pt-2 border-t border-green-200">
+                            <span class="text-gray-500">Total a cobrar:</span>
+                            <span class="font-black text-gray-800 text-base">$${(totalCuenta * 1.15).toFixed(2)}</span>
+                        </div>
                     </div>
                 </div>
-                
-                <input type="hidden" id="tipo_propina" value="15">
-                
-                <!-- Preview de propina -->
-                <div id="propina-preview" class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">Propina calculada:</span>
-                        <span class="font-black text-green-700 text-lg">+$${(totalCuenta * 0.15).toFixed(2)}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs mt-1 pt-2 border-t border-green-200">
-                        <span class="text-gray-500">Total a cobrar:</span>
-                        <span class="font-black text-gray-800 text-base">$${(totalCuenta * 1.15).toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
 
-            <!-- MÉTODO DE PAGO -->
-            <div class="mb-6">
-                <label class="block text-left text-sm font-bold text-gray-700 mb-3">
-                    <i class="bi bi-credit-card text-blue-600"></i>
-                    Método de Pago
-                </label>
-                
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" onclick="seleccionarMetodo('efectivo', this)" 
-                            class="metodo-btn p-4 border-2 border-orange-500 bg-orange-50 rounded-lg transition text-center metodo-seleccionado">
-                        <i class="bi bi-cash-stack text-2xl text-orange-600 block mb-1"></i>
-                        <p class="text-xs font-bold text-orange-700">Efectivo</p>
-                    </button>
-                    <button type="button" onclick="seleccionarMetodo('tarjeta', this)" 
-                            class="metodo-btn p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center">
-                        <i class="bi bi-credit-card text-2xl text-gray-400 block mb-1"></i>
-                        <p class="text-xs font-bold text-gray-600">Tarjeta MP</p>
-                    </button>
-                    <button type="button" onclick="seleccionarMetodo('transferencia', this)" 
-                            class="metodo-btn p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-center">
-                        <i class="bi bi-phone text-2xl text-gray-400 block mb-1"></i>
-                        <p class="text-xs font-bold text-gray-600">Transfer</p>
-                    </button>
+                <div class="mb-6">
+                    <label class="block text-left text-sm font-bold text-gray-700 mb-3">
+                        <i class="bi bi-credit-card text-blue-600"></i> ${t('dash_metodo_p')}
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="seleccionarMetodo('efectivo', this)"
+                                class="metodo-btn p-4 border-2 border-orange-500 bg-orange-50 rounded-lg transition text-center metodo-seleccionado">
+                            <i class="bi bi-cash-stack text-2xl text-orange-600 block mb-1"></i>
+                            <p class="text-xs font-bold text-orange-700">${t('dash_efectivo2')}</p>
+                        </button>
+                        <button type="button" onclick="seleccionarMetodo('tarjeta', this)"
+                                class="metodo-btn p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center">
+                            <i class="bi bi-credit-card text-2xl text-gray-400 block mb-1"></i>
+                            <p class="text-xs font-bold text-gray-600">${t('dash_tarjeta2')}</p>
+                        </button>
+                        <button type="button" onclick="seleccionarMetodo('transferencia', this)"
+                                class="metodo-btn p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-center">
+                            <i class="bi bi-phone text-2xl text-gray-400 block mb-1"></i>
+                            <p class="text-xs font-bold text-gray-600">${t('dash_transfer2')}</p>
+                        </button>
+                    </div>
+                    <input type="hidden" id="metodo_pago" value="efectivo">
                 </div>
-                
-                <input type="hidden" id="metodo_pago" value="efectivo">
-            </div>
 
-            <!-- NOTA INFO -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-left">
-                <div class="flex gap-2">
-                    <i class="bi bi-info-circle text-blue-600 mt-0.5"></i>
-                    <div class="text-xs text-blue-800">
-                        <p class="font-bold mb-1">💡 Recordatorio</p>
-                        <p>Al cerrar esta cuenta, la mesa quedará disponible automáticamente.</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-left">
+                    <div class="flex gap-2">
+                        <i class="bi bi-info-circle text-blue-600 mt-0.5"></i>
+                        <div class="text-xs text-blue-800">
+                            <p class="font-bold mb-1">💡 ${t('dash_recordat')}</p>
+                            <p>${t('dash_recordat_t')}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `,
-        width: 600,
-        showCancelButton: true,
-        confirmButtonText: '<i class="bi bi-check-circle-fill mr-2"></i>Confirmar y Cerrar',
-        cancelButtonText: '<i class="bi bi-x-circle mr-2"></i>Cancelar',
-        confirmButtonColor: '#16a34a',
-        cancelButtonColor: '#6b7280',
-        customClass: {
-            popup: 'rounded-2xl',
-            confirmButton: 'px-6 py-3 rounded-xl font-bold shadow-lg',
-            cancelButton: 'px-6 py-3 rounded-xl font-bold'
-        },
-        didOpen: () => {
-            // Configurar el total para los cálculos
-            window.totalCuentaActual = totalCuenta;
-            
-            // Actualizar preview inicial
-            actualizarPropinaPreview();
-        },
-        preConfirm: () => {
-            const tipo = document.getElementById('tipo_propina').value;
-            const custom = document.getElementById('custom_propina').value;
-            const metodo = document.getElementById('metodo_pago').value;
+            `,
+            width: 'min(600px, 95vw)',
+            showCancelButton: true,
+            confirmButtonText: `<i class="bi bi-check-circle-fill mr-2"></i>${t('dash_confirm_c')}`,
+            cancelButtonText: `<i class="bi bi-x-circle mr-2"></i>${t('dash_cancelar_btn')}`,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'px-6 py-3 rounded-xl font-bold shadow-lg',
+                cancelButton: 'px-6 py-3 rounded-xl font-bold'
+            },
+            didOpen: () => {
+                window.totalCuentaActual = totalCuenta;
+                actualizarPropinaPreview();
+            },
+            preConfirm: () => {
+                const tipo = document.getElementById('tipo_propina').value;
+                const custom = document.getElementById('custom_propina').value;
+                const metodo = document.getElementById('metodo_pago').value;
 
-            if (tipo === 'custom' && (!custom || custom < 0 || custom > 30)) {
-                Swal.showValidationMessage('El porcentaje debe estar entre 0 y 30');
-                return false;
+                if (tipo === 'custom' && (!custom || custom < 0 || custom > 30)) {
+                    Swal.showValidationMessage('El porcentaje debe estar entre 0 y 30');
+                    return false;
+                }
+                return {
+                    tipo_propina: tipo,
+                    custom_porcentaje: tipo === 'custom' ? Number(custom) : null,
+                    metodo_pago: metodo
+                };
+            }
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
+
+            const { tipo_propina, custom_porcentaje, metodo_pago } = result.value;
+
+            if (metodo_pago === "tarjeta") {
+                showLoading("Generando link de pago...");
+                const res = await fetch(`/api/pago/crear/${cuentaId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tipo_propina, custom_porcentaje })
+                });
+                const data = await res.json();
+                hideLoading();
+
+                if (data.success) {
+                    const ventanaPago = window.open(data.init_point, '_blank', 'width=600,height=800');
+                    await esperarConfirmacionPago(cuentaId, ventanaPago, comanda);
+                } else {
+                    showError(data.error || "Error al iniciar pago");
+                }
+                return;
             }
 
-            return {
-                tipo_propina: tipo,
-                custom_porcentaje: tipo === 'custom' ? Number(custom) : null,
-                metodo_pago: metodo
-            };
-        }
-    }).then(async (result) => {
-        
-        if (!result.isConfirmed) return;
-
-        const { tipo_propina, custom_porcentaje, metodo_pago } = result.value;
-
-        // 🔥 SI ES TARJETA → MERCADO PAGO CON POLLING
-        if (metodo_pago === "tarjeta") {
-            
-            showLoading("Generando link de pago...");
-
-            const res = await fetch(`/api/pago/crear/${cuentaId}`, {
+            showLoading("Cerrando cuenta...");
+            const res = await fetch(`/api/mesero/cuenta/${cuentaId}/cerrar`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tipo_propina, custom_porcentaje })
+                body: JSON.stringify({ tipo_propina, custom_porcentaje, metodo_pago })
             });
-
             const data = await res.json();
             hideLoading();
 
             if (data.success) {
-                const ventanaPago = window.open(data.init_point, '_blank', 'width=600,height=800');
-                await esperarConfirmacionPago(cuentaId, ventanaPago);
+                cerrarModalMesa();
+                await cargarEstadoMesas();
+                await actualizarComandas();
+                await cargarEstadisticasDia();
+
+                mostrarTicket({
+                    folio: data.folio || comanda?.folio,
+                    mesa: numeroMesa,
+                    mesero: '{{ session.usuario_nombre }}',
+                    metodo_pago: metodo_pago,
+                    items: comanda?.items || [],
+                    subtotal: data.total,
+                    porcentaje_propina: data.porcentaje_propina,
+                    propina: data.propina,
+                    total_final: data.total_final
+                });
             } else {
-                showError(data.error || "Error al iniciar pago");
+                showError(data.error || 'Error al cerrar cuenta');
             }
-            return;
-        }
-
-        // 🔥 EFECTIVO / TRANSFERENCIA → CIERRE NORMAL
-        showLoading("Cerrando cuenta...");
-
-        const res = await fetch(`/api/mesero/cuenta/${cuentaId}/cerrar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tipo_propina, custom_porcentaje, metodo_pago })
         });
-
-        const data = await res.json();
-        hideLoading();
-
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Cuenta Cerrada!',
-                html: `
-                    <div class="text-center py-4">
-                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="bi bi-check-circle-fill text-5xl text-green-600"></i>
-                        </div>
-                        <p class="text-gray-600 mb-4">Transacción completada exitosamente</p>
-                        <div class="bg-gray-50 rounded-xl p-4 space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">Consumo:</span>
-                                <span class="font-bold">$${data.total.toFixed(2)}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">Propina (${data.porcentaje_propina}%):</span>
-                                <span class="font-bold text-green-600">+$${data.propina.toFixed(2)}</span>
-                            </div>
-                            <div class="flex justify-between text-lg pt-2 border-t border-gray-200">
-                                <span class="font-black text-gray-800">TOTAL:</span>
-                                <span class="font-black text-green-600">$${data.total_final.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                timer: 3000,
-                showConfirmButton: false,
-                customClass: {
-                    popup: 'rounded-2xl'
-                }
-            });
-
-            cerrarModalMesa();
-            await cargarEstadoMesas();
-            await actualizarComandas();
-            await cargarEstadisticasDia();
-        } else {
-            showError(data.error || 'Error al cerrar cuenta');
-        }
-    });
-}
-
-// 🔥 FUNCIONES AUXILIARES PARA EL MODAL
-
-function seleccionarPropina(valor, boton) {
-    // Remover selección previa
-    document.querySelectorAll('.propina-btn').forEach(btn => {
-        btn.classList.remove('propina-seleccionada', 'border-green-500', 'bg-green-50');
-        btn.classList.add('border-gray-200');
-    });
-    
-    // Marcar el botón seleccionado
-    boton.classList.add('propina-seleccionada', 'border-green-500', 'bg-green-50');
-    boton.classList.remove('border-gray-200');
-    
-    // Actualizar campo oculto
-    document.getElementById('tipo_propina').value = valor;
-    
-    // Ocultar custom si no es necesario
-    if (valor !== 'custom') {
-        document.getElementById('custom-propina-container').classList.add('hidden');
-        document.getElementById('custom_propina').value = '';
     }
-    
-    // Actualizar preview
-    actualizarPropinaPreview();
-}
 
-function togglePropinaCustom() {
-    const container = document.getElementById('custom-propina-container');
-    const isHidden = container.classList.contains('hidden');
-    
-    if (isHidden) {
-        container.classList.remove('hidden');
-        document.getElementById('tipo_propina').value = 'custom';
-        
-        // Remover selección de botones
+    // ===================================
+    // AUXILIARES DEL MODAL CERRAR CUENTA
+    // ===================================
+    function seleccionarPropina(valor, boton) {
         document.querySelectorAll('.propina-btn').forEach(btn => {
             btn.classList.remove('propina-seleccionada', 'border-green-500', 'bg-green-50');
             btn.classList.add('border-gray-200');
         });
-        
-        // Focus en el input
-        setTimeout(() => {
-            document.getElementById('custom_propina').focus();
-        }, 100);
-    } else {
-        container.classList.add('hidden');
-        seleccionarPropina('15', document.querySelectorAll('.propina-btn')[2]);
-    }
-}
+        boton.classList.add('propina-seleccionada', 'border-green-500', 'bg-green-50');
+        boton.classList.remove('border-gray-200');
+        document.getElementById('tipo_propina').value = valor;
 
-function seleccionarMetodo(metodo, boton) {
-    // Remover selección previa
-    document.querySelectorAll('.metodo-btn').forEach(btn => {
-        btn.classList.remove('metodo-seleccionado');
-        btn.classList.add('border-gray-200');
-        
-        // Resetear iconos
-        const icon = btn.querySelector('i');
-        const text = btn.querySelector('p');
-        icon.classList.remove('text-orange-600', 'text-blue-600', 'text-purple-600');
-        icon.classList.add('text-gray-400');
-        text.classList.remove('text-orange-700', 'text-blue-700', 'text-purple-700');
-        text.classList.add('text-gray-600');
-    });
-    
-    // Marcar el botón seleccionado
-    boton.classList.add('metodo-seleccionado');
-    boton.classList.remove('border-gray-200');
-    
-    const icon = boton.querySelector('i');
-    const text = boton.querySelector('p');
-    
-    if (metodo === 'efectivo') {
-        boton.classList.add('border-orange-500', 'bg-orange-50');
-        icon.classList.add('text-orange-600');
-        text.classList.add('text-orange-700');
-    } else if (metodo === 'tarjeta') {
-        boton.classList.add('border-blue-500', 'bg-blue-50');
-        icon.classList.add('text-blue-600');
-        text.classList.add('text-blue-700');
-    } else if (metodo === 'transferencia') {
-        boton.classList.add('border-purple-500', 'bg-purple-50');
-        icon.classList.add('text-purple-600');
-        text.classList.add('text-purple-700');
-    }
-    
-    // Actualizar campo oculto
-    document.getElementById('metodo_pago').value = metodo;
-}
-
-function actualizarPropinaPreview() {
-    const tipo = document.getElementById('tipo_propina').value;
-    const customInput = document.getElementById('custom_propina');
-    const total = window.totalCuentaActual || 0;
-    
-    let porcentaje = 0;
-    
-    if (tipo === 'custom') {
-        porcentaje = parseFloat(customInput.value) || 0;
-    } else if (tipo === 'sin') {
-        porcentaje = 0;
-    } else {
-        porcentaje = parseFloat(tipo);
-    }
-    
-    const propina = total * (porcentaje / 100);
-    const totalFinal = total + propina;
-    
-    // Actualizar preview
-    const preview = document.getElementById('propina-preview');
-    if (preview) {
-        preview.innerHTML = `
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-600">Propina calculada (${porcentaje}%):</span>
-                <span class="font-black text-green-700 text-lg">+$${propina.toFixed(2)}</span>
-            </div>
-            <div class="flex justify-between items-center text-xs mt-1 pt-2 border-t border-green-200">
-                <span class="text-gray-500">Total a cobrar:</span>
-                <span class="font-black text-gray-800 text-base">$${totalFinal.toFixed(2)}</span>
-            </div>
-        `;
-    }
-}
-
-// Event listener para actualizar preview cuando cambia el custom
-document.addEventListener('input', function(e) {
-    if (e.target && e.target.id === 'custom_propina') {
+        if (valor !== 'custom') {
+            document.getElementById('custom-propina-container').classList.add('hidden');
+            document.getElementById('custom_propina').value = '';
+        }
         actualizarPropinaPreview();
     }
-});
-// 🔥 FUNCIÓN PARA HACER POLLING Y ESPERAR CONFIRMACIÓN
-async function esperarConfirmacionPago(cuentaId, ventanaPago) {
-    let intentos = 0;
-    const MAX_INTENTOS = 60; // 2 minutos (60 * 2 segundos)
-    let pagoEncontrado = false; // 🔥 BANDERA PARA EVITAR MÚLTIPLES ALERTAS
-    
-    return new Promise((resolve, reject) => {
-        
-        Swal.fire({
-            title: 'Esperando confirmación del pago',
-            html: `
-                <div class="text-center py-4">
-                    <div class="animate-spin inline-block w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
-                    <p class="text-gray-600 mb-2">El cliente está completando el pago en Mercado Pago</p>
-                    <p class="text-sm text-gray-500">Esta ventana se cerrará automáticamente cuando el pago sea confirmado</p>
-                    <p class="text-xs text-gray-400 mt-4">Intentos: <span id="polling-contador">0</span> / ${MAX_INTENTOS}</p>
-                </div>
-            `,
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar verificación'
+
+    function togglePropinaCustom() {
+        const container = document.getElementById('custom-propina-container');
+        const isHidden = container.classList.contains('hidden');
+        if (isHidden) {
+            container.classList.remove('hidden');
+            document.getElementById('tipo_propina').value = 'custom';
+            document.querySelectorAll('.propina-btn').forEach(btn => {
+                btn.classList.remove('propina-seleccionada', 'border-green-500', 'bg-green-50');
+                btn.classList.add('border-gray-200');
+            });
+            setTimeout(() => document.getElementById('custom_propina').focus(), 100);
+        } else {
+            container.classList.add('hidden');
+            seleccionarPropina('15', document.querySelectorAll('.propina-btn')[2]);
+        }
+    }
+
+    function seleccionarMetodo(metodo, boton) {
+        document.querySelectorAll('.metodo-btn').forEach(btn => {
+            btn.classList.remove(
+                'metodo-seleccionado',
+                'border-orange-500', 'border-blue-500', 'border-purple-500',
+                'bg-orange-50', 'bg-blue-50', 'bg-purple-50'
+            );
+            btn.classList.add('border-gray-200');
+
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('p');
+            icon.classList.remove('text-orange-600', 'text-blue-600', 'text-purple-600');
+            icon.classList.add('text-gray-400');
+            text.classList.remove('text-orange-700', 'text-blue-700', 'text-purple-700');
+            text.classList.add('text-gray-600');
         });
 
-        const intervalo = setInterval(async () => {
-            
-            // 🔥 SI YA ENCONTRAMOS EL PAGO, NO HACER MÁS VERIFICACIONES
-            if (pagoEncontrado) {
-                clearInterval(intervalo);
-                return;
-            }
-            
-            intentos++;
-            
-            // Actualizar contador
-            const contador = document.getElementById('polling-contador');
-            if (contador) contador.textContent = intentos;
+        const icon = boton.querySelector('i');
+        const text = boton.querySelector('p');
 
-            try {
-                // 🔥 VERIFICAR ESTADO DEL PAGO
-                const res = await fetch(`/api/pago/verificar?cuenta_id=${cuentaId}`);
-                const data = await res.json();
+        boton.classList.add('metodo-seleccionado');
+        boton.classList.remove('border-gray-200');
 
-                console.log(`🔍 Intento ${intentos}:`, data);
-
-                if (data.success && data.status === 'approved') {
-                    // 🔥 MARCAR COMO ENCONTRADO INMEDIATAMENTE
-                    pagoEncontrado = true;
-                    clearInterval(intervalo);
-                    
-                    // Cerrar ventana de pago
-                    if (ventanaPago && !ventanaPago.closed) {
-                        ventanaPago.close();
-                    }
-
-                    // 🔥 CERRAR EL SWAL DE LOADING
-                    Swal.close();
-
-                    // 🔥 MOSTRAR ÉXITO UNA SOLA VEZ
-                    await Swal.fire({
-                        icon: 'success',
-                        title: '¡Pago Confirmado!',
-                        html: `
-                            <div class="text-center">
-                                <i class="bi bi-check-circle text-6xl text-green-500 mb-4"></i>
-                                <p class="text-lg">Cuenta cerrada correctamente</p>
-                                <p class="text-2xl font-bold text-green-600 mt-2">Total: $${data.total.toFixed(2)}</p>
-                            </div>
-                        `,
-                        timer: 3000,
-                        showConfirmButton: false,
-                        allowOutsideClick: false
-                    });
-                    
-                    // Actualizar todo
-                    cerrarModalMesa();
-                    await cargarEstadoMesas();
-                    await actualizarComandas();
-                    await cargarEstadisticasDia();
-                    
-                    resolve(data);
-                    
-                } else if (data.success && data.status === 'rejected') {
-                    pagoEncontrado = true;
-                    clearInterval(intervalo);
-                    
-                    if (ventanaPago && !ventanaPago.closed) {
-                        ventanaPago.close();
-                    }
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Pago Rechazado',
-                        text: 'El pago fue rechazado. Por favor intenta con otro método.',
-                        confirmButtonColor: '#F2913D'
-                    });
-                    
-                    reject(new Error('Pago rechazado'));
-                    
-                } else if (intentos >= MAX_INTENTOS) {
-                    // 🔥 TIMEOUT
-                    pagoEncontrado = true;
-                    clearInterval(intervalo);
-                    
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Tiempo de espera agotado',
-                        text: 'No se pudo confirmar el pago. Verifica manualmente el estado de la cuenta.',
-                        confirmButtonColor: '#F2913D'
-                    });
-                    
-                    reject(new Error('Timeout'));
-                }
-                
-            } catch (error) {
-                console.error('Error en polling:', error);
-            }
-            
-        }, 2000); // Verificar cada 2 segundos
-
-        // 🔥 SI EL USUARIO CANCELA MANUALMENTE
-        const cancelButton = Swal.getCancelButton();
-        if (cancelButton) {
-            cancelButton.addEventListener('click', () => {
-                pagoEncontrado = true;
-                clearInterval(intervalo);
-                if (ventanaPago && !ventanaPago.closed) {
-                    ventanaPago.close();
-                }
-                reject(new Error('Cancelado por usuario'));
-            });
+        if (metodo === 'efectivo') {
+            boton.classList.add('border-orange-500', 'bg-orange-50');
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-orange-600');
+            text.classList.remove('text-gray-600');
+            text.classList.add('text-orange-700');
+        } else if (metodo === 'tarjeta') {
+            boton.classList.add('border-blue-500', 'bg-blue-50');
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-blue-600');
+            text.classList.remove('text-gray-600');
+            text.classList.add('text-blue-700');
+        } else if (metodo === 'transferencia') {
+            boton.classList.add('border-purple-500', 'bg-purple-50');
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-purple-600');
+            text.classList.remove('text-gray-600');
+            text.classList.add('text-purple-700');
         }
+
+        document.getElementById('metodo_pago').value = metodo;
+    }
+
+    function actualizarPropinaPreview() {
+        const tipo = document.getElementById('tipo_propina').value;
+        const customInput = document.getElementById('custom_propina');
+        const total = window.totalCuentaActual || 0;
+
+        let porcentaje = 0;
+        if (tipo === 'custom') porcentaje = parseFloat(customInput.value) || 0;
+        else if (tipo === 'sin') porcentaje = 0;
+        else porcentaje = parseFloat(tipo);
+
+        const propina = total * (porcentaje / 100);
+        const totalFinal = total + propina;
+
+        const preview = document.getElementById('propina-preview');
+        if (preview) {
+            preview.innerHTML = `
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">Propina calculada (${porcentaje}%):</span>
+                    <span class="font-black text-green-700 text-lg">+$${propina.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs mt-1 pt-2 border-t border-green-200">
+                    <span class="text-gray-500">Total a cobrar:</span>
+                    <span class="font-black text-gray-800 text-base">$${totalFinal.toFixed(2)}</span>
+                </div>
+            `;
+        }
+    }
+
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'custom_propina') actualizarPropinaPreview();
     });
-}
+
+    // ===================================
+    // POLLING MERCADO PAGO
+    // ===================================
+    async function esperarConfirmacionPago(cuentaId, ventanaPago, comanda) {
+        let intentos = 0;
+        const MAX_INTENTOS = 60;
+        let pagoEncontrado = false;
+
+        return new Promise((resolve, reject) => {
+            Swal.fire({
+                title: t('dash_esp_mp'),
+                html: `
+                    <div class="text-center py-4">
+                        <div class="animate-spin inline-block w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
+                        <p class="text-gray-600 mb-2">${t('dash_mp_desc')}</p>
+                        <p class="text-sm text-gray-500">${t('dash_mp_auto')}</p>
+                        <p class="text-xs text-gray-400 mt-4">${t('dash_intentos')} <span id="polling-contador">0</span> / ${MAX_INTENTOS}</p>
+                    </div>
+                `,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: t('dash_cancel_v')
+            });
+
+            const intervalo = setInterval(async () => {
+                if (pagoEncontrado) { clearInterval(intervalo); return; }
+
+                intentos++;
+                const contador = document.getElementById('polling-contador');
+                if (contador) contador.textContent = intentos;
+
+                try {
+                    const res = await fetch(`/api/pago/verificar?cuenta_id=${cuentaId}`);
+                    const data = await res.json();
+                    console.log(`🔍 Intento ${intentos}:`, data);
+
+                    if (data.success && data.status === 'approved') {
+                        pagoEncontrado = true;
+                        clearInterval(intervalo);
+
+                        if (ventanaPago && !ventanaPago.closed) ventanaPago.close();
+                        Swal.close();
+
+                        cerrarModalMesa();
+                        await cargarEstadoMesas();
+                        await actualizarComandas();
+                        await cargarEstadisticasDia();
+
+                        mostrarTicket({
+                            folio: comanda?.folio || data.folio,
+                            mesa: comanda?.mesa_numero,
+                            mesero: '{{ session.usuario_nombre }}',
+                            metodo_pago: 'tarjeta',
+                            items: comanda?.items || [],
+                            subtotal: data.total ?? comanda?.total ?? 0,
+                            porcentaje_propina: data.porcentaje_propina ?? 0,
+                            propina: data.propina ?? 0,
+                            total_final: data.total_final ?? data.total ?? 0
+                        });
+
+                        resolve(data);
+
+                    } else if (data.success && data.status === 'rejected') {
+                        pagoEncontrado = true;
+                        clearInterval(intervalo);
+                        if (ventanaPago && !ventanaPago.closed) ventanaPago.close();
+                        Swal.fire({ icon: 'error', title: 'Pago Rechazado', text: 'El pago fue rechazado. Por favor intenta con otro método.', confirmButtonColor: '#F2913D' });
+                        reject(new Error('Pago rechazado'));
+
+                    } else if (intentos >= MAX_INTENTOS) {
+                        pagoEncontrado = true;
+                        clearInterval(intervalo);
+                        Swal.fire({ icon: 'warning', title: 'Tiempo de espera agotado', text: 'No se pudo confirmar el pago. Verifica manualmente el estado de la cuenta.', confirmButtonColor: '#F2913D' });
+                        reject(new Error('Timeout'));
+                    }
+                } catch (error) {
+                    console.error('Error en polling:', error);
+                }
+            }, 2000);
+
+            const cancelButton = Swal.getCancelButton();
+            if (cancelButton) {
+                cancelButton.addEventListener('click', () => {
+                    pagoEncontrado = true;
+                    clearInterval(intervalo);
+                    if (ventanaPago && !ventanaPago.closed) ventanaPago.close();
+                    reject(new Error('Cancelado por usuario'));
+                });
+            }
+        });
+    }
+
+    // ===================================
+    // 🎫 TICKET
+    // ===================================
+    function mostrarTicket(datos) {
+        window._ticketDatos = datos;
+
+        const fecha = datos.fecha ? new Date(datos.fecha) : new Date();
+        const fechaStr = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const horaStr = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+        const metodoPagoLabel = {
+            efectivo: '💵 Efectivo',
+            tarjeta: '💳 Tarjeta (Mercado Pago)',
+            transferencia: '📲 Transferencia'
+        }[datos.metodo_pago] || datos.metodo_pago;
+
+        const itemsHtml = (datos.items || []).map(item => `
+            <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:12px; color:#374151;">
+                <span style="flex:1;">${item.cantidad}x ${item.nombre}</span>
+                <span style="margin-left:8px; font-weight:700;">$${(item.precio * item.cantidad).toFixed(2)}</span>
+            </div>
+        `).join('');
+
+        const propina = Number(datos.propina ?? 0);
+        const subtotal = Number(datos.subtotal ?? 0);
+        const totalFinal = Number(datos.total_final ?? subtotal + propina);
+        let porcentaje = Number(datos.porcentaje_propina ?? 0);
+        if (porcentaje === 0 && propina > 0 && subtotal > 0) {
+            porcentaje = Math.round((propina / subtotal) * 100);
+        }
+
+        const html = `
+            <div style="font-family:'Courier New',Courier,monospace; font-size:13px; color:#111; max-width:300px; margin:0 auto;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <div style="font-size:28px; margin-bottom:4px;">🍽️</div>
+                    <p style="font-size:16px; font-weight:900; letter-spacing:2px; text-transform:uppercase; margin:0;">Callejon 19</p>
+                    <p style="font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:2px; margin:4px 0 0;">${t('dash_tkt_titulo')}</p>
+                    <div style="border-top:1px dashed #D1D5DB; margin:10px 0;"></div>
+                    <p style="font-size:11px; color:#6B7280; margin:0;">${fechaStr} &nbsp;|&nbsp; ${horaStr}</p>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
+                        <span style="color:#6B7280;">${t('dash_tkt_folio')}:</span>
+                        <span style="font-weight:700;">${datos.folio || 'N/A'}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
+                        <span style="color:#6B7280;">Mesa:</span>
+                        <span style="font-weight:700;">${datos.mesa || 'N/A'}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
+                        <span style="color:#6B7280;">${t('dash_tkt_aten')}:</span>
+                        <span style="font-weight:700;">${datos.mesero || 'N/A'}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
+                        <span style="color:#6B7280;">${t('dash_tkt_pago')}:</span>
+                        <span style="font-weight:700;">${metodoPagoLabel}</span>
+                    </div>
+                </div>
+
+                <div style="border-top:1px dashed #D1D5DB; margin:12px 0;"></div>
+
+                <div style="margin-bottom:12px;">
+                    ${itemsHtml || '<p style="color:#9CA3AF;font-size:11px;text-align:center;">Sin productos registrados</p>'}
+                </div>
+
+                <div style="border-top:1px dashed #D1D5DB; margin:12px 0;"></div>
+
+                <div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:#4B5563;">
+                        <span>${t('dash_tkt_sub')}:</span>
+                        <span>$${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0; color:#16A34A;">
+                        <span>Propina (${porcentaje}%):</span>
+                        <span>+$${propina.toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:900; color:#111; padding-top:6px; margin-top:4px; border-top:1px solid #E5E7EB;">
+                        <span>${t('dash_tkt_total')}:</span>
+                        <span>$${totalFinal.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div style="border-top:1px dashed #D1D5DB; margin:16px 0;"></div>
+                <p style="text-align:center; font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:2px; margin:0;">${t('dash_gracias')}</p>
+                <p style="text-align:center; font-size:11px; color:#D1D5DB; margin:4px 0 0;">${t('dash_vuelva')} 😊</p>
+            </div>
+        `;
+
+        document.getElementById('ticket-contenido').innerHTML = html;
+        document.getElementById('modalTicket').classList.remove('hidden');
+    }
+
+    function cerrarModalTicket() {
+        document.getElementById('modalTicket').classList.add('hidden');
+    }
+
+    function imprimirTicket() {
+        const contenido = document.getElementById('ticket-contenido').innerHTML;
+        const ventana = window.open('', '_blank', 'width=400,height=700');
+        ventana.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Ticket</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: 12px;
+                        padding: 16px;
+                        width: 300px;
+                        background: white;
+                    }
+                    @media print {
+                        body { width: 100%; padding: 0; }
+                        @page { margin: 10mm; size: 80mm auto; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${contenido}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(() => window.close(), 800);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        ventana.document.close();
+    }
+
+    async function descargarTicketPDF() {
+        const datos = window._ticketDatos;
+        if (!datos) return;
+
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando...';
+        btn.disabled = true;
+
+        try {
+            if (typeof html2canvas === 'undefined') {
+                await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+            }
+            if (typeof window.jspdf === 'undefined') {
+                await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+            }
+
+            const elemento = document.getElementById('ticket-contenido');
+            const canvas = await html2canvas(elemento, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+
+            const pdfWidth = 80;
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            const pdf = new jsPDF({
+                unit: 'mm',
+                format: [pdfWidth, pdfHeight],
+                orientation: 'portrait'
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`ticket-${datos.folio || 'sin-folio'}.pdf`);
+
+        } catch (e) {
+            console.error('Error al generar PDF:', e);
+            imprimirTicket();
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function cargarScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) return resolve();
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
     // ===================================
     // UTILIDADES
     // ===================================
     function calcularTiempoTranscurrido(fechaInicio) {
         if (!fechaInicio) return 'N/A';
 
-        const inicio = new Date(fechaInicio);
+        const inicio = new Date(fechaInicio); // ISO con +00:00 → se parsea bien
+        if (isNaN(inicio.getTime())) return 'N/A';
+
         const ahora = new Date();
         const diff = Math.floor((ahora - inicio) / 60000);
 
-        if (diff < 60) {
-            return `${diff} min`;
-        } else {
-            const horas = Math.floor(diff / 60);
-            const mins = diff % 60;
-            return `${horas}h ${mins}m`;
-        }
+        if (diff < 0) return t('dash_ahora');
+        if (diff < 1) return t('dash_ahora');
+        if (diff < 60) return `${diff} min`;
+
+        const horas = Math.floor(diff / 60);
+        const mins = diff % 60;
+        return mins > 0 ? `${horas}h ${mins}m` : `${horas}h`;
     }
 
     function showLoading(message = 'Cargando...') {
-        Swal.fire({
-            title: message,
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+        Swal.fire({ title: message, allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
     }
 
-    function hideLoading() {
-        Swal.close();
-    }
+    function hideLoading() { Swal.close(); }
 
     function showSuccess(message) {
-        Swal.fire({
-            icon: 'success',
-            title: '¡Éxito!',
-            text: message,
-            timer: 2000,
-            showConfirmButton: false
-        });
+        Swal.fire({ icon: 'success', title: '¡Éxito!', text: message, timer: 2000, showConfirmButton: false });
     }
 
     function showError(message) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: message
-        });
+        Swal.fire({ icon: 'error', title: 'Error', text: message });
     }
 </script>
 {% endblock %}

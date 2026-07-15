@@ -6,6 +6,8 @@
 document.addEventListener("DOMContentLoaded", function () {
 
     let socket;
+    let _rolActual = null;                 // se llena cuando /api/me responde
+    const _notifVistas = new Set();        // IDs ya tosteados en esta sesión de pestaña
     const trigger = document.getElementById('notification-trigger');
     const dropdown = document.getElementById('notification-dropdown');
     const list = document.getElementById('notification-list');
@@ -27,7 +29,8 @@ document.addEventListener("DOMContentLoaded", function () {
         'STOCK_BAJO': { class: 'fas fa-exclamation-circle', color: 'text-red-500' },
         'ENTRADA_REGISTRADA': { class: 'fas fa-arrow-down', color: 'text-green-500' },
         'SALIDA_REGISTRADA': { class: 'fas fa-arrow-up', color: 'text-orange-500' },
-        'MERMA_REGISTRADA': { class: 'fas fa-trash', color: 'text-red-500' }
+        'MERMA_REGISTRADA': { class: 'fas fa-trash', color: 'text-red-500' },
+        'PLATILLO_NO_DISPONIBLE': { class: 'fas fa-ban', color: 'text-orange-500' }
     };
 
     // Toggle dropdown
@@ -64,6 +67,31 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.success && data.notificaciones.length > 0) {
                 renderizarNotificaciones(data.notificaciones);
                 actualizarContador(data.notificaciones.length);
+                // Fallback: toast para PLATILLO_NO_DISPONIBLE que el socket no entregó
+                if (_rolActual === "2") {
+                    data.notificaciones.forEach(n => {
+                        if (n.tipo === "PLATILLO_NO_DISPONIBLE" && !_notifVistas.has(n._id)) {
+                            _notifVistas.add(n._id);
+                            const extra = n.datos_extra || {};
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '⚠️ Platillo no disponible',
+                                    html: `<strong>${extra.platillo || ''}</strong><br><span style="font-size:.9em;color:#666">${extra.razon || ''}</span>`,
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 8000,
+                                    timerProgressBar: true,
+                                    background: '#fff3cd',
+                                    color: '#856404',
+                                });
+                            }
+                        } else {
+                            _notifVistas.add(n._id);
+                        }
+                    });
+                }
             } else {
                 sinNotificaciones();
             }
@@ -252,16 +280,47 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Rooms por rol
+    const ROL_ROOMS = { "1": "admins", "2": "meseros", "3": "cocina", "4": "inventario" };
+
     // Conectar a Socket.IO
-    function conectarAlServicioDeNotificaciones(token) {
+    function conectarAlServicioDeNotificaciones(token, userData) {
         const SOCKET_URL = window.location.origin;
         socket = io(SOCKET_URL, {
             transports: ['polling', 'websocket'],
             timeout: 10000
         });
-        
+
         socket.on("connect", () => {
             socket.emit('registrar', { token: token });
+            // Unirse a sala personal y sala del rol
+            if (userData && userData.usuario_id) {
+                socket.emit('join_room', `user_${userData.usuario_id}`);
+            }
+            if (userData && userData.rol && ROL_ROOMS[userData.rol]) {
+                socket.emit('join_room', ROL_ROOMS[userData.rol]);
+            }
+        });
+
+        // Alerta de platillo no disponible — solo mostrar al mesero (rol 2)
+        socket.on("platillo_no_disponible", (data) => {
+            if (!userData || userData.rol !== "2") return;
+            aumentarContador();
+            reproducirSonido();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '⚠️ Platillo no disponible',
+                    html: `<strong>${data.nombre}</strong><br><span style="font-size:.9em;color:#666">${data.razon}</span>`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 8000,
+                    timerProgressBar: true,
+                    background: '#fff3cd',
+                    color: '#856404',
+                });
+            }
         });
 
         socket.on("error_autenticacion", (data) => {
@@ -344,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!userData.socket_token) return;
 
             await solicitarPermisosNotificacion();
-            conectarAlServicioDeNotificaciones(userData.socket_token);
+            conectarAlServicioDeNotificaciones(userData.socket_token, userData);
             await cargarNotificaciones();
 
         } catch (err) {
