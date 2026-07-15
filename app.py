@@ -210,6 +210,21 @@ def on_join_cliente(data):
         join_room(sala)
         print(f"[SALA] Cliente unido a sala personal: {sala}")
 
+@socketio.on("join_monitor")
+def on_join_monitor():
+    """Admin se une a la sala de monitoreo de sensores en tiempo real."""
+    join_room("admin_monitor")
+    print("[SALA] Admin unido a monitor de sensores")
+
+@socketio.on("join_repartidor")
+def on_join_repartidor(repartidor_id):
+    """Repartidor se une a su sala personal + sala global para recibir notificaciones."""
+    rid = str(repartidor_id) if repartidor_id else ""
+    if rid:
+        join_room(f"repartidor_{rid}")
+        join_room("repartidores_global")
+        print(f"[SALA] Repartidor {rid} unido a sala personal y global")
+
 # ================================
 # API DOCS
 # ================================

@@ -1,5 +1,6 @@
 from flask import request, session, jsonify, render_template
 from models.delivery_model import DeliveryOrder, Repartidor
+from models.sensor_model import SensorData
 from models.empleado_model import Usuario
 from services.security.password_service import PasswordService
 from bson.objectid import ObjectId
@@ -19,6 +20,20 @@ def _serialize(doc):
             out[k] = str(v)
         elif isinstance(v, datetime):
             out[k] = v.strftime("%Y-%m-%d %H:%M")
+        else:
+            out[k] = v
+    return out
+
+
+def _serialize_sensor(doc):
+    if doc is None:
+        return None
+    out = {}
+    for k, v in doc.items():
+        if isinstance(v, ObjectId):
+            out[k] = str(v)
+        elif isinstance(v, datetime):
+            out[k] = v.strftime("%Y-%m-%d %H:%M:%S")
         else:
             out[k] = v
     return out
@@ -269,4 +284,135 @@ class RepartidorAPIController:
             )
             return jsonify({"success": True})
         except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────
+# VISTAS WEARABLE — Sensores (Rol 5)
+# ─────────────────────────────────────────────
+
+class SensorViewController:
+
+    @staticmethod
+    def mis_sensores():
+        nombre = session.get("usuario_nombre", "")
+        repartidor_id = session.get("usuario_id", "")
+        ultima = SensorData.ultimo_por_repartidor(repartidor_id)
+        return render_template(
+            "repartidor/mis_sensores.html",
+            nombre=nombre,
+            repartidor_id=repartidor_id,
+            ultima=_serialize_sensor(ultima),
+        )
+
+
+# ─────────────────────────────────────────────
+# API — SENSORES
+# ─────────────────────────────────────────────
+
+class SensorAPIController:
+
+    @staticmethod
+    def recibir():
+        try:
+            data = request.get_json(force=True) or {}
+            data["repartidor_id"]     = session.get("usuario_id", "")
+            data["repartidor_nombre"] = session.get("usuario_nombre", "")
+            data["tenant_id"]         = session.get("tenant_id", "")
+            SensorData.guardar(data)
+
+            from extensions import socketio
+            socketio.emit("sensor_update", {
+                "repartidor_id":     data["repartidor_id"],
+                "repartidor_nombre": data["repartidor_nombre"],
+                "lat":               data.get("lat"),
+                "lon":               data.get("lon"),
+                "battery":           data.get("battery"),
+                "pasos":             data.get("pasos"),
+                "ts":                datetime.utcnow().strftime("%H:%M:%S"),
+            }, room="admin_monitor")
+            return jsonify({"success": True})
+        except Exception as e:
+            logger.error("sensor recibir: %s", e)
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
+    def api_todos():
+        try:
+            tenant_id = session.get("tenant_id", "")
+            lecturas = SensorData.todos_activos(tenant_id)
+            return jsonify({"success": True, "lecturas": [_serialize_sensor(l) for l in lecturas]})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────
+# VISTAS ADMIN — Monitor y Notificaciones
+# ─────────────────────────────────────────────
+
+class AdminMonitorController:
+
+    @staticmethod
+    def monitor():
+        tenant_id = session.get("tenant_id", "")
+        lecturas = SensorData.todos_activos(tenant_id)
+        repartidores = Repartidor.listar_activos(tenant_id)
+        return render_template(
+            "admin/monitor_sensores.html",
+            lecturas=[_serialize_sensor(s) for s in lecturas],
+            repartidores=[_serialize(r) for r in repartidores],
+        )
+
+    @staticmethod
+    def eventos():
+        tenant_id = session.get("tenant_id", "")
+        repartidor_id = request.args.get("repartidor_id", "")
+        eventos = SensorData.historial(
+            tenant_id=tenant_id,
+            repartidor_id=repartidor_id or None,
+            limit=100,
+        )
+        repartidores = Repartidor.listar_activos(tenant_id)
+        return render_template(
+            "admin/eventos_historial.html",
+            eventos=[_serialize_sensor(e) for e in eventos],
+            repartidores=[_serialize(r) for r in repartidores],
+            filtro_repartidor=repartidor_id,
+        )
+
+    @staticmethod
+    def notificar_vista():
+        tenant_id = session.get("tenant_id", "")
+        repartidores = Repartidor.listar_activos(tenant_id)
+        return render_template(
+            "admin/notificar_wearable.html",
+            repartidores=[_serialize(r) for r in repartidores],
+        )
+
+    @staticmethod
+    def notificar_enviar():
+        try:
+            data = request.get_json(force=True) or {}
+            mensaje       = (data.get("mensaje") or "").strip()
+            repartidor_id = data.get("repartidor_id")
+            tipo          = data.get("tipo", "info")
+            if not mensaje:
+                return jsonify({"success": False, "error": "Mensaje vacío"}), 400
+
+            from extensions import socketio
+            payload = {
+                "mensaje":   mensaje,
+                "tipo":      tipo,
+                "timestamp": datetime.utcnow().strftime("%H:%M"),
+                "de":        session.get("usuario_nombre", "Admin"),
+            }
+            if repartidor_id:
+                socketio.emit("notificacion_wearable", payload,
+                              room=f"repartidor_{repartidor_id}")
+            else:
+                socketio.emit("notificacion_wearable", payload,
+                              room="repartidores_global")
+            return jsonify({"success": True})
+        except Exception as e:
+            logger.error("notificar error: %s", e)
             return jsonify({"success": False, "error": str(e)}), 500

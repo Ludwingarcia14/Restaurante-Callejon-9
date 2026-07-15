@@ -1,0 +1,254 @@
+{% extends "layout/layout_base.html" %}
+{% block title %}Monitor Sensores{% endblock %}
+{% block page_title %}Monitor en Tiempo Real{% endblock %}
+{% block page_subtitle %}Ubicación, batería y actividad de todos los dispositivos wearable{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+<!-- KPIs -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-sky-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Dispositivos Activos</p>
+        <p class="text-3xl font-bold text-gray-800">{{ repartidores|length }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Con datos recientes</p>
+        <p class="text-3xl font-bold text-gray-800" id="kpi-conectados">{{ lecturas|length }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Bat. promedio</p>
+        <p class="text-3xl font-bold text-gray-800" id="kpi-bat">
+            {% if lecturas %}
+                {{ "%.0f"|format(lecturas|map(attribute='battery')|list|sum / lecturas|length) }}%
+            {% else %}--{% endif %}
+        </p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-purple-400">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total pasos hoy</p>
+        <p class="text-3xl font-bold text-gray-800" id="kpi-pasos">
+            {{ lecturas|map(attribute='pasos')|list|sum|default(0) }}
+        </p>
+    </div>
+</div>
+
+<!-- Tabla de dispositivos -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b flex items-center justify-between">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-broadcast text-sky-500 text-lg animate-pulse"></i>
+            Dispositivos Wearable
+            <span class="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-normal ml-1">Tiempo real</span>
+        </h3>
+        <button onclick="refrescar()"
+                class="p-2 text-gray-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition">
+            <i class="bi bi-arrow-clockwise text-lg" id="ico-refresh"></i>
+        </button>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm" id="tabla-devices">
+            <thead>
+                <tr class="border-b bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3 text-left">Dispositivo</th>
+                    <th class="px-4 py-3 text-left">Estado</th>
+                    <th class="px-4 py-3 text-left hidden sm:table-cell">GPS (Lat / Lon)</th>
+                    <th class="px-4 py-3 text-center">Batería</th>
+                    <th class="px-4 py-3 text-right hidden md:table-cell">Pasos</th>
+                    <th class="px-4 py-3 text-left hidden lg:table-cell">Última actualiz.</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="tbody-devices">
+            {% if lecturas %}
+                {% for l in lecturas %}
+                <tr class="hover:bg-gray-50 transition" id="row-{{ l.repartidor_id }}">
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {{ l.repartidor_nombre[0]|upper if l.repartidor_nombre else '?' }}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">{{ l.repartidor_nombre }}</p>
+                                <p class="text-xs text-gray-400 font-mono">{{ l.repartidor_id[:8] }}…</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Activo
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 hidden sm:table-cell font-mono text-xs text-gray-600">
+                        {{ "%.6f"|format(l.lat) }}° /
+                        {{ "%.6f"|format(l.lon) }}°
+                        <a href="https://maps.google.com/?q={{ l.lat }},{{ l.lon }}" target="_blank"
+                           class="ml-1 text-sky-500 hover:underline">
+                            <i class="bi bi-map"></i>
+                        </a>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="font-bold text-sm
+                                {% if l.battery > 60 %}text-emerald-600
+                                {% elif l.battery > 20 %}text-amber-600
+                                {% else %}text-red-600{% endif %}">
+                                {{ "%.0f"|format(l.battery) }}%
+                            </span>
+                            <div class="w-14 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full
+                                    {% if l.battery > 60 %}bg-emerald-500
+                                    {% elif l.battery > 20 %}bg-amber-500
+                                    {% else %}bg-red-500{% endif %}"
+                                     style="width: {{ l.battery }}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-right text-gray-700 font-medium hidden md:table-cell">
+                        {{ "{:,}".format(l.pasos|int) }}
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gray-400 hidden lg:table-cell">
+                        {{ l.timestamp }}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr id="row-empty">
+                    <td colspan="6" class="px-4 py-16 text-center text-gray-400">
+                        <i class="bi bi-wifi-off text-4xl block mb-3 opacity-20"></i>
+                        <p class="font-medium">Sin dispositivos conectados</p>
+                        <p class="text-sm mt-1">Los repartidores deben abrir la pantalla <strong>Sensores</strong> en su app.</p>
+                    </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Mapa de ubicaciones (OpenStreetMap embed si hay datos) -->
+{% if lecturas %}
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-map text-emerald-500 text-lg"></i> Ubicaciones en mapa
+        </h3>
+    </div>
+    <div class="p-4 space-y-2">
+        {% for l in lecturas %}
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-geo-alt-fill text-sky-500"></i>
+                <span class="font-medium text-sm text-gray-800">{{ l.repartidor_nombre }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-mono text-gray-500">
+                    {{ "%.4f"|format(l.lat) }}, {{ "%.4f"|format(l.lon) }}
+                </span>
+                <a href="https://maps.google.com/?q={{ l.lat }},{{ l.lon }}" target="_blank"
+                   class="text-xs bg-sky-500 text-white px-3 py-1 rounded-lg hover:bg-sky-600 transition">
+                    <i class="bi bi-box-arrow-up-right"></i> Ver
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+</div>
+
+<script>
+const socket = io();
+socket.on('connect', () => socket.emit('join_monitor'));
+
+socket.on('sensor_update', data => {
+    actualizarFila(data);
+});
+
+function actualizarFila(d) {
+    // Quitar fila vacía si existe
+    const empty = document.getElementById('row-empty');
+    if (empty) empty.remove();
+
+    let fila = document.getElementById(`row-${d.repartidor_id}`);
+    if (!fila) {
+        fila = document.createElement('tr');
+        fila.id = `row-${d.repartidor_id}`;
+        fila.className = 'hover:bg-gray-50 transition';
+        document.getElementById('tbody-devices').prepend(fila);
+    }
+
+    const bat = Math.round(d.battery || 0);
+    const batColor = bat > 60 ? 'emerald' : bat > 20 ? 'amber' : 'red';
+    const inicial = (d.repartidor_nombre || '?')[0].toUpperCase();
+
+    fila.innerHTML = `
+        <td class="px-4 py-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-sky-600
+                            flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    ${inicial}
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">${d.repartidor_nombre}</p>
+                    <p class="text-xs text-gray-400 font-mono">${(d.repartidor_id||'').slice(0,8)}…</p>
+                </div>
+            </div>
+        </td>
+        <td class="px-4 py-3">
+            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Activo
+            </span>
+        </td>
+        <td class="px-4 py-3 hidden sm:table-cell font-mono text-xs text-gray-600">
+            ${parseFloat(d.lat||0).toFixed(6)}° /
+            ${parseFloat(d.lon||0).toFixed(6)}°
+            <a href="https://maps.google.com/?q=${d.lat},${d.lon}" target="_blank"
+               class="ml-1 text-sky-500 hover:underline"><i class="bi bi-map"></i></a>
+        </td>
+        <td class="px-4 py-3 text-center">
+            <div class="flex flex-col items-center gap-1">
+                <span class="font-bold text-sm text-${batColor}-600">${bat}%</span>
+                <div class="w-14 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-${batColor}-500" style="width:${bat}%"></div>
+                </div>
+            </div>
+        </td>
+        <td class="px-4 py-3 text-right text-gray-700 font-medium hidden md:table-cell">
+            ${parseInt(d.pasos||0).toLocaleString()}
+        </td>
+        <td class="px-4 py-3 text-xs text-gray-400 hidden lg:table-cell">
+            ${d.ts || new Date().toLocaleTimeString()}
+        </td>`;
+
+    // Flash visual en la fila actualizada
+    fila.classList.add('bg-sky-50');
+    setTimeout(() => fila.classList.remove('bg-sky-50'), 1500);
+
+    // Actualizar KPI
+    const rows = document.querySelectorAll('#tbody-devices tr:not(#row-empty)');
+    document.getElementById('kpi-conectados').textContent = rows.length;
+}
+
+async function refrescar() {
+    const ico = document.getElementById('ico-refresh');
+    ico.classList.add('animate-spin');
+    try {
+        const r = await fetch('/api/sensor/todos');
+        const data = await r.json();
+        if (data.success) data.lecturas.forEach(l => actualizarFila({
+            repartidor_id: l.repartidor_id,
+            repartidor_nombre: l.repartidor_nombre,
+            lat: l.lat, lon: l.lon, battery: l.battery, pasos: l.pasos,
+            ts: l.timestamp,
+        }));
+    } catch (e) { console.error(e); }
+    setTimeout(() => ico.classList.remove('animate-spin'), 600);
+}
+
+// Auto-refresh cada 30s
+setInterval(refrescar, 30000);
+</script>
+{% endblock %}

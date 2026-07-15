@@ -6,6 +6,9 @@ from controllers.repartidor.repartidor_controller import (
     AdminDeliveryViewController,
     DeliveryAPIController,
     RepartidorAPIController,
+    SensorViewController,
+    SensorAPIController,
+    AdminMonitorController,
 )
 
 # ── Vistas Repartidor (Rol 5) ────────────────────────────────
@@ -101,3 +104,48 @@ def api_repartidores_actualizar(uid):
 @rol_required(['1'])
 def api_repartidores_eliminar(uid):
     return RepartidorAPIController.eliminar(uid)
+
+# ── Wearable: Sensor screen (Rol 5) ──────────────────────────
+@routes_bp.route("/repartidor/sensores")
+@login_required
+@rol_required(['5'])
+def repartidor_sensores():
+    return SensorViewController.mis_sensores()
+
+# ── API Sensores (Rol 5 envía, Rol 1 consulta) ───────────────
+@routes_bp.route("/api/sensor/enviar", methods=["POST"])
+@login_required
+@rol_required(['5'])
+def api_sensor_enviar():
+    return SensorAPIController.recibir()
+
+@routes_bp.route("/api/sensor/todos")
+@login_required
+@rol_required(['1'])
+def api_sensor_todos():
+    return SensorAPIController.api_todos()
+
+# ── Admin: Monitor tiempo real ────────────────────────────────
+@routes_bp.route("/admin/monitor")
+@login_required
+@rol_required(['1'])
+def admin_monitor_sensores():
+    return AdminMonitorController.monitor()
+
+@routes_bp.route("/admin/eventos")
+@login_required
+@rol_required(['1'])
+def admin_eventos_historial():
+    return AdminMonitorController.eventos()
+
+@routes_bp.route("/admin/notificar")
+@login_required
+@rol_required(['1'])
+def admin_notificar_vista():
+    return AdminMonitorController.notificar_vista()
+
+@routes_bp.route("/api/admin/notificar", methods=["POST"])
+@login_required
+@rol_required(['1'])
+def api_admin_notificar():
+    return AdminMonitorController.notificar_enviar()

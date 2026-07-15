@@ -350,6 +350,24 @@
                     <i class="bi bi-truck text-lg"></i>
                     <span>Delivery</span>
                 </a>
+
+                <!-- Wearables -->
+                <a href="{{ url_for('routes.admin_repartidores') }}" class="nav-link" id="nav-repartidores">
+                    <i class="bi bi-smartwatch text-lg"></i>
+                    <span>Wearables</span>
+                </a>
+                <a href="{{ url_for('routes.admin_monitor_sensores') }}" class="nav-link" id="nav-monitor">
+                    <i class="bi bi-broadcast text-lg"></i>
+                    <span>Monitor Tiempo Real</span>
+                </a>
+                <a href="{{ url_for('routes.admin_notificar_vista') }}" class="nav-link" id="nav-notificar">
+                    <i class="bi bi-send text-lg"></i>
+                    <span>Notificar Dispositivos</span>
+                </a>
+                <a href="{{ url_for('routes.admin_eventos_historial') }}" class="nav-link" id="nav-eventos">
+                    <i class="bi bi-journal-text text-lg"></i>
+                    <span>Historial Eventos</span>
+                </a>
                 {% endif %}
 
 

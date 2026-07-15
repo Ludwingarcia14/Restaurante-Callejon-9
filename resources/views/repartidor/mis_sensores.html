@@ -1,0 +1,349 @@
+{% extends "layout/layout_repartidor.html" %}
+{% block title %}Sensores{% endblock %}
+{% block page_title %}Mis Sensores{% endblock %}
+{% block page_subtitle %}GPS · Batería · Acelerómetro en tiempo real{% endblock %}
+
+{% block content %}
+<div class="max-w-sm mx-auto space-y-4">
+
+<!-- ── Dispositivo wearable ──────────────────────────────── -->
+<div class="rounded-3xl p-5 text-white shadow-2xl"
+     style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);">
+
+    <!-- Header del dispositivo -->
+    <div class="flex items-center justify-between mb-5">
+        <div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-0.5">Wearable · Repartidor</p>
+            <p class="font-bold text-base leading-tight">{{ nombre }}</p>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+            <div id="dot-conexion" class="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+            <span id="txt-conexion" class="text-[9px] text-slate-400 tracking-wider">ONLINE</span>
+        </div>
+    </div>
+
+    <!-- GPS ──────────────────────────────────────────── -->
+    <div class="bg-slate-800/60 rounded-2xl p-4 mb-3 border border-slate-700/50">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-sky-500/20 flex items-center justify-center">
+                    <i class="bi bi-geo-alt-fill text-sky-400 text-sm"></i>
+                </div>
+                <span class="text-xs text-slate-400 font-medium uppercase tracking-wide">GPS</span>
+            </div>
+            <span id="gps-status" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-400">
+                Buscando señal...
+            </span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 font-mono text-sm">
+            <div>
+                <p class="text-[9px] text-slate-500 uppercase mb-1">Latitud</p>
+                <p id="val-lat" class="text-sky-300 font-bold text-base tabular-nums">--.------°</p>
+            </div>
+            <div>
+                <p class="text-[9px] text-slate-500 uppercase mb-1">Longitud</p>
+                <p id="val-lon" class="text-sky-300 font-bold text-base tabular-nums">--.------°</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batería + Pasos ──────────────────────────────── -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <!-- Batería -->
+        <div class="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/50">
+            <div class="flex items-center gap-1.5 mb-2">
+                <i id="bat-icon" class="bi bi-battery-full text-emerald-400"></i>
+                <span class="text-[9px] text-slate-400 uppercase tracking-wide">Batería</span>
+            </div>
+            <p id="val-battery" class="text-3xl font-black text-emerald-400 tabular-nums leading-none">--%</p>
+            <div class="h-1.5 bg-slate-700 rounded-full mt-2.5 overflow-hidden">
+                <div id="bat-bar" class="h-full bg-emerald-400 rounded-full transition-all duration-1000" style="width:0%"></div>
+            </div>
+        </div>
+        <!-- Pasos (acelerómetro) -->
+        <div class="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/50">
+            <div class="flex items-center gap-1.5 mb-2">
+                <i class="bi bi-person-walking text-amber-400"></i>
+                <span class="text-[9px] text-slate-400 uppercase tracking-wide">Pasos</span>
+            </div>
+            <p id="val-pasos" class="text-3xl font-black text-amber-400 tabular-nums leading-none">0</p>
+            <p class="text-[9px] text-slate-500 mt-2.5">Acelerómetro</p>
+        </div>
+    </div>
+
+    <!-- Última sincronización -->
+    <div class="flex items-center justify-between text-[10px] text-slate-500">
+        <span>Último envío: <span id="ultima-sync" class="text-slate-400">--:--:--</span></span>
+        <span id="sync-status" class="text-emerald-400 font-semibold"></span>
+    </div>
+</div>
+
+<!-- ── Botón compartir ───────────────────────────────────── -->
+<button id="btn-compartir" onclick="compartirAhora()"
+        class="w-full py-4 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-bold text-base rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2.5">
+    <i class="bi bi-send-fill text-lg"></i> Compartir ubicación
+</button>
+
+<!-- ── Auto-envío toggle ─────────────────────────────────── -->
+<div class="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+    <div>
+        <p class="text-sm font-semibold text-gray-800">Auto-compartir</p>
+        <p class="text-xs text-gray-400">Cada 30 segundos</p>
+    </div>
+    <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="toggle-auto" class="sr-only peer" checked>
+        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer
+                    peer-checked:after:translate-x-full peer-checked:after:border-white
+                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                    after:bg-white after:border-gray-300 after:border after:rounded-full
+                    after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+    </label>
+</div>
+
+<!-- ── Panel de notificaciones ──────────────────────────── -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2 text-sm">
+            <i class="bi bi-bell-fill text-sky-500"></i> Notificaciones del Admin
+        </h3>
+        <span id="notif-badge"
+              class="hidden text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">0</span>
+    </div>
+    <div id="lista-notificaciones" class="divide-y divide-gray-50 max-h-56 overflow-y-auto">
+        <div id="notif-empty" class="py-10 text-center text-gray-400 text-sm">
+            <i class="bi bi-bell-slash text-3xl block mb-2 opacity-20"></i>
+            Sin notificaciones
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+const REPARTIDOR_ID = "{{ repartidor_id }}";
+let currentLat = null, currentLon = null, batActual = null, pasos = 0;
+let notifCount = 0, autoInterval = null;
+
+// ── Coordenadas base simuladas (Valle de Toluca) ──────────
+const BASE_LAT = 19.2812 + (Math.random() * 0.04 - 0.02);
+const BASE_LON = -99.6563 + (Math.random() * 0.04 - 0.02);
+let simLat = BASE_LAT, simLon = BASE_LON;
+
+// ── GPS ───────────────────────────────────────────────────
+function actualizarGPS() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                currentLat = pos.coords.latitude;
+                currentLon = pos.coords.longitude;
+                mostrarGPS(currentLat, currentLon, '✓ GPS activo', 'emerald');
+            },
+            () => usarGPSSim(),
+            { timeout: 5000, maximumAge: 10000 }
+        );
+    } else { usarGPSSim(); }
+}
+function usarGPSSim() {
+    simLat += (Math.random() - 0.5) * 0.0003;
+    simLon += (Math.random() - 0.5) * 0.0003;
+    currentLat = simLat; currentLon = simLon;
+    mostrarGPS(simLat, simLon, '⚡ Simulado', 'amber');
+}
+function mostrarGPS(lat, lon, label, color) {
+    document.getElementById('val-lat').textContent = lat.toFixed(6) + '°';
+    document.getElementById('val-lon').textContent = lon.toFixed(6) + '°';
+    const st = document.getElementById('gps-status');
+    st.textContent = label;
+    st.className = `text-[10px] px-2 py-0.5 rounded-full bg-${color}-500/20 text-${color}-300`;
+}
+
+// ── Batería ───────────────────────────────────────────────
+let simBat = 72 + Math.floor(Math.random() * 22);
+function actualizarBateria() {
+    if ('getBattery' in navigator) {
+        navigator.getBattery()
+            .then(bat => {
+                batActual = Math.round(bat.level * 100);
+                mostrarBateria(batActual);
+                bat.addEventListener('levelchange', () => {
+                    batActual = Math.round(bat.level * 100);
+                    mostrarBateria(batActual);
+                });
+            })
+            .catch(() => usarBatSim());
+    } else { usarBatSim(); }
+}
+function usarBatSim() {
+    if (simBat > 5 && Math.random() < 0.08) simBat--;
+    batActual = simBat;
+    mostrarBateria(batActual);
+}
+function mostrarBateria(pct) {
+    document.getElementById('val-battery').textContent = pct + '%';
+    const bar = document.getElementById('bat-bar');
+    bar.style.width = pct + '%';
+    const icon = document.getElementById('bat-icon');
+    if (pct > 60) {
+        icon.className = 'bi bi-battery-full text-emerald-400';
+        bar.style.backgroundColor = '#34d399';
+    } else if (pct > 20) {
+        icon.className = 'bi bi-battery-half text-amber-400';
+        bar.style.backgroundColor = '#fbbf24';
+    } else {
+        icon.className = 'bi bi-battery text-red-400';
+        bar.style.backgroundColor = '#f87171';
+    }
+}
+
+// ── Acelerómetro / Pasos ──────────────────────────────────
+function setupAcelerometro() {
+    if (window.DeviceMotionEvent) {
+        let lastMag = 0, lastStep = 0;
+        window.addEventListener('devicemotion', e => {
+            const a = e.accelerationIncludingGravity;
+            if (!a) return;
+            const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+            const now = Date.now();
+            if (Math.abs(mag - lastMag) > 2.5 && now - lastStep > 300) {
+                pasos++;
+                lastStep = now;
+            }
+            lastMag = mag;
+        });
+    } else {
+        // Simulación: ~1 paso/1.2s cuando hay movimiento GPS
+        setInterval(() => {
+            if (Math.random() < 0.75) pasos += Math.floor(Math.random() * 2) + 1;
+            document.getElementById('val-pasos').textContent = pasos.toLocaleString();
+        }, 1200);
+    }
+}
+
+// ── Enviar datos al servidor ──────────────────────────────
+async function enviarSensores() {
+    if (currentLat === null) { usarGPSSim(); }
+    const st = document.getElementById('sync-status');
+    try {
+        const r = await fetch('/api/sensor/enviar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                lat:     currentLat,
+                lon:     currentLon,
+                battery: batActual || simBat,
+                pasos:   pasos,
+            })
+        });
+        const d = await r.json();
+        if (d.success) {
+            document.getElementById('ultima-sync').textContent =
+                new Date().toTimeString().slice(0, 8);
+            st.textContent = '✓ Sincronizado';
+            st.className = 'text-emerald-400 font-semibold';
+            setTimeout(() => { st.textContent = ''; }, 2000);
+        }
+    } catch {
+        st.textContent = '✗ Sin conexión';
+        st.className = 'text-red-400 font-semibold';
+    }
+}
+
+async function compartirAhora() {
+    const btn = document.getElementById('btn-compartir');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Enviando...';
+    actualizarGPS();
+    usarBatSim();
+    await new Promise(r => setTimeout(r, 600));
+    await enviarSensores();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send-fill text-lg"></i> Compartir ubicación';
+}
+
+// ── Auto-envío ────────────────────────────────────────────
+function iniciarAutoEnvio() {
+    if (autoInterval) clearInterval(autoInterval);
+    autoInterval = setInterval(() => {
+        actualizarGPS();
+        usarBatSim();
+        enviarSensores();
+    }, 30000);
+}
+
+document.getElementById('toggle-auto').addEventListener('change', e => {
+    if (e.target.checked) iniciarAutoEnvio();
+    else { clearInterval(autoInterval); autoInterval = null; }
+});
+
+// ── Socket.IO ─────────────────────────────────────────────
+const socket = io();
+socket.on('connect', () => {
+    socket.emit('join_repartidor', REPARTIDOR_ID);
+    document.getElementById('dot-conexion').style.boxShadow = '0 0 8px rgba(52,211,153,0.8)';
+    document.getElementById('dot-conexion').className = 'w-3.5 h-3.5 rounded-full bg-emerald-400';
+    document.getElementById('txt-conexion').textContent = 'ONLINE';
+});
+socket.on('disconnect', () => {
+    document.getElementById('dot-conexion').className = 'w-3.5 h-3.5 rounded-full bg-red-400';
+    document.getElementById('dot-conexion').style.boxShadow = 'none';
+    document.getElementById('txt-conexion').textContent = 'OFFLINE';
+});
+
+socket.on('notificacion_wearable', data => {
+    mostrarNotificacion(data);
+});
+
+function mostrarNotificacion(data) {
+    notifCount++;
+    document.getElementById('notif-empty').classList.add('hidden');
+    const badge = document.getElementById('notif-badge');
+    badge.classList.remove('hidden');
+    badge.textContent = notifCount;
+
+    const estilos = {
+        info:    'border-sky-400 bg-sky-50 text-sky-800',
+        alerta:  'border-amber-400 bg-amber-50 text-amber-800',
+        urgente: 'border-red-500 bg-red-50 text-red-800',
+    };
+    const iconos = { info: 'info-circle-fill', alerta: 'exclamation-triangle-fill', urgente: 'exclamation-octagon-fill' };
+    const cls   = estilos[data.tipo] || estilos.info;
+    const icono = iconos[data.tipo] || 'info-circle-fill';
+
+    const el = document.createElement('div');
+    el.className = `px-4 py-3 border-l-4 ${cls}`;
+    el.innerHTML = `
+        <div class="flex items-start gap-2.5">
+            <i class="bi bi-${icono} mt-0.5 shrink-0"></i>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold">${data.mensaje}</p>
+                <p class="text-xs opacity-60 mt-0.5">${data.de || 'Admin'} · ${data.timestamp}</p>
+            </div>
+        </div>`;
+    document.getElementById('lista-notificaciones').prepend(el);
+
+    if (!document.hidden && typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: data.tipo === 'urgente' ? '⚠️ Urgente' : '🔔 Notificación',
+            text:  data.mensaje,
+            icon:  data.tipo === 'urgente' ? 'warning' : 'info',
+            timer: 4000, showConfirmButton: false, position: 'top',
+            toast: true,
+        });
+    }
+}
+
+// ── Inicialización ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarGPS();
+    actualizarBateria();
+    setupAcelerometro();
+    iniciarAutoEnvio();
+    // Actualizar display de pasos cada segundo
+    setInterval(() => {
+        document.getElementById('val-pasos').textContent = pasos.toLocaleString();
+    }, 1000);
+    // Refrescar GPS y batería cada 10s
+    setInterval(() => { actualizarGPS(); usarBatSim(); }, 10000);
+});
+</script>
+{% endblock %}
