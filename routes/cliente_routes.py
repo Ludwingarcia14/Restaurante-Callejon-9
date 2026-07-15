@@ -5,6 +5,10 @@ from flask import render_template
 def cliente_login_view():
     return render_template("cliente/login_cliente.html")
 
+@routes_bp.route("/cliente/registro")
+def cliente_registro_view():
+    return render_template("cliente/registro.html")
+
 @routes_bp.route("/cliente/perfil")
 def cliente_perfil_view():
     return render_template("cliente/perfil.html")

@@ -1,0 +1,134 @@
+{% extends "layout/layout_cliente.html" %}
+
+{% block title %}Crear Cuenta - Callejón 19{% endblock %}
+
+{% block content %}
+<div class="mt-4 bg-white dark:bg-slate-800 rounded-2xl shadow-md p-6">
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Crea tu cuenta</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Regístrate para hacer pedidos desde tu teléfono</p>
+    </div>
+
+    <form id="registroForm" novalidate>
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" for="nombreInput">Nombre</label>
+            <div class="relative">
+                <i class="bi bi-person absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="nombreInput" name="nombre" required maxlength="100"
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 dark:text-white transition-colors"
+                    placeholder="Tu nombre">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" for="apellidosInput">Apellidos</label>
+            <div class="relative">
+                <i class="bi bi-person-badge absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="apellidosInput" name="apellidos" maxlength="100"
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 dark:text-white transition-colors"
+                    placeholder="Tus apellidos">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" for="emailInput">Correo electrónico</label>
+            <div class="relative">
+                <i class="bi bi-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="email" id="emailInput" name="email" required
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 dark:text-white transition-colors"
+                    placeholder="tu@email.com">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" for="telefonoInput">Teléfono (opcional)</label>
+            <div class="relative">
+                <i class="bi bi-telephone absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="tel" id="telefonoInput" name="telefono" maxlength="20"
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 dark:text-white transition-colors"
+                    placeholder="5512345678">
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" for="passwordInput">Contraseña</label>
+            <div class="relative">
+                <i class="bi bi-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="password" id="passwordInput" name="password" required minlength="6" maxlength="128"
+                    class="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-orange-400 dark:text-white transition-colors"
+                    placeholder="Mínimo 6 caracteres">
+            </div>
+        </div>
+
+        <button type="submit" id="registroButton" class="w-full bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition hover:-translate-y-0.5 flex justify-center items-center gap-2">
+            <span class="btn-text">Crear Cuenta</span>
+            <i class="bi bi-arrow-right-circle"></i>
+        </button>
+
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+            ¿Ya tienes cuenta?
+            <a href="{{ url_for('routes.cliente_login_view') }}" class="text-orange-500 font-semibold hover:underline">Inicia sesión</a>
+        </p>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cliente/api_cliente.js') }}"></script>
+
+<script>
+    // Redirigir si ya hay sesión
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            window.location.href = '/cliente/perfil';
+        }
+    });
+
+    document.getElementById('registroForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const nombre    = document.getElementById('nombreInput').value.trim();
+        const apellidos = document.getElementById('apellidosInput').value.trim();
+        const email     = document.getElementById('emailInput').value.trim();
+        const telefono  = document.getElementById('telefonoInput').value.trim();
+        const password  = document.getElementById('passwordInput').value;
+        const btn = document.getElementById('registroButton');
+        const btnText = btn.querySelector('.btn-text');
+        const btnIcon = btn.querySelector('i');
+
+        if (!nombre || !email || !password) {
+            showError('Por favor completa los campos obligatorios');
+            return;
+        }
+        if (password.length < 6) {
+            showError('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+
+        btn.disabled = true;
+        btnText.textContent = 'Creando cuenta...';
+        btnIcon.className = 'bi bi-arrow-repeat animate-spin';
+
+        const response = await APICliente.post('/api/v1/clientes/registro', {
+            nombre, apellidos, email, telefono, password
+        });
+
+        if (response.success) {
+            localStorage.setItem('access_token', response.data.access_token);
+            localStorage.setItem('refresh_token', response.data.refresh_token);
+
+            showSuccess('¡Cuenta creada! Bienvenido a Callejón 19');
+
+            setTimeout(() => {
+                window.location.href = '/cliente/menu';
+            }, 1000);
+        } else {
+            showError(response.error || 'No se pudo crear la cuenta');
+            btn.disabled = false;
+            btnText.textContent = 'Crear Cuenta';
+            btnIcon.className = 'bi bi-arrow-right-circle';
+        }
+    });
+</script>
+{% endblock %}

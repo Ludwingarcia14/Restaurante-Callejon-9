@@ -34,6 +34,11 @@
             <span class="btn-text">Iniciar Sesión</span>
             <i class="bi bi-arrow-right-circle"></i>
         </button>
+
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+            ¿Aún no tienes cuenta?
+            <a href="{{ url_for('routes.cliente_registro_view') }}" class="text-orange-500 font-semibold hover:underline">Regístrate</a>
+        </p>
     </form>
 </div>
 {% endblock %}

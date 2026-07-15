@@ -32,7 +32,7 @@ class Cliente:
 
     @classmethod
     def create(cls, nombre: str, apellidos: str, email: str,
-               password_hash: str, telefono: str = "") -> str:
+               password_hash: str, telefono: str = "", tenant_id: str = None) -> str:
         now = datetime.utcnow()
         doc = {
             "nombre": nombre.strip(),
@@ -44,6 +44,9 @@ class Cliente:
             "tipo": "cliente",
             "activo": True,
             "puntos": 0,
+            # Opcional: permite ubicar al cliente en un restaurante especifico
+            # en despliegues multi-tenant. None en despliegues de un solo restaurante.
+            "tenant_id": tenant_id.strip() if isinstance(tenant_id, str) and tenant_id.strip() else None,
             "refresh_token_hash": None,
             "created_at": now,
             "updated_at": now,
@@ -91,6 +94,7 @@ class Cliente:
             "telefono": doc.get("telefono", ""),
             "foto_url": doc.get("foto_url", ""),
             "rol": "cliente",
+            "tenant_id": doc.get("tenant_id"),
             "puntos": doc.get("puntos", 0),
             "created_at": created.isoformat() if created else None,
         }

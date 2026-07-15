@@ -70,6 +70,15 @@
             <i class="bi bi-journal-text"></i>
             <span>Menú</span>
         </a>
+        <a href="{{ url_for('routes.cliente_carrito_view') }}" class="bottom-nav-item hidden relative" id="nav-carrito">
+            <i class="bi bi-cart3"></i>
+            <span id="carrito-badge" class="hidden absolute -top-1 right-2 bg-orange-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
+            <span>Carrito</span>
+        </a>
+        <a href="{{ url_for('routes.cliente_pedido_activo_view') }}" class="bottom-nav-item hidden" id="nav-pedido">
+            <i class="bi bi-receipt"></i>
+            <span>Mi Pedido</span>
+        </a>
         <a href="{{ url_for('routes.cliente_perfil_view') }}" class="bottom-nav-item hidden" id="nav-perfil">
             <i class="bi bi-person"></i>
             <span>Perfil</span>
@@ -82,6 +91,7 @@
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/cliente/api_cliente.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cliente/carrito.js') }}"></script>
     <script>
         // Tema oscuro
         function toggleTheme() {
@@ -111,10 +121,18 @@
             });
 
             // Verificar si hay token para mostrar/ocultar botones
-            const token = getFromStorage ? getFromStorage('access_token') : null;
+            // (access_token se guarda "en crudo", no con saveToStorage/JSON.stringify)
+            const token = localStorage.getItem('access_token');
             if (token) {
                 document.getElementById('nav-login')?.classList.add('hidden');
                 document.getElementById('nav-perfil')?.classList.remove('hidden');
+                document.getElementById('nav-carrito')?.classList.remove('hidden');
+                document.getElementById('nav-pedido')?.classList.remove('hidden');
+            }
+
+            // Badge del carrito (carrito.js lo mantiene actualizado si está cargado)
+            if (typeof Carrito !== 'undefined') {
+                Carrito.actualizarBadge();
             }
         });
     </script>
