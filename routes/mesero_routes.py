@@ -195,6 +195,12 @@ def api_mesero_historial():
 def api_mesero_kmeans():
     return MeseroKMeansController.api_kmeans()
 
+@routes_bp.route("/api/mesero/kmeans/recomendaciones", methods=["POST"])
+@login_required
+@rol_required(['2'])
+def api_mesero_kmeans_recomendaciones():
+    return MeseroKMeansController.api_recomendaciones()
+
 @routes_bp.route("/api/mesero/kmeans/diagnostico", methods=["GET"])
 @login_required
 @rol_required(['2'])

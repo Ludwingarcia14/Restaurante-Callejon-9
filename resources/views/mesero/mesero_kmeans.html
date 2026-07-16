@@ -2,7 +2,7 @@
 
 {% block title %}Segmentación de Mesas — K-Means{% endblock %}
 {% block page_title %}<span data-i18n="km_titulo">Segmentación de Mesas</span>{% endblock %}
-{% block page_subtitle %}<span data-i18n="km_sub">CRISP-DM · Fase 4 — K-Means (k=3) · últimos 90 días</span>{% endblock %}
+{% block page_subtitle %}K-Means (k=3) · PCA · últimos 90 días{% endblock %}
 
 {% block navigation %}
 <script>
@@ -57,10 +57,11 @@ document.addEventListener('DOMContentLoaded', function() {
      style="background:rgba(59,130,246,0.08); border:1px solid #93c5fd; color:#1e40af;">
     <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-blue-500"></i>
     <div>
-        <strong>CRISP-DM · Fase 4 — Modelado</strong><br>
-        El algoritmo <strong>K-Means (k=3)</strong> agrupa tus mesas por
-        <em>frecuencia de visitas</em>, <em>ticket promedio</em> y <em>variabilidad del ticket</em>.
-        Identifica automáticamente mesas <strong>VIP</strong>, <strong>regulares</strong> y <strong>ocasionales</strong>.
+        <strong>Aprendizaje No Supervisado — K-Means + PCA</strong><br>
+        <strong>K-Means (k=3)</strong> agrupa mesas sin etiquetas previas usando 4 variables:
+        <em>frecuencia</em>, <em>ticket promedio</em>, <em>variabilidad</em> y <em>propina</em>.
+        <strong>PCA</strong> reduce el espacio a 2 dimensiones para visualización.
+        La calidad del agrupamiento se evalúa con <strong>Silhouette</strong> e <strong>WCSS</strong>.
     </div>
 </div>
 
@@ -75,9 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-diagram-3 text-blue-500"></i> <span data-i18n="km_mapa">Mapa de Clusters</span>
+            <i class="bi bi-diagram-3 text-blue-500"></i> Proyección PCA — Clusters en 2D
         </h3>
-        <p class="text-xs text-gray-400 mb-4" data-i18n="km_eje_xy">X = visitas · Y = ticket promedio ($)</p>
+        <p id="pca-axis-label" class="text-xs text-gray-400 mb-4">PC1 (eje X) · PC2 (eje Y) · calculando varianza…</p>
         <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
             <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
         </div>
@@ -95,45 +96,98 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Panel PCA -->
+<div id="pca-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <i class="bi bi-arrows-angle-contract text-indigo-500"></i>
+        Análisis de Componentes Principales (PCA)
+        <span class="text-xs font-normal text-gray-400 ml-1">Reducción de Dimensionalidad</span>
+    </h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Varianza explicada -->
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Varianza Explicada por Componente</p>
+            <div id="pca-variance-bars" class="space-y-3 mb-3"></div>
+            <div id="pca-acumulada" class="text-xs text-gray-500 pt-2 border-t border-gray-100"></div>
+        </div>
+        <!-- Loadings -->
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contribución de Variables (Loadings)</p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs border-collapse" id="pca-loadings-table">
+                    <thead>
+                        <tr class="border-b border-gray-100 text-gray-400 uppercase tracking-wide">
+                            <th class="py-2 pr-3 text-left font-semibold">Variable</th>
+                            <th class="py-2 px-3 text-center font-semibold" id="pca-th-pc1">PC1</th>
+                            <th class="py-2 px-3 text-center font-semibold" id="pca-th-pc2">PC2</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pca-loadings-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Evaluación (Fase 5) -->
 <div id="evaluacion-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
     <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
         <i class="bi bi-speedometer2 text-purple-500"></i>
-        <span data-i18n="km_evaluacion">Evaluación del Modelo</span>
-        <span class="text-xs font-normal text-gray-400 ml-1">CRISP-DM · Fase 5</span>
+        Evaluación del Modelo
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="eval-card rounded-lg p-4 text-center eval-purple">
-            <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">Silhouette Score</p>
+            <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">Silhouette Global</p>
             <p id="eval-sil" class="text-2xl font-bold text-purple-600">—</p>
-            <p class="text-xs text-gray-400 mt-1" data-i18n="km_sil_desc">Cuán bien separados están los clusters (0→1)</p>
+            <p id="eval-sil-interp" class="text-xs text-gray-400 mt-1">Calidad del agrupamiento (0→1)</p>
         </div>
         <div class="eval-card rounded-lg p-4 text-center eval-green">
-            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1" data-i18n="km_inertia_lbl">Inercia (k=3)</p>
+            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">WCSS (k=3)</p>
             <p id="eval-inertia" class="text-2xl font-bold text-green-600">—</p>
-            <p class="text-xs text-gray-400 mt-1" data-i18n="km_inertia_desc">Suma de distancias al centroide</p>
+            <p class="text-xs text-gray-400 mt-1">Within-Cluster Sum of Squares</p>
         </div>
         <div class="eval-card rounded-lg p-4 text-center eval-orange">
-            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1" data-i18n="km_mesas_lbl2">Mesas analizadas</p>
+            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Mesas analizadas</p>
             <p id="eval-mesas" class="text-2xl font-bold text-orange-500">—</p>
-            <p class="text-xs text-gray-400 mt-1" data-i18n="km_mesas_90">Con historial en los últimos 90 días</p>
+            <p class="text-xs text-gray-400 mt-1">Con historial en los últimos 90 días</p>
         </div>
     </div>
+
+    <!-- Silhouette por cluster -->
+    <div id="sil-cluster-wrap" class="mb-6" style="display:none;">
+        <p class="text-sm font-medium text-gray-600 mb-3">
+            <i class="bi bi-bar-chart-horizontal text-purple-400 mr-1"></i>
+            Índice de Silueta por Cluster
+        </p>
+        <div id="sil-cluster-bars" class="space-y-2"></div>
+        <p class="text-xs text-gray-400 mt-2">
+            Valores &gt;0.5 indican clusters bien definidos · &gt;0.7 excelente separación
+        </p>
+    </div>
+
+    <!-- WCSS / Codo -->
     <p class="text-sm font-medium text-gray-600 mb-2">
         <i class="bi bi-graph-down-arrow text-gray-400 mr-1"></i>
-        <span data-i18n="km_codo">Método del Codo — justificación de k=3</span>
+        Método del Codo — WCSS por número de clusters
     </p>
     <canvas id="chartElbow" style="max-height:180px;"></canvas>
 </div>
 
-<!-- Recomendaciones (Fase 6) -->
+<!-- Recomendaciones IA -->
 <div id="recomendaciones-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6">
-    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-        <i class="bi bi-lightbulb text-yellow-500"></i>
-        <span data-i18n="km_recomend">Recomendaciones por Cluster</span>
-        <span class="text-xs font-normal text-gray-400 ml-1">CRISP-DM · Fase 6</span>
+    <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
+        <i class="bi bi-stars text-yellow-500"></i>
+        Recomendaciones generadas por IA
+        <span id="ia-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full"
+              style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;">Claude</span>
+        <span id="rules-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full"
+              style="background:#fafafa;color:#64748b;border:1px solid #e2e8f0;">Análisis automático</span>
     </h3>
-    <div id="recomendaciones-lista" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    <p class="text-xs text-gray-400 mb-4">Basadas en los datos reales de cada cluster</p>
+    <div id="rec-loading" class="flex items-center gap-2 text-sm text-gray-400 py-4">
+        <i class="bi bi-arrow-repeat animate-spin"></i> Generando recomendaciones…
+    </div>
+    <div id="recomendaciones-lista" class="grid grid-cols-1 md:grid-cols-3 gap-4" style="display:none;"></div>
 </div>
 
 <!-- Aviso sin datos -->
@@ -192,10 +246,11 @@ async function cargar() {
         }
 
         renderResumen(d.resumen);
-        renderScatter(d.puntos);
+        renderScatter(d.puntos, d.evaluacion && d.evaluacion.pca);
         renderTabla(d.puntos);
+        renderPCA(d.evaluacion && d.evaluacion.pca);
         renderEvaluacion(d.evaluacion);
-        renderRecomendaciones(d.resumen);
+        renderRecomendaciones(d.resumen, d.evaluacion);
 
     } catch(e) {
         document.getElementById('resumen-cards').innerHTML =
@@ -220,18 +275,25 @@ function renderResumen(resumen) {
                 <p class="text-sm font-semibold" style="color:${c.color};">${c.label}</p>
                 <p class="text-xs mt-0.5" style="color:${textMuted};">${c.num_mesas} ${c.num_mesas!==1?t('km_mesas_pl'):t('km_mesa_sing')}</p>
                 <p class="text-xs mt-0.5" style="color:${textMuted};">${t('km_ticket_prom')} ${fmt(c.ticket_prom)} · ${c.visitas_prom} ${t('km_vis_mesa')}</p>
+                ${c.silhouette != null ? `<p class="text-xs mt-0.5" style="color:${textMuted};">Silueta: <strong style="color:${c.color};">${c.silhouette.toFixed(3)}</strong></p>` : ''}
             </div>
         </div>`;
     }).join('');
 }
 
-function renderScatter(puntos) {
+function renderScatter(puntos, pca) {
     document.getElementById('chart-loading').style.display = 'none';
     document.getElementById('chartKmeans').style.display = '';
+
+    const v = pca ? pca.varianza_explicada : [];
+    const xLabel = v[0] != null ? `PC1 (${v[0]}% varianza)` : 'PC1';
+    const yLabel = v[1] != null ? `PC2 (${v[1]}% varianza)` : 'PC2';
+    document.getElementById('pca-axis-label').textContent = `${xLabel} · ${yLabel}`;
+
     const labels = [t('km_label_vip'), t('km_label_reg'), t('km_label_ocas')];
     const datasets = [0,1,2].map(cl => ({
         label: labels[cl],
-        data: puntos.filter(p=>p.cluster===cl).map(p=>({x:p.x,y:p.y,mesa:p.mesa})),
+        data: puntos.filter(p=>p.cluster===cl).map(p=>({x: p.pca_x ?? p.x, y: p.pca_y ?? p.y, mesa:p.mesa, vx:p.x, vy:p.y})),
         backgroundColor: COLORS[cl]+'cc',
         borderColor: COLORS[cl],
         pointRadius: 8, pointHoverRadius: 11,
@@ -244,11 +306,14 @@ function renderScatter(puntos) {
             responsive:true,
             plugins:{
                 legend:{position:'bottom',labels:{boxWidth:12}},
-                tooltip:{callbacks:{label:ctx=>{const p=ctx.raw;return ` ${p.mesa} — ${p.x} visitas, ${fmt(p.y)} ticket`;}}}
+                tooltip:{callbacks:{label:ctx=>{
+                    const p=ctx.raw;
+                    return ` ${p.mesa} — ${p.vx} visitas, ${fmt(p.vy)} ticket`;
+                }}}
             },
             scales:{
-                x:{title:{display:true,text:t('km_vis_axis'),font:{size:11}},beginAtZero:true},
-                y:{title:{display:true,text:t('km_ticket_axis'),font:{size:11}},beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)}}
+                x:{title:{display:true,text:xLabel,font:{size:11}}},
+                y:{title:{display:true,text:yLabel,font:{size:11}}}
             }
         }
     });
@@ -293,23 +358,56 @@ function renderTabla(puntos) {
 function renderEvaluacion(ev) {
     if (!ev) return;
     document.getElementById('evaluacion-panel').style.display = '';
-    document.getElementById('eval-sil').textContent = ev.silhouette_score !== null ? ev.silhouette_score.toFixed(3) : 'N/A';
+
+    // Silhouette global con interpretación
+    const sil = ev.silhouette_score;
+    document.getElementById('eval-sil').textContent = sil !== null ? sil.toFixed(3) : 'N/A';
+    if (sil !== null) {
+        const interp = sil >= 0.7 ? '✦ Excelente separación' : sil >= 0.5 ? '✓ Clusters bien definidos' : '~ Clusters aceptables';
+        document.getElementById('eval-sil-interp').textContent = interp;
+    }
+
     document.getElementById('eval-inertia').textContent = ev.inertia.toFixed(2);
     document.getElementById('eval-mesas').textContent = ev.n_mesas;
 
-    if (ev.elbow && ev.elbow.length > 0) {
+    // Silhouette por cluster
+    const silArr = ev.silhouette_por_cluster || [];
+    if (silArr.some(v => v !== null)) {
+        document.getElementById('sil-cluster-wrap').style.display = '';
+        const LABELS = [t('km_label_vip'), t('km_label_reg'), t('km_label_ocas')];
+        document.getElementById('sil-cluster-bars').innerHTML = silArr.map((s, i) => {
+            if (s === null) return '';
+            const pct = Math.max(0, Math.min(100, s * 100));
+            const color = COLORS[i] || '#94a3b8';
+            const quality = s >= 0.7 ? 'Excelente' : s >= 0.5 ? 'Bueno' : 'Moderado';
+            return `<div>
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium" style="color:${color};">${LABELS[i] || 'Cluster '+i}</span>
+                    <span class="text-xs text-gray-500">${s.toFixed(3)} — <em>${quality}</em></span>
+                </div>
+                <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all" style="width:${pct}%;background:${color};"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // WCSS / Codo
+    const elbow = ev.wcss_elbow || ev.elbow || [];
+    if (elbow.length > 0) {
         if (chartElbow) chartElbow.destroy();
+        const wcssVals = elbow.map(e => e.wcss ?? e.inertia);
         chartElbow = new Chart(document.getElementById('chartElbow'),{
             type:'line',
             data:{
-                labels: ev.elbow.map(e=>`k=${e.k}`),
+                labels: elbow.map(e=>`k=${e.k}`),
                 datasets:[{
-                    label:'Inercia',
-                    data: ev.elbow.map(e=>e.inertia),
+                    label:'WCSS',
+                    data: wcssVals,
                     borderColor:'#8b5cf6', backgroundColor:'#8b5cf620',
                     fill:true, tension:0.3,
-                    pointBackgroundColor: ev.elbow.map(e=>e.k===3?'#8b5cf6':'#c4b5fd'),
-                    pointRadius: ev.elbow.map(e=>e.k===3?8:4),
+                    pointBackgroundColor: elbow.map(e=>e.k===3?'#8b5cf6':'#c4b5fd'),
+                    pointRadius: elbow.map(e=>e.k===3?8:4),
                 }]
             },
             options:{
@@ -317,26 +415,105 @@ function renderEvaluacion(ev) {
                 plugins:{legend:{display:false}},
                 scales:{
                     x:{grid:{display:false}},
-                    y:{title:{display:true,text:'Inercia',font:{size:10}}}
+                    y:{title:{display:true,text:'WCSS (Within-Cluster Sum of Squares)',font:{size:10}}}
                 }
             }
         });
     }
 }
 
-function renderRecomendaciones(resumen) {
+function renderPCA(pca) {
+    if (!pca) return;
+    document.getElementById('pca-panel').style.display = '';
+
+    // Barras de varianza
+    const barColors = ['#6366f1','#8b5cf6'];
+    document.getElementById('pca-variance-bars').innerHTML = pca.varianza_explicada.map((v, i) => `
+        <div>
+            <div class="flex justify-between mb-1">
+                <span class="text-xs font-semibold" style="color:${barColors[i]}">PC${i+1}</span>
+                <span class="text-xs text-gray-600 font-mono">${v}%</span>
+            </div>
+            <div class="h-3 rounded-full bg-gray-100 overflow-hidden">
+                <div class="h-3 rounded-full" style="width:${v}%;background:${barColors[i]};transition:width .6s ease;"></div>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('pca-acumulada').innerHTML =
+        `<span class="font-semibold text-indigo-600">${pca.varianza_acumulada}%</span> de la varianza total explicada por PC1 + PC2`;
+
+    // Cabeceras de tabla
+    if (pca.varianza_explicada[0] != null)
+        document.getElementById('pca-th-pc1').textContent = `PC1 (${pca.varianza_explicada[0]}%)`;
+    if (pca.varianza_explicada[1] != null)
+        document.getElementById('pca-th-pc2').textContent = `PC2 (${pca.varianza_explicada[1]}%)`;
+
+    // Loadings agrupados por variable
+    const features = pca.feature_labels || [];
+    const byFeature = {};
+    (pca.loadings || []).forEach(l => {
+        if (!byFeature[l.feature]) byFeature[l.feature] = {};
+        byFeature[l.feature][l.pc] = l.peso;
+    });
+    document.getElementById('pca-loadings-body').innerHTML = features.map(f => {
+        const row = byFeature[f] || {};
+        const cell = (pc) => {
+            const v = row[pc];
+            if (v == null) return '<td class="py-2 px-3 text-center text-gray-300">—</td>';
+            const abs = Math.abs(v);
+            const color = v > 0 ? '#059669' : '#dc2626';
+            const bold = abs > 0.4 ? 'font-semibold' : '';
+            return `<td class="py-2 px-3 text-center ${bold} font-mono" style="color:${color}">${v > 0 ? '+' : ''}${v.toFixed(3)}</td>`;
+        };
+        return `<tr class="border-b border-gray-50">
+            <td class="py-2 pr-3 text-gray-700">${f}</td>
+            ${cell('PC1')}${cell('PC2')}
+        </tr>`;
+    }).join('');
+}
+
+async function renderRecomendaciones(resumen, evaluacion) {
     document.getElementById('recomendaciones-panel').style.display = '';
+    document.getElementById('rec-loading').style.display = 'flex';
+    document.getElementById('recomendaciones-lista').style.display = 'none';
+
+    let textos = null;
+    let usoClaude = false;
+    try {
+        const r = await fetch('/api/mesero/kmeans/recomendaciones', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({resumen, evaluacion})
+        });
+        const d = await r.json();
+        if (d.success && Array.isArray(d.recomendaciones)) {
+            textos = d.recomendaciones;
+            usoClaude = d.via_claude || false;
+        }
+    } catch(_) {}
+
+    document.getElementById('rec-loading').style.display = 'none';
+    document.getElementById('recomendaciones-lista').style.display = '';
+
+    if (usoClaude) {
+        document.getElementById('ia-badge').classList.remove('hidden');
+    } else {
+        document.getElementById('rules-badge').classList.remove('hidden');
+    }
+
     const dark = isDark();
     const textMut = dark ? '#a08878' : '#4b5563';
-    document.getElementById('recomendaciones-lista').innerHTML = resumen.map((c, i)=>{
-        const bg = dark ? BG_DARK[i] ?? c.color + '14' : c.bg;
+    document.getElementById('recomendaciones-lista').innerHTML = resumen.map((c, i) => {
+        const bg  = dark ? BG_DARK[i] ?? c.color + '14' : c.bg;
+        const rec = (textos && textos[i]) ? textos[i] : (c.recomendacion || '');
         return `
         <div class="rounded-xl p-4" style="background:${bg}; border:1px solid ${c.color}30;">
             <div class="flex items-center gap-2 mb-2">
                 <i class="bi ${c.icon}" style="color:${c.color};"></i>
                 <span class="text-sm font-semibold" style="color:${c.color};">${c.label}</span>
             </div>
-            <p class="text-xs" style="color:${textMut};">${c.recomendacion}</p>
+            <p class="text-sm leading-relaxed" style="color:${textMut};">${rec}</p>
         </div>`;
     }).join('');
 }
