@@ -24,6 +24,7 @@ TENANT_COLLECTIONS = [
     "inventario", "platillos", "productos", "menu", "clientes", "propinas",
     "notificaciones", "actividad_reciente", "insights", "estadisticas_diarias",
     "tickets", "payment_preferences", "pedidos_movil", "pagos_movil",
+    "delivery_orders",
 ]
 
 
@@ -37,14 +38,21 @@ def main(apply):
     print(f"Modo: {'APLICAR' if apply else 'REPORTE (dry-run)'}")
     print(f"Tenant por defecto: {default_id} {'' if existing else '[NUEVO]'}\n")
 
+    # Documentos "sin tenant": ausente, null o cadena vacia. Se incluyen los dos
+    # ultimos porque documentos creados en runtime antes de la correccion del
+    # tenant quedaron con tenant_id="" (existe pero vacio) y el filtro original
+    # por $exists no los alcanzaba.
+    SIN_TENANT = {"$or": [
+        {"tenant_id": {"$exists": False}},
+        {"tenant_id": None},
+        {"tenant_id": ""},
+    ]}
+
     total = 0
     for col in TENANT_COLLECTIONS:
-        faltan = db[col].count_documents({"tenant_id": {"$exists": False}})
+        faltan = db[col].count_documents(SIN_TENANT)
         if apply and faltan:
-            db[col].update_many(
-                {"tenant_id": {"$exists": False}},
-                {"$set": {"tenant_id": default_id}},
-            )
+            db[col].update_many(SIN_TENANT, {"$set": {"tenant_id": default_id}})
         total += faltan
         etiqueta = "asignados" if apply else "pendientes"
         marca = "" if faltan == 0 else "  <--"

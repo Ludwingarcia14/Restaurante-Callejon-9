@@ -30,6 +30,30 @@ class CocinaService:
         PedidoMovil.update_estado(pedido_id, nuevo_estado)
         doc["estado"] = nuevo_estado
         _emitir_actualizacion_cliente_movil(doc.get("cliente_id", ""), doc)
+
+        # ── NUEVO FLUJO: la orden de entrega nace cuando Cocina marca 'listo' ──
+        # Antes el DeliveryOrder se creaba al momento del pedido (ver
+        # controllers/api/v1/pedido_movil_controller.py::crear_pedido, hoy
+        # desactivado). Ahora se crea aquí, ya 'listo para recoger', y se
+        # notifica a todos los repartidores conectados para que uno lo acepte.
+        # La condición delivery_order_id=None respeta pedidos antiguos que ya
+        # traían una orden creada por el flujo anterior.
+        if (
+            nuevo_estado == "listo"
+            and doc.get("tipo_entrega") == "delivery"
+            and not doc.get("delivery_order_id")
+        ):
+            delivery_id = _crear_delivery_al_marcar_listo(pedido_id, doc)
+            if delivery_id:
+                doc["delivery_order_id"] = delivery_id
+
+        # ── Propagar el avance de cocina a la orden de entrega (si existe) ──
+        # Este era el eslabon faltante: antes, el DeliveryOrder nunca se enteraba
+        # de que Cocina habia terminado, y el Administrador no tenia forma de saber
+        # que pedidos ya estaban listos para asignar repartidor.
+        if doc.get("delivery_order_id"):
+            _sincronizar_delivery_con_cocina(pedido_id, nuevo_estado, doc)
+
         return True
 
     @staticmethod
@@ -254,6 +278,122 @@ class CocinaService:
 
 
 # ── Utilidades de tiempo y socket (privadas al módulo) ──────────────────────
+
+def _crear_delivery_al_marcar_listo(pedido_id: str, pedido_doc: dict):
+    """
+    Crea la orden de entrega en el momento en que Cocina marca 'listo' un pedido
+    móvil a domicilio, la enlaza al PedidoMovil y avisa a la sala
+    'repartidores_global' (a la que todo repartidor se une al conectar, ver
+    app.py::on join_repartidor) para que cualquiera pueda aceptarla.
+
+    Devuelve el ObjectId (str) del DeliveryOrder creado, o None si falló.
+    """
+    from pymongo.errors import DuplicateKeyError
+
+    try:
+        from models.delivery_model import DeliveryOrder
+        from models.pedido_movil_model import PedidoMovil
+        from models.cliente_model import Cliente
+
+        cliente_doc = Cliente.find_by_id(pedido_doc.get("cliente_id", ""))
+        ubicacion = pedido_doc.get("ubicacion") or {}
+
+        delivery_id = DeliveryOrder.crear({
+            "tipo": "pedido_movil",
+            "pedido_movil_id": pedido_id,
+            "cliente_id": pedido_doc.get("cliente_id"),
+            "cliente_nombre": f"{cliente_doc.get('nombre','')} {cliente_doc.get('apellidos','')}".strip() if cliente_doc else "",
+            "cliente_telefono": cliente_doc.get("telefono", "") if cliente_doc else "",
+            "direccion": pedido_doc.get("direccion", ""),
+            "referencias": pedido_doc.get("referencias", ""),
+            "cliente_lat": ubicacion.get("lat"),
+            "cliente_lng": ubicacion.get("lng"),
+            "cliente_ubicacion_accuracy": ubicacion.get("accuracy"),
+            "items": pedido_doc.get("items", []),
+            "total": pedido_doc.get("total", 0),
+            "notas": pedido_doc.get("notas", ""),
+            "tenant_id": pedido_doc.get("tenant_id", ""),
+            # Nace listo: cocina acaba de terminarlo.
+            "estado_cocina": "listo",
+        })
+        PedidoMovil.set_delivery_order_id(pedido_id, delivery_id)
+    except DuplicateKeyError:
+        # Carrera: otra petición 'listo' simultánea ya insertó la orden (índice
+        # único uniq_pedido_movil_id, ver DeliveryOrder.ensure_indexes). Se
+        # recupera la existente y se repara el enlace por si el ganador no
+        # alcanzó a escribirlo; NO se re-emite la notificación a repartidores
+        # (la emitió, o la está emitiendo, la petición ganadora).
+        try:
+            existente = DeliveryOrder.get_by_pedido_movil(pedido_id)
+            if existente:
+                delivery_id = str(existente["_id"])
+                PedidoMovil.set_delivery_order_id(pedido_id, delivery_id)
+                return delivery_id
+        except Exception as e:
+            print(f"⚠️ No se pudo recuperar la orden de entrega existente: {e}")
+        return None
+    except Exception as e:
+        print(f"⚠️ No se pudo crear la orden de entrega al marcar listo: {e}")
+        return None
+
+    try:
+        from extensions import socketio
+        delivery = DeliveryOrder.get_by_id(delivery_id)
+        socketio.emit(
+            "nuevo_pedido_disponible",
+            {
+                "delivery_id": str(delivery_id),
+                "folio": delivery.get("folio", "") if delivery else "",
+                "pedido_folio": pedido_doc.get("folio", ""),
+                "cliente_nombre": delivery.get("cliente_nombre", "") if delivery else "",
+                "direccion": pedido_doc.get("direccion", ""),
+                "referencias": pedido_doc.get("referencias", ""),
+                "total": pedido_doc.get("total", 0),
+                "tiempo_estimado": delivery.get("tiempo_estimado", 30) if delivery else 30,
+            },
+            room="repartidores_global",
+            namespace="/",
+        )
+    except Exception as e:
+        print(f"⚠️ Error Socket.IO hacia repartidores_global: {e}")
+
+    return delivery_id
+
+
+def _sincronizar_delivery_con_cocina(pedido_id: str, estado_cocina: str, pedido_doc: dict):
+    """
+    Refleja el avance de Cocina en la orden de entrega ya existente y avisa al
+    panel del Administrador para que la lista se refresque sin recargar.
+
+    NO crea ningun DeliveryOrder nuevo (la relacion PedidoMovil <-> DeliveryOrder
+    es 1:1 y el documento se creo al momento del pedido, ver
+    controllers/api/v1/pedido_movil_controller.py::crear_pedido).
+    NO modifica DeliveryOrder.estado, que pertenece al flujo Admin/Repartidor.
+    """
+    try:
+        from models.delivery_model import DeliveryOrder
+        DeliveryOrder.set_estado_cocina(pedido_id, estado_cocina)
+    except Exception as e:
+        print(f"⚠️ No se pudo sincronizar el estado de cocina con delivery: {e}")
+        return
+
+    try:
+        from extensions import socketio
+        socketio.emit(
+            "delivery_cocina_actualizado",
+            {
+                "pedido_movil_id": str(pedido_id),
+                "delivery_order_id": str(pedido_doc.get("delivery_order_id")),
+                "estado_cocina": estado_cocina,
+                "folio": pedido_doc.get("folio", ""),
+                "listo_para_asignar": estado_cocina == "listo",
+            },
+            room="admins",
+            namespace="/",
+        )
+    except Exception as e:
+        print(f"⚠️ Error Socket.IO hacia admins: {e}")
+
 
 def _emitir_actualizacion_cliente_movil(cliente_id: str, pedido_doc: dict):
     """

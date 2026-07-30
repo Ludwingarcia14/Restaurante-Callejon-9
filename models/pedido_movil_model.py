@@ -18,7 +18,8 @@ class PedidoMovil:
 
     @classmethod
     def crear(cls, cliente_id: str, mesa_numero, items: list, notas: str = "",
-              tipo_entrega: str = "mesa", direccion: str = "", referencias: str = "") -> str:
+              tipo_entrega: str = "mesa", direccion: str = "", referencias: str = "",
+              tenant_id: str = "") -> str:
         """
         items deben venir ya validados y con precios del servidor:
         [{platillo_id, nombre, precio, cantidad, notas}]
@@ -31,6 +32,9 @@ class PedidoMovil:
         now = datetime.utcnow()
         doc = {
             "cliente_id": cliente_id,
+            # pedidos_movil forma parte de TENANT_COLLECTIONS en
+            # migrations/001_multitenant_backfill.py; el documento debe nacer con tenant.
+            "tenant_id": tenant_id or "",
             "tipo_entrega": tipo_entrega,
             "mesa_numero": mesa_numero,
             "direccion": direccion.strip() if direccion else "",
@@ -159,7 +163,7 @@ class PedidoMovil:
     # =========================================================
 
     @classmethod
-    def ensure_indexes(cls):
+    def ensure_indexes(cls): 
         cls.collection.create_index("cliente_id")
         cls.collection.create_index("estado")
         cls.collection.create_index([("cliente_id", 1), ("estado", 1)])

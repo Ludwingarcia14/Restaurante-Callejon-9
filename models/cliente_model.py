@@ -70,6 +70,18 @@ class Cliente:
         )
 
     @classmethod
+    def set_tenant_id(cls, cliente_id: str, tenant_id: str):
+        """
+        Asigna el restaurante (tenant) a un cliente que aún no lo tenía.
+        Usado para clientes registrados antes de que el registro resolviera
+        automáticamente el restaurante por defecto.
+        """
+        return cls.collection.update_one(
+            {"_id": ObjectId(cliente_id)},
+            {"$set": {"tenant_id": tenant_id, "updated_at": datetime.utcnow()}}
+        )
+
+    @classmethod
     def update_refresh_token(cls, cliente_id: str, token_hash):
         """Almacena el SHA-256 del refresh token (o None en logout)."""
         return cls.collection.update_one(

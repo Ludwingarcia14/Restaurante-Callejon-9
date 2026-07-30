@@ -69,6 +69,19 @@ def api_delivery_estado(delivery_id):
 def api_delivery_pendientes():
     return DeliveryAPIController.listar_pendientes()
 
+# ── Nuevo flujo: repartidor acepta pedidos por sí mismo ───────
+@routes_bp.route("/api/delivery/disponibles")
+@login_required
+@rol_required(['5'])
+def api_delivery_disponibles():
+    return DeliveryAPIController.listar_disponibles_api()
+
+@routes_bp.route("/api/delivery/<delivery_id>/aceptar", methods=["POST"])
+@login_required
+@rol_required(['5'])
+def api_delivery_aceptar(delivery_id):
+    return DeliveryAPIController.aceptar(delivery_id)
+
 @routes_bp.route("/api/delivery/mis-entregas")
 @login_required
 @rol_required(['5'])

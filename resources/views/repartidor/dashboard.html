@@ -149,6 +149,41 @@
 
     /* Ruta line */
     .route-line { stroke-dasharray: 8,6; }
+
+    /* ── Pedidos disponibles (nuevo flujo: el repartidor acepta) ── */
+    #disponibles-panel { padding: 0 16px; }
+    #disponibles-panel.oculto { display: none; }
+    .disp-titulo {
+        font-size: 11px; font-weight: 800; letter-spacing: .05em;
+        text-transform: uppercase; color: white;
+        text-shadow: 0 1px 4px rgba(0,0,0,.4);
+        margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+    }
+    #disponibles-scroll {
+        display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;
+        scroll-snap-type: x mandatory; scrollbar-width: none;
+    }
+    #disponibles-scroll::-webkit-scrollbar { display: none; }
+    .disp-card {
+        flex: 0 0 260px; scroll-snap-align: start;
+        background: white; border-radius: 16px; padding: 12px 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.18);
+        border: 2px solid #fbbf24;
+        animation: dispIn .35s ease;
+    }
+    @keyframes dispIn { from { transform: translateY(14px); opacity: 0; } }
+    .disp-folio {
+        font-family: monospace; font-size: 11px; font-weight: 700;
+        color: #b45309; background: #fef3c7; padding: 2px 7px; border-radius: 6px;
+    }
+    .btn-aceptar {
+        width: 100%; margin-top: 8px; padding: 10px; border: none;
+        border-radius: 10px; background: #16a34a; color: white;
+        font-size: 13px; font-weight: 800; cursor: pointer; transition: background .18s;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-aceptar:hover { background: #15803d; }
+    .btn-aceptar:disabled { background: #9ca3af; cursor: wait; }
 </style>
 {% endblock %}
 
@@ -186,6 +221,13 @@
 
     <!-- Panel inferior -->
     <div id="bottom-panel">
+
+        <!-- Pedidos disponibles para aceptar (nuevo flujo) -->
+        <div id="disponibles-panel" class="oculto">
+            <div class="disp-titulo"><i class="bi bi-bell-fill"></i> Pedidos disponibles</div>
+            <div id="disponibles-scroll"></div>
+        </div>
+
         {% if activas %}
         <div id="cards-scroll">
             {% for e in activas %}
@@ -246,7 +288,7 @@
         <div class="no-entregas-overlay">
             <div style="font-size:40px;margin-bottom:8px;">🛵</div>
             <p style="font-weight:700;color:#111827;font-size:15px;">Sin entregas activas</p>
-            <p style="font-size:12px;color:#9ca3af;margin-top:4px;">El admin te asignará pedidos pronto.</p>
+            <p style="font-size:12px;color:#9ca3af;margin-top:4px;">Cuando cocina marque un pedido como listo, aparecerá aquí para que lo aceptes.</p>
         </div>
         {% endif %}
     </div>
@@ -490,8 +532,95 @@ socket.on('notificacion_wearable', d => {
     }
 });
 
+// ── Pedidos disponibles (nuevo flujo: el repartidor acepta) ─────
+function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+}
+
+function renderDisponibles(pedidos) {
+    const panel = document.getElementById('disponibles-panel');
+    const scroll = document.getElementById('disponibles-scroll');
+    if (!pedidos.length) {
+        panel.classList.add('oculto');
+        scroll.innerHTML = '';
+        return;
+    }
+    panel.classList.remove('oculto');
+    scroll.innerHTML = pedidos.map(p => `
+        <div class="disp-card" id="disp-${p._id}">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span class="disp-folio">${escHtml(p.folio)}</span>
+                <span style="margin-left:auto;font-size:18px;font-weight:900;color:#111827;">
+                    $${parseFloat(p.total || 0).toFixed(0)}
+                </span>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:#111827;margin-top:6px;">
+                ${escHtml(p.cliente_nombre)}
+            </div>
+            <div style="font-size:11px;color:#6b7280;display:flex;gap:4px;margin-top:2px;">
+                <i class="bi bi-geo-alt-fill" style="color:#f97316;flex-shrink:0;"></i>
+                <span>${escHtml(p.direccion)}${p.referencias ? ' — ' + escHtml(p.referencias) : ''}</span>
+            </div>
+            <button class="btn-aceptar" onclick="aceptarPedido('${p._id}', this)">
+                <i class="bi bi-check-circle-fill"></i> Aceptar pedido
+            </button>
+        </div>`).join('');
+}
+
+async function cargarDisponibles() {
+    try {
+        const r = await fetch('/api/delivery/disponibles');
+        const data = await r.json();
+        if (data.success) renderDisponibles(data.pedidos || []);
+    } catch (e) { console.warn('Error cargando disponibles:', e); }
+}
+
+async function aceptarPedido(id, btn) {
+    btn.disabled = true;
+    try {
+        const r = await fetch(`/api/delivery/${id}/aceptar`, { method: 'POST' });
+        const data = await r.json();
+        if (data.success) {
+            await Swal.fire({ icon: 'success', title: '¡Pedido tuyo! 🛵',
+                text: 'Ya aparece en tus entregas activas.', timer: 1800, showConfirmButton: false });
+            location.reload();
+        } else {
+            Swal.fire({ icon: 'warning', title: 'No disponible',
+                text: data.error || 'Este pedido ya fue tomado.', timer: 2500, showConfirmButton: false });
+            cargarDisponibles();
+        }
+    } catch (e) {
+        btn.disabled = false;
+        Swal.fire('Error', 'No se pudo aceptar el pedido.', 'error');
+    }
+}
+
+socket.on('nuevo_pedido_disponible', d => {
+    cargarDisponibles();
+    Swal.fire({
+        icon: 'info', title: '🛎️ Nuevo pedido disponible',
+        text: `${d.folio} — ${d.direccion} ($${parseFloat(d.total || 0).toFixed(0)})`,
+        toast: true, position: 'top', timer: 6000,
+        showConfirmButton: false, timerProgressBar: true,
+    });
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Callejón 9 — Nuevo pedido', { body: `${d.folio} · ${d.direccion}` });
+    }
+});
+
+socket.on('pedido_tomado', d => {
+    if (d.repartidor_id === REP_ID) return;  // yo lo tomé; mi vista ya se recargó
+    document.getElementById(`disp-${d.delivery_id}`)?.remove();
+    if (!document.querySelectorAll('.disp-card').length) {
+        document.getElementById('disponibles-panel').classList.add('oculto');
+    }
+});
+
 // ── Init ────────────────────────────────────────────────────────
 cargarDestinos();
+cargarDisponibles();
 </script>
 
 <style>

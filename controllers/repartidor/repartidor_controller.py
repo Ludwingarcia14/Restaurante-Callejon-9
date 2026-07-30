@@ -127,7 +127,11 @@ class AdminDeliveryViewController:
     @staticmethod
     def panel():
         tenant_id = session.get("tenant_id", "")
-        pendientes = DeliveryOrder.listar_pendientes(tenant_id)
+        # Este panel solo trabaja sobre DeliveryOrder creados automáticamente desde
+        # PedidoMovil (ver controllers/api/v1/pedido_movil_controller.py::crear_pedido).
+        # La creación manual (tipo="directo") ya no se ofrece desde esta vista; el
+        # endpoint POST /api/delivery/crear se conserva para otros usos futuros.
+        pendientes = DeliveryOrder.listar_pendientes(tenant_id, tipo="pedido_movil")
         repartidores = Repartidor.listar_activos(tenant_id)
         return render_template(
             "admin/delivery_panel.html",
@@ -209,6 +213,66 @@ class DeliveryAPIController:
             return jsonify({"success": False, "error": str(e)}), 500
 
     @staticmethod
+    def aceptar(delivery_id):
+        """
+        POST /api/delivery/<id>/aceptar — Rol 5.
+        Nuevo flujo: el repartidor acepta el pedido él mismo (el Admin ya no
+        asigna). La aceptación es atómica (ver DeliveryOrder.aceptar_por_repartidor);
+        si otro repartidor ganó la carrera se responde 409 para que el frontend
+        retire la tarjeta y avise.
+        """
+        try:
+            repartidor_id = session.get("usuario_id")
+            rep = Repartidor.get_by_id(repartidor_id)
+            if not rep:
+                return jsonify({"success": False, "error": "Repartidor no encontrado"}), 404
+
+            nombre = f"{rep.get('usuario_nombre','')} {rep.get('usuario_apellidos','')}".strip()
+            delivery = DeliveryOrder.aceptar_por_repartidor(delivery_id, repartidor_id, nombre)
+            if not delivery:
+                return jsonify({
+                    "success": False,
+                    "error": "Este pedido ya fue tomado por otro repartidor",
+                }), 409
+
+            # Aviso al cliente (misma sala/evento que el flujo existente)
+            _notificar_cliente_delivery(delivery)
+
+            # Aviso al resto de repartidores para que el pedido desaparezca de
+            # su lista de disponibles en tiempo real.
+            try:
+                from extensions import socketio
+                socketio.emit(
+                    "pedido_tomado",
+                    {
+                        "delivery_id": str(delivery["_id"]),
+                        "folio": delivery.get("folio", ""),
+                        "repartidor_id": str(repartidor_id),
+                        "repartidor_nombre": nombre,
+                    },
+                    room="repartidores_global",
+                    namespace="/",
+                )
+            except Exception as e:
+                logger.warning("No se pudo emitir pedido_tomado: %s", e)
+
+            return jsonify({"success": True, "delivery": _serialize(delivery)})
+
+        except Exception as e:
+            logger.error("Error aceptando pedido: %s", e)
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
+    def listar_disponibles_api():
+        """GET /api/delivery/disponibles — Rol 5. Pedidos listos sin repartidor."""
+        try:
+            tenant_id = session.get("tenant_id", "")
+            pedidos = DeliveryOrder.listar_disponibles(tenant_id)
+            return jsonify({"success": True, "pedidos": [_serialize(p) for p in pedidos]})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @staticmethod
     def actualizar_estado(delivery_id):
         try:
             data = request.get_json(force=True)
@@ -218,6 +282,34 @@ class DeliveryAPIController:
                 return jsonify({"success": False, "error": "Estado inválido"}), 400
 
             DeliveryOrder.actualizar_estado(delivery_id, nuevo_estado)
+
+            # Nuevo flujo: al cerrar la entrega, cerrar también el PedidoMovil
+            # enlazado. Sin esto, PedidoMovil.find_activo_por_cliente seguía
+            # devolviendo el pedido como 'activo' para siempre (su estado se
+            # quedaba en 'listo'). Solo estados terminales; los intermedios de
+            # la entrega (asignado/en_camino) no existen en el enum del pedido
+            # y viajan al cliente por el evento 'delivery_actualizado'.
+            if nuevo_estado in ("entregado", "cancelado"):
+                try:
+                    d = DeliveryOrder.get_by_id(delivery_id)
+                    if d and d.get("pedido_movil_id"):
+                        from models.pedido_movil_model import PedidoMovil
+                        PedidoMovil.update_estado(str(d["pedido_movil_id"]), nuevo_estado)
+                        pedido = PedidoMovil.find_by_id(str(d["pedido_movil_id"]))
+                        if pedido:
+                            from extensions import socketio
+                            socketio.emit(
+                                "pedido_actualizado",
+                                {
+                                    "pedido_id": str(pedido["_id"]),
+                                    "estado": nuevo_estado,
+                                    "folio": pedido.get("folio"),
+                                },
+                                room=f"cliente_{pedido.get('cliente_id','')}",
+                                namespace="/",
+                            )
+                except Exception as e:
+                    logger.warning("No se pudo cerrar el PedidoMovil enlazado: %s", e)
 
             # Notify customer tracking page in real-time
             delivery = DeliveryOrder.get_by_id(delivery_id)
@@ -247,7 +339,10 @@ class DeliveryAPIController:
     def listar_pendientes():
         try:
             tenant_id = session.get("tenant_id", "")
-            pedidos = DeliveryOrder.listar_pendientes(tenant_id)
+            # Usado únicamente por admin/delivery_panel.html (KPIs). Se filtra por
+            # tipo="pedido_movil" para que coincida exactamente con panel(), que
+            # alimenta la lista de abajo con el mismo criterio.
+            pedidos = DeliveryOrder.listar_pendientes(tenant_id, tipo="pedido_movil")
             return jsonify({"success": True, "pedidos": [_serialize(p) for p in pedidos]})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500

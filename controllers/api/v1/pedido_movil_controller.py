@@ -12,10 +12,20 @@ from models.pedido_movil_model import PedidoMovil, ESTADOS_VALIDOS
 from models.menu_model import Platillo
 from models.mesa_model import Mesa
 from models.cliente_model import Cliente
+from utils.tenant_context import get_current_tenant
 from utils.validators import sanitize_str
 from utils.pagination import get_pagination_params, paginate_response
 
 logger = logging.getLogger(__name__)
+
+# ── NUEVO FLUJO (desactivado, no eliminado) ──────────────────────────────────
+# Antes, el DeliveryOrder se creaba aquí en cuanto el cliente hacía el pedido,
+# lo que obligó a mantener el campo espejo estado_cocina y la sincronización de
+# services/cocina_service.py. Ahora la orden de entrega se crea cuando Cocina
+# marca 'listo' (cocina_service._crear_delivery_al_marcar_listo). El bloque
+# original de crear_pedido se conserva detrás de esta bandera hasta que el
+# flujo nuevo esté validado de extremo a extremo (ver OBSOLETO.md, fase 2).
+CREAR_DELIVERY_AL_CREAR_PEDIDO = False
 
 
 def _emitir_a_cocina(pedido_doc: dict):
@@ -56,6 +66,19 @@ def _emitir_actualizacion_cliente(cliente_id: str, pedido_doc: dict):
         )
     except Exception as e:
         logger.warning("No se pudo emitir actualización al cliente: %s", e)
+
+
+def _tenant_actual() -> str:
+    """
+    tenant_id activo de la petición (lo puebla jwt_required desde el JWT).
+    Respaldo: restaurante por defecto, para clientes registrados antes de que
+    el registro resolviera el tenant automáticamente.
+    """
+    tenant = get_current_tenant()
+    if tenant:
+        return str(tenant)
+    from controllers.api.v1.cliente_auth_controller import resolver_tenant_por_defecto
+    return resolver_tenant_por_defecto()
 
 
 def _enriquecer_con_delivery(pedido_publico: dict) -> dict:
@@ -192,6 +215,7 @@ class PedidoMovilController:
                 tipo_entrega=tipo_entrega,
                 direccion=direccion,
                 referencias=referencias,
+                tenant_id=_tenant_actual(),
             )
         except Exception as e:
             logger.error("Error creando pedido móvil: %s", e)
@@ -201,7 +225,9 @@ class PedidoMovilController:
 
         # Si es un pedido a domicilio, generamos de una vez la orden de entrega
         # para que quede visible en la cola del repartidor (models/delivery_model.py).
-        if tipo_entrega == "delivery":
+        # DESACTIVADO por CREAR_DELIVERY_AL_CREAR_PEDIDO: en el nuevo flujo la
+        # orden se crea cuando Cocina marca 'listo' (services/cocina_service.py).
+        if tipo_entrega == "delivery" and CREAR_DELIVERY_AL_CREAR_PEDIDO:
             try:
                 from models.delivery_model import DeliveryOrder
                 cliente_doc = Cliente.find_by_id(cliente_id)
@@ -216,6 +242,12 @@ class PedidoMovilController:
                     "items": items_validados,
                     "total": pedido_doc.get("total", 0),
                     "notas": notas,
+                    # tenant_id desde el contexto de la petición (poblado por
+                    # jwt_required a partir del JWT del cliente). Si viene vacío
+                    # —p. ej. clientes registrados antes de la corrección— se usa
+                    # como respaldo el restaurante por defecto, la misma fuente que
+                    # empleó migrations/001_multitenant_backfill.py.
+                    "tenant_id": _tenant_actual(),
                 })
                 PedidoMovil.set_delivery_order_id(pedido_id, delivery_id)
                 pedido_doc = PedidoMovil.find_by_id(pedido_id)

@@ -16,6 +16,25 @@ logger = logging.getLogger(__name__)
 _CLIENT_ROL = "5"
 
 
+def resolver_tenant_por_defecto() -> str:
+    """
+    Devuelve el tenant_id del restaurante por defecto usando el mecanismo que ya
+    existe en el proyecto (models/restaurante_model.py), el mismo que empleó
+    migrations/001_multitenant_backfill.py para asignar tenant_id a `usuarios`,
+    `clientes` y `pedidos_movil`.
+
+    Por eso el tenant_id de un empleado es exactamente str(Restaurante._id): aquí
+    se resuelve desde la misma fuente, sin pedirle al cliente que elija restaurante
+    y sin introducir configuración nueva.
+    """
+    try:
+        from models.restaurante_model import Restaurante
+        return str(Restaurante.ensure_default())
+    except Exception as e:
+        logger.warning("No se pudo resolver el restaurante por defecto: %s", e)
+        return ""
+
+
 def _hash_token(token: str) -> str:
     """SHA-256 del refresh token — nunca se guarda en claro."""
     return hashlib.sha256(token.encode()).hexdigest()
@@ -37,8 +56,12 @@ class ClienteAuthController:
         email     = sanitize_str(data.get("email", "")).lower()
         password  = data.get("password", "")
         telefono  = sanitize_str(data.get("telefono", ""), 20)
-        # Opcional: solo aplica en despliegues multi-tenant (ver models/cliente_model.py)
+        # Opcional: solo aplica en despliegues multi-tenant (ver models/cliente_model.py).
+        # Si no viene, se resuelve del restaurante por defecto — el formulario de
+        # registro NO pide tenant_id y el cliente nunca elige restaurante.
         tenant_id = sanitize_str(data.get("tenant_id", ""), 50) or None
+        if not tenant_id:
+            tenant_id = resolver_tenant_por_defecto() or None
 
         if not nombre:
             return jsonify({"status": "error", "message": "El nombre es requerido"}), 400
@@ -117,7 +140,21 @@ class ClienteAuthController:
             return jsonify({"status": "error", "message": "Credenciales incorrectas"}), 401
 
         cliente_id = str(cliente_doc["_id"])
-        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente", tenant_id=cliente_doc.get("tenant_id"))
+
+        # Clientes registrados ANTES de esta corrección quedaron sin tenant_id.
+        # Se resuelve del restaurante por defecto y se persiste, para que su JWT
+        # deje de propagar un tenant vacío hacia PedidoMovil/DeliveryOrder.
+        tenant_id = cliente_doc.get("tenant_id")
+        if not tenant_id:
+            tenant_id = resolver_tenant_por_defecto() or None
+            if tenant_id:
+                try:
+                    Cliente.set_tenant_id(cliente_id, tenant_id)
+                    cliente_doc["tenant_id"] = tenant_id
+                except Exception as e:
+                    logger.warning("No se pudo persistir tenant_id del cliente: %s", e)
+
+        tokens = generate_tokens(cliente_id, rol=_CLIENT_ROL, tipo="cliente", tenant_id=tenant_id)
 
         try:
             Cliente.update_refresh_token(cliente_id, _hash_token(tokens["refresh_token"]))

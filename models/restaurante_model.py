@@ -14,9 +14,22 @@ class Restaurante:
     collection = db["restaurantes"]
     DEFAULT_NOMBRE = "Callejón 9"
 
+    DEFAULT_SLUG = "callejon9"
+
     @classmethod
     def find_default(cls):
-        """Devuelve el restaurante por defecto (datos historicos) o None."""
+        """
+        Devuelve el restaurante por defecto (datos historicos) o None.
+
+        Busca por slug (fijo, no editable) y NO por nombre: el nombre se edita
+        desde el panel de configuracion, y buscar por el provoco que un renombre
+        creara un segundo tenant fantasma via ensure_default. Si existieran
+        varios documentos con el mismo slug, gana el mas antiguo (el original).
+        """
+        doc = cls.collection.find_one({"slug": cls.DEFAULT_SLUG}, sort=[("created_at", 1)])
+        if doc:
+            return doc
+        # Respaldo para BDs anteriores a la introduccion del campo slug.
         return cls.collection.find_one({"nombre": cls.DEFAULT_NOMBRE})
 
     @classmethod
