@@ -308,6 +308,14 @@ class DeliveryAPIController:
                                 room=f"cliente_{pedido.get('cliente_id','')}",
                                 namespace="/",
                             )
+                            # Cocina retira el pedido de 'Pedidos completados'
+                            # en tiempo real al cerrarse la entrega.
+                            socketio.emit(
+                                "pedido_movil_actualizado",
+                                {"pedido_id": str(pedido["_id"]), "estado": nuevo_estado},
+                                room="cocina",
+                                namespace="/",
+                            )
                 except Exception as e:
                     logger.warning("No se pudo cerrar el PedidoMovil enlazado: %s", e)
 
@@ -450,6 +458,19 @@ class RepartidorAPIController:
 # ─────────────────────────────────────────────
 
 class SensorViewController:
+
+    @staticmethod
+    def watch():
+        """
+        Interfaz smartwatch (pantalla pequeña) del repartidor. Complemento del
+        teléfono: consume exactamente los mismos endpoints y sockets que el
+        dashboard (disponibles/aceptar/estado/sensor), sin lógica propia.
+        """
+        return render_template(
+            "repartidor/watch.html",
+            nombre=session.get("usuario_nombre", ""),
+            repartidor_id=session.get("usuario_id", ""),
+        )
 
     @staticmethod
     def mis_sensores():

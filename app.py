@@ -130,10 +130,12 @@ from models.cliente_model import Cliente
 from models.pedido_movil_model import PedidoMovil as _PedidoMovil
 from models.pago_movil_model import PagoMovil as _PagoMovil
 from models.delivery_model import DeliveryOrder as _DeliveryOrder
+from models.calificacion_model import Calificacion as _Calificacion
 Cliente.ensure_indexes()
 _PedidoMovil.ensure_indexes()
 _PagoMovil.ensure_indexes()
 _DeliveryOrder.ensure_indexes()  # garantía 1:1 PedidoMovil ↔ DeliveryOrder
+_Calificacion.ensure_indexes()   # una calificación por pedido
 
 # ================================
 # MIDDLEWARE Y CONTEXTO

@@ -79,6 +79,10 @@
             <i class="bi bi-receipt"></i>
             <span>Mi Pedido</span>
         </a>
+        <a href="{{ url_for('routes.cliente_mis_pedidos_view') }}" class="bottom-nav-item hidden" id="nav-historial">
+            <i class="bi bi-clock-history"></i>
+            <span>Mis Pedidos</span>
+        </a>
         <a href="{{ url_for('routes.cliente_perfil_view') }}" class="bottom-nav-item hidden" id="nav-perfil">
             <i class="bi bi-person"></i>
             <span>Perfil</span>
@@ -128,6 +132,7 @@
                 document.getElementById('nav-perfil')?.classList.remove('hidden');
                 document.getElementById('nav-carrito')?.classList.remove('hidden');
                 document.getElementById('nav-pedido')?.classList.remove('hidden');
+                document.getElementById('nav-historial')?.classList.remove('hidden');
             }
 
             // Badge del carrito (carrito.js lo mantiene actualizado si está cargado)

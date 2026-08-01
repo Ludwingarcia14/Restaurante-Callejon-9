@@ -24,3 +24,7 @@ def cliente_carrito_view():
 @routes_bp.route("/cliente/pedido")
 def cliente_pedido_activo_view():
     return render_template("cliente/pedido_activo.html")
+
+@routes_bp.route("/cliente/pedidos")
+def cliente_mis_pedidos_view():
+    return render_template("cliente/mis_pedidos.html")

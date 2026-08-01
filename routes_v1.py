@@ -133,6 +133,18 @@ def pedido_crear():
     """Realiza un pedido desde la mesa."""
     return PedidoMovilController.crear_pedido()
 
+@api_v1_bp.route("/pedidos", methods=["GET"])
+@jwt_required
+def pedidos_historial():
+    """Historial 'Mis pedidos' del cliente (paginado, con calificación)."""
+    return PedidoMovilController.listar_mis_pedidos()
+
+@api_v1_bp.route("/pedidos/<string:pedido_id>/calificar", methods=["POST"])
+@jwt_required
+def pedido_calificar(pedido_id):
+    """Califica al repartidor de un pedido entregado (1-5 estrellas)."""
+    return PedidoMovilController.calificar(pedido_id)
+
 @api_v1_bp.route("/pedidos/activo", methods=["GET"])
 @jwt_required
 def pedido_activo():

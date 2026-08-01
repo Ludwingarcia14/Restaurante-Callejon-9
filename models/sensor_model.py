@@ -21,6 +21,21 @@ class SensorData:
             "tenant_id":         data.get("tenant_id", ""),
             "timestamp":         datetime.utcnow(),
         }
+        # ── Campos opcionales del smartwatch (solo se guardan si vienen) ──
+        # Mismo endpoint /api/sensor/enviar; el teléfono sigue mandando el
+        # subconjunto de arriba y no se ve afectado.
+        if data.get("heart_rate") is not None:
+            doc["heart_rate"] = float(data["heart_rate"])
+        for eje in ("accel", "gyro"):
+            v = data.get(eje)
+            if isinstance(v, dict):
+                doc[eje] = {
+                    "x": float(v.get("x") or 0),
+                    "y": float(v.get("y") or 0),
+                    "z": float(v.get("z") or 0),
+                }
+        if data.get("fuente"):
+            doc["fuente"] = str(data["fuente"])  # 'phone' | 'watch'
         res = cls._col().insert_one(doc)
         return str(res.inserted_id)
 

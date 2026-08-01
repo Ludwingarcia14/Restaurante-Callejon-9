@@ -344,6 +344,120 @@ class PedidoMovilController:
         return jsonify({"status": "success", "message": "Ubicación guardada"}), 200
 
     # ----------------------------------------------------------
+    # HISTORIAL "MIS PEDIDOS" (Funcionalidad 3)
+    # ----------------------------------------------------------
+    @staticmethod
+    def listar_mis_pedidos():
+        """
+        GET /api/v1/pedidos?page=N&limit=N
+        Historial completo del cliente autenticado, con repartidor y
+        calificación (si existen) para pintar las tarjetas del historial.
+        """
+        cliente_id = request.jwt_payload["sub"]
+        limit, page, skip = get_pagination_params(default_limit=10, max_limit=50)
+
+        try:
+            docs, total = PedidoMovil.find_by_cliente_paginado(cliente_id, limit, skip)
+        except Exception as e:
+            logger.error("Error listando historial: %s", e)
+            return jsonify({"status": "error", "message": "Error al obtener el historial"}), 500
+
+        from models.calificacion_model import Calificacion
+        from models.delivery_model import DeliveryOrder
+
+        califs = Calificacion.find_by_pedidos([str(d["_id"]) for d in docs])
+
+        pedidos = []
+        for d in docs:
+            pub = PedidoMovil.to_public(d)
+            # Repartidor: viene de la entrega enlazada (solo pedidos delivery)
+            pub["repartidor_nombre"] = ""
+            if d.get("delivery_order_id"):
+                try:
+                    dv = DeliveryOrder.get_by_id(str(d["delivery_order_id"]))
+                    if dv:
+                        pub["repartidor_nombre"] = dv.get("repartidor_nombre", "")
+                except Exception:
+                    pass
+            pub["calificacion"] = Calificacion.to_public(califs.get(str(d["_id"])))
+            pub["puede_calificar"] = (
+                d.get("estado") == "entregado"
+                and d.get("tipo_entrega") == "delivery"
+                and str(d["_id"]) not in califs
+                and bool(pub["repartidor_nombre"])
+            )
+            pedidos.append(pub)
+
+        resp = paginate_response(pedidos, total, page, limit)
+        resp["status"] = "success"
+        return jsonify(resp), 200
+
+    @staticmethod
+    def calificar(pedido_id: str):
+        """
+        POST /api/v1/pedidos/<pedido_id>/calificar
+        Body: {estrellas: 1-5, comentario?}
+        Solo el dueño, solo pedidos entregados, una sola vez (índice único).
+        """
+        cliente_id = request.jwt_payload["sub"]
+        data = request.get_json(silent=True) or {}
+
+        try:
+            estrellas = int(data.get("estrellas", 0))
+        except (TypeError, ValueError):
+            estrellas = 0
+        if estrellas < 1 or estrellas > 5:
+            return jsonify({"status": "error", "message": "estrellas debe ser un entero de 1 a 5"}), 400
+        comentario = sanitize_str(data.get("comentario", ""), 300)
+
+        doc = PedidoMovil.find_by_id(pedido_id)
+        if not doc:
+            return jsonify({"status": "error", "message": "Pedido no encontrado"}), 404
+        if doc.get("cliente_id") != cliente_id:
+            return jsonify({"status": "error", "message": "Sin permisos"}), 403
+        if doc.get("estado") != "entregado":
+            return jsonify({"status": "error", "message": "Solo se pueden calificar pedidos entregados"}), 400
+
+        # Repartidor desde la entrega enlazada
+        repartidor_id, repartidor_nombre = None, ""
+        if doc.get("delivery_order_id"):
+            try:
+                from models.delivery_model import DeliveryOrder
+                dv = DeliveryOrder.get_by_id(str(doc["delivery_order_id"]))
+                if dv:
+                    repartidor_id = dv.get("repartidor_id")
+                    repartidor_nombre = dv.get("repartidor_nombre", "")
+            except Exception as e:
+                logger.warning("No se pudo obtener la entrega para calificar: %s", e)
+        if not repartidor_id:
+            return jsonify({"status": "error", "message": "Este pedido no tiene repartidor que calificar"}), 400
+
+        from models.calificacion_model import Calificacion
+        from pymongo.errors import DuplicateKeyError
+        try:
+            Calificacion.crear(
+                pedido_id=pedido_id,
+                cliente_id=cliente_id,
+                repartidor_id=repartidor_id,
+                repartidor_nombre=repartidor_nombre,
+                estrellas=estrellas,
+                comentario=comentario,
+                tenant_id=doc.get("tenant_id", ""),
+            )
+        except DuplicateKeyError:
+            return jsonify({"status": "error", "message": "Este pedido ya fue calificado"}), 409
+        except Exception as e:
+            logger.error("Error guardando calificación: %s", e)
+            return jsonify({"status": "error", "message": "Error al guardar la calificación"}), 500
+
+        return jsonify({
+            "status": "success",
+            "message": "¡Gracias por tu calificación!",
+            "data": {"estrellas": estrellas, "comentario": comentario,
+                     "repartidor_nombre": repartidor_nombre},
+        }), 201
+
+    # ----------------------------------------------------------
     # ACTUALIZAR ESTADO (cocina / admin)
     # ----------------------------------------------------------
     @staticmethod

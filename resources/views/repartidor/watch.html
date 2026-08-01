@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Watch · Callejón 9</title>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<style>
+    /* Interfaz smartwatch: una sola columna, tipografía grande, botones enormes.
+       Complemento del teléfono — misma sesión, mismos endpoints. */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+        background: #000; color: #fff;
+        font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+    }
+    #watch {
+        width: 100%; max-width: 240px; height: 100%; max-height: 280px;
+        display: flex; flex-direction: column; padding: 10px 12px;
+        position: relative; overflow-y: auto; scrollbar-width: none;
+    }
+    #watch::-webkit-scrollbar { display: none; }
+
+    .screen { display: none; flex: 1; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    .hora { font-size: 11px; color: #9ca3af; text-align: center; margin-bottom: 4px; }
+    .titulo { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+              color: #f97316; text-align: center; margin-bottom: 6px; }
+
+    .big-icon { font-size: 34px; text-align: center; margin: 8px 0 4px; }
+    .estado-txt { text-align: center; font-size: 15px; font-weight: 800; }
+    .sub-txt { text-align: center; font-size: 10px; color: #9ca3af; margin-top: 3px; }
+
+    .dato { display: flex; justify-content: space-between; align-items: baseline;
+            padding: 3px 0; border-bottom: 1px solid #1f2937; }
+    .dato .k { font-size: 9px; color: #6b7280; text-transform: uppercase; }
+    .dato .v { font-size: 12px; font-weight: 700; text-align: right; max-width: 140px;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dato .v.dir { white-space: normal; font-size: 10px; line-height: 1.25; }
+
+    .btn { display: block; width: 100%; border: none; border-radius: 14px;
+           padding: 12px 8px; font-size: 13px; font-weight: 900; color: #fff;
+           margin-top: 8px; cursor: pointer; }
+    .btn:disabled { opacity: .5; }
+    .btn-verde   { background: #16a34a; }
+    .btn-naranja { background: #f97316; }
+    .btn-gris    { background: #1f2937; color: #9ca3af; font-size: 11px; padding: 8px; }
+    .btn-azul    { background: #0284c7; }
+
+    .total-big { text-align: center; font-size: 26px; font-weight: 900; margin: 4px 0; }
+
+    /* Barra inferior de navegación entre pantallas */
+    #tabs { display: flex; justify-content: space-around; padding-top: 6px;
+            border-top: 1px solid #1f2937; margin-top: auto; }
+    #tabs button { background: none; border: none; color: #4b5563; font-size: 16px; padding: 4px 8px; cursor: pointer; }
+    #tabs button.on { color: #f97316; }
+
+    .pulso { animation: pulso 1.2s infinite; }
+    @keyframes pulso { 50% { opacity: .45; } }
+
+    .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .sensor-card { background: #111827; border-radius: 10px; padding: 7px; text-align: center; }
+    .sensor-card .sk { font-size: 8px; color: #6b7280; text-transform: uppercase; }
+    .sensor-card .sv { font-size: 14px; font-weight: 900; margin-top: 2px; }
+    .c-sky { color: #38bdf8; } .c-red { color: #f87171; }
+    .c-amber { color: #fbbf24; } .c-green { color: #34d399; }
+</style>
+</head>
+<body>
+<div id="watch">
+    <div class="hora" id="hora">--:--</div>
+
+    <!-- 1. DISPONIBLE -->
+    <div class="screen active" id="sc-disponible">
+        <div class="titulo">Disponible</div>
+        <div class="big-icon">🛵</div>
+        <p class="estado-txt">Esperando pedidos</p>
+        <p class="sub-txt">Te avisaremos aquí<br>cuando cocina termine uno.</p>
+    </div>
+
+    <!-- 2. NUEVO PEDIDO -->
+    <div class="screen" id="sc-nuevo">
+        <div class="titulo pulso">🛎️ Nuevo pedido</div>
+        <div class="dato"><span class="k">Folio</span><span class="v" id="np-folio">—</span></div>
+        <div class="dato"><span class="k">Cliente</span><span class="v" id="np-cliente">—</span></div>
+        <div class="dato"><span class="k">Dirección</span><span class="v dir" id="np-dir">—</span></div>
+        <div class="total-big" id="np-total">$0</div>
+        <button class="btn btn-verde" id="btn-aceptar" onclick="aceptar()">✔ Aceptar pedido</button>
+        <button class="btn btn-gris" onclick="descartarNuevo()">Ignorar</button>
+    </div>
+
+    <!-- 3. PEDIDO ACTIVO -->
+    <div class="screen" id="sc-activo">
+        <div class="titulo">Pedido activo</div>
+        <div id="activo-vacio" style="text-align:center;">
+            <div class="big-icon">💤</div>
+            <p class="sub-txt">Sin entrega en curso</p>
+        </div>
+        <div id="activo-datos" style="display:none;">
+            <div class="dato"><span class="k">Folio</span><span class="v" id="ac-folio">—</span></div>
+            <div class="dato"><span class="k">Cliente</span><span class="v" id="ac-cliente">—</span></div>
+            <div class="dato"><span class="k">Estado</span><span class="v" id="ac-estado">—</span></div>
+            <div class="total-big" id="ac-total">$0</div>
+            <button class="btn btn-naranja" id="btn-camino" onclick="cambiarEstado('en_camino')" style="display:none;">🚴 En camino</button>
+            <button class="btn btn-verde" id="btn-entregado" onclick="cambiarEstado('entregado')" style="display:none;">✔ Entregado</button>
+        </div>
+    </div>
+
+    <!-- 4. NAVEGACIÓN -->
+    <div class="screen" id="sc-nav">
+        <div class="titulo">Navegación</div>
+        <div id="nav-vacio" style="text-align:center;">
+            <div class="big-icon">🧭</div>
+            <p class="sub-txt">Acepta un pedido<br>para navegar.</p>
+        </div>
+        <div id="nav-datos" style="display:none;">
+            <div class="dato"><span class="k">Destino</span><span class="v dir" id="nav-dir">—</span></div>
+            <div class="dato"><span class="k">Distancia</span><span class="v" id="nav-dist">—</span></div>
+            <a class="btn btn-azul" id="nav-maps" href="#" target="_blank" style="text-align:center;text-decoration:none;">🗺 Abrir mapa</a>
+        </div>
+    </div>
+
+    <!-- 5. SENSORES -->
+    <div class="screen" id="sc-sensores">
+        <div class="titulo">Sensores</div>
+        <div class="sensor-grid">
+            <div class="sensor-card"><div class="sk">GPS</div><div class="sv c-sky" id="sn-gps">—</div></div>
+            <div class="sensor-card"><div class="sk">Ritmo ❤</div><div class="sv c-red" id="sn-hr">—</div></div>
+            <div class="sensor-card"><div class="sk">Acelerómetro</div><div class="sv c-amber" id="sn-accel">—</div></div>
+            <div class="sensor-card"><div class="sk">Giroscopio</div><div class="sv c-green" id="sn-gyro">—</div></div>
+        </div>
+        <p class="sub-txt" id="sn-envio" style="margin-top:8px;">Enviando cada 10 s…</p>
+    </div>
+
+    <!-- Navegación inferior -->
+    <div id="tabs">
+        <button data-sc="sc-disponible" class="on">🏠</button>
+        <button data-sc="sc-activo">📦</button>
+        <button data-sc="sc-nav">🧭</button>
+        <button data-sc="sc-sensores">📡</button>
+    </div>
+</div>
+
+<script>
+const REP_ID = "{{ repartidor_id }}";
+
+// ── Estado local ─────────────────────────────────────────────
+let pedidoNuevo = null;    // el disponible mostrado en pantalla 2
+let entregaActiva = null;  // la entrega asignada/en_camino
+let posActual = null;
+let hr = null, accel = null, gyro = null, bateria = null;
+
+// ── Reloj ────────────────────────────────────────────────────
+setInterval(() => {
+    document.getElementById('hora').textContent =
+        new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}, 1000);
+
+// ── Cambio de pantalla ───────────────────────────────────────
+function pantalla(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('#tabs button').forEach(b =>
+        b.classList.toggle('on', b.dataset.sc === id));
+}
+document.querySelectorAll('#tabs button').forEach(b =>
+    b.addEventListener('click', () => pantalla(b.dataset.sc)));
+
+// ── Alerta física: vibración + tono característico ───────────
+function alertaFisica() {
+    if (navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 500]);
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [[880, 0], [1175, .18], [880, .36], [1568, .54]].forEach(([f, t]) => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = 'square'; o.frequency.value = f;
+            g.gain.setValueAtTime(.25, ctx.currentTime + t);
+            g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .16);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .17);
+        });
+    } catch (e) {}
+}
+
+// ── Pantalla 2: nuevo pedido ─────────────────────────────────
+function mostrarNuevo(p) {
+    pedidoNuevo = p;
+    document.getElementById('np-folio').textContent = p.folio || '—';
+    document.getElementById('np-cliente').textContent = p.cliente_nombre || '—';
+    document.getElementById('np-dir').textContent = p.direccion || '—';
+    document.getElementById('np-total').textContent = '$' + parseFloat(p.total || 0).toFixed(0);
+    document.getElementById('btn-aceptar').disabled = false;
+    pantalla('sc-nuevo');
+    alertaFisica();
+}
+function descartarNuevo() { pedidoNuevo = null; pantalla('sc-disponible'); }
+
+// Mismo endpoint atómico que el dashboard del teléfono.
+async function aceptar() {
+    if (!pedidoNuevo) return;
+    const btn = document.getElementById('btn-aceptar');
+    btn.disabled = true;
+    const id = pedidoNuevo.delivery_id || pedidoNuevo._id;
+    try {
+        const r = await fetch(`/api/delivery/${id}/aceptar`, { method: 'POST' });
+        const data = await r.json();
+        if (data.success) {
+            pedidoNuevo = null;
+            await cargarActiva();
+            pantalla('sc-activo');
+            if (navigator.vibrate) navigator.vibrate(200);
+        } else {
+            document.getElementById('np-folio').textContent = '⚠ Ya tomado';
+            setTimeout(descartarNuevo, 1800);
+        }
+    } catch (e) { btn.disabled = false; }
+}
+
+// ── Pantalla 3: pedido activo (reusa /api/delivery/mis-entregas) ─
+async function cargarActiva() {
+    try {
+        const r = await fetch('/api/delivery/mis-entregas');
+        const data = await r.json();
+        entregaActiva = (data.success && data.entregas && data.entregas.length) ? data.entregas[0] : null;
+    } catch (e) { entregaActiva = null; }
+    pintarActiva();
+}
+function pintarActiva() {
+    const hay = !!entregaActiva;
+    document.getElementById('activo-vacio').style.display = hay ? 'none' : 'block';
+    document.getElementById('activo-datos').style.display = hay ? 'block' : 'none';
+    document.getElementById('nav-vacio').style.display = hay ? 'none' : 'block';
+    document.getElementById('nav-datos').style.display = hay ? 'block' : 'none';
+    if (!hay) return;
+    const e = entregaActiva;
+    document.getElementById('ac-folio').textContent = e.folio;
+    document.getElementById('ac-cliente').textContent = e.cliente_nombre || '—';
+    document.getElementById('ac-estado').textContent = e.estado === 'asignado' ? 'Asignado' : 'En camino';
+    document.getElementById('ac-total').textContent = '$' + parseFloat(e.total || 0).toFixed(0);
+    document.getElementById('btn-camino').style.display = e.estado === 'asignado' ? 'block' : 'none';
+    document.getElementById('btn-entregado').style.display = e.estado === 'en_camino' ? 'block' : 'none';
+    // Navegación
+    document.getElementById('nav-dir').textContent = e.direccion || '—';
+    const q = (e.cliente_lat && e.cliente_lng) ? `${e.cliente_lat},${e.cliente_lng}` : encodeURIComponent(e.direccion || '');
+    document.getElementById('nav-maps').href = `https://maps.google.com/?q=${q}&travelmode=driving`;
+    calcDistancia();
+}
+
+// Mismo endpoint de estado que usa el dashboard.
+async function cambiarEstado(estado) {
+    if (!entregaActiva) return;
+    try {
+        const r = await fetch(`/api/delivery/${entregaActiva._id}/estado`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado })
+        });
+        const data = await r.json();
+        if (data.success) {
+            if (navigator.vibrate) navigator.vibrate(200);
+            await cargarActiva();
+            if (estado === 'entregado') pantalla('sc-disponible');
+        }
+    } catch (e) {}
+}
+
+function calcDistancia() {
+    const el = document.getElementById('nav-dist');
+    if (!posActual || !entregaActiva || !entregaActiva.cliente_lat) { el.textContent = '—'; return; }
+    const R = 6371e3, toR = d => d * Math.PI / 180;
+    const [la1, lo1] = posActual, la2 = +entregaActiva.cliente_lat, lo2 = +entregaActiva.cliente_lng;
+    const dφ = toR(la2 - la1), dλ = toR(lo2 - lo1);
+    const a = Math.sin(dφ/2)**2 + Math.cos(toR(la1)) * Math.cos(toR(la2)) * Math.sin(dλ/2)**2;
+    const m = 2 * R * Math.asin(Math.sqrt(a));
+    el.textContent = m > 950 ? (m/1000).toFixed(1) + ' km' : Math.round(m) + ' m';
+}
+
+// ── Pantalla 5: sensores (mismo endpoint /api/sensor/enviar) ─
+if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(p => {
+        posActual = [p.coords.latitude, p.coords.longitude];
+        document.getElementById('sn-gps').textContent =
+            p.coords.latitude.toFixed(3) + '°';
+        calcDistancia();
+    }, () => { document.getElementById('sn-gps').textContent = 'N/D'; },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+}
+
+// Acelerómetro / giroscopio via DeviceMotion (disponible en watches con navegador)
+window.addEventListener('devicemotion', ev => {
+    if (ev.accelerationIncludingGravity) {
+        const a = ev.accelerationIncludingGravity;
+        accel = { x: a.x || 0, y: a.y || 0, z: a.z || 0 };
+        document.getElementById('sn-accel').textContent =
+            Math.sqrt(accel.x**2 + accel.y**2 + accel.z**2).toFixed(1);
+    }
+    if (ev.rotationRate) {
+        const g = ev.rotationRate;
+        gyro = { x: g.alpha || 0, y: g.beta || 0, z: g.gamma || 0 };
+        document.getElementById('sn-gyro').textContent =
+            Math.abs(gyro.x + gyro.y + gyro.z).toFixed(0) + '°/s';
+    }
+});
+
+// Ritmo cardíaco: los navegadores de smartwatch que lo exponen usan la
+// Generic Sensor API; si no existe, se muestra N/D (no se inventa el dato).
+if ('HeartRateSensor' in window) {
+    try {
+        const s = new HeartRateSensor();
+        s.addEventListener('reading', () => {
+            hr = s.heartRate;
+            document.getElementById('sn-hr').textContent = hr + ' bpm';
+        });
+        s.start();
+    } catch (e) { document.getElementById('sn-hr').textContent = 'N/D'; }
+} else {
+    document.getElementById('sn-hr').textContent = 'N/D';
+}
+
+// Batería
+if ('getBattery' in navigator) {
+    navigator.getBattery().then(b => {
+        bateria = Math.round(b.level * 100);
+        b.addEventListener('levelchange', () => { bateria = Math.round(b.level * 100); });
+    }).catch(() => {});
+}
+
+// Envío periódico — exactamente el mismo endpoint que el teléfono.
+setInterval(async () => {
+    if (!posActual) return;
+    try {
+        await fetch('/api/sensor/enviar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                lat: posActual[0], lon: posActual[1],
+                battery: bateria || 0, pasos: 0,
+                heart_rate: hr, accel: accel, gyro: gyro,
+                fuente: 'watch',
+            }),
+        });
+        document.getElementById('sn-envio').textContent =
+            'Último envío ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch (e) {}
+}, 10000);
+
+// ── Socket.IO: mismos eventos que el dashboard ───────────────
+const socket = io(window.location.origin, { transports: ['polling', 'websocket'] });
+socket.on('connect', () => socket.emit('join_repartidor', REP_ID));
+
+socket.on('nuevo_pedido_disponible', d => {
+    if (!entregaActiva) mostrarNuevo(d);
+});
+socket.on('pedido_tomado', d => {
+    if (d.repartidor_id === REP_ID) return;
+    if (pedidoNuevo && (pedidoNuevo.delivery_id === d.delivery_id || pedidoNuevo._id === d.delivery_id)) {
+        descartarNuevo();
+    }
+});
+socket.on('notificacion_wearable', d => {
+    alertaFisica();
+    document.getElementById('np-folio').textContent = '📢 ' + (d.de || 'Admin');
+    document.getElementById('np-cliente').textContent = d.mensaje || '';
+    document.getElementById('np-dir').textContent = '';
+    document.getElementById('np-total').textContent = '';
+    pantalla('sc-nuevo');
+    setTimeout(() => { if (!pedidoNuevo) pantalla('sc-disponible'); }, 6000);
+});
+
+// ── Init: entrega activa y disponibles pendientes ────────────
+(async () => {
+    await cargarActiva();
+    if (entregaActiva) { pantalla('sc-activo'); return; }
+    try {
+        const r = await fetch('/api/delivery/disponibles');
+        const data = await r.json();
+        if (data.success && data.pedidos && data.pedidos.length) mostrarNuevo(data.pedidos[0]);
+    } catch (e) {}
+})();
+</script>
+</body>
+</html>

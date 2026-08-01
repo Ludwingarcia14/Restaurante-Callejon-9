@@ -1,0 +1,231 @@
+{% extends "layout/layout_cliente.html" %}
+
+{% block title %}Mis Pedidos - Callejón 19{% endblock %}
+
+{% block content %}
+<div class="mb-6 mt-2">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Mis Pedidos</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Historial de todos tus pedidos</p>
+</div>
+
+<div id="cargando" class="text-center py-16">
+    <i class="bi bi-arrow-repeat text-4xl text-orange-400 inline-block animate-spin"></i>
+</div>
+
+<div id="sinPedidos" class="hidden text-center py-16">
+    <i class="bi bi-bag text-6xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+    <p class="text-gray-500 dark:text-gray-400 font-medium">Aún no has realizado pedidos</p>
+    <a href="{{ url_for('routes.cliente_menu_view') }}" class="inline-block mt-4 text-orange-500 font-semibold hover:underline">Ver el menú</a>
+</div>
+
+<div id="listaPedidos" class="space-y-4"></div>
+
+<div id="paginacion" class="hidden flex items-center justify-center gap-4 mt-6 pb-4">
+    <button id="btnPrev" onclick="cambiarPagina(-1)"
+            class="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm text-sm font-semibold text-gray-600 dark:text-gray-300 disabled:opacity-40">
+        <i class="bi bi-chevron-left"></i> Anterior
+    </button>
+    <span id="lblPagina" class="text-sm text-gray-500 dark:text-gray-400">1 / 1</span>
+    <button id="btnNext" onclick="cambiarPagina(1)"
+            class="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm text-sm font-semibold text-gray-600 dark:text-gray-300 disabled:opacity-40">
+        Siguiente <i class="bi bi-chevron-right"></i>
+    </button>
+</div>
+
+<!-- Modal calificar repartidor -->
+<div id="modalCalificar" class="hidden fixed inset-0 bg-black/70 z-[1100] flex items-center justify-center p-4 backdrop-blur-sm"
+     onclick="if(event.target===this)cerrarCalificar()">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div class="bg-orange-500 text-white p-5 flex items-center justify-between">
+            <h3 class="font-bold text-lg"><i class="bi bi-star-fill"></i> Calificar repartidor</h3>
+            <button onclick="cerrarCalificar()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="p-5">
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">¿Cómo estuvo la entrega de</p>
+            <p class="font-bold text-gray-800 dark:text-white mb-4" id="califRepartidor">—</p>
+
+            <div class="flex justify-center gap-2 mb-4" id="estrellas">
+                <i class="bi bi-star text-3xl text-gray-300 cursor-pointer" data-n="1"></i>
+                <i class="bi bi-star text-3xl text-gray-300 cursor-pointer" data-n="2"></i>
+                <i class="bi bi-star text-3xl text-gray-300 cursor-pointer" data-n="3"></i>
+                <i class="bi bi-star text-3xl text-gray-300 cursor-pointer" data-n="4"></i>
+                <i class="bi bi-star text-3xl text-gray-300 cursor-pointer" data-n="5"></i>
+            </div>
+
+            <textarea id="califComentario" rows="3" maxlength="300"
+                      placeholder="Comentario (opcional)"
+                      class="w-full border-2 border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-3 py-2 text-sm focus:border-orange-400 focus:outline-none mb-4"></textarea>
+
+            <button id="btnEnviarCalif" onclick="enviarCalificacion()" disabled
+                    class="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white rounded-xl font-bold transition">
+                Enviar calificación
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cliente/api_cliente.js') }}"></script>
+<script>
+let paginaActual = 1, totalPaginas = 1;
+let califPedidoId = null, califEstrellas = 0;
+
+const ESTADO_UI = {
+    entregado: ['Entregado',  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'],
+    cancelado: ['Cancelado',  'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'],
+    listo:     ['Listo',      'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-400'],
+    en_cocina: ['Preparando', 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400'],
+    pendiente: ['Recibido',   'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300'],
+    recibido:  ['Recibido',   'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300'],
+};
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+}
+
+function estrellasHtml(n) {
+    let h = '';
+    for (let i = 1; i <= 5; i++)
+        h += `<i class="bi ${i <= n ? 'bi-star-fill text-amber-400' : 'bi-star text-gray-300'}"></i>`;
+    return h;
+}
+
+function cardPedido(p) {
+    const [lbl, css] = ESTADO_UI[p.estado] || [p.estado, ESTADO_UI.pendiente[1]];
+    const fecha = p.created_at ? new Date(p.created_at).toLocaleString('es-MX',
+        { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const items = (p.items || []).map(i =>
+        `<div class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+            <span>${i.cantidad}x ${esc(i.nombre)}</span>
+            <span>$${(i.precio * i.cantidad).toFixed(2)}</span>
+        </div>`).join('');
+
+    let bloqueCalif = '';
+    if (p.calificacion) {
+        bloqueCalif = `
+        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+            <div class="flex items-center gap-2 text-sm">
+                <span class="text-gray-500 dark:text-gray-400">Tu calificación:</span>
+                <span>${estrellasHtml(p.calificacion.estrellas)}</span>
+            </div>
+            ${p.calificacion.comentario ? `<p class="text-xs text-gray-400 mt-1 italic">"${esc(p.calificacion.comentario)}"</p>` : ''}
+        </div>`;
+    } else if (p.puede_calificar) {
+        bloqueCalif = `
+        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+            <button onclick="abrirCalificar('${p.id}', '${esc(p.repartidor_nombre)}')"
+                    class="w-full py-2.5 bg-amber-400 hover:bg-amber-500 text-white rounded-xl text-sm font-bold transition">
+                <i class="bi bi-star"></i> Calificar repartidor
+            </button>
+        </div>`;
+    }
+
+    return `
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5">
+        <div class="flex justify-between items-start mb-2">
+            <div>
+                <p class="font-mono text-xs font-bold text-orange-500">${esc(p.folio)}</p>
+                <p class="text-xs text-gray-400">${fecha}</p>
+            </div>
+            <span class="text-xs font-bold px-3 py-1 rounded-full ${css}">${lbl}</span>
+        </div>
+        <div class="space-y-1 mb-2">${items}</div>
+        <div class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-slate-700">
+            <span class="text-xs text-gray-400">
+                ${p.tipo_entrega === 'delivery'
+                    ? `<i class="bi bi-bicycle"></i> ${p.repartidor_nombre ? esc(p.repartidor_nombre) : 'A domicilio'}`
+                    : `<i class="bi bi-shop"></i> En restaurante`}
+            </span>
+            <span class="font-black text-gray-800 dark:text-white">$${parseFloat(p.total || 0).toFixed(2)}</span>
+        </div>
+        ${bloqueCalif}
+    </div>`;
+}
+
+async function cargarPedidos() {
+    document.getElementById('cargando').classList.remove('hidden');
+    const r = await APICliente.get(`/api/v1/pedidos?page=${paginaActual}&limit=10`);
+    document.getElementById('cargando').classList.add('hidden');
+
+    if (!r.success) return;
+    const pedidos = r.data.data || [];
+    const pag = r.data.pagination || {};
+    totalPaginas = pag.pages || 1;
+
+    document.getElementById('sinPedidos').classList.toggle('hidden', pedidos.length > 0);
+    document.getElementById('listaPedidos').innerHTML = pedidos.map(cardPedido).join('');
+
+    const hayPag = totalPaginas > 1;
+    document.getElementById('paginacion').classList.toggle('hidden', !hayPag);
+    document.getElementById('lblPagina').textContent = `${pag.page || 1} / ${totalPaginas}`;
+    document.getElementById('btnPrev').disabled = !pag.has_prev;
+    document.getElementById('btnNext').disabled = !pag.has_next;
+}
+
+function cambiarPagina(delta) {
+    paginaActual = Math.min(Math.max(paginaActual + delta, 1), totalPaginas);
+    cargarPedidos();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Modal calificar ─────────────────────────────────────────
+function abrirCalificar(pedidoId, repartidor) {
+    califPedidoId = pedidoId;
+    califEstrellas = 0;
+    document.getElementById('califRepartidor').textContent = repartidor || 'tu repartidor';
+    document.getElementById('califComentario').value = '';
+    document.getElementById('btnEnviarCalif').disabled = true;
+    pintarEstrellas(0);
+    document.getElementById('modalCalificar').classList.remove('hidden');
+}
+function cerrarCalificar() {
+    document.getElementById('modalCalificar').classList.add('hidden');
+    califPedidoId = null;
+}
+function pintarEstrellas(n) {
+    document.querySelectorAll('#estrellas i').forEach(el => {
+        const on = +el.dataset.n <= n;
+        el.className = `bi ${on ? 'bi-star-fill text-amber-400' : 'bi-star text-gray-300'} text-3xl cursor-pointer`;
+    });
+}
+document.querySelectorAll('#estrellas i').forEach(el => {
+    el.addEventListener('click', () => {
+        califEstrellas = +el.dataset.n;
+        pintarEstrellas(califEstrellas);
+        document.getElementById('btnEnviarCalif').disabled = false;
+    });
+});
+
+async function enviarCalificacion() {
+    if (!califPedidoId || !califEstrellas) return;
+    const btn = document.getElementById('btnEnviarCalif');
+    btn.disabled = true;
+    const r = await APICliente.post(`/api/v1/pedidos/${califPedidoId}/calificar`, {
+        estrellas: califEstrellas,
+        comentario: document.getElementById('califComentario').value,
+    });
+    if (r.success) {
+        cerrarCalificar();
+        cargarPedidos();
+    } else {
+        btn.disabled = false;
+        alert(r.error || 'No se pudo enviar la calificación');
+    }
+}
+
+// ── Init ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('access_token')) {
+        window.location.href = "{{ url_for('routes.cliente_login_view') }}";
+        return;
+    }
+    cargarPedidos();
+});
+</script>
+{% endblock %}

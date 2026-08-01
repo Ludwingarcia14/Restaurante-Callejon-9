@@ -119,6 +119,13 @@ def api_repartidores_actualizar(uid):
 def api_repartidores_eliminar(uid):
     return RepartidorAPIController.eliminar(uid)
 
+# ── Wearable: interfaz smartwatch (Rol 5) ────────────────────
+@routes_bp.route("/repartidor/watch")
+@login_required
+@rol_required(['5'])
+def repartidor_watch():
+    return SensorViewController.watch()
+
 # ── Wearable: Sensor screen (Rol 5) ──────────────────────────
 @routes_bp.route("/repartidor/sensores")
 @login_required

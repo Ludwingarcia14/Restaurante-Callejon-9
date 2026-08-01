@@ -30,6 +30,7 @@ class CocinaService:
         PedidoMovil.update_estado(pedido_id, nuevo_estado)
         doc["estado"] = nuevo_estado
         _emitir_actualizacion_cliente_movil(doc.get("cliente_id", ""), doc)
+        _emitir_pedido_movil_a_cocina(pedido_id, nuevo_estado)
 
         # ── NUEVO FLUJO: la orden de entrega nace cuando Cocina marca 'listo' ──
         # Antes el DeliveryOrder se creaba al momento del pedido (ver
@@ -278,6 +279,23 @@ class CocinaService:
 
 
 # ── Utilidades de tiempo y socket (privadas al módulo) ──────────────────────
+
+def _emitir_pedido_movil_a_cocina(pedido_id: str, nuevo_estado: str):
+    """
+    Avisa a la sala 'cocina' que un pedido móvil cambió de estado, para que la
+    vista de pedidos reubique la tarjeta (en proceso ↔ completados) en tiempo
+    real en todas las pantallas de cocina abiertas.
+    """
+    try:
+        from extensions import socketio
+        socketio.emit(
+            "pedido_movil_actualizado",
+            {"pedido_id": str(pedido_id), "estado": nuevo_estado},
+            room="cocina",
+            namespace="/",
+        )
+    except Exception as e:
+        print(f"⚠️ Error Socket.IO pedido_movil_actualizado: {e}")
 
 def _crear_delivery_al_marcar_listo(pedido_id: str, pedido_doc: dict):
     """
