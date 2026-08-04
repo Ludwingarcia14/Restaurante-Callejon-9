@@ -1,0 +1,116 @@
+{% extends "layout/layout_cliente.html" %}
+
+{% block title %}Mi Perfil - Callejón 19{% endblock %}
+
+{% block content %}
+<div class="mt-4 bg-white dark:bg-slate-800 rounded-2xl shadow-md overflow-hidden">
+    <div class="bg-gradient-to-r from-orange-400 to-orange-600 p-6 text-center relative">
+        <div class="w-24 h-24 mx-auto bg-white dark:bg-slate-700 rounded-full flex items-center justify-center mb-3 shadow-lg overflow-hidden border-4 border-white dark:border-slate-800" id="avatarContainer">
+            <i class="bi bi-person text-5xl text-orange-300 dark:text-slate-500" id="avatarIcon"></i>
+            <img id="avatarImg" src="" alt="Foto de perfil" class="hidden w-full h-full object-cover">
+        </div>
+        <h2 class="text-xl font-bold text-white" id="perfilNombre">Cargando...</h2>
+        <p class="text-orange-100 text-sm font-medium mt-1" id="perfilRol">Cliente</p>
+    </div>
+
+    <div class="p-6">
+        <div class="space-y-4">
+            <div class="flex items-center gap-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                <div class="w-10 h-10 rounded-full bg-orange-50 dark:bg-slate-700 flex items-center justify-center text-orange-500">
+                    <i class="bi bi-envelope text-lg"></i>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Correo Electrónico</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white truncate" id="perfilEmail">...</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                <div class="w-10 h-10 rounded-full bg-orange-50 dark:bg-slate-700 flex items-center justify-center text-orange-500">
+                    <i class="bi bi-telephone text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Teléfono</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white" id="perfilTelefono">No registrado</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                <div class="w-10 h-10 rounded-full bg-orange-50 dark:bg-slate-700 flex items-center justify-center text-orange-500">
+                    <i class="bi bi-star text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Puntos Callejón</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white" id="perfilPuntos">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <button id="btnLogout" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 px-4 rounded-xl transition-colors flex justify-center items-center gap-2 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400">
+                <i class="bi bi-box-arrow-right text-lg"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cliente/api_cliente.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Redirigir si no hay token local
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/cliente/login';
+            return;
+        }
+
+        // 2. Cargar información desde el backend
+        showLoading('Cargando tu perfil...');
+        const response = await APICliente.get('/api/v1/clientes/perfil');
+        hideLoading();
+
+        if (response.success && response.data.data) {
+            const user = response.data.data;
+            
+            // Llenar la vista con los datos
+            document.getElementById('perfilNombre').textContent = `${user.nombre} ${user.apellidos}`.trim();
+            document.getElementById('perfilEmail').textContent = user.email;
+            
+            if (user.telefono) {
+                document.getElementById('perfilTelefono').textContent = user.telefono;
+            }
+            if (user.puntos !== undefined) {
+                document.getElementById('perfilPuntos').textContent = user.puntos;
+            }
+            
+            // Actualizar foto si existe
+            if (user.foto_url) {
+                document.getElementById('avatarIcon').classList.add('hidden');
+                const img = document.getElementById('avatarImg');
+                img.src = user.foto_url;
+                img.classList.remove('hidden');
+            }
+        } else {
+            showError('No se pudo cargar la información del perfil');
+        }
+
+        // 3. Ejecutar Logout
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            const confirmado = await confirmDialog('¿Cerrar sesión?', 'Tendrás que volver a ingresar tu correo y contraseña para hacer pedidos.');
+            
+            if (confirmado) {
+                showLoading('Cerrando sesión...');
+                // Invalidamos el refresh_token en la base de datos
+                await APICliente.post('/api/v1/clientes/logout', {});
+                hideLoading();
+                
+                // Eliminamos los tokens locales y redirigimos
+                APICliente.forceLogout();
+            }
+        });
+    });
+</script>
+{% endblock %}
