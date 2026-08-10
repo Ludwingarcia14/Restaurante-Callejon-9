@@ -67,6 +67,7 @@ function renderizarPedidos() {
     document.getElementById('total-pendientes').textContent = pedidosLista.length;
 }
 
+
 // ===================================
 // CREAR RECTÁNGULO COMPACTO DE PEDIDO
 // ===================================
@@ -76,9 +77,8 @@ function crearRectanguloPedido(pedido) {
     
     return `
         <div class="bg-white border-l-4 border-red-500 rounded-lg p-4 shadow-md hover:shadow-lg transition">
-            <!-- Número Pedido -->
             <div class="flex items-center justify-between mb-3">
-                <h4 class="text-2xl font-bold text-gray-800">
+                <h4 class="text-2xl 2xl:text-4xl font-bold text-gray-800">
                     <i class="bi bi-hash"></i> ${pedido.numero_pedido}
                 </h4>
                 <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
@@ -86,27 +86,25 @@ function crearRectanguloPedido(pedido) {
                 </span>
             </div>
             
-            <!-- Info Rápida -->
             <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
                 <div class="bg-gray-50 p-2 rounded">
-                    <p class="text-xs text-gray-600 font-semibold">MESA</p>
-                    <p class="font-bold text-gray-800">${pedido.numero_mesa}</p>
+                    <p class="text-xs 2xl:text-base text-gray-600 font-semibold">MESA</p>
+                    <p class="font-bold text-gray-800 2xl:text-xl">${pedido.numero_mesa}</p>
                 </div>
                 <div class="bg-gray-50 p-2 rounded">
-                    <p class="text-xs text-gray-600 font-semibold">ENTRADA</p>
-                    <p class="font-bold text-gray-800">${pedido.hora_entrada}</p>
+                    <p class="text-xs 2xl:text-base text-gray-600 font-semibold">ENTRADA</p>
+                    <p class="font-bold text-gray-800 2xl:text-xl">${pedido.hora_entrada}</p>
                 </div>
                 <div class="bg-gray-50 p-2 rounded">
-                    <p class="text-xs text-gray-600 font-semibold">ESPERANDO</p>
-                    <p class="font-bold ${urgencia}">${tiempoEsperando} min</p>
+                    <p class="text-xs 2xl:text-base text-gray-600 font-semibold">ESPERANDO</p>
+                    <p class="font-bold ${urgencia} 2xl:text-xl">${tiempoEsperando} min</p>
                 </div>
                 <div class="bg-gray-50 p-2 rounded">
-                    <p class="text-xs text-gray-600 font-semibold">REGISTRADO</p>
-                    <p class="font-bold text-gray-800 text-xs">${pedido.usuario_registro}</p>
+                    <p class="text-xs 2xl:text-base text-gray-600 font-semibold">REGISTRADO</p>
+                    <p class="font-bold text-gray-800 text-xs 2xl:text-base">${pedido.usuario_registro}</p>
                 </div>
             </div>
             
-            <!-- Acciones -->
             <div class="flex gap-2">
                 <button onclick="verDetallesPedido(${pedido.id})" class="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold text-sm">
                     <i class="bi bi-eye"></i> Ver Detalles
@@ -118,6 +116,7 @@ function crearRectanguloPedido(pedido) {
         </div>
     `;
 }
+
 
 // ===================================
 // RENDERIZAR LISTADO LATERAL
@@ -132,9 +131,9 @@ function renderizarListadoRapido() {
     
     listado.innerHTML = pedidosLista.map((pedido, index) => `
         <button onclick="verDetallesPedido(${pedido.id})" class="w-full text-left p-2 hover:bg-orange-50 rounded-lg transition border-l-2 border-orange-500">
-            <p class="font-bold text-gray-800 text-sm">#${pedido.numero_pedido}</p>
-            <p class="text-xs text-gray-600">Mesa ${pedido.numero_mesa}</p>
-            <p class="text-xs text-red-600 font-bold mt-1">${pedido.minutos_esperando} min</p>
+            <p class="font-bold text-gray-800 text-sm 2xl:text-xl">#${pedido.numero_pedido}</p>
+            <p class="text-xs 2xl:text-base text-gray-600">Mesa ${pedido.numero_mesa}</p>
+            <p class="text-xs 2xl:text-base text-red-600 font-bold mt-1">${pedido.minutos_esperando} min</p>
         </button>
     `).join('');
 }
@@ -180,7 +179,7 @@ function rellenarModalDetalles(pedido) {
         <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
             <div class="flex items-start justify-between mb-2">
                 <div>
-                    <p class="font-bold text-gray-800">
+                    <p class="font-bold text-gray-800 2xl:text-xl">
                         <span class="text-orange-600 font-bold">${detalle.cantidad}x</span>
                         ${detalle.platillo}
                     </p>
@@ -189,7 +188,7 @@ function rellenarModalDetalles(pedido) {
             </div>
             ${detalle.notas_especiales ? `
                 <div class="mt-2 p-2 bg-yellow-50 border-l-2 border-yellow-500 rounded">
-                    <p class="text-sm text-gray-700">
+                    <p class="text-sm 2xl:text-base text-gray-700">
                         <i class="bi bi-exclamation-circle text-yellow-600"></i>
                         <strong>Notas:</strong> ${detalle.notas_especiales}
                     </p>
