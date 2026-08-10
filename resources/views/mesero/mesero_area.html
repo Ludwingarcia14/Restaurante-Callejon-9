@@ -1,0 +1,140 @@
+{% extends "layout/layout_mesero.html" %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
+{% block page_title %}Evolución de Ingresos{% endblock %}
+{% block page_subtitle %}Ingresos semanales y acumulado · últimos 90 días{% endblock %}
+
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="card card--pad" style="background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.3)">
+    <div style="display:flex;align-items:flex-start;gap:12px;font-size:13.5px;color:var(--ink)">
+      <i class="bi bi-info-circle-fill" style="color:#16a34a;flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong>¿Para qué sirve el gráfico de área?</strong><br>
+        Visualiza el crecimiento acumulado del restaurante semana a semana. El área rellena
+        resalta la magnitud del flujo de ingresos, mientras la línea acumulada muestra si el
+        negocio va en ascenso. Es ideal para identificar semanas récord, caídas puntuales y
+        estacionalidad sin perderse en el detalle diario.
+      </div>
+    </div>
+  </div>
+
+  <div id="area-loading" style="height:160px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3)">
+    <i class="bi bi-arrow-repeat" style="font-size:18px"></i> Cargando…
+  </div>
+
+  <div id="area-content" style="display:none">
+
+    <div id="area-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px"></div>
+
+    <div class="card card--pad">
+      <div class="card__head">
+        <span class="card__title"><i class="bi bi-graph-up-arrow" style="color:#16a34a;margin-right:6px"></i>Ingresos por semana</span>
+        <span class="card__note">Área = ingresos semanales · Línea = acumulado total</span>
+      </div>
+      <div id="chart-area" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><p class="card__title">Detalle semanal</p></div>
+      <div style="overflow-x:auto">
+        <table class="table">
+          <thead><tr>
+            <th>Semana</th>
+            <th class="is-num">Pedidos</th>
+            <th class="is-num">Ingresos</th>
+            <th class="is-num">Acumulado</th>
+          </tr></thead>
+          <tbody id="area-tabla"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const FONT = 'Instrument Sans,system-ui,sans-serif';
+function isDark()  { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches); }
+function gridClr(){ return isDark() ? '#322D25' : '#E7E2D8'; }
+function lblClr() { return isDark() ? '#948C80' : '#8A8478'; }
+function fmtMXN(v){ return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(v||0); }
+
+let apex;
+
+async function cargar() {
+  try {
+    const r = await fetch('/api/analytics/area');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error');
+
+    document.getElementById('area-loading').style.display = 'none';
+    document.getElementById('area-content').style.display = '';
+
+    document.getElementById('area-kpis').innerHTML = `
+      <div class="kpi" style="border-left:3px solid #16a34a">
+        <span class="kpi__k">Ingresos totales</span>
+        <span class="kpi__v num">${fmtMXN(d.total_ingresos)}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.periodo_dias} días</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--info)">
+        <span class="kpi__k">Total pedidos</span>
+        <span class="kpi__v num">${d.total_pedidos.toLocaleString('es-MX')}</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid #f59e0b">
+        <span class="kpi__k">Semana récord</span>
+        <span class="kpi__v" style="font-size:15px">${d.sem_record}</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--accent)">
+        <span class="kpi__k">Semanas analizadas</span>
+        <span class="kpi__v num">${d.n_semanas}</span>
+      </div>`;
+
+    if (apex) { apex.destroy(); apex = null; }
+    apex = new ApexCharts(document.getElementById('chart-area'), {
+      chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: FONT },
+      series: [
+        { name: 'Ingresos semanales', data: d.ingresos },
+        { name: 'Acumulado',          data: d.acumulado }
+      ],
+      xaxis: {
+        categories: d.labels,
+        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } }
+      },
+      yaxis: {
+        labels: { formatter: v => fmtMXN(v), style: { colors: lblClr() } }
+      },
+      colors: ['#16a34a', '#4A6FA5'],
+      stroke: { curve: 'smooth', width: [2, 2] },
+      fill: {
+        type: 'gradient',
+        gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 100] }
+      },
+      dataLabels: { enabled: false },
+      grid: { borderColor: gridClr(), strokeDashArray: 3 },
+      tooltip: { y: { formatter: v => fmtMXN(v) } },
+      legend: { position: 'top', labels: { colors: lblClr() } }
+    });
+    apex.render();
+
+    document.getElementById('area-tabla').innerHTML = d.labels.map((lbl, i) => `
+      <tr>
+        <td class="is-key">${lbl}</td>
+        <td class="is-num">${d.pedidos[i]}</td>
+        <td class="is-num">${fmtMXN(d.ingresos[i])}</td>
+        <td class="is-num is-total">${fmtMXN(d.acumulado[i])}</td>
+      </tr>`).join('');
+
+  } catch(e) {
+    document.getElementById('area-loading').innerHTML =
+      `<span style="color:var(--accent);font-size:13px"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+  }
+}
+
+cargar();
+</script>
+{% endblock %}

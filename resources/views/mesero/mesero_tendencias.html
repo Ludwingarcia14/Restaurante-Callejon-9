@@ -1,0 +1,130 @@
+{% extends "layout/layout_mesero.html" %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
+{% block page_title %}Tendencias de Ventas{% endblock %}
+{% block page_subtitle %}Pedidos e ingresos diarios · últimos 90 días</span>{% endblock %}
+
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="card card--pad" style="background:rgba(63,122,82,.07);border:1px solid rgba(63,122,82,.3);margin-bottom:4px">
+    <div style="display:flex;align-items:flex-start;gap:12px;font-size:13.5px;color:var(--ink)">
+      <i class="bi bi-info-circle-fill" style="color:#3F7A52;flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong>¿Para qué sirve esta gráfica?</strong><br>
+        Una gráfica de líneas revela tendencias a lo largo del tiempo. Aquí puedes identificar
+        los días con más actividad, semanas flojas, picos estacionales y si el restaurante
+        está creciendo o perdiendo tracción. Combina pedidos (barras) e ingresos (línea) en
+        un solo vistazo.
+      </div>
+    </div>
+  </div>
+
+  <div id="tend-loading" style="height:160px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3)">
+    <i class="bi bi-arrow-repeat" style="font-size:18px"></i> Cargando…
+  </div>
+
+  <div id="tend-content" style="display:none">
+
+    <div id="tend-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px"></div>
+
+    <div class="card card--pad">
+      <div class="card__head">
+        <span class="card__title"><i class="bi bi-graph-up" style="color:#3F7A52;margin-right:6px"></i>Evolución diaria</span>
+        <span class="card__note">Barras = pedidos (eje izq.) · Línea = ingresos (eje der.)</span>
+      </div>
+      <div id="chart-tendencias" style="margin-top:8px"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const FONT = 'Instrument Sans,system-ui,sans-serif';
+function isDark()    { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches); }
+function gridClr()  { return isDark() ? '#322D25' : '#E7E2D8'; }
+function lblClr()   { return isDark() ? '#948C80' : '#8A8478'; }
+function fmtMXN(v)  { return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(v||0); }
+
+let apex;
+
+async function cargar() {
+  try {
+    const r = await fetch('/api/analytics/tendencias');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error');
+
+    document.getElementById('tend-loading').style.display = 'none';
+    document.getElementById('tend-content').style.display = '';
+
+    const diasActivos = d.labels.length;
+    const pico = d.pedidos.indexOf(Math.max(...d.pedidos));
+    const promDiario = d.total_pedidos > 0 ? (d.total_pedidos / diasActivos).toFixed(1) : 0;
+
+    document.getElementById('tend-kpis').innerHTML = `
+      <div class="kpi" style="border-left:3px solid #3F7A52">
+        <span class="kpi__k">Total pedidos</span>
+        <span class="kpi__v num">${d.total_pedidos.toLocaleString('es-MX')}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.periodo_dias} días</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--accent)">
+        <span class="kpi__k">Ingresos totales</span>
+        <span class="kpi__v num">${fmtMXN(d.total_ingresos)}</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--info)">
+        <span class="kpi__k">Promedio / día</span>
+        <span class="kpi__v num">${promDiario} pedidos</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid #f59e0b">
+        <span class="kpi__k">Día pico</span>
+        <span class="kpi__v num" style="font-size:15px">${d.labels[pico] || '—'}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.pedidos[pico] || 0} pedidos</span>
+      </div>`;
+
+    if (apex) { apex.destroy(); apex = null; }
+    apex = new ApexCharts(document.getElementById('chart-tendencias'), {
+      chart: { type: 'line', height: 320, toolbar: { show: false }, fontFamily: FONT },
+      series: [
+        { name: 'Pedidos',  type: 'column', data: d.pedidos },
+        { name: 'Ingresos', type: 'line',   data: d.ingresos }
+      ],
+      xaxis: {
+        categories: d.labels,
+        tickAmount: Math.min(12, d.labels.length),
+        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } }
+      },
+      yaxis: [
+        { seriesName: 'Pedidos',  title: { text: 'Pedidos', style: { color: lblClr() } },
+          labels: { style: { colors: lblClr() } } },
+        { seriesName: 'Ingresos', opposite: true,
+          title: { text: 'Ingresos (MXN)', style: { color: lblClr() } },
+          labels: { formatter: v => fmtMXN(v), style: { colors: lblClr() } } }
+      ],
+      colors: ['#4A6FA5', '#3F7A52'],
+      stroke: { width: [0, 2.5], curve: 'smooth' },
+      fill: { opacity: [0.85, 1] },
+      plotOptions: { bar: { columnWidth: '60%', borderRadius: 3 } },
+      dataLabels: { enabled: false },
+      grid: { borderColor: gridClr(), strokeDashArray: 3 },
+      tooltip: {
+        y: [
+          { formatter: v => v + ' pedidos' },
+          { formatter: v => fmtMXN(v) }
+        ]
+      },
+      legend: { position: 'top', labels: { colors: lblClr() } }
+    });
+    apex.render();
+
+  } catch(e) {
+    document.getElementById('tend-loading').innerHTML =
+      `<span style="color:var(--accent);font-size:13px"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+  }
+}
+
+cargar();
+</script>
+{% endblock %}

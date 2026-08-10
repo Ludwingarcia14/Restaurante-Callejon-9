@@ -1,120 +1,78 @@
-﻿{% extends "layout/layout_mesero.html" %}
+{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Random Forest{% endblock %}
 {% block page_title %}Random Forest{% endblock %}
 {% block page_subtitle %}<span data-i18n="ar_sub">CRISP-DM · Fase 4 — 200 árboles entrenados sobre clusters K-Means</span>{% endblock %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
 
-{% block navigation %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    const sec = document.querySelector('.sidebar-nav .border-t');
-    if (sec) sec.style.display = 'none';
-});
-</script>
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
-    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
-</a>
-<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
-</a>
-<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
-</a>
-<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
-    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
-</a>
-<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
-    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
-</a>
-<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
-    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
-</a>
-<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link active">
-    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
-</a>
-<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
-    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
-    <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>
-</a>
-<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
-    <i class="bi bi-share text-lg"></i><span>Asociación</span>
-</a>
-<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
-    <i class="bi bi-graph-up text-lg"></i><span>Predicción</span>
-</a>
-{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
 
 {% block content %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="page">
 
-<div class="mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
-     style="background:rgba(16,185,129,0.08); border:1px solid #6ee7b7; color:#065f46;">
-    <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-emerald-500"></i>
-    <div>
-        <strong>Enfoque híbrido — K-Means + Random Forest</strong><br>
-        K-Means segmenta las mesas (no supervisado); el <strong>Random Forest</strong>
-        aprende esas etiquetas entrenando <strong>200 árboles</strong> y promediando sus resultados.
-        A diferencia de un árbol único, distribuye la importancia entre todos los features
-        y muestra cuánto contribuye cada variable <em>en promedio ± su variabilidad entre árboles</em>.
-    </div>
-</div>
-
-<!-- Loading -->
-<div id="arbol-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="ar_entrenando">Entrenando Random Forest (200 árboles)…</span>
-</div>
-
-<!-- Contenido principal -->
-<div id="arbol-content" style="display:none;">
-
-    <!-- Importancia de variables -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-bar-chart-horizontal text-emerald-500"></i> <span data-i18n="ar_importancia">Importancia de Variables</span>
-        </h3>
-        <p class="text-xs text-gray-400 mb-5" data-i18n="ar_imp_desc">¿Qué variable influye más en la clasificación de las mesas?</p>
-
-        <div class="w-full mb-6" style="max-height:200px;">
-            <canvas id="chartImportancias"></canvas>
+    <!-- Info banner -->
+    <div class="card card--pad" style="background:rgba(16,185,129,.07);border:1px solid #6ee7b7;margin-bottom:20px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--ink);">
+            <i class="bi bi-info-circle-fill" style="color:#10b981;flex-shrink:0;margin-top:2px;"></i>
+            <div>
+                <strong>Enfoque híbrido — K-Means + Random Forest</strong><br>
+                K-Means segmenta las mesas (no supervisado); el <strong>Random Forest</strong>
+                aprende esas etiquetas entrenando <strong>200 árboles</strong> y promediando sus resultados.
+                A diferencia de un árbol único, distribuye la importancia entre todos los features
+                y muestra cuánto contribuye cada variable <em>en promedio ± su variabilidad entre árboles</em>.
+            </div>
         </div>
-        <div id="importancias-detalle" class="space-y-5"></div>
     </div>
 
-    <!-- Métricas del modelo -->
-    <div id="rf-metricas" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"></div>
+    <!-- Loading -->
+    <div id="arbol-loading" style="height:200px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3)"><i class="bi bi-arrow-repeat" style="font-size:20px"></i> <span data-i18n="ar_entrenando">Entrenando Random Forest…</span></div>
 
-    <!-- Árbol representativo -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-code-slash text-emerald-500"></i> <span data-i18n="ar_arbol_rep">Árbol Representativo del Bosque</span>
-        </h3>
-        <p class="text-xs text-gray-400 mb-4">
-            <span data-i18n="ar_arbol_desc">El árbol individual cuyas importancias más se acercan al promedio del bosque (max_depth=3).</span>
-        </p>
-        <pre id="arbol-reglas"
-             class="text-sm p-5 rounded-xl overflow-x-auto leading-7"
-             style="background:#0f172a; color:#e2e8f0; font-family:'Courier New', monospace;"></pre>
+    <!-- Contenido principal -->
+    <div id="arbol-content" style="display:none;">
+
+        <!-- Importancia de variables -->
+        <div class="card card--pad" style="margin-bottom:20px;">
+            <div class="card__head">
+                <span class="card__title"><i class="bi bi-bar-chart-horizontal" style="color:var(--ok);margin-right:6px;"></i><span data-i18n="ar_importancia">Importancia de Variables</span></span>
+                <span class="card__note" data-i18n="ar_imp_desc">¿Qué variable influye más en la clasificación de las mesas?</span>
+            </div>
+            <div id="chart-importancias" style="margin-bottom:20px"></div>
+            <div id="importancias-detalle"></div>
+        </div>
+
+        <!-- Métricas del modelo -->
+        <div id="rf-metricas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;"></div>
+
+        <!-- Árbol representativo -->
+        <div class="card card--pad" style="margin-bottom:20px;">
+            <div class="card__head">
+                <span class="card__title"><i class="bi bi-code-slash" style="color:var(--ok);margin-right:6px;"></i><span data-i18n="ar_arbol_rep">Árbol Representativo del Bosque</span></span>
+                <span class="card__note" data-i18n="ar_arbol_desc">El árbol individual cuyas importancias más se acercan al promedio del bosque (max_depth=3).</span>
+            </div>
+            <pre id="arbol-reglas"
+                 style="background:#0f172a;color:#e2e8f0;font-family:'Courier New',monospace;font-size:13px;line-height:1.7;padding:20px;border-radius:10px;overflow-x:auto;margin-top:12px;"></pre>
+        </div>
+
     </div>
 
 </div>
 
 <style>
-@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-.animate-spin { animation: spin 1s linear infinite; }
+@keyframes arbol-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+#arbol-loading .bi-arrow-repeat { animation: arbol-spin 1s linear infinite; }
 </style>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-let chartImportancias;
-const COLORS = ['#f59e0b','#3b82f6','#94a3b8'];
-const BG     = ['#fef3c7','#dbeafe','#f1f5f9'];
+const CHART_FONT = 'Instrument Sans,system-ui,sans-serif';
+function isDark()    { return document.documentElement.classList.contains('dark'); }
+function gridColor() { return isDark() ? '#322D25' : '#E7E2D8'; }
+function lblColor()  { return isDark() ? '#948C80' : '#8A8478'; }
 
-function pct(v) { return `${(v*100).toFixed(1)}%`; }
+function pct(v) { return (v * 100).toFixed(1) + '%'; }
+
+let apexImp = null;
 
 async function cargar() {
     try {
@@ -124,7 +82,7 @@ async function cargar() {
 
         if (!d.arbol) {
             document.getElementById('arbol-loading').innerHTML =
-                `<span class="text-yellow-500 text-sm"><i class="bi bi-exclamation-triangle"></i> ${t('ar_sin_datos')}</span>`;
+                '<span style="color:#f59e0b;font-size:14px;"><i class="bi bi-exclamation-triangle"></i> ' + t('ar_sin_datos') + '</span>';
             return;
         }
 
@@ -137,27 +95,27 @@ async function cargar() {
 
     } catch(e) {
         document.getElementById('arbol-loading').innerHTML =
-            `<span class="text-red-400 text-sm"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+            '<span style="color:#ef4444;font-size:14px;"><i class="bi bi-exclamation-circle"></i> ' + e.message + '</span>';
     }
 }
 
 function renderMetricas(arbol) {
     const oob = arbol.oob_score !== undefined ? (arbol.oob_score * 100).toFixed(1) + '%' : 'N/A';
     document.getElementById('rf-metricas').innerHTML = `
-        <div class="rounded-lg p-4 text-center" style="background:#f0fdf4; border:1px solid #86efac;">
-            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">${t('ar_n_arboles')}</p>
-            <p class="text-3xl font-bold text-green-700">${arbol.n_estimators}</p>
-            <p class="text-xs text-gray-400 mt-1">Random Forest (max_depth=3)</p>
+        <div class="kpi" style="border-left:3px solid var(--ok);">
+            <span class="kpi__k">${t('ar_n_arboles')}</span>
+            <span class="kpi__v">${arbol.n_estimators}</span>
+            <span style="font-size:11px;color:var(--ink-3);">Random Forest (max_depth=3)</span>
         </div>
-        <div class="rounded-lg p-4 text-center" style="background:#f5f3ff; border:1px solid #c4b5fd;">
-            <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">OOB Score</p>
-            <p class="text-3xl font-bold text-purple-700">${oob}</p>
-            <p class="text-xs text-gray-400 mt-1">${t('ar_oob_desc')}</p>
+        <div class="kpi" style="border-left:3px solid var(--info);">
+            <span class="kpi__k">OOB Score</span>
+            <span class="kpi__v">${oob}</span>
+            <span style="font-size:11px;color:var(--ink-3);">${t('ar_oob_desc')}</span>
         </div>
-        <div class="rounded-lg p-4 text-center" style="background:#fff7ed; border:1px solid #fed7aa;">
-            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Features</p>
-            <p class="text-3xl font-bold text-orange-600">${arbol.feature_importances.length}</p>
-            <p class="text-xs text-gray-400 mt-1">${t('ar_feats_desc')}</p>
+        <div class="kpi" style="border-left:3px solid var(--accent);">
+            <span class="kpi__k">Features</span>
+            <span class="kpi__v">${arbol.feature_importances.length}</span>
+            <span style="font-size:11px;color:var(--ink-3);">${t('ar_feats_desc')}</span>
         </div>
     `;
 }
@@ -165,50 +123,33 @@ function renderMetricas(arbol) {
 function renderImportancias(imp) {
     const maxImp = Math.max(...imp.map(f => f.importancia), 0.001);
 
-    if (chartImportancias) chartImportancias.destroy();
-    chartImportancias = new Chart(document.getElementById('chartImportancias'), {
-        type: 'bar',
-        data: {
-            labels: imp.map(f => f.feature),
-            datasets: [{
-                label: 'Importancia',
-                data: imp.map(f => f.importancia),
-                backgroundColor: ['#10b981cc','#3b82f6cc','#f59e0bcc'],
-                borderColor:     ['#10b981','#3b82f6','#f59e0b'],
-                borderWidth: 1,
-                borderRadius: 6,
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: {
-                    max: 1,
-                    ticks: { callback: v => pct(v) },
-                    title: { display: true, text: t('ar_imp_rel'), font: { size: 10 } }
-                },
-                y: { grid: { display: false } }
-            }
-        }
+    if (apexImp) { apexImp.destroy(); apexImp = null; }
+    apexImp = new ApexCharts(document.getElementById('chart-importancias'), {
+        chart: { type: 'bar', height: 180, toolbar: { show: false }, fontFamily: CHART_FONT },
+        series: [{ name: 'Importancia', data: imp.map(f => parseFloat((f.importancia * 100).toFixed(1))) }],
+        xaxis: { categories: imp.map(f => f.feature), labels: { style: { colors: lblColor() } } },
+        yaxis: { labels: { formatter: v => v + '%', style: { colors: lblColor() } } },
+        plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%' } },
+        colors: ['#10b981'],
+        dataLabels: { enabled: true, formatter: v => v.toFixed(1) + '%', style: { fontSize: '10px', colors: [lblColor()] } },
+        grid: { borderColor: gridColor(), strokeDashArray: 3 },
+        tooltip: { y: { formatter: v => v.toFixed(1) + '%' } }
     });
+    apexImp.render();
 
     document.getElementById('importancias-detalle').innerHTML = imp.map(f => `
-        <div>
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-sm font-medium text-gray-700">${f.feature}</span>
-                <span class="text-sm font-bold text-gray-800">
+        <div style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-size:13px;font-weight:500;color:var(--ink);">${f.feature}</span>
+                <span style="font-size:13px;font-weight:700;color:var(--ink);">
                     ${pct(f.importancia)}
-                    <span class="text-xs font-normal text-gray-400 ml-1">± ${pct(f.std || 0)}</span>
+                    <span style="font-size:11px;font-weight:400;color:var(--ink-3);margin-left:4px;">± ${pct(f.std || 0)}</span>
                 </span>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-2.5 relative">
-                <div class="h-2.5 rounded-full bg-emerald-500 transition-all"
-                     style="width:${(f.importancia/maxImp*100).toFixed(1)}%;"></div>
+            <div style="width:100%;background:var(--accent-soft);border-radius:999px;height:8px;">
+                <div style="height:8px;border-radius:999px;background:#10b981;transition:width .4s;width:${(f.importancia / maxImp * 100).toFixed(1)}%;"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-1">${descripcionFeature(f.feature)}</p>
+            <p style="font-size:11px;color:var(--ink-3);margin-top:4px;">${descripcionFeature(f.feature)}</p>
         </div>
     `).join('');
 }
@@ -223,26 +164,23 @@ function descripcionFeature(nombre) {
 }
 
 function renderReglas(reglas, clases) {
-    const colores = ['#f59e0b','#3b82f6','#94a3b8'];
+    const colores = ['#f59e0b', '#3b82f6', '#94a3b8'];
     let html = reglas;
 
-    // Reemplazar "class: N" con el nombre del cluster coloreado
     (clases || []).forEach((cls, i) => {
         const color = colores[i] || '#64748b';
         html = html.replace(
-            new RegExp(`class: ${i}`, 'g'),
-            `<span style="color:${color}; font-weight:700;">→ ${cls}</span>`
+            new RegExp('class: ' + i, 'g'),
+            '<span style="color:' + color + ';font-weight:700;">→ ' + cls + '</span>'
         );
     });
 
-    // Colorear los operadores de comparación
     html = html
         .replace(/(&lt;=|<=)/g, '<span style="color:#38bdf8;">$1</span>')
         .replace(/(&gt;|>)/g,   '<span style="color:#fb923c;">$1</span>');
 
     document.getElementById('arbol-reglas').innerHTML = html;
 }
-
 
 cargar();
 </script>

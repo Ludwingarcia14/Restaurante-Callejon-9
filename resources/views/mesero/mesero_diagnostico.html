@@ -1,115 +1,77 @@
-﻿{% extends "layout/layout_mesero.html" %}
+{% extends "layout/layout_mesero.html" %}
 
 {% block title %}Diagnóstico de Datos{% endblock %}
 {% block page_title %}<span data-i18n="diag_titulo">Diagnóstico de Datos</span>{% endblock %}
 {% block page_subtitle %}<span data-i18n="diag_sub">CRISP-DM · Fase 2 — Entendimiento estadístico de las comandas · últimos 90 días</span>{% endblock %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
 
-{% block navigation %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    const sec = document.querySelector('.sidebar-nav .border-t');
-    if (sec) sec.style.display = 'none';
-});
-</script>
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
-    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
-</a>
-<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
-</a>
-<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
-</a>
-<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
-    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
-</a>
-<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
-    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
-</a>
-<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
-    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
-</a>
-<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
-    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
-</a>
-<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link active">
-    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
-    <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>
-</a>
-<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
-    <i class="bi bi-share text-lg"></i><span>Asociación</span>
-</a>
-<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
-    <i class="bi bi-graph-up text-lg"></i><span>Predicción</span>
-</a>
-{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
 
 {% block content %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="page">
 
-<div class="mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
-     style="background:rgba(99,102,241,0.08); border:1px solid #c7d2fe; color:#3730a3;">
-    <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-indigo-500"></i>
-    <div>
-        <strong>CRISP-DM · Fase 2 — Entendimiento de los Datos</strong><br>
-        Perfil estadístico de las comandas de los últimos 90 días: volumen por mesa,
-        distribución de tickets, propinas promedio y métodos de pago.
-        Esta información es la base del modelado K-Means.
-    </div>
-</div>
-
-<!-- Loading -->
-<div id="diag-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="diag_cargando">Cargando diagnóstico…</span>
-</div>
-
-<!-- Contenido -->
-<div id="diag-content" style="display:none;">
-
-    <!-- KPIs globales -->
-    <div id="diag-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
-
-    <!-- Perfil por mesa -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 overflow-auto">
-        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-table text-indigo-500"></i> <span data-i18n="diag_perfil">Perfil Estadístico por Mesa</span>
-        </h3>
-        <p class="text-xs text-gray-400 mb-4" data-i18n="diag_perfil_desc">
-            Mín., máx., promedio y desviación estándar del ticket. A mayor desviación, más variabilidad en el gasto.
-        </p>
-        <div id="diag-tabla-mesas" class="overflow-x-auto"></div>
-    </div>
-
-    <!-- Métodos de pago -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="bi bi-pie-chart text-indigo-500"></i> <span data-i18n="diag_metodos">Distribución de Métodos de Pago</span>
-        </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
-            <div class="flex justify-center">
-                <canvas id="chartMetodos" style="max-height:240px; max-width:240px;"></canvas>
+    <!-- Info banner -->
+    <div class="card card--pad" style="background:rgba(99,102,241,.07);border:1px solid #c7d2fe;margin-bottom:24px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;color:#3730a3;font-size:13px;">
+            <i class="bi bi-info-circle-fill" style="margin-top:2px;flex-shrink:0;color:#6366f1;font-size:16px;"></i>
+            <div>
+                <strong>CRISP-DM · Fase 2 — Entendimiento de los Datos</strong><br>
+                Perfil estadístico de las comandas de los últimos 90 días: volumen por mesa,
+                distribución de tickets, propinas promedio y métodos de pago.
+                Esta información es la base del modelado K-Means.
             </div>
-            <div id="diag-metodos-lista" class="space-y-3"></div>
         </div>
     </div>
+
+    <!-- Loading -->
+    <div id="diag-loading" style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--ink-3)"><i class="bi bi-arrow-repeat" style="font-size:20px"></i></div>
+
+    <!-- Contenido -->
+    <div id="diag-content" style="display:none;">
+
+        <!-- KPIs globales -->
+        <div id="diag-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;"></div>
+
+        <!-- Perfil por mesa -->
+        <div class="card card--pad" style="margin-bottom:24px;">
+            <div class="card__head">
+                <span class="card__title">
+                    <i class="bi bi-table" style="color:var(--info);margin-right:6px;"></i>
+                    <span data-i18n="diag_perfil">Perfil Estadístico por Mesa</span>
+                </span>
+            </div>
+            <p style="font-size:12px;color:var(--ink-3);margin-bottom:16px;" data-i18n="diag_perfil_desc">
+                Mín., máx., promedio y desviación estándar del ticket. A mayor desviación, más variabilidad en el gasto.
+            </p>
+            <div style="overflow-x:auto;">
+                <div id="diag-tabla-mesas"></div>
+            </div>
+        </div>
+
+        <!-- Métodos de pago -->
+        <div class="card card--pad">
+            <div class="card__head">
+                <span class="card__title">
+                    <i class="bi bi-pie-chart" style="color:var(--info);margin-right:6px;"></i>
+                    <span data-i18n="diag_metodos">Distribución de Métodos de Pago</span>
+                </span>
+            </div>
+            <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;margin-top:16px;">
+                <div id="chart-metodos" style="width:200px;height:200px"></div>
+                <div id="diag-metodos-lista"></div>
+            </div>
+        </div>
+
+    </div>
 </div>
+{% endblock %}
 
-<style>
-@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-.animate-spin { animation: spin 1s linear infinite; }
-</style>
-
+{% block extra_scripts %}
 <script>
-let chartMetodos;
+let apexMetodos;
 
 function fmt(v) {
-    return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v || 0);
 }
 
 async function cargar() {
@@ -125,62 +87,62 @@ async function cargar() {
         renderTabla(d.por_mesa);
         renderMetodos(d.metodos_pago);
 
-    } catch(e) {
+    } catch (e) {
         document.getElementById('diag-loading').innerHTML =
-            `<span class="text-red-400 text-sm"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+            `<span style="color:var(--accent);font-size:13px;"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
     }
 }
 
 function renderKpis(d) {
     document.getElementById('diag-kpis').innerHTML = `
-        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-indigo-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_comandas')}</p>
-            <p class="text-3xl font-bold text-gray-800">${d.total_comandas.toLocaleString('es-MX')}</p>
-            <p class="text-xs text-gray-400 mt-1">${d.periodo_dias} ${t('diag_dias_lbl')}</p>
+        <div class="kpi" style="border-left:3px solid var(--info);">
+            <span class="kpi__k" data-i18n="diag_comandas">Total Comandas</span>
+            <span class="kpi__v">${d.total_comandas.toLocaleString('es-MX')}</span>
+            <span style="font-size:11px;color:var(--ink-3);">${d.periodo_dias} <span data-i18n="diag_dias_lbl">días</span></span>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-emerald-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_ticket_g')}</p>
-            <p class="text-3xl font-bold text-gray-800">${fmt(d.ticket_global_avg)}</p>
+        <div class="kpi" style="border-left:3px solid var(--ok);">
+            <span class="kpi__k" data-i18n="diag_ticket_g">Ticket Promedio Global</span>
+            <span class="kpi__v">${fmt(d.ticket_global_avg)}</span>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-orange-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_desv')}</p>
-            <p class="text-3xl font-bold text-gray-800">${fmt(d.ticket_global_std)}</p>
-            <p class="text-xs text-gray-400 mt-1">${t('diag_var_global')}</p>
+        <div class="kpi" style="border-left:3px solid var(--accent);">
+            <span class="kpi__k" data-i18n="diag_desv">Desviación Global</span>
+            <span class="kpi__v">${fmt(d.ticket_global_std)}</span>
+            <span style="font-size:11px;color:var(--ink-3);" data-i18n="diag_var_global">Variabilidad del ticket</span>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 text-center border-l-4 border-blue-400">
-            <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">${t('diag_periodo_lbl')}</p>
-            <p class="text-lg font-bold text-gray-800">${d.fecha_inicio || '—'}</p>
-            <p class="text-xs text-gray-400">${t('diag_al')} ${d.fecha_fin || '—'}</p>
+        <div class="kpi" style="border-left:3px solid var(--info);">
+            <span class="kpi__k" data-i18n="diag_periodo_lbl">Período</span>
+            <span class="kpi__v" style="font-size:16px;">${d.fecha_inicio || '—'}</span>
+            <span style="font-size:11px;color:var(--ink-3);"><span data-i18n="diag_al">al</span> ${d.fecha_fin || '—'}</span>
         </div>
     `;
 }
 
 function renderTabla(porMesa) {
     document.getElementById('diag-tabla-mesas').innerHTML = `
-        <table class="w-full text-sm border-collapse">
+        <table class="table">
             <thead>
-                <tr class="border-b-2 border-gray-200 text-xs text-gray-500 uppercase tracking-wide bg-gray-50">
-                    <th class="px-4 py-3 text-left">${t('m_mesa_word')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_reg')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_min')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_max')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_prom')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_desv')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_prop')}</th>
-                    <th class="px-4 py-3 text-right">${t('diag_th_com')}</th>
+                <tr>
+                    <th data-i18n="m_mesa_word">Mesa</th>
+                    <th class="is-num" data-i18n="diag_th_reg">Registros</th>
+                    <th class="is-num" data-i18n="diag_th_min">Mín. Ticket</th>
+                    <th class="is-num" data-i18n="diag_th_max">Máx. Ticket</th>
+                    <th class="is-num" data-i18n="diag_th_prom">Prom. Ticket</th>
+                    <th class="is-num" data-i18n="diag_th_desv">Desv. Std</th>
+                    <th class="is-num" data-i18n="diag_th_prop">Propina %</th>
+                    <th class="is-num" data-i18n="diag_th_com">Comensales</th>
                 </tr>
             </thead>
             <tbody>
                 ${porMesa.map(m => `
-                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                        <td class="px-4 py-3 font-semibold text-gray-800">${t('m_mesa_word')} ${m.mesa}</td>
-                        <td class="px-4 py-3 text-right text-gray-600">${m.registros}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_min)}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_max)}</td>
-                        <td class="px-4 py-3 text-right font-semibold text-gray-800">${fmt(m.ticket_avg)}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${fmt(m.ticket_std)}</td>
-                        <td class="px-4 py-3 text-right text-gray-600">${m.propina_pct_avg}%</td>
-                        <td class="px-4 py-3 text-right text-gray-600">${m.comensales_avg}</td>
+                    <tr>
+                        <td class="is-key"><span data-i18n="m_mesa_word">Mesa</span> ${m.mesa}</td>
+                        <td class="is-num">${m.registros}</td>
+                        <td class="is-num">${fmt(m.ticket_min)}</td>
+                        <td class="is-num">${fmt(m.ticket_max)}</td>
+                        <td class="is-num" style="font-weight:600;">${fmt(m.ticket_avg)}</td>
+                        <td class="is-num">${fmt(m.ticket_std)}</td>
+                        <td class="is-num">${m.propina_pct_avg}%</td>
+                        <td class="is-num">${m.comensales_avg}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -191,46 +153,32 @@ function renderTabla(porMesa) {
 function renderMetodos(metodos) {
     if (!metodos || metodos.length === 0) return;
     const total = metodos.reduce((s, m) => s + m.count, 0);
-    const colores = ['#3b82f6','#10b981','#f59e0b','#94a3b8'];
+    const colores = ['#3b82f6', '#10b981', '#f59e0b', '#94a3b8'];
 
-    const dark = document.documentElement.classList.contains('dark');
-    if (chartMetodos) chartMetodos.destroy();
-    chartMetodos = new Chart(document.getElementById('chartMetodos'), {
-        type: 'doughnut',
-        data: {
-            labels: metodos.map(m => m.metodo),
-            datasets: [{
-                data: metodos.map(m => m.count),
-                backgroundColor: colores.slice(0, metodos.length),
-                borderWidth: 2,
-                borderColor: dark ? '#18120e' : '#ffffff',
-                hoverOffset: 6,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${ctx.label}: ${ctx.raw} (${(ctx.raw/total*100).toFixed(1)}%)`
-                    }
-                }
-            },
-            cutout: '65%'
-        }
+    const el = document.getElementById('chart-metodos');
+    if (apexMetodos) { apexMetodos.destroy(); apexMetodos = null; }
+
+    apexMetodos = new ApexCharts(el, {
+        chart: { type: 'donut', width: 200, height: 200, fontFamily: 'Instrument Sans,system-ui,sans-serif' },
+        series: metodos.map(m => m.count),
+        labels: metodos.map(m => m.metodo),
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#94a3b8'],
+        dataLabels: { enabled: false },
+        plotOptions: { pie: { donut: { size: '65%' } } },
+        legend: { show: false },
+        tooltip: { y: { formatter: (v, { seriesIndex, w }) => ' ' + w.globals.labels[seriesIndex] + ': ' + v + ' (' + (v / total * 100).toFixed(1) + '%)' } }
     });
+    apexMetodos.render();
 
-    const textMut = dark ? '#a08878' : '#9ca3af';
     document.getElementById('diag-metodos-lista').innerHTML = metodos.map((m, i) => `
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${colores[i]};"></span>
-                <span class="capitalize text-sm" style="color:${dark ? '#c5b5a4' : '#374151'};">${m.metodo}</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line-soft);">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="width:10px;height:10px;border-radius:50%;background:${colores[i] || '#94a3b8'};flex-shrink:0;display:inline-block;"></span>
+                <span style="font-size:13px;color:var(--ink);text-transform:capitalize;">${m.metodo}</span>
             </div>
-            <div class="text-right">
-                <span class="text-sm font-bold" style="color:${colores[i]};">${m.count}</span>
-                <span class="text-xs ml-1" style="color:${textMut};">(${(m.count/total*100).toFixed(1)}%)</span>
+            <div style="text-align:right;">
+                <span style="font-size:13px;font-weight:700;color:${colores[i] || '#94a3b8'};">${m.count}</span>
+                <span style="font-size:11px;color:var(--ink-3);margin-left:4px;">(${(m.count / total * 100).toFixed(1)}%)</span>
             </div>
         </div>
     `).join('');

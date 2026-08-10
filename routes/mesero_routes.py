@@ -12,6 +12,7 @@ from controllers.mesero.diagnostico_controller import MeseroDiagnosticoControlle
 from controllers.mesero.metodologia_controller import MeseroMetodologiaController
 from controllers.mesero.etl_controller import MeseroProcesosDatosController
 from controllers.analytics.analytics_controller import AnalyticsController
+from services.analytics_charts_service import AnalyticsChartsService
 from models.producto_model import Producto
 
 # ── Vistas ────────────────────────────────────────────────
@@ -116,6 +117,51 @@ def mesero_prediccion():
     from flask import render_template as _rt
     return _rt("mesero/mesero_prediccion.html", perfil=session.get("perfil_mesero", {}))
 
+@routes_bp.route("/mesero/configuracion")
+@login_required
+@rol_required(['2'])
+def mesero_config():
+    perfil_mesero = session.get("perfil_mesero")
+    if not perfil_mesero:
+        return redirect(url_for("routes.login"))
+    return render_template("mesero/config/config.html", perfil=perfil_mesero)
+
+@routes_bp.route("/mesero/analitica")
+@login_required
+@rol_required(['2'])
+def mesero_analitica():
+    return render_template("mesero/mesero_analitica.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/tendencias")
+@login_required
+@rol_required(['2'])
+def mesero_tendencias():
+    return render_template("mesero/mesero_tendencias.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/histograma")
+@login_required
+@rol_required(['2'])
+def mesero_histograma():
+    return render_template("mesero/mesero_histograma.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/heatmap")
+@login_required
+@rol_required(['2'])
+def mesero_heatmap():
+    return render_template("mesero/mesero_heatmap.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/area")
+@login_required
+@rol_required(['2'])
+def mesero_area():
+    return render_template("mesero/mesero_area.html", perfil=session.get("perfil_mesero", {}))
+
+@routes_bp.route("/mesero/boxplot")
+@login_required
+@rol_required(['2'])
+def mesero_boxplot():
+    return render_template("mesero/mesero_boxplot.html", perfil=session.get("perfil_mesero", {}))
+
 # ── API Mesero ────────────────────────────────────────────
 @routes_bp.route("/api/menu", methods=["GET"])
 @login_required
@@ -206,3 +252,33 @@ def api_mesero_kmeans_recomendaciones():
 @rol_required(['2'])
 def api_mesero_kmeans_diagnostico():
     return MeseroDiagnosticoController.api_diagnostico()
+
+@routes_bp.route("/api/analytics/tendencias", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_tendencias():
+    return jsonify(AnalyticsChartsService.tendencias())
+
+@routes_bp.route("/api/analytics/histograma", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_histograma():
+    return jsonify(AnalyticsChartsService.histograma())
+
+@routes_bp.route("/api/analytics/heatmap", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_heatmap():
+    return jsonify(AnalyticsChartsService.heatmap())
+
+@routes_bp.route("/api/analytics/area", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_area():
+    return jsonify(AnalyticsChartsService.area())
+
+@routes_bp.route("/api/analytics/boxplot", methods=["GET"])
+@login_required
+@rol_required(['2'])
+def api_boxplot():
+    return jsonify(AnalyticsChartsService.boxplot())

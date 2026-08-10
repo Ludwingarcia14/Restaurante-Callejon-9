@@ -1,0 +1,123 @@
+{% extends "layout/layout_mesero.html" %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
+{% block page_title %}Actividad del Restaurante{% endblock %}
+{% block page_subtitle %}Mapa de calor — comandas por día de semana y hora · últimos 90 días{% endblock %}
+
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="card card--pad" style="background:rgba(181,98,58,.07);border:1px solid rgba(181,98,58,.3)">
+    <div style="display:flex;align-items:flex-start;gap:12px;font-size:13.5px;color:var(--ink)">
+      <i class="bi bi-info-circle-fill" style="color:var(--accent);flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong>¿Para qué sirve el mapa de calor?</strong><br>
+        Identifica exactamente cuándo el restaurante está más ocupado. Los colores más intensos
+        marcan los momentos pico. Úsalo para planificar turnos, asignar más personal en horas
+        críticas y reducir tiempos de espera donde más impacta en la experiencia del comensal.
+      </div>
+    </div>
+  </div>
+
+  <div id="hm-loading" style="height:160px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3)">
+    <i class="bi bi-arrow-repeat" style="font-size:18px"></i> Cargando…
+  </div>
+
+  <div id="hm-content" style="display:none">
+
+    <div id="hm-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px"></div>
+
+    <div class="card card--pad">
+      <div class="card__head">
+        <span class="card__title"><i class="bi bi-grid-3x3" style="color:var(--accent);margin-right:6px"></i>Intensidad de comandas</span>
+        <span class="card__note">Celdas más oscuras = más comandas en ese momento</span>
+      </div>
+      <div id="chart-heatmap" style="margin-top:8px"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const FONT = 'Instrument Sans,system-ui,sans-serif';
+function isDark()  { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches); }
+function lblClr() { return isDark() ? '#948C80' : '#8A8478'; }
+
+let apex;
+
+async function cargar() {
+  try {
+    const r = await fetch('/api/analytics/heatmap');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error');
+
+    document.getElementById('hm-loading').style.display = 'none';
+    document.getElementById('hm-content').style.display = '';
+
+    document.getElementById('hm-kpis').innerHTML = `
+      <div class="kpi" style="border-left:3px solid var(--accent)">
+        <span class="kpi__k">Total comandas</span>
+        <span class="kpi__v num">${d.total.toLocaleString('es-MX')}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.periodo_dias} días</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid #f59e0b">
+        <span class="kpi__k">Hora pico</span>
+        <span class="kpi__v num">${d.pico_hora}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.pico_val} comandas máx.</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid #4A6FA5">
+        <span class="kpi__k">Día más activo</span>
+        <span class="kpi__v" style="font-size:16px">${d.pico_dia}</span>
+      </div>`;
+
+    if (apex) { apex.destroy(); apex = null; }
+    apex = new ApexCharts(document.getElementById('chart-heatmap'), {
+      chart: {
+        type: 'heatmap',
+        height: 320,
+        toolbar: { show: false },
+        fontFamily: FONT
+      },
+      series: d.series,
+      xaxis: {
+        labels: { style: { colors: lblClr(), fontSize: '11px' } }
+      },
+      yaxis: {
+        labels: { style: { colors: lblClr() } }
+      },
+      dataLabels: { enabled: false },
+      colors: ['#B5623A'],
+      plotOptions: {
+        heatmap: {
+          shadeIntensity: 0.6,
+          radius: 4,
+          useFillColorAsStroke: false,
+          colorScale: {
+            ranges: [
+              { from: 0, to: 0,  name: 'Sin actividad', color: 'var(--line-soft)' },
+              { from: 1, to: 5,  name: 'Baja',          color: '#f5c8b2' },
+              { from: 6, to: 12, name: 'Media',         color: '#d4855a' },
+              { from: 13, to: 9999, name: 'Alta',       color: '#B5623A' }
+            ]
+          }
+        }
+      },
+      tooltip: {
+        y: { formatter: v => v + ' comandas' }
+      },
+      legend: { show: true, labels: { colors: lblClr() } }
+    });
+    apex.render();
+
+  } catch(e) {
+    document.getElementById('hm-loading').innerHTML =
+      `<span style="color:var(--accent);font-size:13px"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+  }
+}
+
+cargar();
+</script>
+{% endblock %}

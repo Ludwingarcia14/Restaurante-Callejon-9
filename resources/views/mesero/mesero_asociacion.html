@@ -1,180 +1,187 @@
-﻿{% extends "layout/layout_mesero.html" %}
+{% extends "layout/layout_mesero.html" %}
 {% block title %}Reglas de Asociación{% endblock %}
 {% block page_title %}<span data-i18n="asoc_titulo">Asociación de Platillos</span>{% endblock %}
 {% block page_subtitle %}<span data-i18n="asoc_sub">Qué platillos se piden juntos con más frecuencia</span>{% endblock %}
-
-{% block navigation %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.style.display = 'none';
-    });
-    const sec = document.querySelector('.sidebar-nav .border-t');
-    if (sec) sec.style.display = 'none';
-});
-</script>
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link"><i class="bi bi-house-door text-lg"></i><span>Inicio</span></a>
-<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link"><i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span></a>
-<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link"><i class="bi bi-journal-text text-lg"></i><span>Menú</span></a>
-<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link"><i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span></a>
-<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link"><i class="bi bi-clock-history text-lg"></i><span>Historial</span></a>
-<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link"><i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span></a>
-<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link"><i class="bi bi-tree text-lg"></i><span>Random Forest</span></a>
-<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link"><i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span></a>
-<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link"><i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span></a>
-<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link active"><i class="bi bi-share text-lg"></i><span>Asociación</span></a>
-<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link"><i class="bi bi-graph-up text-lg"></i><span>Predicción</span></a>
-{% endblock %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
 
 {% block content %}
-<div class="asoc-hero mb-6 p-6 rounded-2xl text-white" style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);">
-  <div class="flex items-start gap-4">
-    <div class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
-      <i class="bi bi-share text-2xl"></i>
-    </div>
-    <div>
-      <h2 class="text-xl font-bold mb-1">Reglas de Asociación — Market Basket</h2>
-      <p class="text-sm opacity-85">Descubre qué platillos se piden juntos. Úsalo para hacer sugerencias inteligentes a los comensales y aumentar el ticket promedio.</p>
-    </div>
-  </div>
-</div>
+<div class="page">
 
-<div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4">
-  <div class="flex items-center gap-2">
-    <label class="text-xs font-semibold text-gray-500 uppercase" data-i18n="asoc_soporte">Soporte mín.</label>
-    <select id="sel-soporte" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-      <option value="0.02">2%</option><option value="0.04" selected>4%</option>
-      <option value="0.06">6%</option><option value="0.10">10%</option>
-    </select>
-  </div>
-  <div class="flex items-center gap-2">
-    <label class="text-xs font-semibold text-gray-500 uppercase" data-i18n="asoc_confianza">Confianza mín.</label>
-    <select id="sel-confianza" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-      <option value="0.15">15%</option><option value="0.25" selected>25%</option>
-      <option value="0.40">40%</option><option value="0.60">60%</option>
-    </select>
-  </div>
-  <button onclick="cargar()" class="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style="background:#7c3aed;">
-    <i class="bi bi-arrow-clockwise mr-1"></i><span data-i18n="asoc_calcular">Calcular</span>
-  </button>
-  <span id="estado" class="text-xs text-gray-400"></span>
-</div>
-
-<div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-  <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2">
-    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_calculando">Calculando…</span>
-  </div>
-</div>
-
-<div class="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
-  <div><strong class="text-purple-700">Soporte:</strong> % de comandas con ambos platillos. A mayor soporte, más frecuente es el combo.</div>
-  <div><strong class="text-purple-700">Confianza:</strong> % de veces que, si piden A, también piden B. Mide la fuerza de la sugerencia.</div>
-  <div><strong class="text-purple-700">Lift:</strong> Cuánto más probable es el combo vs. azar. Lift &gt;2 = asociación muy fuerte.</div>
-</div>
-
-<!-- Top combos -->
-<div id="combos-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
-  <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-    <i class="bi bi-trophy text-purple-500"></i> <span data-i18n="asoc_combos">Combos Recomendados — Sugerir a comensales</span>
-  </h3>
-  <div id="combos-lista" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-</div>
-
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-  <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-2 shrink-0">
-      <i class="bi bi-list-ul text-purple-500"></i>
-      <h3 class="text-sm font-semibold text-gray-700" data-i18n="asoc_todas">Todas las reglas</h3>
-    </div>
-    <div id="asoc-slider-wrap" class="flex items-center gap-2 flex-1 max-w-xs" style="display:none!important;">
-      <i class="bi bi-funnel text-purple-400 text-xs shrink-0"></i>
-      <input id="asoc-slider" type="range" min="1" max="50" value="10"
-             class="flex-1 accent-purple-500" style="cursor:pointer;">
-      <span class="text-xs font-semibold text-purple-600 whitespace-nowrap">
-        Top <span id="asoc-slider-val">10</span>/<span id="asoc-slider-max">—</span>
-      </span>
+  <!-- Hero banner -->
+  <div style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);border-radius:14px;padding:24px;margin-bottom:20px;color:#fff;">
+    <div style="display:flex;align-items:flex-start;gap:16px;">
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-share" style="font-size:22px;"></i>
+      </div>
+      <div>
+        <h2 style="font-size:18px;font-weight:700;margin:0 0 4px;">Reglas de Asociación — Market Basket</h2>
+        <p style="font-size:13px;opacity:.85;margin:0;">Descubre qué platillos se piden juntos. Úsalo para hacer sugerencias inteligentes a los comensales y aumentar el ticket promedio.</p>
+      </div>
     </div>
   </div>
-  <div id="tabla-loading" class="flex items-center justify-center h-32 text-gray-400 text-sm gap-2">
-    <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_calculando">Calculando…</span>
+
+  <!-- Filters -->
+  <div class="card card--pad" style="margin-bottom:20px;">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;">
+      <div class="field">
+        <label style="font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px;" data-i18n="asoc_soporte">Soporte mín.</label>
+        <select id="sel-soporte" class="input">
+          <option value="0.02">2%</option>
+          <option value="0.04" selected>4%</option>
+          <option value="0.06">6%</option>
+          <option value="0.10">10%</option>
+        </select>
+      </div>
+      <div class="field">
+        <label style="font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px;" data-i18n="asoc_confianza">Confianza mín.</label>
+        <select id="sel-confianza" class="input">
+          <option value="0.15">15%</option>
+          <option value="0.25" selected>25%</option>
+          <option value="0.40">40%</option>
+          <option value="0.60">60%</option>
+        </select>
+      </div>
+      <button onclick="cargar()" class="btn btn--primary">
+        <i class="bi bi-arrow-clockwise"></i> <span data-i18n="asoc_calcular">Calcular</span>
+      </button>
+      <span id="estado" style="font-size:12px;color:var(--ink-3);align-self:center;"></span>
+    </div>
   </div>
-  <div id="tabla-reglas" style="display:none;" class="overflow-auto"></div>
-  <div id="aviso-panel" style="display:none;" class="p-6 text-center text-sm text-amber-700 bg-amber-50 border-t border-amber-100"></div>
+
+  <!-- KPI cards -->
+  <div id="kpi-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
+    <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;height:64px;color:var(--ink-3);font-size:13px;gap:8px;">
+      <i class="bi bi-arrow-repeat asoc-spin"></i> <span data-i18n="an_calculando">Calculando…</span>
+    </div>
+  </div>
+
+  <!-- Info panel: soporte / confianza / lift -->
+  <div class="card card--pad" style="margin-bottom:20px;background:rgba(109,40,217,.06);border:1px solid rgba(139,92,246,.2);">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;font-size:12px;color:var(--ink-2);">
+      <div><strong style="color:#7c3aed;">Soporte:</strong> % de comandas con ambos platillos. A mayor soporte, más frecuente es el combo.</div>
+      <div><strong style="color:#7c3aed;">Confianza:</strong> % de veces que, si piden A, también piden B. Mide la fuerza de la sugerencia.</div>
+      <div><strong style="color:#7c3aed;">Lift:</strong> Cuánto más probable es el combo vs. azar. Lift &gt;2 = asociación muy fuerte.</div>
+    </div>
+  </div>
+
+  <!-- Combos recomendados panel (filled by JS) -->
+  <div id="combos-panel" style="display:none;margin-bottom:20px;">
+    <div class="card card--pad">
+      <div class="card__head">
+        <h3 class="card__title">
+          <i class="bi bi-trophy" style="color:#7c3aed;"></i>
+          <span data-i18n="asoc_combos">Combos Recomendados — Sugerir a comensales</span>
+        </h3>
+      </div>
+      <div id="combos-lista" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Rules table card -->
+  <div class="card" style="overflow:hidden;">
+    <div class="card__head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <h3 class="card__title">
+        <i class="bi bi-list-ul" style="color:#7c3aed;"></i>
+        <span data-i18n="asoc_todas">Todas las reglas</span>
+      </h3>
+      <div id="asoc-slider-wrap" style="display:none;align-items:center;gap:8px;flex:1;max-width:260px;">
+        <i class="bi bi-funnel" style="color:#8b5cf6;font-size:12px;flex-shrink:0;"></i>
+        <input id="asoc-slider" type="range" min="1" max="50" value="10"
+               style="flex:1;cursor:pointer;accent-color:#7c3aed;">
+        <span style="font-size:12px;font-weight:600;color:#7c3aed;white-space:nowrap;">
+          Top <span id="asoc-slider-val">10</span>/<span id="asoc-slider-max">—</span>
+        </span>
+      </div>
+    </div>
+    <div id="tabla-loading" style="display:flex;align-items:center;justify-content:center;height:128px;color:var(--ink-3);font-size:13px;gap:8px;">
+      <i class="bi bi-arrow-repeat asoc-spin"></i> <span data-i18n="an_calculando">Calculando…</span>
+    </div>
+    <div id="tabla-reglas" style="display:none;overflow-x:auto;"></div>
+    <div id="aviso-panel" style="display:none;padding:24px;text-align:center;font-size:13px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a;"></div>
+  </div>
+
 </div>
 
 <style>
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.animate-spin{animation:spin 1s linear infinite}
-html.dark .asoc-hero {
-    background: linear-gradient(135deg, rgba(109,40,217,0.35) 0%, rgba(76,29,149,0.45) 100%) !important;
-    border: 1px solid rgba(139,92,246,0.3);
-}
-html.dark .bg-purple-50 {
-    background-color: rgba(109,40,217,0.08) !important;
-    border-color: rgba(139,92,246,0.2) !important;
-}
+@keyframes asoc-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.asoc-spin{animation:asoc-spin 1s linear infinite;display:inline-block;}
 </style>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
 async function cargar(){
-  const soporte=document.getElementById('sel-soporte').value;
-  const confianza=document.getElementById('sel-confianza').value;
-  document.getElementById('estado').textContent='Calculando…';
-  document.getElementById('tabla-loading').style.display='flex';
-  document.getElementById('tabla-reglas').style.display='none';
-  document.getElementById('aviso-panel').style.display='none';
-  document.getElementById('combos-panel').style.display='none';
-  document.getElementById('kpi-cards').innerHTML=`<div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm gap-2"><i class="bi bi-arrow-repeat animate-spin"></i> ${t('an_calculando')}</div>`;
-  try{
-    const r=await fetch(`/api/analytics/asociacion?soporte=${soporte}&confianza=${confianza}&dias=90`);
-    const d=await r.json();
-    if(d.error)throw new Error(d.error);
+  const soporte   = document.getElementById('sel-soporte').value;
+  const confianza = document.getElementById('sel-confianza').value;
+  document.getElementById('estado').textContent = 'Calculando…';
+  document.getElementById('tabla-loading').style.display = 'flex';
+  document.getElementById('tabla-reglas').style.display  = 'none';
+  document.getElementById('aviso-panel').style.display   = 'none';
+  document.getElementById('combos-panel').style.display  = 'none';
+  document.getElementById('kpi-cards').innerHTML = `
+    <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;height:64px;color:var(--ink-3);font-size:13px;gap:8px;">
+      <i class="bi bi-arrow-repeat asoc-spin"></i> ${t('an_calculando')}
+    </div>`;
+  try {
+    const r = await fetch(`/api/analytics/asociacion?soporte=${soporte}&confianza=${confianza}&dias=90`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
     renderKPIs(d);
-    if(d.aviso){
-      document.getElementById('tabla-loading').style.display='none';
-      document.getElementById('aviso-panel').textContent=d.aviso;
-      document.getElementById('aviso-panel').style.display='';
-      document.getElementById('estado').textContent='';return;
+    if (d.aviso) {
+      document.getElementById('tabla-loading').style.display = 'none';
+      document.getElementById('aviso-panel').textContent    = d.aviso;
+      document.getElementById('aviso-panel').style.display  = '';
+      document.getElementById('estado').textContent = '';
+      return;
     }
     const reglas = deduplicarReglas(d.reglas);
-    renderTabla(reglas);renderCombos(reglas.slice(0,5));
-    document.getElementById('estado').textContent=`${reglas.length} ${t('asoc_reglas_lbl')} · ${d.n_transacciones} ${t('asoc_transc_lbl')}`;
-  }catch(e){
-    document.getElementById('tabla-loading').innerHTML=`<span class="text-red-400 text-sm">${e.message}</span>`;
-    document.getElementById('estado').textContent='';
+    renderTabla(reglas);
+    renderCombos(reglas.slice(0, 5));
+    document.getElementById('estado').textContent =
+      `${reglas.length} ${t('asoc_reglas_lbl')} · ${d.n_transacciones} ${t('asoc_transc_lbl')}`;
+  } catch(e) {
+    document.getElementById('tabla-loading').innerHTML =
+      `<span style="color:#ef4444;font-size:13px;">${e.message}</span>`;
+    document.getElementById('estado').textContent = '';
   }
 }
+
 function renderKPIs(d){
-  const cards=[
-    {label:t('asoc_transacc'),val:d.n_transacciones||'—',icon:'bi-receipt',color:'#7c3aed'},
-    {label:t('asoc_items_u'),val:d.n_items_unicos||'—',icon:'bi-grid-3x3-gap',color:'#8b5cf6'},
-    {label:t('asoc_reglas_enc'),val:(d.reglas||[]).length,icon:'bi-share',color:'#10b981'},
-    {label:t('asoc_sop_min'),val:d.min_soporte+'%',icon:'bi-percent',color:'#f59e0b'},
+  const cards = [
+    {label: t('asoc_transacc'),    val: d.n_transacciones || '—',    color: '#7c3aed'},
+    {label: t('asoc_items_u'),     val: d.n_items_unicos  || '—',    color: '#8b5cf6'},
+    {label: t('asoc_reglas_enc'),  val: (d.reglas || []).length,     color: '#3F7A52'},
+    {label: t('asoc_sop_min'),     val: d.min_soporte + '%',         color: '#B5623A'},
   ];
-  document.getElementById('kpi-cards').innerHTML=cards.map(k=>`
-    <div class="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:${k.color}20;">
-        <i class="bi ${k.icon} text-lg" style="color:${k.color};"></i>
-      </div>
-      <div><p class="text-xs text-gray-500">${k.label}</p><p class="text-base font-bold text-gray-800">${k.val}</p></div>
+  document.getElementById('kpi-cards').innerHTML = cards.map(k => `
+    <div class="kpi" style="border-left:3px solid ${k.color}">
+      <p class="kpi__k">${k.label}</p>
+      <p class="kpi__v num">${k.val}</p>
     </div>`).join('');
 }
+
 function deduplicarReglas(reglas){
   const seen = new Map();
   reglas.forEach(r => {
-    const key = [...r.si_piden, ...r.tambien_piden].sort().join('|');
+    const key  = [...r.si_piden, ...r.tambien_piden].sort().join('|');
     const prev = seen.get(key);
     if (!prev || r.confianza > prev.confianza) seen.set(key, r);
   });
   return [...seen.values()];
 }
-function tagPurple(p, dark){ return `<span style="background:${dark?'rgba(139,92,246,0.15)':'#ede9fe'};color:${dark?'#c4b5fd':'#6d28d9'};" class="inline-block rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`; }
-function tagGreen(p, dark){ return `<span style="background:${dark?'rgba(34,197,94,0.12)':'#dcfce7'};color:${dark?'#4ade80':'#15803d'};" class="inline-block rounded-full px-2 py-0.5 text-xs font-medium mr-1">${p}</span>`; }
+
+function tagPurple(p){
+  return `<span style="background:rgba(139,92,246,.12);color:#6d28d9;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;">${p}</span>`;
+}
+function tagGreen(p){
+  return `<span style="background:rgba(63,122,82,.12);color:#3F7A52;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;">${p}</span>`;
+}
 
 let _asocReglas = [];
 function renderTabla(reglas){
   _asocReglas = reglas;
-  document.getElementById('tabla-loading').style.display='none';
-  document.getElementById('tabla-reglas').style.display='';
+  document.getElementById('tabla-loading').style.display = 'none';
+  document.getElementById('tabla-reglas').style.display  = '';
 
   const slider = document.getElementById('asoc-slider');
   const wrap   = document.getElementById('asoc-slider-wrap');
@@ -193,50 +200,57 @@ function renderTabla(reglas){
   };
   _renderAsocRows(def);
 }
+
 function _renderAsocRows(n){
-  const dark      = document.documentElement.classList.contains('dark');
-  const borderCol = dark ? '#3a2c20' : '#f3f4f6';
-  const theadBg   = dark ? '#1e1611' : '#f9fafb';
-  const hoverBg   = dark ? 'rgba(139,92,246,0.07)' : '#faf5ff';
-  const textMut   = dark ? '#a08878' : '#6b7280';
   const rows = _asocReglas.slice(0, n);
-  document.getElementById('tabla-reglas').innerHTML=`
-    <table class="w-full text-xs border-collapse">
-      <thead><tr style="background:${theadBg};border-bottom:1px solid ${borderCol};color:${textMut};" class="text-left uppercase tracking-wide">
-        <th class="px-4 py-3">${t('asoc_si_piden')}</th><th class="px-4 py-3">${t('asoc_tambien')}</th>
-        <th class="px-4 py-3 text-center">${t('asoc_conf_th')}</th><th class="px-4 py-3 text-center">${t('asoc_lift_th')}</th>
-      </tr></thead>
-      <tbody>${rows.map(r=>`
-        <tr style="border-bottom:1px solid ${borderCol};" onmouseover="this.style.background='${hoverBg}'" onmouseout="this.style.background='transparent'" class="transition">
-          <td class="px-4 py-3">${r.si_piden.map(p=>tagPurple(p,dark)).join('')}</td>
-          <td class="px-4 py-3">${r.tambien_piden.map(p=>tagGreen(p,dark)).join('')}</td>
-          <td class="px-4 py-3 text-center"><span class="font-bold ${r.confianza>=50?'text-green-500':r.confianza>=30?'text-amber-500':'text-gray-400'}">${r.confianza}%</span></td>
-          <td class="px-4 py-3 text-center"><span class="font-bold ${r.lift>=2?'text-purple-400':r.lift>=1.5?'text-purple-400':'text-gray-400'}">${r.lift}</span></td>
+  document.getElementById('tabla-reglas').innerHTML = `
+    <table class="table">
+      <thead>
+        <tr>
+          <th>${t('asoc_si_piden')}</th>
+          <th>${t('asoc_tambien')}</th>
+          <th class="is-num">${t('asoc_conf_th')}</th>
+          <th class="is-num">${t('asoc_lift_th')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+        <tr>
+          <td>${r.si_piden.map(p => tagPurple(p)).join(' ')}</td>
+          <td>${r.tambien_piden.map(p => tagGreen(p)).join(' ')}</td>
+          <td class="is-num">
+            <span style="font-weight:700;color:${r.confianza >= 50 ? '#3F7A52' : r.confianza >= 30 ? '#B5623A' : 'var(--ink-3)'};">
+              ${r.confianza}%
+            </span>
+          </td>
+          <td class="is-num">
+            <span style="font-weight:700;color:${r.lift >= 2 ? '#7c3aed' : r.lift >= 1.5 ? '#8b5cf6' : 'var(--ink-3)'};">
+              ${r.lift}
+            </span>
+          </td>
         </tr>`).join('')}
       </tbody>
     </table>`;
 }
+
 function renderCombos(reglas){
-  if(!reglas.length)return;
-  const dark = document.documentElement.classList.contains('dark');
-  const cardBg  = dark ? 'rgba(139,92,246,0.08)'  : 'linear-gradient(135deg,#faf5ff,#f5f3ff)';
-  const cardBdr = dark ? 'rgba(139,92,246,0.25)'  : '#e9d5ff';
-  const descCol = dark ? '#a08878' : '#6b7280';
-  document.getElementById('combos-panel').style.display='';
-  document.getElementById('combos-lista').innerHTML=reglas.map((r,i)=>`
-    <div class="rounded-xl p-4" style="background:${cardBg}; border:1px solid ${cardBdr};">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">${i+1}</span>
-        <span class="text-xs font-semibold" style="color:${dark?'#c4b5fd':'#6d28d9'};">Confianza ${r.confianza}% · Lift ${r.lift}</span>
+  if (!reglas.length) return;
+  document.getElementById('combos-panel').style.display = '';
+  document.getElementById('combos-lista').innerHTML = reglas.map((r, i) => `
+    <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.22);border-radius:12px;padding:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="width:24px;height:24px;border-radius:50%;background:#7c3aed;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i + 1}</span>
+        <span style="font-size:12px;font-weight:600;color:#7c3aed;">Confianza ${r.confianza}% · Lift ${r.lift}</span>
       </div>
-      <div class="flex flex-wrap items-center gap-1 mb-2">
-        ${r.si_piden.map(p=>tagPurple(p,dark)).join('')}
-        <i class="bi bi-arrow-right mx-1" style="color:${dark?'#80685a':'#9ca3af'};"></i>
-        ${r.tambien_piden.map(p=>tagGreen(p,dark)).join('')}
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px;">
+        ${r.si_piden.map(p => tagPurple(p)).join('')}
+        <i class="bi bi-arrow-right" style="color:var(--ink-3);margin:0 4px;"></i>
+        ${r.tambien_piden.map(p => tagGreen(p)).join('')}
       </div>
-      <p class="text-xs" style="color:${descCol};">${r.descripcion}</p>
+      <p style="font-size:12px;color:var(--ink-2);margin:0;">${r.descripcion}</p>
     </div>`).join('');
 }
+
 cargar();
 </script>
 {% endblock %}

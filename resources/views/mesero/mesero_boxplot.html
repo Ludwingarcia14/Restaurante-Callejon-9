@@ -1,0 +1,162 @@
+{% extends "layout/layout_mesero.html" %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
+{% block page_title %}Variabilidad por Mesa{% endblock %}
+{% block page_subtitle %}Box plot — dispersión del ticket por mesa · últimos 90 días{% endblock %}
+
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="card card--pad" style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.3)">
+    <div style="display:flex;align-items:flex-start;gap:12px;font-size:13.5px;color:var(--ink)">
+      <i class="bi bi-info-circle-fill" style="color:#8b5cf6;flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong>¿Para qué sirve el box plot?</strong><br>
+        Cada caja muestra la dispersión del ticket para una mesa: la caja va del Q1 al Q3
+        (el 50% central de los datos), la línea central es la mediana, y los bigotes
+        alcanza los valores máximo y mínimo. Una caja ancha indica alta variabilidad;
+        una caja angosta, comportamiento consistente. Útil para detectar mesas con
+        clientes de perfil irregular o con gran potencial de gasto no capturado.
+      </div>
+    </div>
+  </div>
+
+  <div id="bp-loading" style="height:160px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3)">
+    <i class="bi bi-arrow-repeat" style="font-size:18px"></i> Cargando…
+  </div>
+
+  <div id="bp-content" style="display:none">
+
+    <div id="bp-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px"></div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start">
+
+      <div class="card card--pad">
+        <div class="card__head">
+          <span class="card__title"><i class="bi bi-layout-three-columns" style="color:#8b5cf6;margin-right:6px"></i>Dispersión del ticket</span>
+          <span class="card__note">Caja = Q1–Q3 · línea = mediana · bigotes = mín / máx</span>
+        </div>
+        <div id="chart-boxplot" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><p class="card__title">Estadísticas por mesa</p></div>
+        <div style="overflow-x:auto">
+          <table class="table">
+            <thead><tr>
+              <th>Mesa</th>
+              <th class="is-num">Mediana</th>
+              <th class="is-num">Q1</th>
+              <th class="is-num">Q3</th>
+              <th class="is-num">N</th>
+            </tr></thead>
+            <tbody id="bp-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const FONT = 'Instrument Sans,system-ui,sans-serif';
+function isDark()  { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches); }
+function gridClr(){ return isDark() ? '#322D25' : '#E7E2D8'; }
+function lblClr() { return isDark() ? '#948C80' : '#8A8478'; }
+function fmtMXN(v){ return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0); }
+
+let apex;
+
+async function cargar() {
+  try {
+    const r = await fetch('/api/analytics/boxplot');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error');
+
+    document.getElementById('bp-loading').style.display = 'none';
+    document.getElementById('bp-content').style.display = '';
+
+    const g = d.global;
+    document.getElementById('bp-kpis').innerHTML = `
+      <div class="kpi" style="border-left:3px solid #8b5cf6">
+        <span class="kpi__k">Mesas analizadas</span>
+        <span class="kpi__v num">${d.mesas.length}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.periodo_dias} días</span>
+      </div>
+      ${g.median !== undefined ? `
+      <div class="kpi" style="border-left:3px solid var(--ok)">
+        <span class="kpi__k">Mediana global</span>
+        <span class="kpi__v num">${fmtMXN(g.median)}</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--info)">
+        <span class="kpi__k">Rango intercuartil</span>
+        <span class="kpi__v num">${fmtMXN(g.q3 - g.q1)}</span>
+        <span style="font-size:11px;color:var(--ink-3)">Q3 − Q1</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--accent)">
+        <span class="kpi__k">Ticket máximo</span>
+        <span class="kpi__v num">${fmtMXN(g.max)}</span>
+      </div>` : ''}`;
+
+    if (apex) { apex.destroy(); apex = null; }
+    apex = new ApexCharts(document.getElementById('chart-boxplot'), {
+      chart: { type: 'boxPlot', height: Math.max(260, d.mesas.length * 42), toolbar: { show: false }, fontFamily: FONT },
+      series: [{
+        type: 'boxPlot',
+        data: d.mesas.map(m => ({
+          x: m.mesa,
+          y: [m.min, m.q1, m.median, m.q3, m.max]
+        }))
+      }],
+      plotOptions: {
+        bar: { horizontal: true, borderRadius: 4 },
+        boxPlot: { colors: { upper: '#4A6FA5', lower: '#8b5cf6' } }
+      },
+      xaxis: {
+        labels: { formatter: v => fmtMXN(v), style: { colors: lblClr(), fontSize: '11px' } }
+      },
+      yaxis: {
+        labels: { style: { colors: lblClr() } }
+      },
+      dataLabels: { enabled: false },
+      grid: { borderColor: gridClr(), strokeDashArray: 3 },
+      tooltip: {
+        custom: ({ seriesIndex, dataPointIndex, w }) => {
+          const m = d.mesas[dataPointIndex];
+          if (!m) return '';
+          return `<div style="padding:10px;font-size:12px;line-height:1.7">
+            <strong>${m.mesa}</strong><br>
+            Máx: ${fmtMXN(m.max)}<br>
+            Q3:  ${fmtMXN(m.q3)}<br>
+            Med: ${fmtMXN(m.median)}<br>
+            Q1:  ${fmtMXN(m.q1)}<br>
+            Mín: ${fmtMXN(m.min)}<br>
+            N:   ${m.n} comandas
+          </div>`;
+        }
+      }
+    });
+    apex.render();
+
+    document.getElementById('bp-tabla').innerHTML = d.mesas.map(m => `
+      <tr>
+        <td class="is-key">${m.mesa}</td>
+        <td class="is-num" style="font-weight:600">${fmtMXN(m.median)}</td>
+        <td class="is-num">${fmtMXN(m.q1)}</td>
+        <td class="is-num">${fmtMXN(m.q3)}</td>
+        <td class="is-num">${m.n}</td>
+      </tr>`).join('');
+
+  } catch(e) {
+    document.getElementById('bp-loading').innerHTML =
+      `<span style="color:var(--accent);font-size:13px"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+  }
+}
+
+cargar();
+</script>
+{% endblock %}

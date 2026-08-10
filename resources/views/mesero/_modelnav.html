@@ -1,0 +1,34 @@
+{# resources/views/mesero/_modelnav.html
+   Lista lateral compartida por las ocho vistas de Analítica.
+   Uso:  {% with modelo_activo = 'Pareto 80/20' %}{% include "mesero/_modelnav.html" %}{% endwith %} #}
+
+{% set modelos = [
+  ('Pareto 80/20',   'Platillos que generan el ingreso', 'routes.mesero_pareto'),
+  ('Asociación',     'Qué se pide junto',                'routes.mesero_asociacion'),
+  ('Predicción',     'Demanda de los próximos días',     'routes.mesero_prediccion'),
+  ('Segmentación',   'K-Means de clientes por mesa',     'routes.mesero_kmeans'),
+  ('Random Forest',  'Propina esperada por servicio',    'routes.mesero_arbol'),
+  ('Diagnóstico',    'Calidad de los datos',             'routes.mesero_diagnostico')
+] %}
+{% set docs = [
+  ('Metodología',      'CRISP-DM aplicado al restaurante',        'routes.mesero_metodologia'),
+  ('Proceso de datos', 'ETL: extracción, transformación y carga', 'routes.mesero_etl')
+] %}
+
+<div class="modelnav">
+  <p class="modelnav__group">Modelos</p>
+  {% for nombre, desc, endpoint in modelos %}
+    <a href="{{ url_for(endpoint) }}" class="modelnav__item {{ 'is-active' if nombre == modelo_activo }}">
+      <p class="modelnav__name">{{ nombre }}</p>
+      <p class="modelnav__desc">{{ desc }}</p>
+    </a>
+  {% endfor %}
+
+  <p class="modelnav__group">Documentación</p>
+  {% for nombre, desc, endpoint in docs %}
+    <a href="{{ url_for(endpoint) }}" class="modelnav__item {{ 'is-active' if nombre == modelo_activo }}">
+      <p class="modelnav__name">{{ nombre }}</p>
+      <p class="modelnav__desc">{{ desc }}</p>
+    </a>
+  {% endfor %}
+</div>

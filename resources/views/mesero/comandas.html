@@ -1,334 +1,204 @@
-﻿{% extends "layout/layout_mesero.html" %}
+{% extends "layout/layout_mesero.html" %}
 
-{% block title %}Mis Comandas - Mesero{% endblock %}
+{% block title %}Comandas — Callejón 9{% endblock %}
 {% block page_title %}<span data-i18n="cmd_titulo">Gestión de Comandas</span>{% endblock %}
 {% block page_subtitle %}<span data-i18n="cmd_sub">Comandas activas y cuentas cerradas</span>{% endblock %}
 
-
-{% block navigation %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Ocultar links del admin que no aplican al mesero
-    const linksAdmin = ['nav-dashboard', 'nav-menu', 'nav-ventas', 'nav-reportes', 'nav-analytics'];
-    linksAdmin.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    // Ocultar sección de Administración
-    const adminSection = document.querySelector('.sidebar-nav .border-t');
-    if (adminSection) adminSection.style.display = 'none';
-});
-</script>
-
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
-    <i class="bi bi-house-door text-lg"></i>
-    <span data-i18n="mn_inicio">Inicio</span>
-</a>
-<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt text-lg"></i>
-    <span data-i18n="mn_comandas">Comandas Activas</span>
-</a>
-<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text text-lg"></i>
-    <span data-i18n="mn_menu">Menú</span>
-</a>
-<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
-    <i class="bi bi-cash-coin text-lg"></i>
-    <span data-i18n="mn_propinas">Propinas del Día</span>
-</a>
-<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
-    <i class="bi bi-clock-history text-lg"></i>
-    <span data-i18n="mn_historial">Historial</span>
-</a>
-<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
-    <i class="bi bi-diagram-3 text-lg"></i>
-    <span data-i18n="mn_kmeans">Segmentación</span>
-</a>
-<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
-    <i class="bi bi-tree text-lg"></i>
-    <span data-i18n="mn_arbol">Random Forest</span>
-</a>
-<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
-    <i class="bi bi-clipboard-data text-lg"></i>
-    <span data-i18n="mn_diagnostico">Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
-    <i class="bi bi-bar-chart-steps text-lg"></i>
-    <span data-i18n="mn_pareto">Pareto 80/20</span>
-</a>
-<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
-    <i class="bi bi-share text-lg"></i>
-    <span data-i18n="mn_asociacion">Asociación</span>
-</a>
-<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
-    <i class="bi bi-graph-up text-lg"></i>
-    <span data-i18n="mn_prediccion">Predicción</span>
-</a>
-{% endblock %}
-
 {% block content %}
+<div class="page">
 
-<!-- ================= COMANDAS ACTIVAS ================= -->
-<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-    <div>
-        <h2 class="text-2xl font-bold text-gray-800" data-i18n="m_cmdas_lbl">Comandas Activas</h2>
-        <p class="text-gray-500" data-i18n="m_en_proceso">Pedidos en proceso</p>
+  {# ── ACTIVAS ──────────────────────────────────────────── #}
+  <section>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px">
+      <div>
+        <p class="eyebrow" style="margin:0 0 4px" data-i18n="m_en_proceso">En proceso</p>
+        <h2 style="margin:0;font-size:20px;font-weight:600;color:var(--ink)" data-i18n="m_cmdas_lbl">Comandas Activas</h2>
+      </div>
+      <button onclick="cargarComandas()" class="btn btn--ghost">
+        <i class="bi bi-arrow-clockwise"></i>
+        <span data-i18n="m_refrescar_btn">Actualizar</span>
+      </button>
     </div>
-    <button onclick="cargarComandas()" class="btn btn-primary">
-        <i class="bi bi-arrow-clockwise"></i> <span data-i18n="m_refrescar_btn">Actualizar</span>
-    </button>
-</div>
+    <div id="comandas-grid"
+         style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
+  </section>
 
-<div id="comandas-grid"
-     class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12"></div>
+  {# ── HISTORIAL ─────────────────────────────────────────── #}
+  <section>
+    <p class="eyebrow" style="margin:0 0 16px" data-i18n="cmd_historial">Historial de Cuentas Cerradas</p>
 
-<!-- ================= HISTORIAL ================= -->
-<h3 class="text-xl font-bold text-gray-800 mb-4" data-i18n="cmd_historial">
-    Historial de Cuentas Cerradas
-</h3>
-
-<!-- FILTROS -->
-<div class="card mb-6 border border-gray-100">
-    <div class="card-body">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="text-sm font-semibold text-gray-600" data-i18n="cmd_desde">Desde</label>
-                <input id="filtro-desde" type="date"
-                       class="input input-bordered w-full">
-            </div>
-            <div>
-                <label class="text-sm font-semibold text-gray-600" data-i18n="cmd_hasta">Hasta</label>
-                <input id="filtro-hasta" type="date"
-                       class="input input-bordered w-full">
-            </div>
-            <div>
-                <label class="text-sm font-semibold text-gray-600" data-i18n="m_mesa_word">Mesa</label>
-                <input id="filtro-mesa" type="number" min="1"
-                       placeholder="Ej. 3"
-                       class="input input-bordered w-full">
-            </div>
-            <div class="flex items-end gap-2">
-                <button onclick="aplicarFiltros()"
-                        class="btn btn-success w-full">
-                    <i class="bi bi-funnel"></i> <span data-i18n="cmd_filtrar">Filtrar</span>
-                </button>
-                <button onclick="limpiarFiltros()"
-                        class="btn btn-outline w-full">
-                    <span data-i18n="cmd_limpiar">Limpiar</span>
-                </button>
-            </div>
+    <div class="card card--pad" style="margin-bottom:16px">
+      <div class="filters">
+        <div class="field">
+          <label data-i18n="cmd_desde">Desde</label>
+          <input id="filtro-desde" type="date" class="input">
         </div>
-    </div>
-</div>
-
-<!-- ======= HISTORIAL MOBILE (CARDS) ======= -->
-<div id="historial-cards"
-     class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden"></div>
-
-<!-- ======= HISTORIAL DESKTOP (TABLA) ======= -->
-<div class="card hidden md:block">
-    <div class="card-body overflow-x-auto">
-        <table class="table w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th data-i18n="cmd_folio">Folio</th>
-                    <th data-i18n="m_mesa_word">Mesa</th>
-                    <th data-i18n="cmd_total_th">Total</th>
-                    <th data-i18n="cmd_fecha">Fecha</th>
-                </tr>
-            </thead>
-            <tbody id="historial-tabla"></tbody>
-        </table>
-    </div>
-</div>
-
-<!-- ================= MODAL ================= -->
-<div id="modalComanda"
-     data-modal="true" data-close-fn="cerrarModal"
-     class="hidden fixed inset-0 bg-black bg-opacity-50 z-[1100] flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl
-                max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="bg-green-600 text-white p-4 flex justify-between">
-            <div>
-                <h3 class="text-xl font-bold" id="modal-folio"></h3>
-                <p><span data-i18n="m_mesa_word">Mesa</span> <span id="modal-mesa"></span></p>
-            </div>
-            <button onclick="cerrarModal()" class="text-xl">✕</button>
+        <div class="field">
+          <label data-i18n="cmd_hasta">Hasta</label>
+          <input id="filtro-hasta" type="date" class="input">
         </div>
-        <div class="p-6" id="modal-content"></div>
+        <div class="field">
+          <label data-i18n="m_mesa_word">Mesa</label>
+          <input id="filtro-mesa" type="number" min="1" placeholder="Ej. 3"
+                 class="input" style="width:120px">
+        </div>
+        <div class="field">
+          <label style="visibility:hidden">—</label>
+          <div style="display:flex;gap:8px">
+            <button onclick="aplicarFiltros()" class="btn btn--primary">
+              <i class="bi bi-funnel"></i>
+              <span data-i18n="cmd_filtrar">Filtrar</span>
+            </button>
+            <button onclick="limpiarFiltros()" class="btn btn--ghost">
+              <span data-i18n="cmd_limpiar">Limpiar</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
 
+    <div class="card" style="overflow:hidden">
+      <table class="table">
+        <thead>
+          <tr>
+            <th data-i18n="cmd_folio">Folio</th>
+            <th data-i18n="m_mesa_word">Mesa</th>
+            <th class="is-num" data-i18n="cmd_total_th">Total</th>
+            <th data-i18n="cmd_fecha">Fecha</th>
+          </tr>
+        </thead>
+        <tbody id="historial-tabla"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block modals %}
+<div class="overlay" id="modalComanda" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal__head" style="background:var(--accent);border-bottom:1px solid rgba(255,255,255,.15)">
+      <div>
+        <h3 class="modal__title" id="modal-folio" style="color:#fff;margin:0"></h3>
+        <p class="modal__sub" style="color:rgba(255,255,255,.72);margin:3px 0 0">
+          <span data-i18n="m_mesa_word">Mesa</span> <span id="modal-mesa"></span>
+        </p>
+      </div>
+      <button class="modal__close" style="color:rgba(255,255,255,.8)">&times;</button>
+    </div>
+    <div class="modal__body" id="modal-content"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
 let comandas = [];
 let historialOriginal = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    cargarComandas();
-    cargarHistorial();
+  cargarComandas();
+  cargarHistorial();
 });
 
-/* ================= COMANDAS ACTIVAS ================= */
+/* ── COMANDAS ACTIVAS ─────────────────────────────────────── */
 async function cargarComandas() {
-    const grid = document.getElementById('comandas-grid');
-    grid.innerHTML = '';
-
-    const res = await fetch('/api/mesero/comandas/activas');
+  const grid = document.getElementById('comandas-grid');
+  grid.innerHTML = '<p class="empty">Cargando…</p>';
+  try {
+    const res  = await fetch('/api/mesero/comandas/activas');
     const data = await res.json();
-
-    if (!data.success || data.comandas.length === 0) {
-        grid.innerHTML = `
-            <div class="col-span-full text-center text-gray-500 py-16">
-                ${t('cmd_no_activas')}
-            </div>`;
-        return;
+    if (!data.success || !data.comandas.length) {
+      grid.innerHTML = `<p class="empty">${t('cmd_no_activas')}</p>`;
+      return;
     }
-
     comandas = data.comandas;
-
-    grid.innerHTML = comandas.map(c => `
-        <div class="card border border-gray-100 hover:shadow-lg cursor-pointer
-                    transition active:scale-[0.98]"
+    grid.innerHTML = comandas.map(c => {
+      const bClass = c.estado === 'listo'     ? 'badge--ready'   :
+                     c.estado === 'pendiente' ? 'badge--neutral' : 'badge--busy';
+      return `
+        <div class="card card--pad" style="cursor:pointer"
+             onmouseover="this.style.borderColor='var(--line-strong)'"
+             onmouseout="this.style.borderColor=''"
              onclick="verComanda('${c.id}')">
-            <div class="card-body">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold">${c.folio}</span>
-                    <span class="badge badge-info">${c.estado}</span>
-                </div>
-                <p class="text-sm text-gray-500">${t('m_mesa_word')} ${c.mesa_numero}</p>
-                <p class="text-sm">${(c.items || []).length} ${t('cmd_items_txt')}</p>
-                <p class="font-bold text-green-600 mt-2">
-                    $${c.total.toFixed(2)}
-                </p>
-            </div>
-        </div>
-    `).join('');
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-weight:600;color:var(--ink)">${c.folio}</span>
+            <span class="badge ${bClass}">${c.estado}</span>
+          </div>
+          <p style="font-size:13px;color:var(--ink-3);margin:0">${t('m_mesa_word')} ${c.mesa_numero}</p>
+          <p style="font-size:13px;color:var(--ink-2);margin:4px 0 0">${(c.items||[]).length} ${t('cmd_items_txt')}</p>
+          <p class="num" style="font-size:19px;font-weight:600;margin:10px 0 0;color:var(--ok)">${C9.money(c.total)}</p>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = '<p class="empty">Error al cargar</p>';
+  }
 }
 
 function verComanda(id) {
-    const c = comandas.find(x => x.id === id);
-    if (!c) return;
-
-    document.getElementById('modal-folio').textContent = c.folio;
-    document.getElementById('modal-mesa').textContent = c.mesa_numero;
-
-    document.getElementById('modal-content').innerHTML = `
-        ${c.items.map(i => `
-            <div class="flex justify-between border-b py-2 text-sm">
-                <span>${i.cantidad}x ${i.nombre}</span>
-                <span>$${(i.precio * i.cantidad).toFixed(2)}</span>
-            </div>
-        `).join('')}
-        <div class="flex justify-between mt-4 font-bold text-lg">
-            <span>${t('cmd_total_modal')}</span>
-            <span class="text-green-600">$${c.total.toFixed(2)}</span>
-        </div>
-    `;
-
-    document.getElementById('modalComanda').classList.remove('hidden');
+  const c = comandas.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modal-folio').textContent = c.folio;
+  document.getElementById('modal-mesa').textContent  = c.mesa_numero;
+  document.getElementById('modal-content').innerHTML =
+    c.items.map(i => `
+      <div style="display:flex;justify-content:space-between;padding:10px 0;
+                  border-bottom:1px solid var(--line-soft);font-size:14px">
+        <span style="color:var(--ink)">${i.cantidad}× ${i.nombre}</span>
+        <span class="num" style="color:var(--ink-2)">${C9.money(i.precio * i.cantidad)}</span>
+      </div>`).join('') + `
+    <div style="display:flex;justify-content:space-between;margin-top:16px;
+                font-size:16px;font-weight:600">
+      <span style="color:var(--ink)">${t('cmd_total_modal')}</span>
+      <span class="num" style="color:var(--ok)">${C9.money(c.total)}</span>
+    </div>`;
+  document.getElementById('modalComanda').hidden = false;
 }
 
-function cerrarModal() {
-    document.getElementById('modalComanda').classList.add('hidden');
-}
-
-/* ================= HISTORIAL ================= */
+/* ── HISTORIAL ────────────────────────────────────────────── */
 async function cargarHistorial() {
-    const res = await fetch('/api/mesero/comandas/cerradas');
-    const data = await res.json();
-    historialOriginal = data.comandas || [];
-    renderHistorial(historialOriginal);
+  const res  = await fetch('/api/mesero/comandas/cerradas');
+  const data = await res.json();
+  historialOriginal = data.comandas || [];
+  renderHistorial(historialOriginal);
 }
 
 function aplicarFiltros() {
-    const desdeVal = document.getElementById('filtro-desde').value;
-    const hastaVal = document.getElementById('filtro-hasta').value;
-    const mesaVal  = document.getElementById('filtro-mesa').value;
-
-    let filtrado = [...historialOriginal];
-
-    // 🔹 Filtro por mesa
-    if (mesaVal) {
-        filtrado = filtrado.filter(c =>
-            String(c.mesa) === String(mesaVal)
-        );
-    }
-
-    // 🔹 Filtro fecha desde
-    if (desdeVal) {
-        const desde = new Date(desdeVal);
-        desde.setHours(0, 0, 0, 0);
-
-        filtrado = filtrado.filter(c =>
-            new Date(c.fecha) >= desde
-        );
-    }
-
-    // 🔹 Filtro fecha hasta (día completo)
-    if (hastaVal) {
-        const hasta = new Date(hastaVal);
-        hasta.setHours(23, 59, 59, 999);
-
-        filtrado = filtrado.filter(c =>
-            new Date(c.fecha) <= hasta
-        );
-    }
-
-    renderHistorial(filtrado);
+  const desdeVal = document.getElementById('filtro-desde').value;
+  const hastaVal = document.getElementById('filtro-hasta').value;
+  const mesaVal  = document.getElementById('filtro-mesa').value;
+  let filtrado = [...historialOriginal];
+  if (mesaVal) filtrado = filtrado.filter(c => String(c.mesa) === String(mesaVal));
+  if (desdeVal) {
+    const desde = new Date(desdeVal); desde.setHours(0,0,0,0);
+    filtrado = filtrado.filter(c => new Date(c.fecha) >= desde);
+  }
+  if (hastaVal) {
+    const hasta = new Date(hastaVal); hasta.setHours(23,59,59,999);
+    filtrado = filtrado.filter(c => new Date(c.fecha) <= hasta);
+  }
+  renderHistorial(filtrado);
 }
 
 function limpiarFiltros() {
-    document.getElementById('filtro-desde').value = '';
-    document.getElementById('filtro-hasta').value = '';
-    document.getElementById('filtro-mesa').value = '';
-    renderHistorial(historialOriginal);
+  ['filtro-desde','filtro-hasta','filtro-mesa'].forEach(id => document.getElementById(id).value = '');
+  renderHistorial(historialOriginal);
 }
 
 function renderHistorial(lista) {
-    const cards = document.getElementById('historial-cards');
-    const tabla = document.getElementById('historial-tabla');
-
-    if (!lista.length) {
-        cards.innerHTML = '';
-        tabla.innerHTML = `
-            <tr>
-                <td colspan="4" class="text-center text-gray-500 py-6">
-                    ${t('cmd_sin_result')}
-                </td>
-            </tr>`;
-        return;
-    }
-
-    // Cards (mobile)
-    cards.innerHTML = lista.map(c => `
-        <div class="card border border-gray-100">
-            <div class="card-body">
-                <div class="flex justify-between">
-                    <span class="font-bold">${c.folio}</span>
-                    <span class="text-sm text-gray-500">${t('m_mesa_word')} ${c.mesa}</span>
-                </div>
-                <p class="text-green-600 font-bold mt-2">
-                    $${c.total.toFixed(2)}
-                </p>
-                <p class="text-xs text-gray-500 mt-1">
-                    ${new Date(c.fecha).toLocaleString('es-MX')}
-                </p>
-            </div>
-        </div>
-    `).join('');
-
-    // Tabla (desktop)
-    tabla.innerHTML = lista.map(c => `
-        <tr>
-            <td>${c.folio}</td>
-            <td>${t('m_mesa_word')} ${c.mesa}</td>
-            <td class="font-bold text-green-600">$${c.total.toFixed(2)}</td>
-            <td>${new Date(c.fecha).toLocaleString('es-MX')}</td>
-        </tr>
-    `).join('');
+  const tbody = document.getElementById('historial-tabla');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty" style="padding:32px">${t('cmd_sin_result')}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(c => `
+    <tr>
+      <td class="is-key">${c.folio}</td>
+      <td>${t('m_mesa_word')} ${c.mesa}</td>
+      <td class="is-num is-total">${C9.money(c.total)}</td>
+      <td style="color:var(--ink-3)">${new Date(c.fecha).toLocaleString('es-MX')}</td>
+    </tr>`).join('');
 }
 </script>
 {% endblock %}

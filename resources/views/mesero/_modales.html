@@ -1,0 +1,138 @@
+{# resources/views/mesero/_modales.html — los cinco modales del mesero #}
+
+{# 1 · Nueva cuenta #}
+<div class="overlay" id="modal-nueva-cuenta" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="t-nueva">
+    <div class="modal__head">
+      <div>
+        <h3 class="modal__title" id="t-nueva">Nueva cuenta</h3>
+        <p class="modal__sub">Elige la mesa y cuántos comensales llegan</p>
+      </div>
+      <button class="modal__close" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <p class="eyebrow">Mesas disponibles</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="nc-mesas"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <p class="eyebrow">Comensales</p>
+        <div class="stepper">
+          <button class="stepper__btn" onclick="ncComensales(-1)">&minus;</button>
+          <span class="stepper__v" id="nc-comensales">2</span>
+          <button class="stepper__btn" onclick="ncComensales(1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--ghost" onclick="C9.closeModal('modal-nueva-cuenta')">Cancelar</button>
+      <button class="btn btn--primary" onclick="confirmarNuevaCuenta()">Abrir cuenta</button>
+    </div>
+  </div>
+</div>
+
+{# 2 · Agregar platillos (carrito) #}
+<div class="overlay" id="modal-agregar" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true">
+    <div class="modal__head" style="align-items:center">
+      <div>
+        <h3 class="modal__title" id="ag-titulo">Agregar platillos</h3>
+        <p class="modal__sub" id="ag-sub"></p>
+      </div>
+      <button class="modal__close" aria-label="Cerrar">&times;</button>
+    </div>
+    <div style="flex:1;display:flex;min-height:0">
+      <div style="flex:1;padding:18px 24px;display:flex;flex-direction:column;gap:16px;min-width:0;overflow:auto">
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="ag-categorias"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="ag-platillos"></div>
+      </div>
+      <div style="width:320px;flex-shrink:0;border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--line)"><p class="eyebrow">Por agregar</p></div>
+        <div style="flex:1;overflow:auto" id="ag-carrito"></div>
+        <div style="padding:18px 20px;border-top:1px solid var(--line)">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+            <span style="font-size:13.5px;color:var(--ink-2)">Subtotal a enviar</span>
+            <span style="font-size:22px;font-weight:600" class="num" id="ag-subtotal">$0.00</span>
+          </div>
+          <button class="btn btn--primary btn--lg btn--block" onclick="enviarACocina()">Enviar a cocina</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# 3 · Detalle de platillo — z-index:70 para quedar sobre modal-agregar (z-index:60) #}
+<div class="overlay" id="modal-platillo" hidden style="z-index:70">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal__head">
+      <div>
+        <h3 class="modal__title" id="pl-nombre"></h3>
+        <p class="modal__sub" id="pl-meta"></p>
+      </div>
+      <button class="modal__close" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal__body">
+      <img id="pl-img" class="dish__img" style="height:120px;border-radius:10px" alt="">
+      <div style="display:flex;flex-direction:column;gap:10px" id="pl-opciones-wrap" hidden>
+        <p class="eyebrow" id="pl-opciones-label"></p>
+        <div style="display:flex;gap:8px" id="pl-opciones"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <p class="eyebrow">Nota para cocina</p>
+        <textarea id="pl-nota" rows="2" class="input" style="height:auto;padding:12px 14px;resize:none" placeholder="Sin cebolla, salsa aparte…"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="stepper">
+          <button class="stepper__btn" style="width:46px;height:46px;font-size:19px" onclick="plCantidad(-1)">&minus;</button>
+          <span class="stepper__v" style="min-width:36px;font-size:22px" id="pl-cantidad">1</span>
+          <button class="stepper__btn" style="width:46px;height:46px;font-size:19px" onclick="plCantidad(1)">+</button>
+        </div>
+        <p style="margin:0;font-size:22px;font-weight:600" class="num" id="pl-importe"></p>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--primary btn--lg btn--block" onclick="event.stopPropagation();agregarAlCarrito()">Agregar al pedido</button>
+    </div>
+  </div>
+</div>
+
+{# 4 · Detalle de mesa #}
+<div class="overlay" id="modal-detalle" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal__head">
+      <div>
+        <h3 class="modal__title" id="dt-titulo"></h3>
+        <p class="modal__sub" id="dt-sub"></p>
+      </div>
+      <button class="modal__close" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal__body" style="padding:6px 24px 18px;gap:0" id="dt-items"></div>
+    <div class="modal__foot">
+      <button class="btn btn--ghost" style="flex:1" onclick="abrirAgregarDesdeDetalle()">Agregar platillos</button>
+      <button class="btn btn--primary" style="flex:1" onclick="abrirCobroDesdeDetalle()">Cerrar y cobrar</button>
+    </div>
+  </div>
+</div>
+
+{# 5 · Ticket y cobro #}
+<div class="overlay" id="modal-cobro" hidden>
+  <div class="modal modal--ticket" role="dialog" aria-modal="true">
+    <div class="modal__head" style="padding:18px 22px;align-items:center">
+      <p class="eyebrow">Ticket</p>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn--ghost" style="height:34px;padding:0 12px;font-size:12.5px" onclick="window.print()">Imprimir</button>
+        <button class="btn btn--ghost" style="height:34px;padding:0 12px;font-size:12.5px" onclick="descargarTicketPDF()">PDF</button>
+        <button class="modal__close" aria-label="Cerrar">&times;</button>
+      </div>
+    </div>
+    <div class="ticket" id="ticket-body"></div>
+    <div class="modal__foot" style="flex-direction:column;gap:10px">
+      <div style="display:flex;gap:8px;width:100%">
+        <button class="btn btn--ink" style="flex:1" data-metodo="efectivo" onclick="setMetodo(this)">Efectivo</button>
+        <button class="btn btn--ghost" style="flex:1" data-metodo="tarjeta" onclick="setMetodo(this)">Tarjeta</button>
+        <button class="btn btn--ghost" style="flex:1" data-metodo="transferencia" onclick="setMetodo(this)">Mercado Pago</button>
+      </div>
+      <button class="btn btn--primary btn--lg btn--block" id="btn-confirmar-cobro" onclick="confirmarCobro()">Confirmar cobro</button>
+    </div>
+  </div>
+</div>

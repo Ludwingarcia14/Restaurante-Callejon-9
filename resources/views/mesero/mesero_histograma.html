@@ -1,0 +1,133 @@
+{% extends "layout/layout_mesero.html" %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
+{% block page_title %}Distribución de Tickets{% endblock %}
+{% block page_subtitle %}Histograma de montos por comanda · últimos 90 días{% endblock %}
+
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="card card--pad" style="background:rgba(74,111,165,.07);border:1px solid rgba(74,111,165,.3)">
+    <div style="display:flex;align-items:flex-start;gap:12px;font-size:13.5px;color:var(--ink)">
+      <i class="bi bi-info-circle-fill" style="color:#4A6FA5;flex-shrink:0;margin-top:2px"></i>
+      <div>
+        <strong>¿Para qué sirve el histograma?</strong><br>
+        Muestra con qué frecuencia se presentan distintos rangos de ticket. Si la mayoría
+        se concentra en rangos bajos, hay oportunidad de subir el ticket promedio con combos
+        o sugerencias. Una distribución muy dispersa indica clientes con perfiles muy distintos.
+      </div>
+    </div>
+  </div>
+
+  <div id="hist-loading" style="height:160px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink-3)">
+    <i class="bi bi-arrow-repeat" style="font-size:18px"></i> Cargando…
+  </div>
+
+  <div id="hist-content" style="display:none">
+
+    <div id="hist-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px"></div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start">
+
+      <div class="card card--pad">
+        <div class="card__head">
+          <span class="card__title"><i class="bi bi-bar-chart" style="color:#4A6FA5;margin-right:6px"></i>Frecuencia por rango de ticket</span>
+          <span class="card__note">Cada barra = número de comandas en ese rango</span>
+        </div>
+        <div id="chart-hist" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><p class="card__title">Detalle por rango</p></div>
+        <table class="table">
+          <thead><tr><th>Rango</th><th class="is-num">Comandas</th><th class="is-num">%</th></tr></thead>
+          <tbody id="hist-tabla"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const FONT = 'Instrument Sans,system-ui,sans-serif';
+function isDark()  { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches); }
+function gridClr(){ return isDark() ? '#322D25' : '#E7E2D8'; }
+function lblClr() { return isDark() ? '#948C80' : '#8A8478'; }
+function fmtMXN(v){ return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0); }
+
+let apex;
+
+async function cargar() {
+  try {
+    const r = await fetch('/api/analytics/histograma');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error');
+
+    document.getElementById('hist-loading').style.display = 'none';
+    document.getElementById('hist-content').style.display = '';
+
+    document.getElementById('hist-kpis').innerHTML = `
+      <div class="kpi" style="border-left:3px solid #4A6FA5">
+        <span class="kpi__k">Total comandas</span>
+        <span class="kpi__v num">${d.total.toLocaleString('es-MX')}</span>
+        <span style="font-size:11px;color:var(--ink-3)">${d.periodo_dias} días</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--ok)">
+        <span class="kpi__k">Ticket promedio</span>
+        <span class="kpi__v num">${fmtMXN(d.promedio)}</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid var(--accent)">
+        <span class="kpi__k">Mediana</span>
+        <span class="kpi__v num">${fmtMXN(d.mediana)}</span>
+        <span style="font-size:11px;color:var(--ink-3)">50% de comandas debajo de este valor</span>
+      </div>
+      <div class="kpi" style="border-left:3px solid #f59e0b">
+        <span class="kpi__k">Rango más frecuente</span>
+        <span class="kpi__v" style="font-size:15px">${d.moda_bin}</span>
+      </div>`;
+
+    const maxC = Math.max(...d.bins.map(b => b.count));
+    if (apex) { apex.destroy(); apex = null; }
+    apex = new ApexCharts(document.getElementById('chart-hist'), {
+      chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: FONT },
+      series: [{ name: 'Comandas', data: d.bins.map(b => b.count) }],
+      xaxis: {
+        categories: d.bins.map(b => b.label),
+        labels: { rotate: -35, style: { colors: lblClr(), fontSize: '11px' } }
+      },
+      yaxis: { labels: { style: { colors: lblClr() } } },
+      plotOptions: {
+        bar: {
+          columnWidth: '98%',
+          borderRadius: 3,
+          distributed: true
+        }
+      },
+      colors: d.bins.map(b => b.count === maxC ? '#4A6FA5' : 'rgba(74,111,165,.35)'),
+      dataLabels: { enabled: false },
+      grid: { borderColor: gridClr(), strokeDashArray: 3 },
+      legend: { show: false },
+      tooltip: { y: { formatter: v => v + ' comandas' } }
+    });
+    apex.render();
+
+    document.getElementById('hist-tabla').innerHTML = d.bins.map(b => `
+      <tr>
+        <td class="is-key">${b.label}</td>
+        <td class="is-num">${b.count}</td>
+        <td class="is-num">${d.total > 0 ? (b.count / d.total * 100).toFixed(1) : 0}%</td>
+      </tr>`).join('');
+
+  } catch(e) {
+    document.getElementById('hist-loading').innerHTML =
+      `<span style="color:var(--accent);font-size:13px"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+  }
+}
+
+cargar();
+</script>
+{% endblock %}

@@ -1,523 +1,209 @@
-﻿{% extends "layout/layout_mesero.html" %}
+{# resources/views/mesero/mesero_kmeans.html #}
+{% extends "layout/layout_mesero.html" %}
 
-{% block title %}Segmentación de Mesas — K-Means{% endblock %}
-{% block page_title %}<span data-i18n="km_titulo">Segmentación de Mesas</span>{% endblock %}
-{% block page_subtitle %}K-Means (k=3) · PCA · últimos 90 días{% endblock %}
+{% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
+{% block page_title %}Segmentación de mesas{% endblock %}
+{% block page_subtitle %}K-Means k=3 sobre 4 variables, proyectado con PCA · <span id="km-corrida">—</span>{% endblock %}
 
-{% block navigation %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    ['nav-dashboard','nav-menu','nav-ventas','nav-reportes','nav-analytics'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    const sec = document.querySelector('.sidebar-nav .border-t');
-    if (sec) sec.style.display = 'none';
-});
-</script>
-<a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
-    <i class="bi bi-house-door text-lg"></i><span>Inicio</span>
-</a>
-<a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
-    <i class="bi bi-receipt text-lg"></i><span>Comandas Activas</span>
-</a>
-<a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
-    <i class="bi bi-journal-text text-lg"></i><span>Menú</span>
-</a>
-<a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
-    <i class="bi bi-cash-coin text-lg"></i><span>Propinas del Día</span>
-</a>
-<a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
-    <i class="bi bi-clock-history text-lg"></i><span>Historial</span>
-</a>
-<a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link active">
-    <i class="bi bi-diagram-3 text-lg"></i><span>Segmentación</span>
-</a>
-<a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
-    <i class="bi bi-tree text-lg"></i><span>Random Forest</span>
-</a>
-<a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
-    <i class="bi bi-clipboard-data text-lg"></i><span>Diagnóstico</span>
-</a>
-<a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
-    <i class="bi bi-bar-chart-steps text-lg"></i><span>Pareto 80/20</span>
-</a>
-<a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
-    <i class="bi bi-share text-lg"></i><span>Asociación</span>
-</a>
-<a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
-    <i class="bi bi-graph-up text-lg"></i><span>Predicción</span>
-</a>
+{% block topbar_metrics %}
+<button class="btn btn--ghost" onclick="recalcular()"><i class="bi bi-arrow-repeat"></i>Recalcular</button>
 {% endblock %}
 
 {% block content %}
+<div class="page">
+    {# 1 · resultado #}
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px" id="km-clusters"></div>
+
+    {# 2 · proyección + detalle #}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+      <div class="card card--pad">
+        <p class="card__title" style="margin-bottom:4px">Proyección PCA</p>
+        <p class="card__note" style="margin-bottom:18px" id="km-varianza">—</p>
+        <div class="chart"><canvas id="chartPCA"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><p class="card__title">Detalle por mesa</p></div>
+        <table class="table">
+          <thead><tr>
+            <th>Mesa</th><th>Grupo</th>
+            <th class="is-num">Visitas</th><th class="is-num">Ticket</th><th class="is-num">Ingreso</th>
+          </tr></thead>
+          <tbody id="km-tabla"></tbody>
+        </table>
+      </div>
+    </div>
+
+    {# 3 · el modelo, después del resultado #}
+    <div style="display:flex;flex-direction:column;gap:16px;padding-top:6px;border-top:1px solid var(--line)">
+      <div>
+        <p class="eyebrow" style="margin-top:14px">Cómo se construyó</p>
+        <p style="margin:4px 0 0;max-width:760px;font-size:13.5px;line-height:1.6;color:var(--ink-2)">
+          K-Means agrupa las mesas sin etiquetas previas a partir de cuatro variables: frecuencia, ticket
+          promedio, variabilidad del consumo y propina. PCA reduce ese espacio a dos dimensiones para poder
+          verlo. La calidad se evalúa con silueta y WCSS.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+        <div class="card card--pad" id="km-calidad"></div>
+        <div class="card card--pad" id="km-varianza-barras"></div>
+        <div class="card card--pad">
+          <p class="card__title">Curva de codo</p>
+          <p class="card__note" style="margin-bottom:16px">Donde la inercia deja de caer</p>
+          <div class="chart chart--sm" style="height:120px"><canvas id="chartCodo"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><p class="card__title">Peso de cada variable en los componentes</p></div>
+        <table class="table">
+          <thead><tr><th>Variable</th><th class="is-num">PC1</th><th class="is-num">PC2</th></tr></thead>
+          <tbody id="km-loadings"></tbody>
+        </table>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px" id="km-recomendaciones"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<div class="kmeans-info-banner mb-5 p-4 rounded-xl text-sm flex items-start gap-3"
-     style="background:rgba(59,130,246,0.08); border:1px solid #93c5fd; color:#1e40af;">
-    <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0 text-blue-500"></i>
-    <div>
-        <strong>Aprendizaje No Supervisado — K-Means + PCA</strong><br>
-        <strong>K-Means (k=3)</strong> agrupa mesas sin etiquetas previas usando 4 variables:
-        <em>frecuencia</em>, <em>ticket promedio</em>, <em>variabilidad</em> y <em>propina</em>.
-        <strong>PCA</strong> reduce el espacio a 2 dimensiones para visualización.
-        La calidad del agrupamiento se evalúa con <strong>Silhouette</strong> e <strong>WCSS</strong>.
-    </div>
-</div>
-
-<!-- Resumen cards -->
-<div id="resumen-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="col-span-3 flex items-center justify-center h-20 text-gray-400 text-sm gap-2">
-        <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="km_calculando">Calculando clusters…</span>
-    </div>
-</div>
-
-<!-- Scatter + Tabla -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-            <i class="bi bi-diagram-3 text-blue-500"></i> Proyección PCA — Clusters en 2D
-        </h3>
-        <p id="pca-axis-label" class="text-xs text-gray-400 mb-4">PC1 (eje X) · PC2 (eje Y) · calculando varianza…</p>
-        <div id="chart-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-            <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
-        </div>
-        <canvas id="chartKmeans" style="display:none; max-height:320px;"></canvas>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm p-6 overflow-auto">
-        <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="bi bi-table text-green-500"></i> <span data-i18n="km_detalle">Detalle por Mesa</span>
-        </h3>
-        <div id="tabla-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-            <i class="bi bi-arrow-repeat animate-spin"></i> <span data-i18n="an_cargando">Cargando…</span>
-        </div>
-        <div id="tabla-mesas" style="display:none;" class="overflow-x-auto"></div>
-    </div>
-</div>
-
-<!-- Panel PCA -->
-<div id="pca-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
-    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-        <i class="bi bi-arrows-angle-contract text-indigo-500"></i>
-        Análisis de Componentes Principales (PCA)
-        <span class="text-xs font-normal text-gray-400 ml-1">Reducción de Dimensionalidad</span>
-    </h3>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Varianza explicada -->
-        <div>
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Varianza Explicada por Componente</p>
-            <div id="pca-variance-bars" class="space-y-3 mb-3"></div>
-            <div id="pca-acumulada" class="text-xs text-gray-500 pt-2 border-t border-gray-100"></div>
-        </div>
-        <!-- Loadings -->
-        <div>
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contribución de Variables (Loadings)</p>
-            <div class="overflow-x-auto">
-                <table class="w-full text-xs border-collapse" id="pca-loadings-table">
-                    <thead>
-                        <tr class="border-b border-gray-100 text-gray-400 uppercase tracking-wide">
-                            <th class="py-2 pr-3 text-left font-semibold">Variable</th>
-                            <th class="py-2 px-3 text-center font-semibold" id="pca-th-pc1">PC1</th>
-                            <th class="py-2 px-3 text-center font-semibold" id="pca-th-pc2">PC2</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pca-loadings-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Evaluación (Fase 5) -->
-<div id="evaluacion-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6 mb-6">
-    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-        <i class="bi bi-speedometer2 text-purple-500"></i>
-        Evaluación del Modelo
-    </h3>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div class="eval-card rounded-lg p-4 text-center eval-purple">
-            <p class="text-xs text-purple-500 font-semibold uppercase tracking-wide mb-1">Silhouette Global</p>
-            <p id="eval-sil" class="text-2xl font-bold text-purple-600">—</p>
-            <p id="eval-sil-interp" class="text-xs text-gray-400 mt-1">Calidad del agrupamiento (0→1)</p>
-        </div>
-        <div class="eval-card rounded-lg p-4 text-center eval-green">
-            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">WCSS (k=3)</p>
-            <p id="eval-inertia" class="text-2xl font-bold text-green-600">—</p>
-            <p class="text-xs text-gray-400 mt-1">Within-Cluster Sum of Squares</p>
-        </div>
-        <div class="eval-card rounded-lg p-4 text-center eval-orange">
-            <p class="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Mesas analizadas</p>
-            <p id="eval-mesas" class="text-2xl font-bold text-orange-500">—</p>
-            <p class="text-xs text-gray-400 mt-1">Con historial en los últimos 90 días</p>
-        </div>
-    </div>
-
-    <!-- Silhouette por cluster -->
-    <div id="sil-cluster-wrap" class="mb-6" style="display:none;">
-        <p class="text-sm font-medium text-gray-600 mb-3">
-            <i class="bi bi-bar-chart-horizontal text-purple-400 mr-1"></i>
-            Índice de Silueta por Cluster
-        </p>
-        <div id="sil-cluster-bars" class="space-y-2"></div>
-        <p class="text-xs text-gray-400 mt-2">
-            Valores &gt;0.5 indican clusters bien definidos · &gt;0.7 excelente separación
-        </p>
-    </div>
-
-    <!-- WCSS / Codo -->
-    <p class="text-sm font-medium text-gray-600 mb-2">
-        <i class="bi bi-graph-down-arrow text-gray-400 mr-1"></i>
-        Método del Codo — WCSS por número de clusters
-    </p>
-    <canvas id="chartElbow" style="max-height:180px;"></canvas>
-</div>
-
-<!-- Recomendaciones IA -->
-<div id="recomendaciones-panel" style="display:none;" class="bg-white rounded-xl shadow-sm p-6">
-    <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
-        <i class="bi bi-stars text-yellow-500"></i>
-        Recomendaciones generadas por IA
-        <span id="ia-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full"
-              style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;">Claude</span>
-        <span id="rules-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full"
-              style="background:#fafafa;color:#64748b;border:1px solid #e2e8f0;">Análisis automático</span>
-    </h3>
-    <p class="text-xs text-gray-400 mb-4">Basadas en los datos reales de cada cluster</p>
-    <div id="rec-loading" class="flex items-center gap-2 text-sm text-gray-400 py-4">
-        <i class="bi bi-arrow-repeat animate-spin"></i> Generando recomendaciones…
-    </div>
-    <div id="recomendaciones-lista" class="grid grid-cols-1 md:grid-cols-3 gap-4" style="display:none;"></div>
-</div>
-
-<!-- Aviso sin datos -->
-<div id="aviso-sin-datos" style="display:none;"
-     class="mt-6 p-4 rounded-xl text-sm text-yellow-800 flex items-start gap-3 bg-yellow-50 border border-yellow-200">
-    <i class="bi bi-exclamation-triangle-fill mt-0.5 text-yellow-500"></i>
-    <span id="aviso-texto"></span>
-</div>
-
-<style>
-@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-.animate-spin { animation: spin 1s linear infinite; }
-
-/* Tarjetas de evaluación — modo claro */
-.eval-purple { background:#f5f3ff; border:1px solid #c4b5fd; }
-.eval-green  { background:#f0fdf4; border:1px solid #86efac; }
-.eval-orange { background:#fff7ed; border:1px solid #fed7aa; }
-
-/* Tarjetas de evaluación — modo oscuro */
-html.dark .eval-purple { background:rgba(139,92,246,0.1)  !important; border-color:rgba(139,92,246,0.3)  !important; }
-html.dark .eval-green  { background:rgba(34,197,94,0.08)  !important; border-color:rgba(34,197,94,0.28)   !important; }
-html.dark .eval-orange { background:rgba(249,115,22,0.09) !important; border-color:rgba(249,115,22,0.3)   !important; }
-
-/* Banner info */
-html.dark .kmeans-info-banner {
-    background: rgba(59,130,246,0.1) !important;
-    border-color: rgba(59,130,246,0.35) !important;
-    color: #93c5fd !important;
-}
-</style>
-
+<script src="{{ url_for('static', filename='js/mesero-charts.js') }}"></script>
 <script>
-let chartKmeans, chartElbow;
-const COLORS  = ['#f59e0b','#3b82f6','#94a3b8'];
-const BG      = ['#fef3c7','#dbeafe','#f1f5f9'];
-const BG_DARK = ['rgba(245,158,11,0.14)','rgba(59,130,246,0.14)','rgba(148,163,184,0.10)'];
-const isDark  = () => document.documentElement.classList.contains('dark');
+/* API: { success, puntos[], resumen[], evaluacion{silhouette_score, inertia, n_mesas,
+          n_clusters, wcss_elbow[], pca{varianza_explicada[], varianza_acumulada, loadings[]}}, arbol } */
 
-function fmt(v) {
-    return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);
-}
+const LABEL_MAP = { 'Mesas VIP':'VIP', 'Mesas Regulares':'Regular', 'Mesas Ocasionales':'Ocasional' };
+const COLOR     = { VIP:'var(--accent)', Regular:'var(--info)', Ocasional:'var(--ink-3)' };
 
-async function cargar() {
-    try {
-        const r = await fetch('/api/mesero/kmeans');
-        const d = await r.json();
-        if (!d.success) throw new Error(d.error || 'Error desconocido');
+function clrOf(label) { return COLOR[LABEL_MAP[label]] || 'var(--ink-3)'; }
 
-        if (d.aviso) {
-            document.getElementById('aviso-texto').textContent = d.aviso;
-            document.getElementById('aviso-sin-datos').style.display = 'flex';
-            ['chart-loading','tabla-loading'].forEach(id => document.getElementById(id).style.display = 'none');
-            document.getElementById('resumen-cards').innerHTML =
-                `<div class="col-span-3 text-center text-sm text-gray-400 py-4">${d.aviso}</div>`;
-            return;
-        }
+async function cargar(){
+  try {
+    const r = await fetch('/api/mesero/kmeans');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Error al cargar');
 
-        renderResumen(d.resumen);
-        renderScatter(d.puntos, d.evaluacion && d.evaluacion.pca);
-        renderTabla(d.puntos);
-        renderPCA(d.evaluacion && d.evaluacion.pca);
-        renderEvaluacion(d.evaluacion);
-        renderRecomendaciones(d.resumen, d.evaluacion);
-
-    } catch(e) {
-        document.getElementById('resumen-cards').innerHTML =
-            `<div class="col-span-3 text-sm text-red-500 p-4"><i class="bi bi-exclamation-circle"></i> ${e.message}</div>`;
-        ['chart-loading','tabla-loading'].forEach(id =>
-            document.getElementById(id).innerHTML = `<span class="text-red-400 text-sm">${e.message}</span>`);
+    if (d.aviso) {
+      document.getElementById('km-corrida').textContent = 'datos insuficientes';
+      document.getElementById('km-clusters').innerHTML =
+        `<div class="card card--pad" style="grid-column:1/-1;color:var(--ink-2);font-size:13.5px">
+           <i class="bi bi-info-circle"></i> ${d.aviso}
+         </div>`;
+      return;
     }
-}
 
-function renderResumen(resumen) {
-    const dark = isDark();
-    document.getElementById('resumen-cards').innerHTML = resumen.map((c, i) => {
-        const bg = dark ? BG_DARK[i] ?? c.color + '14' : c.bg;
-        const textMuted = dark ? '#a08878' : '#6b7280';
-        return `
-        <div class="rounded-xl p-5 flex items-center gap-4 shadow-sm"
-             style="background:${bg}; border:1px solid ${c.color}40;">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:${c.color}22;">
-                <i class="bi ${c.icon} text-xl" style="color:${c.color};"></i>
-            </div>
-            <div>
-                <p class="text-sm font-semibold" style="color:${c.color};">${c.label}</p>
-                <p class="text-xs mt-0.5" style="color:${textMuted};">${c.num_mesas} ${c.num_mesas!==1?t('km_mesas_pl'):t('km_mesa_sing')}</p>
-                <p class="text-xs mt-0.5" style="color:${textMuted};">${t('km_ticket_prom')} ${fmt(c.ticket_prom)} · ${c.visitas_prom} ${t('km_vis_mesa')}</p>
-                ${c.silhouette != null ? `<p class="text-xs mt-0.5" style="color:${textMuted};">Silueta: <strong style="color:${c.color};">${c.silhouette.toFixed(3)}</strong></p>` : ''}
-            </div>
+    const ev  = d.evaluacion;
+    const pca = ev.pca;
+
+    document.getElementById('km-corrida').textContent =
+      `${ev.n_clusters} clusters · ${ev.n_mesas} mesas`;
+
+    /* 1. Tarjetas por cluster */
+    document.getElementById('km-clusters').innerHTML = d.resumen.map(c => {
+      const sil = c.silhouette != null ? c.silhouette.toFixed(3) : '—';
+      return `
+        <div class="card card--pad" style="border-top:3px solid ${clrOf(c.label)}">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+            <h3 style="margin:0;font-size:16px;font-weight:600">${c.label}</h3>
+            <span style="font-size:13px;color:var(--ink-3)">${c.num_mesas} mesas</span>
+          </div>
+          <p style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.02em" class="num">${C9Charts.money(c.ticket_prom)}</p>
+          <p style="margin:4px 0 14px;font-size:12.5px;color:var(--ink-3)">ticket promedio</p>
+          <div style="display:flex;gap:22px;padding-top:14px;border-top:1px solid var(--line-soft)">
+            <div><p style="margin:0;font-size:11.5px;color:var(--ink-3)">Visitas / mes</p>
+                 <p style="margin:3px 0 0;font-size:15px;font-weight:600" class="num">${c.visitas_prom}</p></div>
+            <div><p style="margin:0;font-size:11.5px;color:var(--ink-3)">Silueta</p>
+                 <p style="margin:3px 0 0;font-size:15px;font-weight:600" class="num">${sil}</p></div>
+          </div>
         </div>`;
     }).join('');
-}
 
-function renderScatter(puntos, pca) {
-    document.getElementById('chart-loading').style.display = 'none';
-    document.getElementById('chartKmeans').style.display = '';
+    /* 2. Tabla de mesas */
+    document.getElementById('km-tabla').innerHTML = d.puntos.map(m => `
+      <tr>
+        <td class="is-key">${m.mesa}</td>
+        <td><span style="display:inline-flex;align-items:center;gap:7px;font-size:13px">
+              <span class="dot" style="background:${clrOf(m.label)}"></span>${m.label}</span></td>
+        <td class="is-num">${m.x}</td>
+        <td class="is-num">${C9Charts.money(m.y)}</td>
+        <td class="is-num is-total">${C9Charts.money(m.ingreso_total)}</td>
+      </tr>`).join('');
 
-    const v = pca ? pca.varianza_explicada : [];
-    const xLabel = v[0] != null ? `PC1 (${v[0]}% varianza)` : 'PC1';
-    const yLabel = v[1] != null ? `PC2 (${v[1]}% varianza)` : 'PC2';
-    document.getElementById('pca-axis-label').textContent = `${xLabel} · ${yLabel}`;
+    /* 3. Subtítulo varianza */
+    document.getElementById('km-varianza').textContent =
+      `PC1 ${pca.varianza_explicada[0]}% · PC2 ${pca.varianza_explicada[1] ?? 0}% de la varianza`;
 
-    const labels = [t('km_label_vip'), t('km_label_reg'), t('km_label_ocas')];
-    const datasets = [0,1,2].map(cl => ({
-        label: labels[cl],
-        data: puntos.filter(p=>p.cluster===cl).map(p=>({x: p.pca_x ?? p.x, y: p.pca_y ?? p.y, mesa:p.mesa, vx:p.x, vy:p.y})),
-        backgroundColor: COLORS[cl]+'cc',
-        borderColor: COLORS[cl],
-        pointRadius: 8, pointHoverRadius: 11,
-    })).filter(ds=>ds.data.length>0);
-
-    if (chartKmeans) chartKmeans.destroy();
-    chartKmeans = new Chart(document.getElementById('chartKmeans'),{
-        type:'scatter', data:{datasets},
-        options:{
-            responsive:true,
-            plugins:{
-                legend:{position:'bottom',labels:{boxWidth:12}},
-                tooltip:{callbacks:{label:ctx=>{
-                    const p=ctx.raw;
-                    return ` ${p.mesa} — ${p.vx} visitas, ${fmt(p.vy)} ticket`;
-                }}}
-            },
-            scales:{
-                x:{title:{display:true,text:xLabel,font:{size:11}}},
-                y:{title:{display:true,text:yLabel,font:{size:11}}}
-            }
-        }
+    /* 4. Scatter PCA — grupos por label mapeado */
+    const grupos = {};
+    d.puntos.forEach(p => {
+      const key = LABEL_MAP[p.label] || p.label;
+      (grupos[key] ||= []).push({ x: p.pca_x, y: p.pca_y, mesa: p.mesa });
     });
-}
+    C9Charts.scatter(document.getElementById('chartPCA'), grupos);
 
-function renderTabla(puntos) {
-    document.getElementById('tabla-loading').style.display = 'none';
-    document.getElementById('tabla-mesas').style.display = '';
-    const sorted = [...puntos].sort((a,b)=>a.cluster-b.cluster||b.y-a.y);
-    document.getElementById('tabla-mesas').innerHTML = `
-        <table class="w-full text-sm border-collapse">
-            <thead>
-                <tr class="border-b border-gray-200 text-left text-xs text-gray-500 uppercase tracking-wide">
-                    <th class="px-3 py-2">${t('m_mesa_word')}</th>
-                    <th class="px-3 py-2 text-center">${t('km_th_cluster')}</th>
-                    <th class="px-3 py-2 text-center">${t('km_th_visitas')}</th>
-                    <th class="px-3 py-2 text-right">${t('km_th_ticket')}</th>
-                    <th class="px-3 py-2 text-right">${t('km_th_ingreso')}</th>
-                </tr>
-            </thead>
-            <tbody>${sorted.map(p=>{
-                const dark = isDark();
-                const badgeBg = dark ? BG_DARK[p.cluster] ?? COLORS[p.cluster]+'14' : BG[p.cluster];
-                const textMain = dark ? '#e8ddd4' : '#1f2937';
-                const textMid  = dark ? '#c5b5a4' : '#4b5563';
-                const textMut  = dark ? '#a08878' : '#6b7280';
-                return `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-3 py-2 font-medium" style="color:${textMain};">${p.mesa}</td>
-                    <td class="px-3 py-2 text-center">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold"
-                              style="background:${badgeBg};color:${COLORS[p.cluster]};">${p.label}</span>
-                    </td>
-                    <td class="px-3 py-2 text-center" style="color:${textMid};">${p.x}</td>
-                    <td class="px-3 py-2 text-right" style="color:${textMid};">${fmt(p.y)}</td>
-                    <td class="px-3 py-2 text-right" style="color:${textMut};">${fmt(p.ingreso_total)}</td>
-                </tr>`;
-            }).join('')}</tbody>
-        </table>`;
-}
+    /* 5. Curva de codo — campo wcss_elbow[].wcss */
+    C9Charts.bars(document.getElementById('chartCodo'),
+      ev.wcss_elbow.map(p => p.k), ev.wcss_elbow.map(p => p.wcss), { highlightMax: false });
 
-function renderEvaluacion(ev) {
-    if (!ev) return;
-    document.getElementById('evaluacion-panel').style.display = '';
-
-    // Silhouette global con interpretación
-    const sil = ev.silhouette_score;
-    document.getElementById('eval-sil').textContent = sil !== null ? sil.toFixed(3) : 'N/A';
-    if (sil !== null) {
-        const interp = sil >= 0.7 ? '✦ Excelente separación' : sil >= 0.5 ? '✓ Clusters bien definidos' : '~ Clusters aceptables';
-        document.getElementById('eval-sil-interp').textContent = interp;
-    }
-
-    document.getElementById('eval-inertia').textContent = ev.inertia.toFixed(2);
-    document.getElementById('eval-mesas').textContent = ev.n_mesas;
-
-    // Silhouette por cluster
-    const silArr = ev.silhouette_por_cluster || [];
-    if (silArr.some(v => v !== null)) {
-        document.getElementById('sil-cluster-wrap').style.display = '';
-        const LABELS = [t('km_label_vip'), t('km_label_reg'), t('km_label_ocas')];
-        document.getElementById('sil-cluster-bars').innerHTML = silArr.map((s, i) => {
-            if (s === null) return '';
-            const pct = Math.max(0, Math.min(100, s * 100));
-            const color = COLORS[i] || '#94a3b8';
-            const quality = s >= 0.7 ? 'Excelente' : s >= 0.5 ? 'Bueno' : 'Moderado';
-            return `<div>
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-medium" style="color:${color};">${LABELS[i] || 'Cluster '+i}</span>
-                    <span class="text-xs text-gray-500">${s.toFixed(3)} — <em>${quality}</em></span>
-                </div>
-                <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
-                    <div class="h-2 rounded-full transition-all" style="width:${pct}%;background:${color};"></div>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    // WCSS / Codo
-    const elbow = ev.wcss_elbow || ev.elbow || [];
-    if (elbow.length > 0) {
-        if (chartElbow) chartElbow.destroy();
-        const wcssVals = elbow.map(e => e.wcss ?? e.inertia);
-        chartElbow = new Chart(document.getElementById('chartElbow'),{
-            type:'line',
-            data:{
-                labels: elbow.map(e=>`k=${e.k}`),
-                datasets:[{
-                    label:'WCSS',
-                    data: wcssVals,
-                    borderColor:'#8b5cf6', backgroundColor:'#8b5cf620',
-                    fill:true, tension:0.3,
-                    pointBackgroundColor: elbow.map(e=>e.k===3?'#8b5cf6':'#c4b5fd'),
-                    pointRadius: elbow.map(e=>e.k===3?8:4),
-                }]
-            },
-            options:{
-                responsive:true,
-                plugins:{legend:{display:false}},
-                scales:{
-                    x:{grid:{display:false}},
-                    y:{title:{display:true,text:'WCSS (Within-Cluster Sum of Squares)',font:{size:10}}}
-                }
-            }
-        });
-    }
-}
-
-function renderPCA(pca) {
-    if (!pca) return;
-    document.getElementById('pca-panel').style.display = '';
-
-    // Barras de varianza
-    const barColors = ['#6366f1','#8b5cf6'];
-    document.getElementById('pca-variance-bars').innerHTML = pca.varianza_explicada.map((v, i) => `
-        <div>
-            <div class="flex justify-between mb-1">
-                <span class="text-xs font-semibold" style="color:${barColors[i]}">PC${i+1}</span>
-                <span class="text-xs text-gray-600 font-mono">${v}%</span>
-            </div>
-            <div class="h-3 rounded-full bg-gray-100 overflow-hidden">
-                <div class="h-3 rounded-full" style="width:${v}%;background:${barColors[i]};transition:width .6s ease;"></div>
-            </div>
-        </div>
+    /* 6. Loadings — reshape lista plana a por-feature */
+    const byFeature = {};
+    pca.loadings.forEach(l => {
+      if (!byFeature[l.feature]) byFeature[l.feature] = {};
+      byFeature[l.feature][l.pc] = l.peso;
+    });
+    document.getElementById('km-loadings').innerHTML = Object.entries(byFeature).map(([feat, pcs]) => `
+      <tr><td class="is-key">${feat}</td>
+          <td class="is-num">${(pcs['PC1']||0).toFixed(3).replace('-','−')}</td>
+          <td class="is-num">${(pcs['PC2']||0).toFixed(3).replace('-','−')}</td></tr>
     `).join('');
 
-    document.getElementById('pca-acumulada').innerHTML =
-        `<span class="font-semibold text-indigo-600">${pca.varianza_acumulada}%</span> de la varianza total explicada por PC1 + PC2`;
+    /* 7. Calidad del modelo */
+    const sg     = ev.silhouette_score != null ? ev.silhouette_score.toFixed(3) : '—';
+    const sgClr  = ev.silhouette_score > 0.5 ? 'var(--ok)' : 'var(--ink)';
+    document.getElementById('km-calidad').innerHTML = `
+      <p class="card__title">Calidad del modelo</p>
+      <p class="card__note" style="margin-bottom:14px">Evaluación K-Means</p>
+      <p style="margin:0;font-size:11.5px;color:var(--ink-3)">Silhouette Score</p>
+      <p style="margin:2px 0 6px;font-size:26px;font-weight:700;color:${sgClr}" class="num">${sg}</p>
+      <p style="margin:0;font-size:11px;color:var(--ink-3)">cercano a 1 = clusters bien separados</p>
+      <p style="margin:12px 0 0;font-size:11.5px;color:var(--ink-3)">Inercia (WCSS)</p>
+      <p style="margin:2px 0 0;font-size:16px;font-weight:600" class="num">${ev.inertia.toFixed(2)}</p>`;
 
-    // Cabeceras de tabla
-    if (pca.varianza_explicada[0] != null)
-        document.getElementById('pca-th-pc1').textContent = `PC1 (${pca.varianza_explicada[0]}%)`;
-    if (pca.varianza_explicada[1] != null)
-        document.getElementById('pca-th-pc2').textContent = `PC2 (${pca.varianza_explicada[1]}%)`;
+    /* 8. Barras de varianza PCA */
+    document.getElementById('km-varianza-barras').innerHTML = `
+      <p class="card__title">Varianza PCA</p>
+      <p class="card__note" style="margin-bottom:14px">Acumulada: ${pca.varianza_acumulada}%</p>
+      ${pca.varianza_explicada.map((v, i) => `
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:12px;color:var(--ink-2)">PC${i+1}</span>
+            <span style="font-size:12px;font-weight:600">${v}%</span>
+          </div>
+          <div style="background:var(--accent-soft);border-radius:999px;height:7px">
+            <div style="height:7px;border-radius:999px;background:var(--info);width:${Math.min(v,100)}%"></div>
+          </div>
+        </div>`).join('')}`;
 
-    // Loadings agrupados por variable
-    const features = pca.feature_labels || [];
-    const byFeature = {};
-    (pca.loadings || []).forEach(l => {
-        if (!byFeature[l.feature]) byFeature[l.feature] = {};
-        byFeature[l.feature][l.pc] = l.peso;
-    });
-    document.getElementById('pca-loadings-body').innerHTML = features.map(f => {
-        const row = byFeature[f] || {};
-        const cell = (pc) => {
-            const v = row[pc];
-            if (v == null) return '<td class="py-2 px-3 text-center text-gray-300">—</td>';
-            const abs = Math.abs(v);
-            const color = v > 0 ? '#059669' : '#dc2626';
-            const bold = abs > 0.4 ? 'font-semibold' : '';
-            return `<td class="py-2 px-3 text-center ${bold} font-mono" style="color:${color}">${v > 0 ? '+' : ''}${v.toFixed(3)}</td>`;
-        };
-        return `<tr class="border-b border-gray-50">
-            <td class="py-2 pr-3 text-gray-700">${f}</td>
-            ${cell('PC1')}${cell('PC2')}
-        </tr>`;
-    }).join('');
+    /* 9. Recomendaciones por cluster */
+    document.getElementById('km-recomendaciones').innerHTML = d.resumen.map(r => `
+      <div class="card card--pad" style="padding:18px 20px">
+        <p style="margin:0 0 4px;font-size:12px;color:var(--ink-3)">${r.mesas.join(' · ')}</p>
+        <p style="margin:0;font-size:13px;line-height:1.55;color:var(--ink-2)">${r.recomendacion}</p>
+      </div>`).join('');
+
+  } catch(e) {
+    document.getElementById('km-clusters').innerHTML =
+      `<div class="card card--pad" style="grid-column:1/-1;text-align:center;color:var(--accent);padding:24px">
+         <i class="bi bi-exclamation-circle" style="font-size:20px"></i>
+         <p style="margin:8px 0 0;font-size:13px">${e.message}</p>
+       </div>`;
+  }
 }
 
-async function renderRecomendaciones(resumen, evaluacion) {
-    document.getElementById('recomendaciones-panel').style.display = '';
-    document.getElementById('rec-loading').style.display = 'flex';
-    document.getElementById('recomendaciones-lista').style.display = 'none';
-
-    let textos = null;
-    let usoClaude = false;
-    try {
-        const r = await fetch('/api/mesero/kmeans/recomendaciones', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({resumen, evaluacion})
-        });
-        const d = await r.json();
-        if (d.success && Array.isArray(d.recomendaciones)) {
-            textos = d.recomendaciones;
-            usoClaude = d.via_claude || false;
-        }
-    } catch(_) {}
-
-    document.getElementById('rec-loading').style.display = 'none';
-    document.getElementById('recomendaciones-lista').style.display = '';
-
-    if (usoClaude) {
-        document.getElementById('ia-badge').classList.remove('hidden');
-    } else {
-        document.getElementById('rules-badge').classList.remove('hidden');
-    }
-
-    const dark = isDark();
-    const textMut = dark ? '#a08878' : '#4b5563';
-    document.getElementById('recomendaciones-lista').innerHTML = resumen.map((c, i) => {
-        const bg  = dark ? BG_DARK[i] ?? c.color + '14' : c.bg;
-        const rec = (textos && textos[i]) ? textos[i] : (c.recomendacion || '');
-        return `
-        <div class="rounded-xl p-4" style="background:${bg}; border:1px solid ${c.color}30;">
-            <div class="flex items-center gap-2 mb-2">
-                <i class="bi ${c.icon}" style="color:${c.color};"></i>
-                <span class="text-sm font-semibold" style="color:${c.color};">${c.label}</span>
-            </div>
-            <p class="text-sm leading-relaxed" style="color:${textMut};">${rec}</p>
-        </div>`;
-    }).join('');
-}
-
+function recalcular(){ cargar(); }
 cargar();
 </script>
 {% endblock %}
