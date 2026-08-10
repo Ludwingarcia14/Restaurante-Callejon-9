@@ -1,33 +1,33 @@
 {% extends "layout/layout_cocina.html" %}
 
 {% block title %}Pedidos en Preparación - Sistema de Cocina{% endblock %}
-{% block page_title %}Pedidos en Preparación{% endblock %}
-{% block page_subtitle %}Gestión y monitoreo de preparación en tiempo real{% endblock %}
+{% block page_title %}<span data-i18n="cn_ep_titulo">Pedidos en Preparación</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="cn_ep_sub">Gestión y monitoreo de preparación en tiempo real</span>{% endblock %}
 
 {% block navigation %}
 <a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link">
     <i class="bi bi-house-door"></i>
-    <span>Inicio</span>
+    <span data-i18n="cn_inicio">Inicio</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_pedidos') }}" class="nav-link">
     <i class="bi bi-list-task"></i>
-    <span>Pedidos Pendientes</span>
+    <span data-i18n="cn_pend">Pedidos Pendientes</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_en_proceso') }}" class="nav-link active">
     <i class="bi bi-hourglass-split"></i>
-    <span>En Preparación</span>
+    <span data-i18n="cn_en_prep">En Preparación</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_listos') }}" class="nav-link">
     <i class="bi bi-check-circle"></i>
-    <span>Listos</span>
+    <span data-i18n="cn_listos">Listos</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
     <i class="bi bi-box-seam"></i>
-    <span>Inventario</span>
+    <span data-i18n="cn_inventario">Inventario</span>
 </a>
 {% endblock %}
 
@@ -38,15 +38,15 @@
     <div class="flex items-center justify-between">
         <div>
             <h2 class="text-2xl font-bold flex items-center gap-2">
-                <i class="bi bi-fire"></i> Pedidos en Preparación
+                <i class="bi bi-fire"></i> <span data-i18n="cn_ep_titulo">Pedidos en Preparación</span>
             </h2>
             <p class="text-sm opacity-90 mt-1">
-                <i class="bi bi-clock-history"></i> Tiempo promedio: <span id="tiempo-promedio-prep">--</span> min
+                <i class="bi bi-clock-history"></i> <span data-i18n="cn_tiempo_prom">Tiempo promedio:</span> <span id="tiempo-promedio-prep">--</span> min
             </p>
         </div>
         <div class="text-right">
             <div class="text-5xl font-bold" id="total-preparacion">0</div>
-            <p class="text-sm opacity-90">En Cocina</p>
+            <p class="text-sm opacity-90" data-i18n="cn_ep_en_cocina">En Cocina</p>
         </div>
     </div>
 </div>
@@ -55,23 +55,23 @@
 <div class="bg-white p-4 rounded-xl shadow-md mb-6 flex items-center justify-between flex-wrap gap-3">
     <div class="flex items-center gap-3">
         <button onclick="actualizarPedidosPrep()" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center gap-2">
-            <i class="bi bi-arrow-clockwise"></i> Actualizar
+            <i class="bi bi-arrow-clockwise"></i> <span data-i18n="cn_btn_act2">Actualizar</span>
         </button>
-        
+
         <div class="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-lg">
             <i class="bi bi-funnel text-gray-600"></i>
             <select id="filtro-tiempo" class="bg-transparent text-sm border-none focus:ring-0" onchange="filtrarPorTiempo()">
-                <option value="all">Todos</option>
-                <option value="urgente">Urgente (>15 min)</option>
-                <option value="advertencia">Advertencia (>10 min)</option>
-                <option value="normal">Normal (<10 min)</option>
+                <option value="all" data-i18n="cn_filter_todos">Todos</option>
+                <option value="urgente" data-i18n="cn_filter_urg">Urgente (&gt;15 min)</option>
+                <option value="advertencia" data-i18n="cn_filter_adv">Advertencia (&gt;10 min)</option>
+                <option value="normal" data-i18n="cn_filter_norm">Normal (&lt;10 min)</option>
             </select>
         </div>
     </div>
     
     <div class="flex items-center gap-2">
         <span class="text-sm bg-red-100 text-red-700 px-3 py-1 rounded-full flex items-center gap-1">
-            <i class="bi bi-exclamation-triangle-fill"></i> <span id="contador-urgente">0</span> urgentes
+            <i class="bi bi-exclamation-triangle-fill"></i> <span id="contador-urgente">0</span> <span data-i18n="cn_urgentes">urgentes</span>
         </span>
         <span class="text-sm bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full flex items-center gap-1">
             <i class="bi bi-clock"></i> <span id="contador-advertencia">0</span> >10min
@@ -87,20 +87,23 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contenedor-preparacion">
             <div class="col-span-2 text-center py-16 bg-white rounded-xl shadow-md">
                 <i class="bi bi-inbox text-6xl mb-3 block text-gray-300"></i>
-                <p class="text-lg font-semibold text-gray-500">Cargando pedidos...</p>
+                <p class="text-lg font-semibold text-gray-500" data-i18n="cn_cargando">Cargando...</p>
                 <div class="mt-4">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
                 </div>
             </div>
         </div>
     </div>
+    <button>
+        uuuuu
+    </button>
     
     <!-- COLUMNA LATERAL: LISTADO RÁPIDO Y ESTADÍSTICAS -->
     <div class="lg:col-span-1">
         <!-- ORDEN DE PREPARACIÓN -->
         <div class="bg-white rounded-xl shadow-md p-4 mb-4 sticky top-20 max-h-[400px] overflow-y-auto">
             <h3 class="font-bold text-lg mb-4 text-gray-800 pb-3 border-b-2 border-orange-300 flex items-center justify-between">
-                <span><i class="bi bi-list-check"></i> Orden de Preparación</span>
+                <span><i class="bi bi-list-check"></i> <span data-i18n="cn_orden_prep">Orden de Preparación</span></span>
                 <span class="text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded-full" id="total-lista-rapida">0</span>
             </h3>
             <div id="listado-rapido-prep" class="space-y-2"></div>
@@ -109,19 +112,19 @@
         <!-- TIEMPOS ESTIMADOS -->
         <div class="bg-white rounded-xl shadow-md p-4">
             <h3 class="font-bold text-lg mb-3 text-gray-800 pb-2 border-b-2 border-orange-300">
-                <i class="bi bi-clock-history"></i> Tiempos Estimados
+                <i class="bi bi-clock-history"></i> <span data-i18n="cn_tiempos_est">Tiempos Estimados</span>
             </h3>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>Pedido más antiguo:</span>
+                    <span data-i18n="cn_ped_antiguo">Pedido más antiguo:</span>
                     <span class="font-bold text-red-600" id="tiempo-mas-antiguo">--</span>
                 </div>
                 <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>Tiempo promedio:</span>
+                    <span data-i18n="cn_tiempo_prom">Tiempo promedio:</span>
                     <span class="font-bold text-orange-600" id="tiempo-promedio-detalle">--</span>
                 </div>
                 <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>Total preparando:</span>
+                    <span data-i18n="cn_total_prep">Total preparando:</span>
                     <span class="font-bold text-gray-700" id="total-preparando-detalle">0</span>
                 </div>
             </div>
@@ -130,7 +133,7 @@
 </div>
 
 <!-- MODAL DE DETALLES DEL PEDIDO -->
-<div id="modal-detalles-prep" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+<div id="modal-detalles-prep" data-modal="true" data-close-fn="cerrarModalDetallesPrep" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[1100] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideIn">
         
         <!-- Modal Header -->
@@ -139,8 +142,8 @@
                 <div>
                     <h2 class="text-2xl font-bold" id="modal-prep-folio">Pedido #000000</h2>
                     <div class="flex items-center gap-4 mt-2">
-                        <p class="text-sm opacity-90"><i class="bi bi-table"></i> Mesa <span id="modal-prep-mesa">1</span></p>
-                        <p class="text-sm opacity-90"><i class="bi bi-person"></i> Mesero: <span id="modal-prep-mesero">--</span></p>
+                        <p class="text-sm opacity-90"><i class="bi bi-table"></i> <span data-i18n="m_mesa_word">Mesa</span> <span id="modal-prep-mesa">1</span></p>
+                        <p class="text-sm opacity-90"><i class="bi bi-person"></i> <span data-i18n="cn_mesero_lbl">Mesero:</span> <span id="modal-prep-mesero">--</span></p>
                     </div>
                 </div>
                 <button onclick="cerrarModalDetallesPrep()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
@@ -153,27 +156,27 @@
         <div class="p-6">
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
-                    <p class="text-xs text-gray-600 uppercase font-bold">TIEMPO EN PREPARACIÓN</p>
+                    <p class="text-xs text-gray-600 uppercase font-bold" data-i18n="cn_modal_t_prep">TIEMPO EN PREPARACIÓN</p>
                     <p class="text-2xl font-bold text-orange-600" id="modal-prep-tiempo-actual">--</p>
-                    <p class="text-xs text-gray-500 mt-1">Desde que inició preparación</p>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="cn_modal_d_ini">Desde que inició preparación</p>
                 </div>
                 <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
-                    <p class="text-xs text-gray-600 uppercase font-bold">TIEMPO TOTAL</p>
+                    <p class="text-xs text-gray-600 uppercase font-bold" data-i18n="cn_modal_t_tot">TIEMPO TOTAL</p>
                     <p class="text-2xl font-bold text-red-600" id="modal-prep-tiempo-total">--</p>
-                    <p class="text-xs text-gray-500 mt-1">Desde que se tomó el pedido</p>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="cn_modal_d_ped">Desde que se tomó el pedido</p>
                 </div>
             </div>
             
             <div class="mb-6">
                 <h3 class="font-bold text-lg mb-4 text-gray-800 pb-2 border-b-2 border-orange-300 flex items-center gap-2">
-                    <i class="bi bi-basket"></i> Platillos en Preparación
+                    <i class="bi bi-basket"></i> <span data-i18n="cn_modal_p_prep">Platillos en Preparación</span>
                 </h3>
                 <div id="modal-prep-platillos" class="space-y-4"></div>
             </div>
             
             <div id="modal-prep-notas-container" class="bg-yellow-50 p-4 rounded-lg hidden">
                 <h4 class="font-semibold text-sm text-yellow-800 mb-2 flex items-center gap-2">
-                    <i class="bi bi-pencil-square"></i> Notas del pedido:
+                    <i class="bi bi-pencil-square"></i> <span data-i18n="cn_modal_notas">Notas del pedido:</span>
                 </h4>
                 <p id="modal-prep-notas" class="text-sm text-yellow-700"></p>
             </div>
@@ -182,10 +185,10 @@
         <!-- Modal Footer -->
         <div class="bg-gray-50 p-6 border-t-2 border-gray-200 flex gap-3">
             <button onclick="cerrarModalDetallesPrep()" class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold flex items-center justify-center gap-2">
-                <i class="bi bi-x-circle"></i> Cerrar
+                <i class="bi bi-x-circle"></i> <span data-i18n="dash_cerrar">Cerrar</span>
             </button>
             <button onclick="marcarTodoListoDesdeModal()" class="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center justify-center gap-2">
-                <i class="bi bi-check-circle"></i> Marcar Todo Listo
+                <i class="bi bi-check-circle"></i> <span data-i18n="cn_modal_todo_l">Marcar Todo Listo</span>
             </button>
         </div>
     </div>
@@ -230,7 +233,7 @@ function inicializarSocketCocina() {
             console.log('✅ Socket.IO conectado en vista Preparación');
             socket.emit('join_room', 'cocina');
         });
-        socket.on('preparacion_iniciada', function(data) { cargarPedidosPreparacion(); mostrarNotificacion('Nuevo pedido en preparación', 'info'); });
+        socket.on('preparacion_iniciada', function(data) { cargarPedidosPreparacion(); mostrarNotificacion(t('cn_t_nuevo_prep'), 'info'); });
         socket.on('pedido_listo_confirmado', function(data) { cargarPedidosPreparacion(); });
         socket.on('pedido_actualizado', function(data) { cargarPedidosPreparacion(); });
         socket.on('disconnect', function() { console.log('❌ Socket.IO desconectado'); });
@@ -249,10 +252,10 @@ async function cargarPedidosPreparacion() {
             renderizarListadoRapido();
             actualizarEstadisticas();
         } else {
-            mostrarError('Error al cargar los pedidos');
+            mostrarError(t('cn_err_cargar'));
         }
     } catch (error) {
-        mostrarError('Error de conexión con el servidor');
+        mostrarError(t('cn_err_cnx_srv'));
     }
 }
 
@@ -262,8 +265,8 @@ function renderizarPedidosPreparacion() {
         contenedor.innerHTML = `
             <div class="col-span-2 text-center py-16 bg-white rounded-xl shadow-md">
                 <i class="bi bi-inbox text-6xl mb-3 block text-gray-300"></i>
-                <p class="text-lg font-semibold text-gray-500">No hay pedidos en preparación</p>
-                <p class="text-sm text-gray-400 mt-1">Los pedidos aparecerán aquí cuando inicies su preparación</p>
+                <p class="text-lg font-semibold text-gray-500">${t('cn_no_hay_prep')}</p>
+                <p class="text-sm text-gray-400 mt-1">${t('cn_ap_cuando')}</p>
             </div>`;
         return;
     }
@@ -288,16 +291,16 @@ function crearTarjetaPedidoPreparacion(pedido) {
                             <i class="bi ${icono} text-orange-600 text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-gray-800">Mesa ${pedido.mesa_numero}</h3>
-                            <p class="text-xs text-gray-500">${pedido.folio || 'Sin folio'}</p>
-                            <p class="text-xs text-gray-500">Mesero: ${pedido.mesero_nombre || 'N/A'}</p>
+                            <h3 class="font-bold text-gray-800">${t('m_mesa_word')} ${pedido.mesa_numero}</h3>
+                            <p class="text-xs text-gray-500">${pedido.folio || t('cn_sin_folio')}</p>
+                            <p class="text-xs text-gray-500">${t('cn_mesero_lbl')} ${pedido.mesero_nombre || 'N/A'}</p>
                         </div>
                     </div>
                     <span class="px-3 py-1 ${badgeColor} rounded-full text-xs font-bold">${tiempoPrep} min</span>
                 </div>
                 <div class="mb-3">
                     <div class="flex justify-between text-xs mb-1">
-                        <span class="text-gray-600">Progreso</span>
+                        <span class="text-gray-600">${t('cn_progreso')}</span>
                         <span class="font-bold text-orange-600">${itemsPreparados}/${items.length}</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
@@ -312,17 +315,17 @@ function crearTarjetaPedidoPreparacion(pedido) {
                                 <span class="text-gray-700">${item.nombre}</span>
                             </div>
                             <span class="text-xs ${item.estado_cocina === 'listo' ? 'text-green-600' : 'text-orange-600'}">
-                                ${item.estado_cocina === 'listo' ? '✓ Listo' : item.estado_cocina === 'en_preparacion' ? '⚡ Preparando' : '⏳ Pendiente'}
+                                ${item.estado_cocina === 'listo' ? t('cn_item_listo') : item.estado_cocina === 'en_preparacion' ? t('cn_item_prep') : t('cn_item_pend')}
                             </span>
                         </div>
-                    `).join('') || '<p class="text-gray-400 text-sm">Sin items</p>'}
+                    `).join('') || `<p class="text-gray-400 text-sm">${t('cn_sin_items')}</p>`}
                 </div>
                 <div class="flex gap-2">
                     <button onclick="verDetallesPreparacion('${pedido._id}')" class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-semibold text-sm flex items-center justify-center gap-1">
-                        <i class="bi bi-eye"></i> Detalles
+                        <i class="bi bi-eye"></i> ${t('cn_btn_detalles')}
                     </button>
                     <button onclick="marcarListo('${pedido._id}')" class="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold text-sm flex items-center justify-center gap-1">
-                        <i class="bi bi-check-circle"></i> Listo
+                        <i class="bi bi-check-circle"></i> ${t('cn_btn_listo2')}
                     </button>
                 </div>
             </div>
@@ -332,7 +335,7 @@ function crearTarjetaPedidoPreparacion(pedido) {
 function renderizarListadoRapido() {
     const listado = document.getElementById('listado-rapido-prep');
     if (!pedidosPreparacion || pedidosPreparacion.length === 0) {
-        listado.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Sin pedidos en preparación</p>';
+        listado.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">${t('cn_sin_en_prep')}</p>`;
         return;
     }
     listado.innerHTML = [...pedidosPreparacion]
@@ -341,7 +344,7 @@ function renderizarListadoRapido() {
             <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer" onclick="verDetallesPreparacion('${pedido._id}')">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-gray-500">#${index + 1}</span>
-                    <span class="font-medium">Mesa ${pedido.mesa_numero}</span>
+                    <span class="font-medium">${t('m_mesa_word')} ${pedido.mesa_numero}</span>
                 </div>
                 <span class="text-xs ${pedido.tiempo_preparacion > 15 ? 'text-red-600 font-bold' : 'text-gray-600'}">${pedido.tiempo_preparacion || 0} min</span>
             </div>`).join('');
@@ -360,21 +363,21 @@ async function verDetallesPreparacion(pedidoId) {
             document.getElementById('modal-detalles-prep').classList.remove('hidden');
         }
     } catch (error) {
-        mostrarError('No se pudieron cargar los detalles del pedido');
+        mostrarError(t('cn_err_det_ped'));
     }
 }
 
 function llenarModalDetalles(pedido) {
     document.getElementById('modal-prep-folio').textContent        = pedido.folio || `Pedido #${pedido._id.slice(-6)}`;
     document.getElementById('modal-prep-mesa').textContent         = pedido.mesa_numero || 'N/A';
-    document.getElementById('modal-prep-mesero').textContent       = pedido.mesero_nombre || 'No asignado';
-    document.getElementById('modal-prep-tiempo-actual').textContent = `${pedido.tiempo_preparacion || 0} minutos`;
-    document.getElementById('modal-prep-tiempo-total').textContent  = `${pedido.tiempo_espera || 0} minutos`;
+    document.getElementById('modal-prep-mesero').textContent       = pedido.mesero_nombre || t('cn_no_asignado');
+    document.getElementById('modal-prep-tiempo-actual').textContent = `${pedido.tiempo_preparacion || 0} ${t('cn_minutos')}`;
+    document.getElementById('modal-prep-tiempo-total').textContent  = `${pedido.tiempo_espera || 0} ${t('cn_minutos')}`;
     const contenedorPlatillos = document.getElementById('modal-prep-platillos');
     if (pedido.items && pedido.items.length > 0) {
         contenedorPlatillos.innerHTML = pedido.items.map(item => {
-            const estadoMap = { listo: ['bg-green-100 text-green-700', 'Listo'], en_preparacion: ['bg-orange-100 text-orange-700', 'Preparando'] };
-            const [estadoClase, estadoTexto] = estadoMap[item.estado_cocina] || ['bg-gray-100 text-gray-700', 'Pendiente'];
+            const estadoMap = { listo: ['bg-green-100 text-green-700', t('cn_estado_listo')], en_preparacion: ['bg-orange-100 text-orange-700', t('cn_estado_prep')] };
+            const [estadoClase, estadoTexto] = estadoMap[item.estado_cocina] || ['bg-gray-100 text-gray-700', t('cn_estado_pend')];
             return `
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div class="flex items-start gap-3 flex-1">
@@ -390,14 +393,14 @@ function llenarModalDetalles(pedido) {
                             ${item.estado_cocina === 'en_preparacion' ? `
                                 <button onclick="marcarItemListo('${pedido._id}', '${item.producto_id}')"
                                         class="mt-2 text-xs bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition">
-                                    <i class="bi bi-check-circle"></i> Marcar como listo
+                                    <i class="bi bi-check-circle"></i> ${t('cn_btn_marcar_i')}
                                 </button>` : ''}
                         </div>
                     </div>
                 </div>`;
         }).join('');
     } else {
-        contenedorPlatillos.innerHTML = '<p class="text-gray-400 text-center py-4">No hay platillos en este pedido</p>';
+        contenedorPlatillos.innerHTML = `<p class="text-gray-400 text-center py-4">${t('cn_no_hay_plat')}</p>`;
     }
     const notasContainer = document.getElementById('modal-prep-notas-container');
     if (pedido.notas) {
@@ -417,18 +420,18 @@ async function marcarListo(comandaId) {
     try {
         const response = await fetch('/api/cocina/pedido/listo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comanda_id: comandaId }) });
         const data = await response.json();
-        if (data.success) { mostrarNotificacion('✅ Pedido marcado como listo', 'success'); cargarPedidosPreparacion(); cerrarModalDetallesPrep(); }
-        else { mostrarError('Error al marcar pedido como listo'); }
-    } catch (error) { mostrarError('Error de conexión'); }
+        if (data.success) { mostrarNotificacion(t('cn_t_marc_listo'), 'success'); cargarPedidosPreparacion(); cerrarModalDetallesPrep(); }
+        else { mostrarError(t('cn_err_marc_l')); }
+    } catch (error) { mostrarError(t('cfg_err_cnx')); }
 }
 
 async function marcarItemListo(comandaId, productoId) {
     try {
         const response = await fetch('/api/cocina/item/listo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comanda_id: comandaId, producto_id: productoId }) });
         const data = await response.json();
-        if (data.success) { mostrarNotificacion('✅ Item marcado como listo', 'success'); if (pedidoSeleccionado) verDetallesPreparacion(pedidoSeleccionado._id); cargarPedidosPreparacion(); }
-        else { mostrarError('Error al marcar item como listo'); }
-    } catch (error) { mostrarError('Error de conexión'); }
+        if (data.success) { mostrarNotificacion(t('cn_t_item_listo'), 'success'); if (pedidoSeleccionado) verDetallesPreparacion(pedidoSeleccionado._id); cargarPedidosPreparacion(); }
+        else { mostrarError(t('cn_err_item_l')); }
+    } catch (error) { mostrarError(t('cfg_err_cnx')); }
 }
 
 async function marcarTodoListoDesdeModal() { if (pedidoSeleccionado) await marcarListo(pedidoSeleccionado._id); }
@@ -461,7 +464,7 @@ function actualizarEstadisticas() {
     }
 }
 
-function actualizarPedidosPrep() { cargarPedidosPreparacion(); mostrarNotificacion('Pedidos actualizados', 'info'); }
+function actualizarPedidosPrep() { cargarPedidosPreparacion(); mostrarNotificacion(t('cn_t_actualiz'), 'info'); }
 
 function mostrarNotificacion(mensaje, tipo = 'info') {
     Swal.fire({ icon: tipo, title: mensaje, toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });

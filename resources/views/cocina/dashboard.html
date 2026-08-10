@@ -1,33 +1,33 @@
 {% extends "layout/layout_cocina.html" %}
 
 {% block title %}Panel de Cocina{% endblock %}
-{% block page_title %}Dashboard de Cocina{% endblock %}
-{% block page_subtitle %}Gestión de pedidos y preparación{% endblock %}
+{% block page_title %}<span data-i18n="cn_dash_titulo">Dashboard de Cocina</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="cn_dash_sub">Gestión de pedidos y preparación</span>{% endblock %}
 
 {% block navigation %}
 <a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link active">
     <i class="bi bi-house-door"></i>
-    <span>Inicio</span>
+    <span data-i18n="cn_inicio">Inicio</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_pedidos') }}" class="nav-link">
     <i class="bi bi-list-task"></i>
-    <span>Pedidos Pendientes</span>
+    <span data-i18n="cn_pend">Pedidos Pendientes</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_en_proceso') }}" class="nav-link">
     <i class="bi bi-hourglass-split"></i>
-    <span>En Preparación</span>
+    <span data-i18n="cn_en_prep">En Preparación</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_listos') }}" class="nav-link">
     <i class="bi bi-check-circle"></i>
-    <span>Listos</span>
+    <span data-i18n="cn_listos">Listos</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
     <i class="bi bi-box-seam"></i>
-    <span>Inventario</span>
+    <span data-i18n="cn_inventario">Inventario</span>
 </a>
 {% endblock %}
 
@@ -39,15 +39,15 @@
 <div class="bg-gradient-to-r from-orange-500 to-red-600 p-6 rounded-xl shadow-lg text-white mb-6">
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold mb-2">¡Bienvenido, {{ session.usuario_nombre }}! 🔥</h2>
+            <h2 class="text-2xl font-bold mb-2"><span data-i18n="cn_bienvenido">¡Bienvenido,</span> {{ session.usuario_nombre }}! 🔥</h2>
             <div class="flex items-center gap-4 text-sm opacity-90">
                 <div class="flex items-center gap-2">
                     <i class="bi bi-egg-fried"></i>
-                    <span>Área: {{ perfil.area|title if perfil.area else 'General' }}</span>
+                    <span><span data-i18n="cn_area_lbl">Área:</span> {{ perfil.area|title if perfil.area else 'General' }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <i class="bi bi-clock"></i>
-                    <span>Turno: {{ perfil.turno|title if perfil.turno else 'N/A' }}</span>
+                    <span><span data-i18n="cn_turno_lbl">Turno:</span> {{ perfil.turno|title if perfil.turno else 'N/A' }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <i class="bi bi-person-badge"></i>
@@ -57,7 +57,7 @@
         </div>
         <div class="text-right">
             <div class="text-4xl font-bold" id="pedidos-pendientes-count">0</div>
-            <div class="text-sm opacity-90">Pedidos Pendientes</div>
+            <div class="text-sm opacity-90" data-i18n="cn_pend">Pedidos Pendientes</div>
         </div>
     </div>
 </div>
@@ -73,9 +73,9 @@
             <i class="bi bi-bell-fill text-4xl text-red-500 animate-pulse"></i>
             <span class="text-3xl font-bold text-gray-800" id="stat-nuevos">0</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Pedidos Nuevos</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="cn_nuevos">Pedidos Nuevos</p>
         <p class="text-xs text-red-600 mt-1">
-            <i class="bi bi-exclamation-circle"></i> Requieren atención
+            <i class="bi bi-exclamation-circle"></i> <span data-i18n="cn_req_atencion">Requieren atención</span>
         </p>
     </div>
 
@@ -85,9 +85,9 @@
             <i class="bi bi-fire text-4xl text-orange-500"></i>
             <span class="text-3xl font-bold text-gray-800" id="stat-preparacion">0</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">En Preparación</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="cn_en_prep_lbl">En Preparación</p>
         <p class="text-xs text-orange-600 mt-1">
-            <i class="bi bi-clock"></i> En proceso
+            <i class="bi bi-clock"></i> <span data-i18n="m_en_proceso">En proceso</span>
         </p>
     </div>
 
@@ -97,9 +97,9 @@
             <i class="bi bi-check-circle-fill text-4xl text-green-500"></i>
             <span class="text-3xl font-bold text-gray-800" id="stat-listos">0</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Listos</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="cn_listos">Listos</p>
         <p class="text-xs text-green-600 mt-1">
-            <i class="bi bi-bell"></i> Para servir
+            <i class="bi bi-bell"></i> <span data-i18n="cn_para_servir">Para servir</span>
         </p>
     </div>
 
@@ -109,9 +109,9 @@
             <i class="bi bi-graph-up text-4xl text-purple-500"></i>
             <span class="text-3xl font-bold text-gray-800" id="stat-completados">0</span>
         </div>
-        <p class="text-sm text-gray-600 font-medium">Completados Hoy</p>
+        <p class="text-sm text-gray-600 font-medium" data-i18n="cn_completados">Completados Hoy</p>
         <p class="text-xs text-purple-600 mt-1">
-            <i class="bi bi-trophy"></i> Tiempo promedio: <span id="tiempo-promedio">--</span> min
+            <i class="bi bi-trophy"></i> <span data-i18n="cn_tiempo_prom">Tiempo promedio:</span> <span id="tiempo-promedio">--</span> min
         </p>
     </div>
     
@@ -125,7 +125,7 @@
     <div class="card-header">
         <h2 class="card-title">
             <i class="bi bi-star-fill text-yellow-500"></i>
-            Mis Especialidades
+            <span data-i18n="cn_mis_esp">Mis Especialidades</span>
         </h2>
     </div>
     <div class="card-body">
@@ -150,7 +150,7 @@
         <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="bi bi-bell-fill text-xl"></i>
-                <h3 class="font-bold">Pendientes</h3>
+                <h3 class="font-bold" data-i18n="cn_col_pend">Pendientes</h3>
             </div>
             <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-bold" id="count-pendientes">0</span>
         </div>
@@ -158,7 +158,7 @@
             <!-- Los pedidos se cargan aquí dinámicamente -->
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-inbox text-5xl mb-3 block"></i>
-                <p class="text-sm">Sin pedidos pendientes</p>
+                <p class="text-sm" data-i18n="cn_sin_pend">Sin pedidos pendientes</p>
             </div>
         </div>
     </div>
@@ -168,14 +168,14 @@
         <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="bi bi-fire text-xl"></i>
-                <h3 class="font-bold">En Preparación</h3>
+                <h3 class="font-bold" data-i18n="cn_en_prep_lbl">En Preparación</h3>
             </div>
             <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-bold" id="count-preparacion">0</span>
         </div>
         <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto" id="columna-preparacion">
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-hourglass-split text-5xl mb-3 block"></i>
-                <p class="text-sm">Sin pedidos en preparación</p>
+                <p class="text-sm" data-i18n="cn_sin_en_prep">Sin pedidos en preparación</p>
             </div>
         </div>
     </div>
@@ -185,14 +185,14 @@
         <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="bi bi-check-circle-fill text-xl"></i>
-                <h3 class="font-bold">Listos</h3>
+                <h3 class="font-bold" data-i18n="cn_listos">Listos</h3>
             </div>
             <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-bold" id="count-listos">0</span>
         </div>
         <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto" id="columna-listos">
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-check-circle text-5xl mb-3 block"></i>
-                <p class="text-sm">Sin pedidos listos</p>
+                <p class="text-sm" data-i18n="cn_sin_listos">Sin pedidos listos</p>
             </div>
         </div>
     </div>
@@ -209,7 +209,7 @@
             <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <i class="bi bi-slash-circle text-2xl"></i>
             </div>
-            <span class="font-semibold">Marcar Platillo No Disponible</span>
+            <span class="font-semibold" data-i18n="cn_btn_nd">Marcar Platillo No Disponible</span>
         </div>
         <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
     </button>
@@ -219,7 +219,7 @@
             <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="bi bi-box-seam text-2xl"></i>
             </div>
-            <span class="font-semibold">Consultar Inventario</span>
+            <span class="font-semibold" data-i18n="cn_btn_inv">Consultar Inventario</span>
         </div>
         <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
     </button>
@@ -229,7 +229,7 @@
             <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                 <i class="bi bi-arrow-clockwise text-2xl"></i>
             </div>
-            <span class="font-semibold">Actualizar Pedidos</span>
+            <span class="font-semibold" data-i18n="cn_btn_act">Actualizar Pedidos</span>
         </div>
         <i class="bi bi-arrow-right group-hover:translate-x-1 transition"></i>
     </button>
@@ -245,29 +245,28 @@
     <div class="bg-white rounded-xl shadow-md p-6">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
             <i class="bi bi-bar-chart-fill text-orange-500"></i>
-            Top 10 Platillos Más Pedidos
-            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">Últimos 30 días</span>
+            <span data-i18n="cn_top_plat">Top 10 Platillos Más Pedidos</span>
+            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium" data-i18n="cn_ultimos_30">Últimos 30 días</span>
         </h3>
-        <p class="text-xs text-gray-400 mb-4">Unidades totales pedidas por platillo</p>
+        <p class="text-xs text-gray-400 mb-4" data-i18n="cn_unids_total">Unidades totales pedidas por platillo</p>
         <div id="top-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-            <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> Cargando…
+            <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> <span data-i18n="cn_cargando">Cargando...</span>
         </div>
-        <canvas id="chartTop" style="display:none; max-height:300px;"></canvas>
+        <div id="chartTop" style="min-height:300px;"></div>
     </div>
 
     <!-- Scatter: K-Means platillos -->
     <div class="bg-white rounded-xl shadow-md p-6">
         <h3 class="text-base font-semibold text-gray-700 mb-1 flex items-center gap-2">
             <i class="bi bi-diagram-3 text-blue-500"></i>
-            Segmentación de Platillos · K-Means
+            <span data-i18n="cn_seg_plat">Segmentación de Platillos · K-Means</span>
             <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-medium">k=3</span>
         </h3>
-        <p class="text-xs text-gray-400 mb-4">X = unidades pedidas · Y = comandas distintas</p>
+        <p class="text-xs text-gray-400 mb-4" data-i18n="cn_eje_uc">X = unidades pedidas · Y = comandas distintas</p>
         <div id="kmeans-loading" class="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-            <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> Calculando clusters…
+            <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> <span data-i18n="cn_calculando">Calculando clusters...</span>
         </div>
-        <canvas id="chartKmeans" style="display:none; max-height:300px;"></canvas>
-        <div id="kmeans-leyenda" class="flex gap-4 mt-3 justify-center text-xs" style="display:none!important;"></div>
+        <div id="chartKmeans" style="min-height:300px;"></div>
         <div id="kmeans-aviso" class="hidden text-center text-sm text-yellow-600 py-8">
             <i class="bi bi-exclamation-triangle"></i> <span></span>
         </div>
@@ -279,13 +278,44 @@
 @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 </style>
 
+<!-- ===================================
+     MODAL: DETALLES DEL PEDIDO
+     =================================== -->
+<div id="modal-detalles-cocina" data-modal="true" data-close-fn="cerrarModalDetallesCocina"
+     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[1100]">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-4 rounded-t-xl flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <i class="bi bi-receipt text-xl"></i>
+                <h3 class="text-lg font-bold" data-i18n="cn_modal_titulo">Detalles del Pedido</h3>
+            </div>
+            <button onclick="cerrarModalDetallesCocina()" class="text-white hover:text-orange-100 transition text-xl leading-none">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <!-- Body (scrollable) -->
+        <div id="modal-detalles-cocina-content" class="p-6 overflow-y-auto flex-1">
+            <!-- Populated by JS -->
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0">
+            <button onclick="cerrarModalDetallesCocina()"
+                    class="w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold text-sm"
+                    data-i18n="dash_cerrar">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <script>
 // ===================================
@@ -372,15 +402,15 @@ function mostrarNotificacionNuevoPedido(data) {
 
     Swal.fire({
         icon: 'warning',
-        title: '🍽️ ¡Nuevo Pedido!',
+        title: t('cn_nuevo_ped'),
         html: `
             <div style="text-align:left">
-                <p style="font-size:1.2rem;font-weight:700;margin-bottom:4px;">Mesa ${data.mesa}</p>
-                <p style="color:#6b7280;margin-bottom:12px;">Mesero: ${data.mesero || 'N/A'}</p>
+                <p style="font-size:1.2rem;font-weight:700;margin-bottom:4px;">${t('m_mesa_word')} ${data.mesa}</p>
+                <p style="color:#6b7280;margin-bottom:12px;">${t('cn_mesero_lbl')} ${data.mesero || 'N/A'}</p>
                 <ul style="list-style:none;padding:0;margin:0">${itemsHtml}</ul>
             </div>
         `,
-        confirmButtonText: '✅ Entendido',
+        confirmButtonText: t('cn_entendido'),
         confirmButtonColor: '#ea580c',
         showCancelButton: false,
         allowOutsideClick: false,
@@ -460,7 +490,7 @@ function renderizarPedidos() {
         colPendientes.innerHTML = `
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-inbox text-5xl mb-3 block"></i>
-                <p class="text-sm">Sin pedidos pendientes</p>
+                <p class="text-sm">${t('cn_sin_pend')}</p>
             </div>
         `;
     } else {
@@ -473,7 +503,7 @@ function renderizarPedidos() {
         colPreparacion.innerHTML = `
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-hourglass-split text-5xl mb-3 block"></i>
-                <p class="text-sm">Sin pedidos en preparación</p>
+                <p class="text-sm">${t('cn_sin_en_prep')}</p>
             </div>
         `;
     } else {
@@ -486,7 +516,7 @@ function renderizarPedidos() {
         colListos.innerHTML = `
             <div class="text-center py-12 text-gray-400">
                 <i class="bi bi-check-circle text-5xl mb-3 block"></i>
-                <p class="text-sm">Sin pedidos listos</p>
+                <p class="text-sm">${t('cn_sin_listos')}</p>
             </div>
         `;
     } else {
@@ -535,14 +565,20 @@ function crearTarjetaPedido(pedido, estado) {
                         <i class="bi ${iconoEstado} text-sm"></i>
                     </div>
                     <div>
-                        <p class="font-bold text-gray-800">Mesa ${pedido.mesa}</p>
+                        <p class="font-bold text-gray-800">${t('m_mesa_word')} ${pedido.mesa}</p>
                         <p class="text-xs text-gray-500">${pedido.folio || ''}</p>
-                        ${pedido.mesero ? `<p class="text-xs text-gray-500">Mesero: ${pedido.mesero}</p>` : ''}
+                        ${pedido.mesero ? `<p class="text-xs text-gray-500">${t('cn_mesero_lbl')} ${pedido.mesero}</p>` : ''}
                     </div>
                 </div>
-                <span class="px-2 py-1 bg-gray-100 ${tiempoColor} rounded text-xs font-semibold">
-                    ${tiempoTranscurrido} min
-                </span>
+                <div class="flex items-center gap-1">
+                    <span class="px-2 py-1 bg-gray-100 ${tiempoColor} rounded text-xs font-semibold">
+                        ${tiempoTranscurrido} min
+                    </span>
+                    <button onclick='verDetallesPedido("${pedido.id}", "${estado}")' title="${t('cn_btn_detalles')}"
+                            class="px-2 py-1 bg-blue-50 text-blue-500 rounded hover:bg-blue-100 transition text-xs">
+                        <i class="bi bi-eye-fill"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="space-y-2 mb-3">
@@ -559,23 +595,23 @@ function crearTarjetaPedido(pedido, estado) {
             
             ${estado === 'pendiente' ? `
                 <button onclick='iniciarPreparacion("${pedido.id}", ${itemIdsJson})' class="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-sm">
-                    <i class="bi bi-play-fill"></i> Iniciar Preparación
+                    <i class="bi bi-play-fill"></i> ${t('cn_btn_iniciar')}
                 </button>
             ` : ''}
             
             ${estado === 'preparacion' ? `
                 <button onclick='marcarListo("${pedido.id}", ${itemIdsJson})' class="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold text-sm">
-                    <i class="bi bi-check-circle"></i> Marcar Listo
+                    <i class="bi bi-check-circle"></i> ${t('cn_btn_marc_l')}
                 </button>
             ` : ''}
             
             ${estado === 'listo' ? `
                 <div class="space-y-2">
                     <div class="w-full py-2 bg-green-100 text-green-700 rounded-lg text-center font-semibold text-sm">
-                        <i class="bi bi-check-circle-fill"></i> Listo para servir
+                        <i class="bi bi-check-circle-fill"></i> ${t('cn_listo_servir')}
                     </div>
                     <button onclick='entregarPedido("${pedido.id}", ${itemIdsJson})' class="w-full py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-semibold text-xs">
-                        <i class="bi bi-send"></i> Marcar Entregado
+                        <i class="bi bi-send"></i> ${t('cn_btn_entregado')}
                     </button>
                 </div>
             ` : ''}
@@ -602,18 +638,18 @@ async function iniciarPreparacion(comandaId, itemIds) {
         const data = await response.json();
         
         if (data.success) {
-            showToast('✅ Pedido en preparación', 'success');
-            
+            showToast('✅ ' + t('cn_t_en_prep'), 'success');
+
             // Recargar pedidos
             setTimeout(() => {
                 cargarTodosPedidos();
             }, 500);
         } else {
-            showToast('❌ Error al iniciar preparación', 'error');
+            showToast('❌ ' + t('cn_t_err_ini'), 'error');
         }
     } catch (error) {
         console.error('❌ Error:', error);
-        showToast('❌ Error al iniciar preparación', 'error');
+        showToast('❌ ' + t('cn_t_err_ini'), 'error');
     }
 }
 
@@ -633,19 +669,19 @@ async function marcarListo(comandaId, itemIds) {
         const data = await response.json();
         
         if (data.success) {
-            showToast('✅ ¡Pedido listo!', 'success');
-            
+            showToast('✅ ' + t('cn_t_listo'), 'success');
+
             // Recargar pedidos
             setTimeout(() => {
                 cargarTodosPedidos();
                 cargarEstadisticas();
             }, 500);
         } else {
-            showToast('❌ Error al marcar como listo', 'error');
+            showToast('❌ ' + t('cn_t_err_listo'), 'error');
         }
     } catch (error) {
         console.error('❌ Error:', error);
-        showToast('❌ Error al marcar como listo', 'error');
+        showToast('❌ ' + t('cn_t_err_listo'), 'error');
     }
 }
 
@@ -665,19 +701,19 @@ async function entregarPedido(comandaId, itemIds) {
         const data = await response.json();
         
         if (data.success) {
-            showToast('✅ Pedido entregado', 'success');
-            
+            showToast('✅ ' + t('cn_t_entregado'), 'success');
+
             // Recargar pedidos y estadísticas
             setTimeout(() => {
                 cargarTodosPedidos();
                 cargarEstadisticas();
             }, 500);
         } else {
-            showToast('❌ Error al marcar como entregado', 'error');
+            showToast('❌ ' + t('cn_t_err_entr'), 'error');
         }
     } catch (error) {
         console.error('❌ Error:', error);
-        showToast('❌ Error al marcar como entregado', 'error');
+        showToast('❌ ' + t('cn_t_err_entr'), 'error');
     }
 }
 
@@ -693,13 +729,13 @@ function verInventario() {
 }
 
 function actualizarPedidos() {
-    showLoading('Actualizando pedidos...');
+    showLoading(t('cn_actualizando'));
     cargarTodosPedidos();
     cargarEstadisticas();
-    
+
     setTimeout(() => {
         hideLoading();
-        showToast('✅ Pedidos actualizados', 'success');
+        showToast('✅ ' + t('cn_t_actualiz'), 'success');
     }, 1000);
 }
 
@@ -724,14 +760,14 @@ function showToast(message, type = 'info') {
 function showSuccess(message) {
     Swal.fire({
         icon: 'success',
-        title: '¡Éxito!',
+        title: t('dash_exito'),
         text: message,
         timer: 2000,
         showConfirmButton: false
     });
 }
 
-function showLoading(message = 'Cargando...') {
+function showLoading(message = t('cn_cargando')) {
     Swal.fire({
         title: message,
         allowOutsideClick: false,
@@ -746,7 +782,7 @@ function hideLoading() {
 }
 
 // ===================================
-// GRÁFICA: TOP PLATILLOS (BARRAS)
+// GRÁFICA: TOP PLATILLOS (APEXCHARTS)
 // ===================================
 let chartTopInstance, chartKmeansInstance;
 
@@ -757,54 +793,70 @@ async function cargarTopPlatillos() {
         if (!d.success) throw new Error(d.error);
 
         document.getElementById('top-loading').style.display = 'none';
-        const canvas = document.getElementById('chartTop');
-        canvas.style.display = '';
 
-        const labels  = d.data.map(p => p.platillo);
-        const valores = d.data.map(p => p.total_unidades);
+        const labels  = d.data.map(p => p.platillo).reverse();
+        const valores = d.data.map(p => p.total_unidades).reverse();
         const colores = [
-            '#f59e0b','#f97316','#ef4444','#ec4899','#8b5cf6',
-            '#3b82f6','#06b6d4','#10b981','#84cc16','#6b7280'
+            '#6b7280','#84cc16','#10b981','#06b6d4','#3b82f6',
+            '#8b5cf6','#ec4899','#ef4444','#f97316','#f59e0b'
         ];
 
-        if (chartTopInstance) chartTopInstance.destroy();
-        chartTopInstance = new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Unidades pedidas',
-                    data: valores,
-                    backgroundColor: colores.slice(0, labels.length),
-                    borderRadius: 6,
-                    borderSkipped: false,
-                }]
+        if (chartTopInstance) { chartTopInstance.destroy(); chartTopInstance = null; }
+
+        chartTopInstance = new ApexCharts(document.getElementById('chartTop'), {
+            chart: {
+                type: 'bar',
+                height: 320,
+                toolbar: { show: false },
+                animations: { enabled: true, easing: 'easeinout', speed: 600 },
+                fontFamily: 'inherit',
             },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => ` ${ctx.raw} unidades`
-                        }
-                    }
-                },
-                scales: {
-                    x: { beginAtZero: true, ticks: { stepSize: 1 } },
-                    y: { ticks: { font: { size: 11 } } }
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    distributed: true,
+                    barHeight: '70%',
+                    borderRadius: 6,
+                    dataLabels: { position: 'bottom' },
                 }
-            }
+            },
+            colors: colores.slice(0, labels.length),
+            series: [{ name: t('cn_units_lbl'), data: valores }],
+            xaxis: {
+                categories: labels,
+                labels: { style: { fontSize: '11px' } },
+            },
+            yaxis: {
+                labels: { style: { fontSize: '11px' }, maxWidth: 160 },
+            },
+            dataLabels: {
+                enabled: true,
+                textAnchor: 'start',
+                style: { fontSize: '11px', fontWeight: 600, colors: ['#fff'] },
+                formatter: val => val + ' ' + t('cn_unids_suf'),
+                offsetX: 6,
+            },
+            tooltip: {
+                y: { formatter: val => val + ' ' + t('cn_unids_suf') },
+                theme: 'light',
+            },
+            legend: { show: false },
+            grid: {
+                borderColor: '#f3f4f6',
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: false } },
+            },
         });
+        chartTopInstance.render();
     } catch(e) {
         document.getElementById('top-loading').innerHTML =
             `<span class="text-red-400 text-sm"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+        document.getElementById('top-loading').style.display = 'flex';
     }
 }
 
 // ===================================
-// GRÁFICA: K-MEANS PLATILLOS (SCATTER)
+// GRÁFICA: K-MEANS PLATILLOS (APEXCHARTS SCATTER)
 // ===================================
 async function cargarKmeans() {
     try {
@@ -821,49 +873,77 @@ async function cargarKmeans() {
             return;
         }
 
-        const canvas = document.getElementById('chartKmeans');
-        canvas.style.display = '';
-
         const clusterMeta = [
-            { label: 'Estrellas',   color: '#f59e0b' },
-            { label: 'Frecuentes',  color: '#3b82f6' },
-            { label: 'Ocasionales', color: '#94a3b8' },
+            { label: t('cn_cl_estrellas'), color: '#f59e0b' },
+            { label: t('cn_cl_frec'),      color: '#3b82f6' },
+            { label: t('cn_cl_ocas'),      color: '#94a3b8' },
         ];
 
-        const datasets = [0, 1, 2].map(cl => ({
-            label: clusterMeta[cl].label,
+        const series = [0, 1, 2].map(cl => ({
+            name: clusterMeta[cl].label,
             data: d.puntos
                 .filter(p => p.cluster === cl)
                 .map(p => ({ x: p.x, y: p.y, platillo: p.platillo })),
-            backgroundColor: clusterMeta[cl].color + 'cc',
-            borderColor:     clusterMeta[cl].color,
-            pointRadius: 8,
-            pointHoverRadius: 11,
-        })).filter(ds => ds.data.length > 0);
+        })).filter(s => s.data.length > 0);
 
-        if (chartKmeansInstance) chartKmeansInstance.destroy();
-        chartKmeansInstance = new Chart(canvas, {
-            type: 'scatter',
-            data: { datasets },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => ` ${ctx.raw.platillo}: ${ctx.raw.x} uds · ${ctx.raw.y} comandas`
-                        }
-                    }
-                },
-                scales: {
-                    x: { title: { display: true, text: 'Unidades pedidas', font: { size: 11 } }, beginAtZero: true },
-                    y: { title: { display: true, text: 'Comandas distintas', font: { size: 11 } }, beginAtZero: true }
+        if (chartKmeansInstance) { chartKmeansInstance.destroy(); chartKmeansInstance = null; }
+
+        chartKmeansInstance = new ApexCharts(document.getElementById('chartKmeans'), {
+            chart: {
+                type: 'scatter',
+                height: 300,
+                toolbar: { show: false },
+                zoom: { enabled: true, type: 'xy' },
+                animations: { enabled: true, easing: 'easeinout', speed: 500 },
+                fontFamily: 'inherit',
+            },
+            series,
+            colors: clusterMeta.slice(0, series.length).map(c => c.color),
+            markers: {
+                size: 9,
+                strokeWidth: 2,
+                strokeColors: '#fff',
+                hover: { size: 12 },
+            },
+            xaxis: {
+                title: { text: t('cn_units_lbl'), style: { fontSize: '11px', fontWeight: 500 } },
+                tickAmount: 6,
+                labels: { style: { fontSize: '11px' } },
+            },
+            yaxis: {
+                title: { text: t('cn_cmds_dist'), style: { fontSize: '11px', fontWeight: 500 } },
+                tickAmount: 5,
+                labels: { style: { fontSize: '11px' } },
+            },
+            tooltip: {
+                custom({ series: s, seriesIndex: si, dataPointIndex: di, w }) {
+                    const pt = w.config.series[si].data[di];
+                    const color = w.config.colors[si];
+                    const name  = w.config.series[si].name;
+                    return `<div style="padding:8px 12px;font-size:12px;line-height:1.6">
+                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:6px;"></span>
+                        <strong>${pt.platillo}</strong><br>
+                        <span style="color:#6b7280">${name}</span><br>
+                        ${pt.x} ${t('cn_unids_suf')} · ${pt.y} ${t('cn_cmdas_word')}
+                    </div>`;
                 }
-            }
+            },
+            legend: {
+                position: 'bottom',
+                fontSize: '11px',
+                markers: { width: 10, height: 10, radius: 5 },
+            },
+            grid: {
+                borderColor: '#f3f4f6',
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: true } },
+            },
         });
+        chartKmeansInstance.render();
     } catch(e) {
         document.getElementById('kmeans-loading').innerHTML =
             `<span class="text-red-400 text-sm"><i class="bi bi-exclamation-circle"></i> ${e.message}</span>`;
+        document.getElementById('kmeans-loading').style.display = 'flex';
     }
 }
 
@@ -872,5 +952,92 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarTopPlatillos();
     cargarKmeans();
 });
+
+// ===================================
+// MODAL: DETALLES DEL PEDIDO
+// ===================================
+function verDetallesPedido(pedidoId, estado) {
+    const pedido = [...pedidosData.pendientes, ...pedidosData.preparacion, ...pedidosData.listos]
+        .find(p => p.id === pedidoId);
+    if (!pedido) return;
+
+    const estadoMeta = {
+        pendiente:   { label: t('cn_estado_pend'), cls: 'bg-red-100 text-red-700' },
+        preparacion: { label: t('cn_en_prep_lbl'), cls: 'bg-orange-100 text-orange-700' },
+        listo:       { label: t('cn_listos'),       cls: 'bg-green-100 text-green-700' }
+    };
+    const est = estadoMeta[estado] || estadoMeta.pendiente;
+
+    let total = 0;
+    const filasItems = pedido.items.map(item => {
+        const precio = item.precio_unitario || item.precio || 0;
+        const subtotal = precio * (item.cantidad || 1);
+        total += subtotal;
+        return `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-3 px-4 text-sm text-gray-800">${item.nombre}</td>
+                <td class="py-3 px-4 text-sm text-center font-bold text-orange-600">${item.cantidad}</td>
+                <td class="py-3 px-4 text-sm text-right text-gray-500">${precio > 0 ? '$' + precio.toFixed(2) : '—'}</td>
+                <td class="py-3 px-4 text-sm text-right font-semibold text-gray-800">${subtotal > 0 ? '$' + subtotal.toFixed(2) : '—'}</td>
+            </tr>
+            ${item.notas ? `<tr><td colspan="4" class="pb-2 px-4 text-xs text-yellow-700 italic bg-yellow-50"><i class="bi bi-chat-text mr-1"></i>${item.notas}</td></tr>` : ''}
+        `;
+    }).join('');
+
+    document.getElementById('modal-detalles-cocina-content').innerHTML = `
+        <div class="space-y-4">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">${t('m_mesa_word')} ${pedido.mesa}</h3>
+                    ${pedido.folio ? `<p class="text-xs text-gray-400 font-mono mt-0.5">${pedido.folio}</p>` : ''}
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-semibold ${est.cls}">${est.label}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-sm">
+                ${pedido.mesero ? `
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-400 mb-0.5">${t('cn_mesero_lbl').replace(':','')}</p>
+                    <p class="font-semibold text-gray-700">${pedido.mesero}</p>
+                </div>` : ''}
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-400 mb-0.5">${t('cn_tiempo_esp')}</p>
+                    <p class="font-semibold ${(pedido.tiempo_espera || 0) > 15 ? 'text-red-600' : 'text-gray-700'}">${pedido.tiempo_espera || 0} min</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                        <tr>
+                            <th class="py-2 px-4">${t('par_th_platillo')}</th>
+                            <th class="py-2 px-4 text-center">${t('cn_th_cant')}</th>
+                            <th class="py-2 px-4 text-right">${t('cn_th_p_unit')}</th>
+                            <th class="py-2 px-4 text-right">${t('cn_th_subtotal')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filasItems}</tbody>
+                    ${total > 0 ? `
+                    <tfoot class="bg-orange-50">
+                        <tr>
+                            <td colspan="3" class="py-3 px-4 text-sm font-bold text-gray-700 text-right">${t('cn_total_ped')}</td>
+                            <td class="py-3 px-4 text-base font-black text-orange-600 text-right">$${total.toFixed(2)}</td>
+                        </tr>
+                    </tfoot>` : ''}
+                </table>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('modal-detalles-cocina');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModalDetallesCocina() {
+    const modal = document.getElementById('modal-detalles-cocina');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
 </script>
 {% endblock %}

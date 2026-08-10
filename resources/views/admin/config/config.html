@@ -17,8 +17,8 @@
 </style>
 {% endblock %}
 
-{% block page_title %}Configuración de Cuenta{% endblock %}
-{% block page_subtitle %}Gestiona tu perfil y seguridad{% endblock %}
+{% block page_title %}<span data-i18n="cfg_adm_pg_tit">Configuración de Cuenta</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="cfg_adm_pg_sub">Gestiona tu perfil y seguridad</span>{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
@@ -26,17 +26,17 @@
     <!-- Tabs de Navegación -->
     <div class="flex border-b border-gray-200 mb-6">
         <button onclick="showTab('perfil')" class="tab-btn active px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="perfil">
-            <i class="bi bi-person mr-2"></i>Perfil
+            <i class="bi bi-person mr-2"></i><span data-i18n="cfg_tab_perfil">Perfil</span>
         </button>
         <button onclick="showTab('seguridad')" class="tab-btn px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="seguridad">
-            <i class="bi bi-shield-lock mr-2"></i>Seguridad
+            <i class="bi bi-shield-lock mr-2"></i><span data-i18n="cfg_tab_segur">Seguridad</span>
         </button>
         <button onclick="showTab('preferencias')" class="tab-btn px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="preferencias">
-            <i class="bi bi-gear mr-2"></i>Preferencias
+            <i class="bi bi-gear mr-2"></i><span data-i18n="cfg_tab_prefs">Preferencias</span>
         </button>
         {% if session.usuario_rol == '1' %}
         <button onclick="showTab('restaurante')" class="tab-btn px-6 py-3 text-gray-600 hover:text-gray-800 transition font-medium" data-tab="restaurante">
-            <i class="bi bi-shop mr-2"></i>Restaurante
+            <i class="bi bi-shop mr-2"></i><span data-i18n="cfg_tab_rest">Restaurante</span>
         </button>
         {% endif %}
     </div>
@@ -48,47 +48,47 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h3 class="text-lg font-semibold text-gray-800">
-                    <i class="bi bi-person mr-2"></i>Información Personal
+                    <i class="bi bi-person mr-2"></i><span data-i18n="cfg_info_pers">Información Personal</span>
                 </h3>
-                <p class="text-sm text-gray-500">Actualiza tus datos de perfil</p>
+                <p class="text-sm text-gray-500" data-i18n="cfg_act_datos">Actualiza tus datos de perfil</p>
             </div>
             
             <form id="perfilForm" class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Nombre -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                        <input type="text" name="nombre" value="{{ session.usuario_nombre }}" 
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_nombre">Nombre</label>
+                        <input type="text" name="nombre" value="{{ session.usuario_nombre }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                     </div>
-                    
+
                     <!-- Apellidos -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Apellidos</label>
-                        <input type="text" name="apellidos" value="{{ session.usuario_apellidos }}" 
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_apellidos">Apellidos</label>
+                        <input type="text" name="apellidos" value="{{ session.usuario_apellidos }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                     </div>
-                    
+
                     <!-- Email (solo lectura) -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" value="{{ session.usuario_email }}" readonly 
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_email_lbl">Email</label>
+                        <input type="email" value="{{ session.usuario_email }}" readonly
                                class="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed">
-                        <p class="text-xs text-gray-400 mt-1"><i class="bi bi-info-circle mr-1"></i>El email no puede ser modificado</p>
+                        <p class="text-xs text-gray-400 mt-1"><i class="bi bi-info-circle mr-1"></i><span data-i18n="cfg_email_ro">El email no puede ser modificado</span></p>
                     </div>
-                    
+
                     <!-- Teléfono -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-                        <input type="tel" name="telefono" id="telefonoInput" 
-                               placeholder="+52 1 ..." 
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_telefono">Teléfono</label>
+                        <input type="tel" name="telefono" id="telefonoInput"
+                               placeholder="+52 1 ..."
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                     </div>
                 </div>
-                
+
                 <div class="mt-6 flex justify-end">
                     <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition">
-                        <i class="bi bi-save mr-2"></i>Guardar Cambios
+                        <i class="bi bi-save mr-2"></i><span data-i18n="cfg_btn_guard_c">Guardar Cambios</span>
                     </button>
                 </div>
             </form>
@@ -104,16 +104,16 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-800">
-                        <i class="bi bi-shield-check mr-2"></i>Autenticación de Dos Factores (2FA)
+                        <i class="bi bi-shield-check mr-2"></i><span data-i18n="cfg_2fa_tit_f">Autenticación de Dos Factores (2FA)</span>
                     </h3>
-                    <p class="text-sm text-gray-500">Protege tu cuenta con una capa adicional de seguridad</p>
+                    <p class="text-sm text-gray-500" data-i18n="cfg_2fa_sub_f">Protege tu cuenta con una capa adicional de seguridad</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span id="2faStatusBadge" class="px-3 py-1 rounded-full text-sm font-medium {% if is_2fa_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
                         {% if is_2fa_active %}
-                        <i class="bi bi-check-circle mr-1"></i>Activo
+                        <i class="bi bi-check-circle mr-1"></i><span data-i18n="emp_activo">Activo</span>
                         {% else %}
-                        <i class="bi bi-x-circle mr-1"></i>Inactivo
+                        <i class="bi bi-x-circle mr-1"></i><span data-i18n="emp_inactivo">Inactivo</span>
                         {% endif %}
                     </span>
                 </div>
@@ -126,11 +126,11 @@
                     <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="bi bi-shield-check text-3xl text-green-600"></i>
                     </div>
-                    <h4 class="text-lg font-medium text-gray-800 mb-2">2FA está Activado</h4>
-                    <p class="text-gray-500 mb-6">Tu cuenta está protegida con autenticación de dos factores.</p>
-                    
+                    <h4 class="text-lg font-medium text-gray-800 mb-2" data-i18n="cfg_2fa_activo">2FA está Activado</h4>
+                    <p class="text-gray-500 mb-6" data-i18n="cfg_2fa_prot">Tu cuenta está protegida con autenticación de dos factores.</p>
+
                     <button onclick="disable2FA()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition">
-                        <i class="bi bi-shield-x mr-2"></i>Desactivar 2FA
+                        <i class="bi bi-shield-x mr-2"></i><span data-i18n="cfg_btn_desact">Desactivar 2FA</span>
                     </button>
                 </div>
                 {% else %}
@@ -141,26 +141,26 @@
                         <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i class="bi bi-qr-code text-2xl text-brand-600"></i>
                         </div>
-                        <h4 class="font-medium text-gray-800">App Authenticator</h4>
-                        <p class="text-sm text-gray-500 mt-1">Google Auth, Authy, etc.</p>
+                        <h4 class="font-medium text-gray-800" data-i18n="cfg_2fa_app">App Authenticator</h4>
+                        <p class="text-sm text-gray-500 mt-1" data-i18n="cfg_2fa_app_sub">Google Auth, Authy, etc.</p>
                     </button>
-                    
+
                     <!-- Opción Email -->
                     <button onclick="setup2FA('email')" class="p-4 border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition text-center">
                         <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i class="bi bi-envelope text-2xl text-brand-600"></i>
                         </div>
-                        <h4 class="font-medium text-gray-800">Código por Email</h4>
-                        <p class="text-sm text-gray-500 mt-1">Recibe el código por email</p>
+                        <h4 class="font-medium text-gray-800" data-i18n="cfg_2fa_email">Código por Email</h4>
+                        <p class="text-sm text-gray-500 mt-1" data-i18n="cfg_2fa_eml_sub">Recibe el código por email</p>
                     </button>
-                    
+
                     <!-- Opción SMS -->
                     <button onclick="setup2FA('sms')" class="p-4 border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition text-center opacity-50 cursor-not-allowed">
                         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i class="bi bi-phone text-2xl text-green-600"></i>
                         </div>
-                        <h4 class="font-medium text-gray-800">SMS</h4>
-                        <p class="text-sm text-gray-500 mt-1">Próximamente</p>
+                        <h4 class="font-medium text-gray-800" data-i18n="cfg_2fa_sms">SMS</h4>
+                        <p class="text-sm text-gray-500 mt-1" data-i18n="cfg_2fa_pronto">Próximamente</p>
                     </button>
                 </div>
                 {% endif %}
@@ -171,7 +171,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h3 class="text-lg font-semibold text-gray-800">
-                    <i class="bi bi-clock-history mr-2"></i>Sesiones Recientes
+                    <i class="bi bi-clock-history mr-2"></i><span data-i18n="cfg_sesiones">Sesiones Recientes</span>
                 </h3>
             </div>
             <div class="p-6">
@@ -180,10 +180,10 @@
                         <i class="bi bi-laptop text-green-600"></i>
                     </div>
                     <div class="flex-1">
-                        <p class="font-medium text-gray-800">Esta sesión</p>
-                        <p class="text-sm text-gray-500">Activa ahora • {{ session.usuario_email }}</p>
+                        <p class="font-medium text-gray-800" data-i18n="cfg_esta_sesion">Esta sesión</p>
+                        <p class="text-sm text-gray-500"><span data-i18n="cfg_activa_ah">Activa ahora</span> • {{ session.usuario_email }}</p>
                     </div>
-                    <span class="px-2 py-1 bg-green-200 text-green-700 text-xs rounded-full">Actual</span>
+                    <span class="px-2 py-1 bg-green-200 text-green-700 text-xs rounded-full" data-i18n="cfg_actual">Actual</span>
                 </div>
             </div>
         </div>
@@ -196,9 +196,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h3 class="text-lg font-semibold text-gray-800">
-                    <i class="bi bi-gear mr-2"></i>Preferencias del Sistema
+                    <i class="bi bi-gear mr-2"></i><span data-i18n="cfg_pref_titulo">Preferencias del Sistema</span>
                 </h3>
-                <p class="text-sm text-gray-500">Personaliza tu experiencia</p>
+                <p class="text-sm text-gray-500" data-i18n="cfg_pref_pers">Personaliza tu experiencia</p>
             </div>
             
             <div class="p-6 space-y-6">
@@ -209,8 +209,8 @@
                             <i class="bi bi-moon-stars text-gray-600"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-800">Modo Oscuro</p>
-                            <p class="text-sm text-gray-500">Activa el tema oscuro del sistema</p>
+                            <p class="font-medium text-gray-800" data-i18n="cfg_modo_oscuro">Modo Oscuro</p>
+                            <p class="text-sm text-gray-500" data-i18n="cfg_modo_osc_d">Activa el tema oscuro del sistema</p>
                         </div>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -226,8 +226,8 @@
                             <i class="bi bi-bell text-brand-600"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-800">Notificaciones</p>
-                            <p class="text-sm text-gray-500">Recibir alertas del sistema</p>
+                            <p class="font-medium text-gray-800" data-i18n="cfg_notifs">Notificaciones</p>
+                            <p class="text-sm text-gray-500" data-i18n="cfg_notifs_d">Recibir alertas del sistema</p>
                         </div>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -244,8 +244,8 @@
                             <i class="bi bi-cone-striped text-brand-600"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-800">Modo Mantenimiento</p>
-                            <p class="text-sm text-gray-500">Solo administradores pueden entrar al sistema</p>
+                            <p class="font-medium text-gray-800" data-i18n="cfg_modo_mant">Modo Mantenimiento</p>
+                            <p class="text-sm text-gray-500" data-i18n="cfg_modo_mant_d">Solo administradores pueden entrar al sistema</p>
                         </div>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
@@ -268,28 +268,28 @@
             <!-- Identidad y Tema -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg font-semibold text-gray-800"><i class="bi bi-shop mr-2"></i>Identidad y Tema</h3>
-                    <p class="text-sm text-gray-500">La marca de tu restaurante (white-label)</p>
+                    <h3 class="text-lg font-semibold text-gray-800"><i class="bi bi-shop mr-2"></i><span data-i18n="cfg_rest_titulo">Identidad y Tema</span></h3>
+                    <p class="text-sm text-gray-500" data-i18n="cfg_rest_sub">La marca de tu restaurante (white-label)</p>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del restaurante</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_rest_nombre">Nombre del restaurante</label>
                         <input type="text" name="nombre" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_rest_logo">Logo</label>
                         <div class="flex items-center gap-3">
                             <img id="logoPreview" src="" alt="logo" class="w-12 h-12 rounded-lg object-cover border border-gray-200 hidden">
                             <input type="file" id="logoInput" accept="image/*" class="text-sm flex-1">
-                            <button type="button" onclick="subirLogo()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Subir</button>
+                            <button type="button" onclick="subirLogo()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200"><span data-i18n="cfg_rest_subir">Subir</span></button>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Color primario</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_rest_color">Color primario</label>
                         <input type="color" name="primario" value="#F2913D" class="h-10 w-20 border border-gray-300 rounded-lg cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Color de acento</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_rest_acento">Color de acento</label>
                         <input type="color" name="acento" value="#059669" class="h-10 w-20 border border-gray-300 rounded-lg cursor-pointer">
                     </div>
                 </div>
@@ -298,20 +298,20 @@
             <!-- Fiscal -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg font-semibold text-gray-800"><i class="bi bi-receipt mr-2"></i>Fiscal</h3>
-                    <p class="text-sm text-gray-500">Impuesto y moneda del negocio</p>
+                    <h3 class="text-lg font-semibold text-gray-800"><i class="bi bi-receipt mr-2"></i><span data-i18n="cfg_fiscal_tit">Fiscal</span></h3>
+                    <p class="text-sm text-gray-500" data-i18n="cfg_fiscal_sub">Impuesto y moneda del negocio</p>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">IVA (%)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_iva">IVA (%)</label>
                         <input type="number" name="iva" step="0.01" min="0" placeholder="16" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Moneda</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_moneda">Moneda</label>
                         <select name="moneda" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500">
-                            <option value="MXN">MXN — Peso mexicano</option>
-                            <option value="USD">USD — Dólar</option>
-                            <option value="EUR">EUR — Euro</option>
+                            <option value="MXN" data-i18n="cfg_moneda_mxn">MXN — Peso mexicano</option>
+                            <option value="USD" data-i18n="cfg_moneda_usd">USD — Dólar</option>
+                            <option value="EUR" data-i18n="cfg_moneda_eur">EUR — Euro</option>
                         </select>
                     </div>
                 </div>
@@ -320,27 +320,27 @@
             <!-- Contacto -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg font-semibold text-gray-800"><i class="bi bi-geo-alt mr-2"></i>Contacto</h3>
+                    <h3 class="text-lg font-semibold text-gray-800"><i class="bi bi-geo-alt mr-2"></i><span data-i18n="cfg_contacto">Contacto</span></h3>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_direccion">Dirección</label>
                         <input type="text" name="direccion" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_telefono">Teléfono</label>
                         <input type="tel" name="telefono" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Horarios</label>
-                        <input type="text" name="horarios" placeholder="Lun-Dom 9:00-22:00" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="cfg_horarios">Horarios</label>
+                        <input type="text" name="horarios" data-i18n-placeholder="cfg_horarios_ph" placeholder="Lun-Dom 9:00-22:00" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
                     </div>
                 </div>
             </div>
 
             <div class="flex justify-end">
                 <button type="submit" class="btn-primary px-6 py-2 rounded-lg font-medium flex items-center gap-2">
-                    <i class="bi bi-save"></i> Guardar Configuración
+                    <i class="bi bi-save"></i> <span data-i18n="cfg_btn_guard_r">Guardar Configuración</span>
                 </button>
             </div>
         </form>
@@ -350,10 +350,10 @@
 </div>
 
 <!-- Modal para Setup 2FA -->
-<div id="2faModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+<div id="2faModal" data-modal="true" data-close-fn="close2FAModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[1100]">
     <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
         <div class="px-6 py-4 bg-orange-500 text-white flex items-center justify-between">
-            <h3 class="text-lg font-semibold" id="modalTitle">Configurar 2FA</h3>
+            <h3 class="text-lg font-semibold" id="modalTitle" data-i18n="cfg_2fa_modal_t">Configurar 2FA</h3>
             <button onclick="close2FAModal()" class="text-white hover:text-gray-200">
                 <i class="bi bi-x-lg text-xl"></i>
             </button>
@@ -386,9 +386,9 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ modo_mantenimiento: val })
             });
-            if (window.showNotification) showNotification(val ? 'Modo mantenimiento activado' : 'Modo mantenimiento desactivado', 'success');
+            if (window.showNotification) showNotification(val ? t('cfg_mant_on') : t('cfg_mant_off'), 'success');
         } catch (e) {
-            if (window.showNotification) showNotification('No se pudo guardar', 'error');
+            if (window.showNotification) showNotification(t('cfg_no_guard'), 'error');
         }
     }
     {% endif %}
@@ -428,14 +428,14 @@
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
                 });
                 const res = await r.json();
-                if (res.success && window.showNotification) showNotification('Configuración guardada', 'success');
-            } catch (err) { if (window.showNotification) showNotification('Error al guardar', 'error'); }
+                if (res.success && window.showNotification) showNotification(t('cfg_config_ok'), 'success');
+            } catch (err) { if (window.showNotification) showNotification(t('cfg_err_guard'), 'error'); }
         });
     });
 
     async function subirLogo() {
         const inp = document.getElementById('logoInput');
-        if (!inp.files || !inp.files[0]) { showNotification('Selecciona un archivo', 'warning'); return; }
+        if (!inp.files || !inp.files[0]) { showNotification(t('cfg_sel_arch'), 'warning'); return; }
         const fd = new FormData(); fd.append('logo', inp.files[0]);
         try {
             const r = await fetch('/api/restaurante/logo', { method: 'POST', body: fd });
@@ -443,9 +443,9 @@
             if (res.success) {
                 const prev = document.getElementById('logoPreview');
                 prev.src = res.logo + '?t=' + Date.now(); prev.classList.remove('hidden');
-                showNotification('Logo actualizado', 'success');
-            } else { showNotification(res.message || 'Error al subir', 'error'); }
-        } catch (e) { showNotification('Error al subir', 'error'); }
+                showNotification(t('cfg_logo_upd'), 'success');
+            } else { showNotification(res.message || t('cfg_err_subir'), 'error'); }
+        } catch (e) { showNotification(t('cfg_err_subir'), 'error'); }
     }
     {% endif %}
 
@@ -490,8 +490,8 @@
             if (result.status === 'success') {
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Perfil Actualizado!',
-                    text: 'Tus datos han sido guardados correctamente.',
+                    title: t('cfg_perfil_upd'),
+                    text: t('cfg_datos_guard'),
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -499,7 +499,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: result.message || 'No se pudo guardar'
+                    text: result.message || t('cfg_no_guard')
                 });
             }
         } catch (error) {
@@ -507,7 +507,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Error de conexión'
+                text: t('cfg_err_cnx')
             });
         }
     });
@@ -518,34 +518,34 @@
         const content = document.getElementById('modalContent');
         
         if (tipo === 'app') {
-            content.innerHTML = '<div class="text-center"><p class="text-gray-600 mb-4">Generando código QR...</p></div>';
+            content.innerHTML = `<div class="text-center"><p class="text-gray-600 mb-4">${t('cfg_gen_qr')}</p></div>`;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             try {
                 const response = await fetch('/api/2fa/setup', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({tipo: 'app'})
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.status === 'success') {
                     content.innerHTML = `
                         <div class="text-center">
-                            <p class="text-sm text-gray-600 mb-4">Escanea este código con tu aplicación autenticadora:</p>
+                            <p class="text-sm text-gray-600 mb-4">${t('cfg_escanea_f')}</p>
                             <img src="${result.qr_image}" alt="QR Code" class="mx-auto mb-4 rounded-lg border border-gray-200" style="max-width: 200px;">
-                            <p class="text-xs text-gray-500 mb-2">O ingresa este código manualmente:</p>
+                            <p class="text-xs text-gray-500 mb-2">${t('cfg_cod_manual')}</p>
                             <code class="block bg-gray-100 p-2 rounded text-sm font-mono mb-4">${result.secret_key}</code>
-                            
+
                             <div class="mt-4">
-                                <input type="text" id="otpCode" placeholder="Ingresa el código de 6 dígitos" 
+                                <input type="text" id="otpCode" placeholder="${t('cfg_ph_6dig')}"
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg text-center text-lg tracking-widest" maxlength="6">
                             </div>
-                            
+
                             <button onclick="verifyAndEnable2FA('app')" class="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium w-full">
-                                Verificar y Activar
+                                ${t('cfg_btn_ver_act')}
                             </button>
                         </div>
                     `;
@@ -553,22 +553,22 @@
                     content.innerHTML = `<p class="text-red-600 text-center">${result.message}</p>`;
                 }
             } catch (error) {
-                content.innerHTML = `<p class="text-red-600 text-center">Error al generar QR</p>`;
+                content.innerHTML = `<p class="text-red-600 text-center">${t('cfg_err_gen_qr')}</p>`;
             }
         } else if (tipo === 'email') {
-            content.innerHTML = '<div class="text-center"><p class="text-gray-600 mb-4">Enviando código...</p></div>';
+            content.innerHTML = `<div class="text-center"><p class="text-gray-600 mb-4">${t('cfg_enviando')}</p></div>`;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             try {
                 const response = await fetch('/api/2fa/setup', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({tipo: 'email'})
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.status === 'success') {
                     content.innerHTML = `
                         <div class="text-center">
@@ -576,12 +576,12 @@
                                 <i class="bi bi-envelope-check text-3xl text-brand-600"></i>
                             </div>
                             <p class="text-gray-600 mb-4">${result.message}</p>
-                            
-                            <input type="text" id="otpCode" placeholder="Ingresa el código" 
+
+                            <input type="text" id="otpCode" placeholder="${t('cfg_ph_codigo')}"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-center text-lg tracking-widest" maxlength="6">
-                            
+
                             <button onclick="verifyAndEnable2FA('email')" class="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium w-full">
-                                Verificar y Activar
+                                ${t('cfg_btn_ver_act')}
                             </button>
                         </div>
                     `;
@@ -589,7 +589,7 @@
                     content.innerHTML = `<p class="text-red-600 text-center">${result.message}</p>`;
                 }
             } catch (error) {
-                content.innerHTML = `<p class="text-red-600 text-center">Error al enviar código</p>`;
+                content.innerHTML = `<p class="text-red-600 text-center">${t('cfg_err_enviar')}</p>`;
             }
         }
     }
@@ -601,8 +601,8 @@
         if (!otpCode || otpCode.length !== 6) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Código inválido',
-                text: 'Debes ingresar un código de 6 dígitos'
+                title: t('cfg_cod_inv'),
+                text: t('cfg_6_digits')
             });
             return;
         }
@@ -620,8 +620,8 @@
                 close2FAModal();
                 Swal.fire({
                     icon: 'success',
-                    title: '¡2FA Activado!',
-                    text: 'Tu cuenta ahora está protegida con autenticación de dos factores',
+                    title: t('cfg_2fa_act_sw'),
+                    text: t('cfg_2fa_prot_t'),
                     timer: 3000,
                     showConfirmButton: false
                 }).then(() => {
@@ -630,15 +630,15 @@
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Código incorrecto',
-                    text: result.message || 'El código no es válido'
+                    title: t('cfg_2fa_inc_sw'),
+                    text: result.message || t('cfg_cod_no_val')
                 });
             }
         } catch (error) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Error al verificar el código'
+                text: t('cfg_err_verif')
             });
         }
     }
@@ -646,28 +646,28 @@
     // Desactivar 2FA
     function disable2FA() {
         Swal.fire({
-            title: '¿Desactivar 2FA?',
-            text: 'Tu cuenta quedará menos segura sin autenticación de dos factores',
+            title: t('cfg_2fa_desc_t'),
+            text: t('cfg_2fa_desc_tx'),
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Sí, desactivar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: t('cfg_si_desact'),
+            cancelButtonText: t('m_cancelar')
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
                     const response = await fetch('/api/2fa/disable', {
                         method: 'POST'
                     });
-                    
+
                     const result = await response.json();
-                    
+
                     if (result.status === 'success') {
                         Swal.fire({
                             icon: 'success',
-                            title: '2FA Desactivado',
-                            text: 'La autenticación de dos factores ha sido desactivada',
+                            title: t('cfg_2fa_desact'),
+                            text: t('cfg_2fa_desc_m'),
                             timer: 2000,
                             showConfirmButton: false
                         }).then(() => {
@@ -678,7 +678,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'No se pudo desactivar 2FA'
+                        text: t('cfg_err_desact2')
                     });
                 }
             }

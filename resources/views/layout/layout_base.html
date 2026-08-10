@@ -306,7 +306,7 @@
                         </span>
                     {% elif session.usuario_rol == '5' %}
                         <span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">
-                            <i class="bi bi-bicycle"></i> Repartidor
+                            <i class="bi bi-bicycle"></i> <span data-i18n="role_repartidor">Repartidor</span>
                         </span>
                     {% endif %}
                 </div>
@@ -318,55 +318,55 @@
                 <!-- Dashboard -->
                 <a href="{{ url_for('routes.dashboard_admin') }}" class="nav-link" id="nav-dashboard">
                     <i class="bi bi-speedometer2 text-lg"></i>
-                    <span>Centro de Control</span>
+                    <span data-i18n="nav_control">Centro de Control</span>
                 </a>
 
                 <!-- Menu -->
                 <a href="{{ url_for('routes.admin_menu') }}" class="nav-link" id="nav-menu">
                     <i class="bi bi-journal-text text-lg"></i>
-                    <span>Menu</span>
+                    <span data-i18n="nav_menu">Menu</span>
                 </a>
 
                 <!-- Ventas -->
                 <a href="{{ url_for('routes.ventas_dashboard') }}" class="nav-link" id="nav-ventas">
                     <i class="bi bi-cash-stack text-lg"></i>
-                    <span>Ventas</span>
+                    <span data-i18n="nav_ventas">Ventas</span>
                 </a>
 
                 <!-- Reportes y Analítica (unificado) -->
                 <a href="{{ url_for('reports.index') }}" class="nav-link" id="nav-reportes">
                     <i class="bi bi-graph-up text-lg"></i>
-                    <span>Reportes y Analítica</span>
+                    <span data-i18n="nav_reportes">Reportes y Analítica</span>
                 </a>
 
                 <!-- Analytics -->
                 <a href="{{ url_for('routes.analytics_index') }}" class="nav-link" id="nav-analytics">
                     <i class="bi bi-bar-chart-line text-lg"></i>
-                    <span>Analytics</span>
+                    <span data-i18n="nav_analytics">Analytics</span>
                 </a>
 
                 <!-- Delivery -->
                 <a href="{{ url_for('routes.admin_delivery_panel') }}" class="nav-link" id="nav-delivery">
                     <i class="bi bi-truck text-lg"></i>
-                    <span>Delivery</span>
+                    <span data-i18n="nav_delivery">Delivery</span>
                 </a>
 
                 <!-- Wearables -->
                 <a href="{{ url_for('routes.admin_repartidores') }}" class="nav-link" id="nav-repartidores">
                     <i class="bi bi-smartwatch text-lg"></i>
-                    <span>Wearables</span>
+                    <span data-i18n="nav_wearables">Wearables</span>
                 </a>
                 <a href="{{ url_for('routes.admin_monitor_sensores') }}" class="nav-link" id="nav-monitor">
                     <i class="bi bi-broadcast text-lg"></i>
-                    <span>Monitor Tiempo Real</span>
+                    <span data-i18n="nav_monitor_rt">Monitor Tiempo Real</span>
                 </a>
                 <a href="{{ url_for('routes.admin_notificar_vista') }}" class="nav-link" id="nav-notificar">
                     <i class="bi bi-send text-lg"></i>
-                    <span>Notificar Dispositivos</span>
+                    <span data-i18n="nav_notif_dev">Notificar Dispositivos</span>
                 </a>
                 <a href="{{ url_for('routes.admin_eventos_historial') }}" class="nav-link" id="nav-eventos">
                     <i class="bi bi-journal-text text-lg"></i>
-                    <span>Historial Eventos</span>
+                    <span data-i18n="nav_hist_ev">Historial Eventos</span>
                 </a>
                 {% endif %}
 
@@ -374,7 +374,7 @@
                 <!-- Configuración -->
                 <a href="{{ url_for('routes.settings') }}" class="nav-link" id="nav-settings">
                     <i class="bi bi-gear text-lg"></i>
-                    <span>Configuración</span>
+                    <span data-i18n="nav_settings">Configuración</span>
                 </a>
 
                 {% block navigation %}{% endblock %}
@@ -429,8 +429,8 @@
             <header class="page-header">
                 <div class="flex items-center justify-between gap-3">
                     <div class="min-w-0 flex-1">
-                        <h1 class="page-title truncate">{% block page_title %}Panel de Control{% endblock %}</h1>
-                        <p class="page-subtitle truncate">{% block page_subtitle %}Bienvenido al sistema{% endblock %}</p>
+                        <h1 class="page-title truncate">{% block page_title %}<span data-i18n="page_def_title">Panel de Control</span>{% endblock %}</h1>
+                        <p class="page-subtitle truncate">{% block page_subtitle %}<span data-i18n="page_def_sub">Bienvenido al sistema</span>{% endblock %}</p>
                     </div>
 
                     <!-- Controles del Header -->
@@ -686,14 +686,14 @@
         // Confirmacion de acciones
         function confirmAction(message, callback) {
             Swal.fire({
-                title: 'Estas seguro?',
+                title: t('confirm_titulo'),
                 text: message,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#F2913D',
                 cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Si, continuar',
-                cancelButtonText: 'Cancelar'
+                confirmButtonText: t('confirm_si'),
+                cancelButtonText: t('m_cancelar')
             }).then((result) => {
                 if (result.isConfirmed && callback) {
                     callback();
@@ -707,6 +707,30 @@
 
     <!-- Scripts Adicionales -->
     {% block extra_js %}{% endblock %}
+
+    <script>
+    // Global modal handler: Escape + click-outside
+    // Todos los modales deben tener data-modal="true" y data-close-fn="nombreFuncion"
+    (function () {
+        function cerrarModalActivo(el) {
+            var fn = el.dataset.closeFn;
+            if (fn && typeof window[fn] === 'function') window[fn]();
+            else { el.classList.add('hidden'); el.classList.remove('flex'); }
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('[data-modal="true"]:not(.hidden)').forEach(cerrarModalActivo);
+        });
+        document.addEventListener('click', function (e) {
+            var modal = e.target.closest
+                ? e.target
+                : null;
+            if (modal && modal.dataset && modal.dataset.modal === 'true' && e.target === modal) {
+                cerrarModalActivo(modal);
+            }
+        });
+    })();
+    </script>
 
     <!-- Barra de navegación inferior (móvil) -->
     {% block bottom_nav %}{% endblock %}

@@ -1,33 +1,33 @@
 {% extends "layout/layout_cocina.html" %}
 
 {% block title %}Pedidos Pendientes{% endblock %}
-{% block page_title %}Pedidos Pendientes{% endblock %}
-{% block page_subtitle %}Gestión de pedidos para preparar{% endblock %}
+{% block page_title %}<span data-i18n="cn_pend">Pedidos Pendientes</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="cn_ped_sub">Gestión de pedidos para preparar</span>{% endblock %}
 
 {% block navigation %}
 <a href="{{ url_for('routes.dashboard_cocina') }}" class="nav-link">
     <i class="bi bi-house-door"></i>
-    <span>Inicio</span>
+    <span data-i18n="cn_inicio">Inicio</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_pedidos') }}" class="nav-link active">
     <i class="bi bi-list-task"></i>
-    <span>Pedidos Pendientes</span>
+    <span data-i18n="cn_pend">Pedidos Pendientes</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_en_proceso') }}" class="nav-link">
     <i class="bi bi-hourglass-split"></i>
-    <span>En Preparación</span>
+    <span data-i18n="cn_en_prep">En Preparación</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_listos') }}" class="nav-link">
     <i class="bi bi-check-circle"></i>
-    <span>Listos</span>
+    <span data-i18n="cn_listos">Listos</span>
 </a>
 
 <a href="{{ url_for('routes.cocina_inventario') }}" class="nav-link">
     <i class="bi bi-box-seam"></i>
-    <span>Inventario</span>
+    <span data-i18n="cn_inventario">Inventario</span>
 </a>
 {% endblock %}
 
@@ -36,12 +36,12 @@
 <!-- HEADER CON CONTROLES -->
 <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white mb-6 flex items-center justify-between">
     <div>
-        <h2 class="text-2xl font-bold">Pedidos Pendientes 🔴</h2>
-        <p class="text-sm opacity-90 mt-1">Pedidos que esperan ser preparados</p>
+        <h2 class="text-2xl font-bold"><span data-i18n="cn_pend">Pedidos Pendientes</span> 🔴</h2>
+        <p class="text-sm opacity-90 mt-1" data-i18n="cn_ped_esperan">Pedidos que esperan ser preparados</p>
     </div>
     <div class="text-right">
         <div class="text-5xl font-bold" id="total-pendientes">0</div>
-        <p class="text-sm opacity-90">Total</p>
+        <p class="text-sm opacity-90" data-i18n="cn_ped_total">Total</p>
     </div>
 </div>
 
@@ -49,10 +49,10 @@
 <div class="bg-white p-4 rounded-xl shadow-md mb-6 flex items-center justify-between flex-wrap gap-3">
     <div class="flex items-center gap-2">
         <button onclick="actualizarPedidos()" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center gap-2">
-            <i class="bi bi-arrow-clockwise"></i> Actualizar
+            <i class="bi bi-arrow-clockwise"></i> <span data-i18n="cn_btn_act2">Actualizar</span>
         </button>
         <button onclick="abrirModalNoDisponibles()" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:shadow-lg transition font-semibold flex items-center gap-2">
-            <i class="bi bi-slash-circle"></i> Ver No Disponibles
+            <i class="bi bi-slash-circle"></i> <span data-i18n="cn_btn_ver_nd">Ver No Disponibles</span>
         </button>
     </div>
     
@@ -60,7 +60,7 @@
         <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" id="sonido-toggle" class="w-4 h-4" checked>
             <span class="text-sm font-semibold text-gray-700">
-                <i class="bi bi-speaker"></i> Sonido
+                <i class="bi bi-speaker"></i> <span data-i18n="cn_sonido">Sonido</span>
             </span>
         </label>
     </div>
@@ -74,8 +74,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contenedor-pedidos">
             <div class="col-span-2 text-center py-16 text-gray-400">
                 <i class="bi bi-inbox text-6xl mb-3 block"></i>
-                <p class="text-lg font-semibold">Sin pedidos pendientes</p>
-                <p class="text-sm mt-1">Los nuevos pedidos aparecerán aquí</p>
+                <p class="text-lg font-semibold" data-i18n="cn_sin_pend">Sin pedidos pendientes</p>
+                <p class="text-sm mt-1" data-i18n="cn_ped_nuevos_aq">Los nuevos pedidos aparecerán aquí</p>
             </div>
         </div>
     </div>
@@ -84,10 +84,10 @@
     <div class="lg:col-span-1">
         <div class="bg-white rounded-xl shadow-md p-4 sticky top-20 max-h-[600px] overflow-y-auto">
             <h3 class="font-bold text-lg mb-4 text-gray-800 pb-3 border-b-2 border-orange-300">
-                <i class="bi bi-list-check"></i> Orden Rápida
+                <i class="bi bi-list-check"></i> <span data-i18n="cn_orden_rap">Orden Rápida</span>
             </h3>
             <div id="listado-rapido" class="space-y-2">
-                <p class="text-sm text-gray-500 text-center py-6">Cargando...</p>
+                <p class="text-sm text-gray-500 text-center py-6" data-i18n="cn_cargando">Cargando...</p>
             </div>
         </div>
     </div>
@@ -95,14 +95,14 @@
 </div>
 
 <!-- MODAL: VER DETALLES DE PEDIDO -->
-<div id="modal-detalles" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+<div id="modal-detalles" data-modal="true" data-close-fn="cerrarModalDetalles" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[1100] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
         
         <!-- Modal Header -->
         <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 sticky top-0 z-10 flex items-center justify-between">
             <div>
                 <h2 class="text-2xl font-bold" id="modal-numero-pedido">Pedido #001</h2>
-                <p class="text-sm opacity-90 mt-1">Mesa <span id="modal-numero-mesa">1</span></p>
+                <p class="text-sm opacity-90 mt-1"><span data-i18n="m_mesa_word">Mesa</span> <span id="modal-numero-mesa">1</span></p>
             </div>
             <button onclick="cerrarModalDetalles()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
                 <i class="bi bi-x"></i>
@@ -115,15 +115,15 @@
             <!-- Info General -->
             <div class="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
                 <div>
-                    <p class="text-xs text-gray-600 font-semibold">HORA ENTRADA</p>
+                    <p class="text-xs text-gray-600 font-semibold" data-i18n="cn_hora_entrada">HORA ENTRADA</p>
                     <p class="text-lg font-bold text-gray-800" id="modal-hora-entrada">--:--</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-600 font-semibold">ESPERANDO</p>
+                    <p class="text-xs text-gray-600 font-semibold" data-i18n="cn_esperando">ESPERANDO</p>
                     <p class="text-lg font-bold text-red-600" id="modal-minutos-esperando">0 min</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-600 font-semibold">REGISTRADO POR</p>
+                    <p class="text-xs text-gray-600 font-semibold" data-i18n="cn_reg_por">REGISTRADO POR</p>
                     <p class="text-lg font-bold text-gray-800" id="modal-usuario">Usuario</p>
                 </div>
             </div>
@@ -131,7 +131,7 @@
             <!-- Platillos -->
             <div class="mb-6">
                 <h3 class="font-bold text-lg mb-4 text-gray-800 pb-2 border-b-2 border-orange-300">
-                    <i class="bi bi-egg-fried"></i> Platillos Solicitados
+                    <i class="bi bi-egg-fried"></i> <span data-i18n="cn_plat_sol">Platillos Solicitados</span>
                 </h3>
                 <div id="modal-platillos" class="space-y-3">
                     <!-- Los platillos se cargan aquí -->
@@ -143,10 +143,10 @@
         <!-- Modal Footer -->
         <div class="bg-gray-50 p-6 border-t-2 border-gray-200 sticky bottom-0 flex gap-3">
             <button onclick="cerrarModalDetalles()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
-                <i class="bi bi-x-circle"></i> Cerrar
+                <i class="bi bi-x-circle"></i> <span data-i18n="dash_cerrar">Cerrar</span>
             </button>
             <button onclick="iniciarPreparacionDesdeModal()" class="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition font-semibold">
-                <i class="bi bi-play-fill"></i> Iniciar Preparación
+                <i class="bi bi-play-fill"></i> <span data-i18n="cn_btn_iniciar">Iniciar Preparación</span>
             </button>
         </div>
         
@@ -154,12 +154,12 @@
 </div>
 
 <!-- MODAL: PLATILLOS NO DISPONIBLES -->
-<div id="modal-no-disponibles" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+<div id="modal-no-disponibles" data-modal="true" data-close-fn="cerrarModalNoDisponibles" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[1100] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
         
         <!-- Modal Header -->
         <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6 flex items-center justify-between">
-            <h2 class="text-2xl font-bold">Platillos No Disponibles</h2>
+            <h2 class="text-2xl font-bold" data-i18n="cn_nd_modal_plat">Platillos No Disponibles</h2>
             <button onclick="cerrarModalNoDisponibles()" class="text-2xl hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
                 <i class="bi bi-x"></i>
             </button>
@@ -168,14 +168,14 @@
         <!-- Modal Body -->
         <div class="p-6 max-h-[400px] overflow-y-auto">
             <div id="lista-no-disponibles" class="space-y-3">
-                <p class="text-center text-gray-500 py-6">Cargando...</p>
+                <p class="text-center text-gray-500 py-6" data-i18n="cn_cargando">Cargando...</p>
             </div>
         </div>
         
         <!-- Modal Footer -->
         <div class="bg-gray-50 p-6 border-t-2 border-gray-200">
             <button onclick="cerrarModalNoDisponibles()" class="w-full px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-semibold">
-                <i class="bi bi-check-circle"></i> Cerrar
+                <i class="bi bi-check-circle"></i> <span data-i18n="dash_cerrar">Cerrar</span>
             </button>
         </div>
         

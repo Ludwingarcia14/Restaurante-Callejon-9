@@ -22,47 +22,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
     <i class="bi bi-house-door text-lg"></i>
-    <span>Inicio</span>
+    <span data-i18n="mn_inicio">Inicio</span>
 </a>
 <a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
     <i class="bi bi-receipt text-lg"></i>
-    <span>Comandas Activas</span>
+    <span data-i18n="mn_comandas">Comandas Activas</span>
 </a>
 <a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
     <i class="bi bi-journal-text text-lg"></i>
-    <span>Menú</span>
+    <span data-i18n="mn_menu">Menú</span>
 </a>
 <a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
     <i class="bi bi-cash-coin text-lg"></i>
-    <span>Propinas del Día</span>
+    <span data-i18n="mn_propinas">Propinas del Día</span>
 </a>
 <a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
     <i class="bi bi-clock-history text-lg"></i>
-    <span>Historial</span>
+    <span data-i18n="mn_historial">Historial</span>
 </a>
 <a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
     <i class="bi bi-diagram-3 text-lg"></i>
-    <span>Segmentación</span>
+    <span data-i18n="mn_kmeans">Segmentación</span>
 </a>
 <a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
     <i class="bi bi-tree text-lg"></i>
-    <span>Random Forest</span>
+    <span data-i18n="mn_arbol">Random Forest</span>
 </a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
     <i class="bi bi-clipboard-data text-lg"></i>
-    <span>Diagnóstico</span>
+    <span data-i18n="mn_diagnostico">Diagnóstico</span>
 </a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i>
-    <span>Pareto 80/20</span>
+    <span data-i18n="mn_pareto">Pareto 80/20</span>
 </a>
 <a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
     <i class="bi bi-share text-lg"></i>
-    <span>Asociación</span>
+    <span data-i18n="mn_asociacion">Asociación</span>
 </a>
 <a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
     <i class="bi bi-graph-up text-lg"></i>
-    <span>Predicción</span>
+    <span data-i18n="mn_prediccion">Predicción</span>
 </a>
 {% endblock %}
 
@@ -144,7 +144,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ================= MODAL ================= -->
 <div id="modalComanda"
-     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+     data-modal="true" data-close-fn="cerrarModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-[1100] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl
                 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div class="bg-green-600 text-white p-4 flex justify-between">

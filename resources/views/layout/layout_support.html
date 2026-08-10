@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Soporte - {% block title %}Dashboard{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ session.get('_csrf_token') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="shortcut icon" href="{{ url_for('static', filename='assets/img/Logo2.png') }}" type="image/x-icon">
@@ -48,43 +50,43 @@
             <a href="{{ url_for('routes.dashboard_soporte') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.dashboard_soporte' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
-                🏠 <span>Inicio</span>
+                🏠 <span data-i18n="cn_inicio">Inicio</span>
             </a>
 
             <a href="{{ url_for('routes.soporte_tickets') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.soporte_tickets' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
-                📩 <span>Tickets activos</span>
+                📩 <span data-i18n="sp_tickets">Tickets activos</span>
             </a>
 
             <a href="{{ url_for('routes.soporte_historial') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.soporte_historial' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
-                🗄 <span>Historial</span>
+                🗄 <span data-i18n="sp_historial">Historial</span>
             </a>
 
             <a href="{{ url_for('routes.soporte_metricas') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.soporte_metricas' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
-                📊 <span>Métricas</span>
+                📊 <span data-i18n="sp_metricas">Métricas</span>
             </a>
 
             <a href="{{ url_for('routes.soporte_comunicacion') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.soporte_comunicacion' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
-                👥 <span>Comunicación</span>
+                👥 <span data-i18n="sp_comunic">Comunicación</span>
             </a>
 
             <a href="{{ url_for('routes.soporte_alertas') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.soporte_alertas' %}bg-red-100 text-red-600 shadow-sm{% else %}text-gray-700 hover:bg-red-50 hover:text-red-600{% endif %}">
-                🚨 <span>Alertas</span>
+                🚨 <span data-i18n="sp_alertas">Alertas</span>
             </a>
 
             <a href="{{ url_for('routes.soporte_gestion') }}"
                class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                       {% if request.endpoint == 'routes.soporte_gestion' %}bg-blue-100 text-blue-700 shadow-sm{% else %}text-gray-700 hover:bg-blue-50 hover:text-blue-600{% endif %}">
-                🧑‍💼 <span>Gestión del equipo</span>
+                🧑‍💼 <span data-i18n="sp_gestion">Gestión del equipo</span>
             </a>
         </nav>
 
@@ -92,7 +94,7 @@
         <div class="p-4 mt-auto text-center">
             <a href="{{ url_for('routes.logout') }}"
                class="inline-block bg-red-100 text-red-500 px-4 py-2 rounded-full hover:bg-red-200 text-sm shadow-sm">
-                <i class="bi bi-door-open"></i> Cerrar sesión
+                <i class="bi bi-door-open"></i> <span data-i18n="sp_cerrar_ses">Cerrar sesión</span>
             </a>
         </div>
     </aside>
@@ -152,13 +154,13 @@ function toggleMenu(id) {
             border hidden flex flex-col z-50">
 
     <div class="bg-blue-600 text-white px-4 py-3 rounded-t-xl flex justify-between items-center">
-        <span class="font-semibold">Centro de ayuda</span>
+        <span class="font-semibold" data-i18n="sp_help_titulo">Centro de ayuda</span>
         <button id="closeHelpChat" class="text-white text-lg">✕</button>
     </div>
 
     <div class="p-4 text-sm text-gray-700 flex-1 overflow-y-auto">
-        <p class="mb-2">👋 Hola, ¿en qué podemos ayudarte?</p>
-        <p class="text-gray-500">
+        <p class="mb-2" data-i18n="sp_help_saludo">👋 ¿En qué podemos ayudarte?</p>
+        <p class="text-gray-500" data-i18n="sp_help_desc">
             Puedes consultar el estado de tu ticket o hablar con un asesor.
         </p>
     </div>
@@ -166,7 +168,7 @@ function toggleMenu(id) {
     <div class="p-3 border-t">
         <a href="/dashboard/soporte/comunicacion"
            class="block text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-            Ir al chat de soporte
+            <span data-i18n="sp_help_btn">Ir al chat de soporte</span>
         </a>
     </div>
 </div>

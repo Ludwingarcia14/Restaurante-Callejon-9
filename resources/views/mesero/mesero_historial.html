@@ -18,47 +18,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <a href="{{ url_for('routes.dashboard_mesero') }}" class="nav-link">
     <i class="bi bi-house-door text-lg"></i>
-    <span>Inicio</span>
+    <span data-i18n="mn_inicio">Inicio</span>
 </a>
 <a href="{{ url_for('routes.mesero_comandas') }}" class="nav-link">
     <i class="bi bi-receipt text-lg"></i>
-    <span>Comandas Activas</span>
+    <span data-i18n="mn_comandas">Comandas Activas</span>
 </a>
 <a href="{{ url_for('routes.mesero_menu') }}" class="nav-link">
     <i class="bi bi-journal-text text-lg"></i>
-    <span>Menú</span>
+    <span data-i18n="mn_menu">Menú</span>
 </a>
 <a href="{{ url_for('routes.mesero_propinas') }}" class="nav-link">
     <i class="bi bi-cash-coin text-lg"></i>
-    <span>Propinas del Día</span>
+    <span data-i18n="mn_propinas">Propinas del Día</span>
 </a>
 <a href="{{ url_for('routes.mesero_historial') }}" class="nav-link">
     <i class="bi bi-clock-history text-lg"></i>
-    <span>Historial</span>
+    <span data-i18n="mn_historial">Historial</span>
 </a>
 <a href="{{ url_for('routes.mesero_kmeans') }}" class="nav-link">
     <i class="bi bi-diagram-3 text-lg"></i>
-    <span>Segmentación</span>
+    <span data-i18n="mn_kmeans">Segmentación</span>
 </a>
 <a href="{{ url_for('routes.mesero_arbol') }}" class="nav-link">
     <i class="bi bi-tree text-lg"></i>
-    <span>Random Forest</span>
+    <span data-i18n="mn_arbol">Random Forest</span>
 </a>
 <a href="{{ url_for('routes.mesero_diagnostico') }}" class="nav-link">
     <i class="bi bi-clipboard-data text-lg"></i>
-    <span>Diagnóstico</span>
+    <span data-i18n="mn_diagnostico">Diagnóstico</span>
 </a>
 <a href="{{ url_for('routes.mesero_pareto') }}" class="nav-link">
     <i class="bi bi-bar-chart-steps text-lg"></i>
-    <span>Pareto 80/20</span>
+    <span data-i18n="mn_pareto">Pareto 80/20</span>
 </a>
 <a href="{{ url_for('routes.mesero_asociacion') }}" class="nav-link">
     <i class="bi bi-share text-lg"></i>
-    <span>Asociación</span>
+    <span data-i18n="mn_asociacion">Asociación</span>
 </a>
 <a href="{{ url_for('routes.mesero_prediccion') }}" class="nav-link">
     <i class="bi bi-graph-up text-lg"></i>
-    <span>Predicción</span>
+    <span data-i18n="mn_prediccion">Predicción</span>
 </a>
 {% endblock %}
 
@@ -70,19 +70,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div>
             <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block" data-i18n="hist_periodo">Período</label>
-            <div class="flex items-center gap-2">
-                <input type="date" id="filtro-inicio" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
-                <span class="text-gray-400 text-xs">–</span>
-                <input type="date" id="filtro-fin" class="flex-1 border-gray-200 rounded-lg text-sm px-3 py-2">
-                <button onclick="cargarHistorial()"
-                        class="bg-[#F2913D] hover:bg-[#F2A339] text-white px-4 py-2 rounded-lg transition">
-                    <i class="bi bi-search"></i>
-                </button>
-                <button onclick="resetFecha()"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg transition"
-                        title="Últimos 30 días">
-                    <i class="bi bi-calendar-range"></i>
-                </button>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <input type="date" id="filtro-inicio" class="flex-1 min-w-0 border border-gray-200 rounded-lg text-sm px-3 py-2">
+                    <span class="text-gray-400 text-xs flex-shrink-0">–</span>
+                    <input type="date" id="filtro-fin" class="flex-1 min-w-0 border border-gray-200 rounded-lg text-sm px-3 py-2">
+                </div>
+                <div class="flex gap-2 flex-shrink-0">
+                    <button onclick="cargarHistorial()"
+                            class="flex-1 sm:flex-none bg-[#F2913D] hover:bg-[#F2A339] text-white px-4 py-2 rounded-lg transition">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button onclick="resetFecha()"
+                            class="flex-1 sm:flex-none bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg transition"
+                            title="Últimos 30 días">
+                        <i class="bi bi-calendar-range"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -100,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
         <span class="text-gray-500">
             <i class="bi bi-receipt"></i>
-            <span id="num-registros">0</span> cuenta(s) cerrada(s)
+            <span id="num-registros">0</span> <span data-i18n="hist_cuentas_txt">cuenta(s) cerrada(s)</span>
         </span>
         <span id="fecha-seleccionada" class="text-gray-400 font-mono"></span>
     </div>
@@ -154,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="empty-ventas-hora" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
                     <div class="text-center">
                         <i class="bi bi-graph-up text-4xl block mb-2"></i>
-                        <p class="text-xs">Sin datos</p>
+                        <p class="text-xs" data-i18n="hist_sin_datos">Sin datos</p>
                     </div>
                 </div>
             </div>
@@ -174,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="empty-mesas" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
                     <div class="text-center">
                         <i class="bi bi-grid-3x3 text-4xl block mb-2"></i>
-                        <p class="text-xs">Sin datos</p>
+                        <p class="text-xs" data-i18n="hist_sin_datos">Sin datos</p>
                     </div>
                 </div>
             </div>
@@ -195,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="empty-productos" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
                         <div class="text-center">
                             <i class="bi bi-pie-chart text-3xl block mb-1"></i>
-                            <p class="text-xs">Sin datos</p>
+                            <p class="text-xs" data-i18n="hist_sin_datos">Sin datos</p>
                         </div>
                     </div>
                 </div>
@@ -217,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="empty-propinas-hora" class="hidden absolute inset-0 flex items-center justify-center text-gray-300">
                     <div class="text-center">
                         <i class="bi bi-cash-coin text-4xl block mb-2"></i>
-                        <p class="text-xs">Sin datos</p>
+                        <p class="text-xs" data-i18n="hist_sin_datos">Sin datos</p>
                     </div>
                 </div>
             </div>
@@ -497,7 +501,7 @@ function graficaProductos(historial) {
     const sorted = Object.entries(porProducto).sort((a, b) => b[1] - a[1]).slice(0, 6);
     if (!sorted.length) {
         empty.classList.remove('hidden');
-        leyenda.innerHTML = '<p class="text-xs text-gray-400">Los productos aparecerán cuando el historial incluya detalle de items</p>';
+        leyenda.innerHTML = `<p class="text-xs text-gray-400">${t('hist_prods_desc')}</p>`;
         return;
     }
     empty.classList.add('hidden');
@@ -624,11 +628,11 @@ function renderizarHistorial(data) {
         const metodo = (reg.metodo_pago || 'efectivo').toLowerCase();
         let metodoBadge = '', metodoBadgeClass = '';
         if (metodo === 'mercadopago' || metodo === 'tarjeta') {
-            metodoBadge = 'TARJETA MP'; metodoBadgeClass = 'text-blue-600 bg-blue-50';
+            metodoBadge = t('prop_badge_tarj'); metodoBadgeClass = 'text-blue-600 bg-blue-50';
         } else if (metodo === 'efectivo') {
-            metodoBadge = 'EFECTIVO'; metodoBadgeClass = 'text-orange-600 bg-orange-50';
+            metodoBadge = t('prop_badge_ef'); metodoBadgeClass = 'text-orange-600 bg-orange-50';
         } else if (metodo === 'transferencia') {
-            metodoBadge = 'TRANSFERENCIA'; metodoBadgeClass = 'text-purple-600 bg-purple-50';
+            metodoBadge = t('prop_badge_transf'); metodoBadgeClass = 'text-purple-600 bg-purple-50';
         } else {
             metodoBadge = metodo.toUpperCase(); metodoBadgeClass = 'text-gray-600 bg-gray-50';
         }
