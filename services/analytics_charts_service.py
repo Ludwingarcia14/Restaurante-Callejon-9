@@ -95,7 +95,7 @@ class AnalyticsChartsService:
             hora = r["_id"]["hora"]
             matriz[(di, hora)] = r["comandas"]
 
-        horas = sorted({h for (_, h) in matriz}) or list(range(11, 23))
+        horas = list(range(24))  # las 24 horas siempre presentes, en orden cronológico
 
         series = []
         for di, nombre in enumerate(_DIAS):
@@ -122,9 +122,23 @@ class AnalyticsChartsService:
         }
 
     @staticmethod
-    def area(dias: int = 90) -> dict:
+    def area(dias: int = 90, fecha_inicio=None, fecha_fin_exclusiva=None) -> dict:
+        """
+        Ingresos semanales (área + acumulado).
+
+        Por defecto usa "últimos N días" (comportamiento original, sin cambios).
+        Si se proveen fecha_inicio/fecha_fin_exclusiva (datetime), filtra por ese
+        rango explícito en su lugar — pensado para el selector de semanas del
+        frontend, que ya calcula límites sin solape (fin exclusivo) antes de
+        llamar aquí. La agregación/agrupación por semana no se modifica.
+        """
+        if fecha_inicio is not None and fecha_fin_exclusiva is not None:
+            filtro_fecha = {"$gte": fecha_inicio, "$lt": fecha_fin_exclusiva}
+        else:
+            filtro_fecha = {"$gte": _hace(dias)}
+
         pipeline = [
-            {"$match": {**_MATCH, "fecha_cierre": {"$gte": _hace(dias)}}},
+            {"$match": {**_MATCH, "fecha_cierre": filtro_fecha}},
             {"$addFields": {
                 "semana": {"$week":  "$fecha_cierre"},
                 "anio":   {"$year":  "$fecha_cierre"}
@@ -151,6 +165,10 @@ class AnalyticsChartsService:
             acumulados.append(round(acum, 2))
 
         sem_record = labels[int(np.argmax(ingresos))] if ingresos else "—"
+        if fecha_inicio is not None and fecha_fin_exclusiva is not None:
+            periodo_dias = max((fecha_fin_exclusiva - fecha_inicio).days, 1)
+        else:
+            periodo_dias = dias
         return {
             "success":        True,
             "labels":         labels,
@@ -161,7 +179,7 @@ class AnalyticsChartsService:
             "total_pedidos":  sum(pedidos),
             "sem_record":     sem_record,
             "n_semanas":      len(rows),
-            "periodo_dias":   dias
+            "periodo_dias":   periodo_dias
         }
 
     @staticmethod

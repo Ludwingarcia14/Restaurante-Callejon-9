@@ -5,11 +5,29 @@ from datetime import datetime, timedelta
 class ParetoService:
 
     @staticmethod
-    def get_pareto(dias=90):
-        fecha_inicio = datetime.now() - timedelta(days=dias)
+    def get_pareto(start_date=None, end_date=None, dias=90):
+        """
+        Calcula el análisis Pareto 80/20 de ingresos por platillo.
+
+        Acepta un rango explícito (start_date/end_date, ambos datetime) o,
+        si no se proveen, cae de vuelta al comportamiento legado de
+        "últimos N días" (parámetro `dias`) para no romper consumidores
+        que aún no fueron migrados al date range picker.
+        """
+        if start_date and end_date:
+            fecha_inicio = start_date
+            fecha_fin = end_date
+        else:
+            fecha_fin = datetime.now()
+            fecha_inicio = fecha_fin - timedelta(days=dias)
+
+        # Rango inclusivo de todo el día final (por si end_date llega sin hora, ej. 00:00:00)
+        fecha_fin_query = fecha_fin
+        if fecha_fin_query.hour == 0 and fecha_fin_query.minute == 0 and fecha_fin_query.second == 0:
+            fecha_fin_query = fecha_fin_query.replace(hour=23, minute=59, second=59, microsecond=999999)
 
         pipeline = [
-            {"$match": {"fecha_creacion": {"$gte": fecha_inicio}}},
+            {"$match": {"fecha_creacion": {"$gte": fecha_inicio, "$lte": fecha_fin_query}}},
             {"$unwind": "$items"},
             {"$match": {"items.nombre": {"$exists": True, "$ne": None}}},
             {"$group": {
@@ -21,9 +39,20 @@ class ParetoService:
             {"$sort": {"ingreso": -1}},
         ]
 
+        periodo_dias = max((fecha_fin - fecha_inicio).days, 1)
+        rango = {
+            "fecha_inicio": fecha_inicio.strftime("%d/%m/%Y"),
+            "fecha_fin":    fecha_fin.strftime("%d/%m/%Y"),
+            "periodo_dias": periodo_dias,
+        }
+
         items = list(db.ventas.aggregate(pipeline))
         if not items:
-            return {"platillos": [], "total_ingreso": 0, "corte_pareto": None}
+            return {
+                "platillos": [], "total_ingreso": 0, "corte_pareto": None,
+                "total_platillos": 0, "n_pareto": 0, "pct_platillos_clave": 0,
+                **rango,
+            }
 
         total = sum(float(i["ingreso"]) for i in items)
         acumulado = 0.0
@@ -59,5 +88,5 @@ class ParetoService:
             "total_platillos":    len(resultado),
             "n_pareto":           n_pareto,
             "pct_platillos_clave": pct_platillos_clave,
-            "periodo_dias":       dias,
+            **rango,
         }

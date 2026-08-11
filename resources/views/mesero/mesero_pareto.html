@@ -31,29 +31,6 @@
     </div>
   </div>
 
-  {# ── Controles ─────────────────────────────────────────── #}
-  <div class="card card--pad">
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div class="field">
-        <label data-i18n="hist_periodo">Período</label>
-        <select id="sel-dias" class="input" style="width:auto">
-          <option value="30">30 días</option>
-          <option value="60">60 días</option>
-          <option value="90" selected>90 días</option>
-          <option value="180">6 meses</option>
-        </select>
-      </div>
-      <div class="field">
-        <label style="visibility:hidden">—</label>
-        <button onclick="cargar()" class="btn btn--primary" style="background:#d97706;border:0">
-          <i class="bi bi-arrow-clockwise"></i>
-          <span data-i18n="m_refrescar_btn">Actualizar</span>
-        </button>
-      </div>
-      <span id="estado" style="font-size:12.5px;color:var(--ink-3);margin-top:auto;padding-bottom:2px"></span>
-    </div>
-  </div>
-
   {# ── KPIs ──────────────────────────────────────────────── #}
   <div id="kpi-cards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
     <div style="grid-column:1/-1" class="kpi">
@@ -62,6 +39,32 @@
         <span data-i18n="an_calculando">Calculando…</span>
       </p>
     </div>
+  </div>
+
+  {# ── Controles: date range picker ──────────────────────── #}
+  <div class="card card--pad">
+    <div style="display:flex;align-items:end;gap:16px;flex-wrap:wrap">
+      <div class="field">
+        <label data-i18n="hist_periodo">Período</label>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <input type="date" id="fecha-inicio" class="input" onchange="actualizarPeriodoLabel()">
+          <span style="color:var(--ink-4);font-size:13px">–</span>
+          <input type="date" id="fecha-fin" class="input" onchange="actualizarPeriodoLabel()">
+        </div>
+      </div>
+      <div class="field">
+        <label style="visibility:hidden">—</label>
+        <button onclick="cargar()" class="btn btn--primary" style="background:#d97706;border:0">
+          <i class="bi bi-arrow-clockwise"></i>
+          <span data-i18n="m_refrescar_btn">Actualizar</span>
+        </button>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <p class="card__note" style="margin:0;font-size:10px;letter-spacing:.06em;text-transform:uppercase" data-i18n="diag_periodo_lbl">Período analizado</p>
+        <p id="periodo-label" style="margin:2px 0 0;font-size:15px;font-weight:700;color:var(--ink)">—</p>
+      </div>
+    </div>
+    <span id="estado" style="display:block;margin-top:10px;font-size:12.5px;color:var(--ink-3)"></span>
   </div>
 
   {# ── Gráfica + tabla ───────────────────────────────────── #}
@@ -139,8 +142,63 @@ function fmt(v) {
   return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(v||0);
 }
 
+const MESES_PARETO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function ultimoDiaMes(y, m) { return new Date(y, m, 0).getDate(); } // m = mes 1-indexado
+
+// Formatea un rango "YYYY-MM-DD" a texto legible:
+//  - mismo mes/año           → "13 - 29 agosto 2026"
+//  - mes(es) completo(s)     → "agosto - septiembre 2026"
+//  - mismo año, distinto mes → "13 agosto - 5 septiembre 2026"
+//  - distinto año            → "20 diciembre 2025 - 8 enero 2026"
+function formatRangoPareto(startStr, endStr) {
+  if (!startStr || !endStr) return '—';
+  const [y1, m1, d1] = startStr.split('-').map(Number);
+  const [y2, m2, d2] = endStr.split('-').map(Number);
+  if (!y1 || !y2) return '—';
+
+  const esRangoMesesCompletos = d1 === 1 && d2 === ultimoDiaMes(y2, m2) && (y1 !== y2 || m1 !== m2);
+  if (esRangoMesesCompletos) {
+    return y1 === y2
+      ? `${MESES_PARETO[m1 - 1]} - ${MESES_PARETO[m2 - 1]} ${y2}`
+      : `${MESES_PARETO[m1 - 1]} ${y1} - ${MESES_PARETO[m2 - 1]} ${y2}`;
+  }
+  if (y1 === y2 && m1 === m2) return `${d1} - ${d2} ${MESES_PARETO[m1 - 1]} ${y1}`;
+  if (y1 === y2) return `${d1} ${MESES_PARETO[m1 - 1]} - ${d2} ${MESES_PARETO[m2 - 1]} ${y1}`;
+  return `${d1} ${MESES_PARETO[m1 - 1]} ${y1} - ${d2} ${MESES_PARETO[m2 - 1]} ${y2}`;
+}
+
+function actualizarPeriodoLabel() {
+  const inicio = document.getElementById('fecha-inicio').value;
+  const fin    = document.getElementById('fecha-fin').value;
+  document.getElementById('periodo-label').textContent = formatRangoPareto(inicio, fin);
+}
+
+function initFechas() {
+  const hoy    = new Date();
+  const hace90 = new Date();
+  hace90.setDate(hoy.getDate() - 90);
+  const iso = d => d.toISOString().split('T')[0];
+
+  document.getElementById('fecha-inicio').value = iso(hace90);
+  document.getElementById('fecha-fin').value    = iso(hoy);
+  actualizarPeriodoLabel();
+}
+
 async function cargar() {
-  const dias = document.getElementById('sel-dias').value;
+  const inicio = document.getElementById('fecha-inicio').value;
+  const fin    = document.getElementById('fecha-fin').value;
+
+  if (!inicio || !fin) {
+    document.getElementById('estado').textContent = 'Selecciona ambas fechas del período';
+    return;
+  }
+  if (fin < inicio) {
+    document.getElementById('estado').textContent = 'La fecha final no puede ser anterior a la inicial';
+    return;
+  }
+
+  actualizarPeriodoLabel();
   document.getElementById('estado').textContent = 'Calculando…';
 
   document.getElementById('chart-loading').style.display = 'flex';
@@ -152,21 +210,48 @@ async function cargar() {
   if (apexPareto) { apexPareto.destroy(); apexPareto = null; }
 
   try {
-    const r = await fetch(`/api/analytics/pareto?dias=${dias}`);
+    const r = await fetch(`/api/analytics/pareto?start_date=${inicio}&end_date=${fin}`);
     const d = await r.json();
     if (d.error) throw new Error(d.error);
+
+    if (!d.platillos || d.platillos.length === 0) {
+      renderEmptyState(d);
+      return;
+    }
+
     renderKPIs(d);
     renderGrafico(d);
     renderTabla(d);
     renderInsight(d);
     document.getElementById('estado').textContent =
-      `${d.total_platillos} ${t('par_platillos')} · ${d.periodo_dias} ${t('par_dias')}`;
+      `${d.total_platillos} ${t('par_platillos')} · ${formatRangoPareto(inicio, fin)}`;
   } catch(e) {
     document.getElementById('estado').textContent = 'Error: ' + e.message;
     ['chart-loading','tabla-loading'].forEach(id => {
       document.getElementById(id).innerHTML = `<span style="color:var(--accent);font-size:13px">${e.message}</span>`;
     });
   }
+}
+
+function renderEmptyState(d) {
+  document.getElementById('kpi-cards').innerHTML = `
+    <div style="grid-column:1/-1" class="kpi">
+      <p class="kpi__v" style="font-size:14px;font-weight:normal;color:var(--ink-3)">
+        ${fmt(0)} · 0 ${t('par_platillos')}
+      </p>
+    </div>`;
+
+  const vacio = `<span style="color:var(--ink-3);font-size:13px;display:flex;align-items:center;gap:8px">
+      <i class="bi bi-inbox"></i> ${t('par_sin_datos')}
+    </span>`;
+  document.getElementById('chart-loading').innerHTML = vacio;
+  document.getElementById('tabla-loading').innerHTML = vacio;
+
+  document.getElementById('insight-panel').style.display = 'none';
+  const inicio = document.getElementById('fecha-inicio').value;
+  const fin    = document.getElementById('fecha-fin').value;
+  document.getElementById('estado').textContent =
+    `0 ${t('par_platillos')} · ${formatRangoPareto(inicio, fin)}`;
 }
 
 function renderKPIs(d) {
@@ -287,7 +372,7 @@ function _renderParetoRows(n) {
 
 function renderInsight(d) {
   const ing80   = d.platillos.filter(p=>p.es_pareto).reduce((a,b)=>a+b.ingreso,0);
-  const pctIng  = Math.round(ing80/d.total_ingreso*100);
+  const pctIng  = d.total_ingreso > 0 ? Math.round(ing80/d.total_ingreso*100) : 0;
   const top3    = d.platillos.slice(0,3).map(p=>p.platillo).join(', ');
   document.getElementById('insight-texto').textContent =
     `El ${d.pct_platillos_clave}% de los platillos (${d.n_pareto} de ${d.total_platillos}) genera el ${pctIng}% del ingreso. `+
@@ -295,6 +380,7 @@ function renderInsight(d) {
   document.getElementById('insight-panel').style.display = '';
 }
 
+initFechas();
 cargar();
 </script>
 {% endblock %}

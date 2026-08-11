@@ -354,6 +354,7 @@ const I18N = {
     par_th_top:      'Top',
     par_platillos:   'platillos',
     par_dias:        'días',
+    par_sin_datos:   'Sin ventas registradas en este período',
     // Asociación
     asoc_titulo:     'Asociación de Platillos',
     asoc_sub:        'Qué platillos se piden juntos con más frecuencia',
@@ -1231,6 +1232,7 @@ const I18N = {
     par_th_top:      'Top',
     par_platillos:   'dishes',
     par_dias:        'days',
+    par_sin_datos:   'No sales recorded in this period',
     // Asociación
     asoc_titulo:     'Dish Association',
     asoc_sub:        'Which dishes are most often ordered together',

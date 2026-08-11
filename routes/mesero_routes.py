@@ -1,5 +1,6 @@
 from . import routes_bp
-from flask import session, redirect, url_for, render_template, jsonify
+from flask import session, redirect, url_for, render_template, jsonify, request
+from datetime import datetime
 from controllers.auth.AuthController import login_required, rol_required
 from controllers.dashboard.dashboard_controller import DashboardController
 from controllers.historial.historialController import HistorialController
@@ -275,6 +276,17 @@ def api_heatmap():
 @login_required
 @rol_required(['2'])
 def api_area():
+    start_raw = request.args.get("start_date")
+    end_raw = request.args.get("end_date")  # límite exclusivo (inicio de la semana siguiente)
+    if start_raw and end_raw:
+        try:
+            fecha_inicio = datetime.strptime(start_raw, "%Y-%m-%d")
+            fecha_fin_exclusiva = datetime.strptime(end_raw, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"success": False, "error": "Formato de fecha inválido, usa YYYY-MM-DD"}), 400
+        if fecha_fin_exclusiva <= fecha_inicio:
+            return jsonify({"success": False, "error": "end_date debe ser posterior a start_date"}), 400
+        return jsonify(AnalyticsChartsService.area(fecha_inicio=fecha_inicio, fecha_fin_exclusiva=fecha_fin_exclusiva))
     return jsonify(AnalyticsChartsService.area())
 
 @routes_bp.route("/api/analytics/boxplot", methods=["GET"])

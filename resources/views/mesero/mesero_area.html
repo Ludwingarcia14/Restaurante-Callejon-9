@@ -29,6 +29,36 @@
 
     <div id="area-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px"></div>
 
+    {# ── Selector de período por semanas ───────────────────── #}
+    <div class="card card--pad">
+      <div style="display:flex;align-items:end;gap:16px;flex-wrap:wrap">
+        <div class="field">
+          <label>Desde</label>
+          <select id="sem-desde" class="input" style="width:auto" onchange="actualizarRangoLabel()"></select>
+        </div>
+        <div class="field">
+          <label>Hasta</label>
+          <select id="sem-hasta" class="input" style="width:auto" onchange="actualizarRangoLabel()"></select>
+        </div>
+        <div class="field">
+          <label style="visibility:hidden">—</label>
+          <button onclick="aplicarSemanas()" class="btn btn--primary" style="background:#16a34a;border:0">
+            <i class="bi bi-arrow-clockwise"></i> Aplicar
+          </button>
+        </div>
+        <div class="field">
+          <label style="visibility:hidden">—</label>
+          <button onclick="usarPeriodoCompleto()" class="btn btn--ghost" title="Período completo (últimos 90 días)">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <p class="card__note" style="margin:0;font-size:10px;letter-spacing:.06em;text-transform:uppercase">Rango seleccionado</p>
+          <p id="sem-rango-label" style="margin:2px 0 0;font-size:15px;font-weight:700;color:var(--ink)">Período completo</p>
+        </div>
+      </div>
+    </div>
+
     <div class="card card--pad">
       <div class="card__head">
         <span class="card__title"><i class="bi bi-graph-up-arrow" style="color:#16a34a;margin-right:6px"></i>Ingresos por semana</span>
@@ -71,9 +101,85 @@ function fmtMXN(v){ return new Intl.NumberFormat('es-MX',{style:'currency',curre
 
 let apex;
 
-async function cargar() {
+// ── Segmentación semanal del período de evaluación ─────────────────────
+// La evaluación arrancó el 13 de mayo de 2026: la Semana 1 es especial
+// (13→17 mayo, 4 días) porque no coincide con un corte lunes/domingo.
+// A partir de ahí las semanas son de 7 días exactos: 17→24, 24→31, 31→7jun...
+// hasta la fecha final disponible (hoy). El límite de cada semana es
+// exclusivo (mismo día = inicio de la siguiente) para no duplicar registros
+// al combinar semanas — ver AnalyticsChartsService.area().
+const MESES_AREA = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const INICIO_EVALUACION = new Date(2026, 4, 13);   // 13 mayo 2026
+const FIN_SEMANA_1      = new Date(2026, 4, 17);   // 17 mayo 2026 (especial)
+
+function fmtDiaMes(d) { return `${d.getDate()} ${MESES_AREA[d.getMonth()]}`; }
+function fechaISO(d)  { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+function generarSemanas() {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const limites = [new Date(INICIO_EVALUACION), new Date(FIN_SEMANA_1)];
+  let cursor = new Date(FIN_SEMANA_1);
+  while (cursor < hoy) {
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + 7);
+    limites.push(new Date(cursor));
+  }
+  if (limites[limites.length - 1] > hoy) limites[limites.length - 1] = new Date(hoy);
+
+  const semanas = [];
+  for (let i = 0; i < limites.length - 1; i++) {
+    semanas.push({ n: i + 1, start: limites[i], end: limites[i + 1] });
+  }
+  return semanas;
+}
+
+const SEMANAS = generarSemanas();
+
+function initSelectoresSemana() {
+  const opciones = SEMANAS.map((s, i) =>
+    `<option value="${i}">Semana ${s.n} — ${fmtDiaMes(s.start)} al ${fmtDiaMes(s.end)}</option>`
+  ).join('');
+  document.getElementById('sem-desde').innerHTML = opciones;
+  document.getElementById('sem-hasta').innerHTML = opciones;
+  document.getElementById('sem-desde').value = '0';
+  document.getElementById('sem-hasta').value = String(SEMANAS.length - 1);
+  actualizarRangoLabel();
+}
+
+function actualizarRangoLabel() {
+  const desde = SEMANAS[parseInt(document.getElementById('sem-desde').value, 10)];
+  const hasta = SEMANAS[parseInt(document.getElementById('sem-hasta').value, 10)];
+  if (!desde || !hasta) return;
+  document.getElementById('sem-rango-label').textContent =
+    `${fmtDiaMes(desde.start)} → ${fmtDiaMes(hasta.end)}`;
+}
+
+function aplicarSemanas() {
+  const desde = SEMANAS[parseInt(document.getElementById('sem-desde').value, 10)];
+  const hasta = SEMANAS[parseInt(document.getElementById('sem-hasta').value, 10)];
+  if (!desde || !hasta || desde.n > hasta.n) {
+    document.getElementById('sem-rango-label').textContent = 'Rango inválido: "Desde" debe ser ≤ "Hasta"';
+    return;
+  }
+  cargar(fechaISO(desde.start), fechaISO(hasta.end));
+}
+
+function usarPeriodoCompleto() {
+  document.getElementById('sem-rango-label').textContent = 'Período completo';
+  cargar();
+}
+
+async function cargar(startDate, endDate) {
+  document.getElementById('area-loading').style.display = 'flex';
+  document.getElementById('area-loading').innerHTML = '<i class="bi bi-arrow-repeat" style="font-size:18px"></i> Cargando…';
+  document.getElementById('area-content').style.display = 'none';
   try {
-    const r = await fetch('/api/analytics/area');
+    const url = (startDate && endDate)
+      ? `/api/analytics/area?start_date=${startDate}&end_date=${endDate}`
+      : '/api/analytics/area';
+    const r = await fetch(url);
     const d = await r.json();
     if (!d.success) throw new Error(d.error || 'Error');
 
@@ -99,6 +205,15 @@ async function cargar() {
         <span class="kpi__v num">${d.n_semanas}</span>
       </div>`;
 
+    // Etiquetas del eje X: "Semana N · fecha inicio–fecha fin", reutilizando las
+    // fechas que ya vienen en d.labels (fecha de inicio de cada semana calculada
+    // por el backend) — el "fin" de la semana N es el inicio de la semana N+1.
+    // No se inventa ninguna fecha ni se recalculan los ingresos.
+    const categoriasEje = d.labels.map((lbl, i) => {
+      const finLbl = d.labels[i + 1];
+      return finLbl ? `Semana ${i + 1} · ${lbl}–${finLbl}` : `Semana ${i + 1} · ${lbl}`;
+    });
+
     if (apex) { apex.destroy(); apex = null; }
     apex = new ApexCharts(document.getElementById('chart-area'), {
       chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: FONT },
@@ -108,8 +223,8 @@ async function cargar() {
         { name: 'Acumulado',          data: d.acumulado }
       ],
       xaxis: {
-        categories: d.labels,
-        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } },
+        categories: categoriasEje,
+        labels: { rotate: -45, style: { colors: lblClr(), fontSize: '9px' }, trim: false, hideOverlappingLabels: false },
         title: { text: 'Semana', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       yaxis: {
@@ -143,6 +258,7 @@ async function cargar() {
   }
 }
 
+initSelectoresSemana();
 cargar();
 </script>
 {% endblock %}

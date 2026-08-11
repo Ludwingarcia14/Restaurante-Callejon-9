@@ -204,8 +204,15 @@ class Venta:
                 por_metodo[metodo] = {"count": 0, "total": 0}
             por_metodo[metodo]["count"] += 1
             por_metodo[metodo]["total"] += venta.get("total", 0)
-        
+
         return por_metodo
+
+    @classmethod
+    def ensure_indexes(cls):
+        """Índices para consultas por rango de fechas (analítica, cortes, Pareto, etc.)"""
+        cls.collection.create_index("fecha_creacion")
+        cls.collection.create_index([("mesa_id", 1), ("fecha_creacion", -1)])
+        cls.collection.create_index([("mesero_id", 1), ("fecha_creacion", -1)])
 
 
 class Cuenta:

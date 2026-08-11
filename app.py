@@ -129,9 +129,11 @@ register_reports_routes(app)
 from models.cliente_model import Cliente
 from models.pedido_movil_model import PedidoMovil as _PedidoMovil
 from models.pago_movil_model import PagoMovil as _PagoMovil
+from models.venta_model import Venta as _Venta
 Cliente.ensure_indexes()
 _PedidoMovil.ensure_indexes()
 _PagoMovil.ensure_indexes()
+_Venta.ensure_indexes()
 
 # ================================
 # MIDDLEWARE Y CONTEXTO

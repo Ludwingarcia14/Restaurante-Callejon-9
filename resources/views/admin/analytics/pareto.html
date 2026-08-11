@@ -104,6 +104,11 @@ async function cargar(){
     const d = await r.json();
     if(d.error) throw new Error(d.error);
 
+    if (!d.platillos || d.platillos.length === 0) {
+      renderEmptyState(d);
+      return;
+    }
+
     renderKPIs(d);
     renderGrafico(d);
     renderTabla(d);
@@ -115,6 +120,22 @@ async function cargar(){
       document.getElementById(id).innerHTML=`<span class="text-red-400 text-sm">${e.message}</span>`;
     });
   }
+}
+
+function renderEmptyState(d){
+  document.getElementById('kpi-cards').innerHTML = `
+    <div class="col-span-4 flex items-center justify-center h-16 text-gray-400 text-sm">
+      ${fmt(0)} · 0 platillos
+    </div>`;
+
+  const vacio = `<span class="text-gray-400 text-sm flex items-center gap-2">
+      <i class="bi bi-inbox"></i> Sin ventas registradas en este período
+    </span>`;
+  document.getElementById('chart-loading').innerHTML = vacio;
+  document.getElementById('tabla-loading').innerHTML = vacio;
+
+  document.getElementById('insight-panel').style.display = 'none';
+  document.getElementById('estado').textContent = `0 platillos · ${d.periodo_dias} días`;
 }
 
 function renderKPIs(d){

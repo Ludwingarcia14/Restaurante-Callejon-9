@@ -306,6 +306,24 @@ class AnalyticsController:
             if session.get("usuario_rol") not in ("1", "2"):
                 return jsonify({"error": "No autorizado"}), 403
             from flask import request
+
+            start_raw = request.args.get("start_date")
+            end_raw = request.args.get("end_date")
+
+            if start_raw or end_raw:
+                # Modo rango explícito (date range picker): ambas fechas son obligatorias.
+                if not start_raw or not end_raw:
+                    return jsonify({"error": "Debes indicar start_date y end_date"}), 400
+                try:
+                    start_date = datetime.strptime(start_raw, "%Y-%m-%d")
+                    end_date = datetime.strptime(end_raw, "%Y-%m-%d")
+                except ValueError:
+                    return jsonify({"error": "Formato de fecha inválido, usa YYYY-MM-DD"}), 400
+                if end_date < start_date:
+                    return jsonify({"error": "end_date no puede ser anterior a start_date"}), 400
+                return jsonify(ParetoService.get_pareto(start_date=start_date, end_date=end_date))
+
+            # Modo legado: selector de días estático (compatibilidad mientras se migra la UI)
             dias = int(request.args.get("dias", 90))
             return jsonify(ParetoService.get_pareto(dias=dias))
         except Exception as e:

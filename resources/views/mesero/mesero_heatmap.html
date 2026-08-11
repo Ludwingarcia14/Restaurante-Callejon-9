@@ -51,6 +51,15 @@ const FONT = 'Instrument Sans,system-ui,sans-serif';
 function isDark()  { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches); }
 function lblClr() { return isDark() ? '#948C80' : '#8A8478'; }
 
+// Convierte "13h" → "1 p.m." (formato 12h), sin tocar el valor real de la hora (0-23)
+function formatHora12(val) {
+  const h = parseInt(val, 10);
+  if (isNaN(h)) return val;
+  const periodo = h < 12 ? 'a.m.' : 'p.m.';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${periodo}`;
+}
+
 let apex;
 
 async function cargar() {
@@ -89,7 +98,7 @@ async function cargar() {
       title: { text: 'Comandas por día de la semana y hora', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: d.series,
       xaxis: {
-        labels: { style: { colors: lblClr(), fontSize: '11px' } },
+        labels: { style: { colors: lblClr(), fontSize: '10px' }, formatter: formatHora12, rotate: -45, trim: false },
         title: { text: 'Hora del día', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       yaxis: {
@@ -100,7 +109,7 @@ async function cargar() {
       colors: ['#B5623A'],
       plotOptions: {
         heatmap: {
-          shadeIntensity: 0.6,
+          shadeIntensity: 0,
           radius: 4,
           useFillColorAsStroke: false,
           colorScale: {
@@ -114,6 +123,7 @@ async function cargar() {
         }
       },
       tooltip: {
+        x: { formatter: formatHora12 },
         y: { formatter: v => v + ' comandas' }
       },
       legend: { show: true, labels: { colors: lblClr() } }
