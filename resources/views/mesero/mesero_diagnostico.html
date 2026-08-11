@@ -54,16 +54,20 @@
         </div>
 
         <!-- Métodos de pago -->
-        <div class="card card--pad">
+        <div class="card" style="width:100%;max-width:780px;margin:0 auto;">
             <div class="card__head">
-                <span class="card__title">
-                    <i class="bi bi-pie-chart" style="color:var(--info);margin-right:6px;"></i>
+                <p class="card__title">
+                    <i class="bi bi-pie-chart-fill" style="color:var(--info);margin-right:6px;"></i>
                     <span data-i18n="diag_metodos">Distribución de Métodos de Pago</span>
-                </span>
+                </p>
+                <div style="text-align:right;flex-shrink:0;">
+                    <p class="card__note" style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin:0;" data-i18n="diag_periodo_lbl">Período analizado</p>
+                    <p id="diag-metodos-periodo" style="margin:2px 0 0;font-size:13px;font-weight:700;color:var(--ink);">—</p>
+                </div>
             </div>
-            <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;margin-top:16px;">
-                <div id="chart-metodos" style="width:200px;height:200px"></div>
-                <div id="diag-metodos-lista"></div>
+            <div style="padding:32px 40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:40px;">
+                <div id="chart-metodos" style="width:210px;height:210px;flex-shrink:0;"></div>
+                <div id="diag-metodos-lista" style="flex:1;min-width:240px;"></div>
             </div>
         </div>
 
@@ -77,6 +81,16 @@ let apexMetodos;
 
 function fmt(v) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v || 0);
+}
+
+const MESES_CORTOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+// Convierte "dd/mm/yyyy" (formato enviado por el backend) a "13 mayo 2026"
+function formatFechaCorta(fechaStr) {
+    if (!fechaStr) return null;
+    const [d, m, y] = fechaStr.split('/').map(Number);
+    if (!d || !m || !y) return fechaStr;
+    return `${d} ${MESES_CORTOS[m - 1]} ${y}`;
 }
 
 async function cargar() {
@@ -114,12 +128,14 @@ function renderKpis(d) {
             <span class="kpi__v">${fmt(d.ticket_global_std)}</span>
             <span style="font-size:11px;color:var(--ink-3);" data-i18n="diag_var_global">Variabilidad del ticket</span>
         </div>
-        <div class="kpi" style="border-left:3px solid var(--info);">
-            <span class="kpi__k" data-i18n="diag_periodo_lbl">Período</span>
-            <span class="kpi__v" style="font-size:16px;">${d.fecha_inicio || '—'}</span>
-            <span style="font-size:11px;color:var(--ink-3);"><span data-i18n="diag_al">al</span> ${d.fecha_fin || '—'}</span>
-        </div>
     `;
+
+    const periodoEl = document.getElementById('diag-metodos-periodo');
+    if (periodoEl) {
+        const ini = formatFechaCorta(d.fecha_inicio);
+        const fin = formatFechaCorta(d.fecha_fin);
+        periodoEl.textContent = (ini && fin) ? `${ini} – ${fin}` : '—';
+    }
 }
 
 function renderTabla(porMesa) {
@@ -164,12 +180,13 @@ function renderMetodos(metodos) {
     if (apexMetodos) { apexMetodos.destroy(); apexMetodos = null; }
 
     apexMetodos = new ApexCharts(el, {
-        chart: { type: 'donut', width: 200, height: 200, fontFamily: 'Instrument Sans,system-ui,sans-serif' },
+        chart: { type: 'donut', width: 210, height: 210, fontFamily: 'Instrument Sans,system-ui,sans-serif' },
         series: metodos.map(m => m.count),
         labels: metodos.map(m => m.metodo),
         colors: ['#3b82f6', '#10b981', '#f59e0b', '#94a3b8'],
         dataLabels: { enabled: false },
         plotOptions: { pie: { donut: { size: '65%' } } },
+        stroke: { width: 2 },
         legend: { show: false },
         tooltip: { y: { formatter: (v, { seriesIndex, w }) => ' ' + w.globals.labels[seriesIndex] + ': ' + v + ' (' + (v / total * 100).toFixed(1) + '%)' } }
     });
