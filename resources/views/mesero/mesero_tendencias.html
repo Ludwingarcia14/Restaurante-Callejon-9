@@ -105,7 +105,7 @@ async function cargar() {
       },
       yaxis: [
         { seriesName: 'Pedidos',  title: { text: 'Pedidos', style: { color: lblClr() } },
-          labels: { style: { colors: lblClr() } } },
+          labels: { formatter: v => Math.round(v), style: { colors: lblClr() } } },
         { seriesName: 'Ingresos', opposite: true,
           title: { text: 'Ingresos (MXN)', style: { color: lblClr() } },
           labels: { formatter: v => fmtMXN(v), style: { colors: lblClr() } } }
