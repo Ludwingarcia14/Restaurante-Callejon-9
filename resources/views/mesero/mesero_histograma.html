@@ -32,14 +32,37 @@
 
       <div class="card card--pad">
         <div class="card__head">
-          <span class="card__title"><i class="bi bi-bar-chart" style="color:#4A6FA5;margin-right:6px"></i>Frecuencia por rango de ticket</span>
-          <span class="card__note">Cada barra = número de comandas en ese rango</span>
+          <span class="card__title"><i class="bi bi-bar-chart" style="color:#4A6FA5;margin-right:6px"></i>Distribución de Tickets y Estrategia de Consumo</span>
+          <span class="card__note">Cada barra = comandas en ese rango · color = estrategia</span>
         </div>
         <div id="chart-hist" style="margin-top:8px"></div>
+
+        {# Leyenda de zonas de estrategia #}
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;padding:0 4px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>
+            <span style="font-size:12px;color:var(--ink-2)"><strong>Incrementar</strong> · $200–$400 · combos y complementos</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="width:10px;height:10px;border-radius:50%;background:#16a34a;flex-shrink:0"></span>
+            <span style="font-size:12px;color:var(--ink-2)"><strong>Alcanzar meta</strong> · $401–$999 · combos de mayor valor</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="width:10px;height:10px;border-radius:50%;background:#6366f1;flex-shrink:0"></span>
+            <span style="font-size:12px;color:var(--ink-2)"><strong>Mantener</strong> · ≥ $1,000 · 🎁 1 invitado gratis</span>
+          </div>
+        </div>
+
+        {# Insight dinámico (solo se muestra si los datos lo justifican) #}
+        <div id="hist-insight" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(245,158,11,.08);border-radius:8px;border-left:3px solid #f59e0b">
+          <p id="hist-insight-texto" style="margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-2)"></p>
+        </div>
+
         <div style="margin-top:14px;padding:11px 14px;background:rgba(74,111,165,.06);border-radius:8px;border-left:3px solid #4A6FA5">
-          <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
-          <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">La barra más alta es el rango de ticket más frecuente. Si la "montaña" se inclina a la izquierda, la mayoría gasta poco — hay margen para subir el ticket con sugerencias. Si hay una cola larga a la derecha, existen comensales de alto valor que conviene retener.</p>
-          <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#4A6FA5;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> el rango donde empieza la caída brusca marca el techo psicológico del ticket — ahí es donde una sugerencia oportuna puede cruzar la barrera.</p>
+          <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">¿Qué hacer?</p>
+          <p style="margin:0 0 5px;font-size:12.5px;line-height:1.55;color:var(--ink-2)"><span style="color:#f59e0b">●</span> <strong>Tickets de $200–$400:</strong> incentivar el consumo con combos económicos y complementos.</p>
+          <p style="margin:0 0 5px;font-size:12.5px;line-height:1.55;color:var(--ink-2)"><span style="color:#16a34a">●</span> <strong>Tickets de $401–$999:</strong> sugerir combos de mayor valor o adicionales para acercar el ticket a $1,000.</p>
+          <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-2)"><span style="color:#6366f1">●</span> <strong>Tickets ≥ $1,000:</strong> mantener el nivel de consumo con la promoción de 1 invitado gratis.</p>
         </div>
       </div>
 
@@ -52,6 +75,26 @@
       </div>
 
     </div>
+
+    {# ── Estrategias por rango de consumo ──────────────────── #}
+    <div class="card">
+      <div class="card__head">
+        <p class="card__title"><i class="bi bi-bullseye" style="color:#4A6FA5;margin-right:6px"></i>Estrategias por rango de consumo</p>
+        <span class="card__note">🎁 Meta: $1,000 = 1 invitado gratis</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="table">
+          <thead><tr>
+            <th>Rango de ticket</th>
+            <th>Objetivo</th>
+            <th>Acción recomendada</th>
+            <th class="is-num">Comandas en el período</th>
+          </tr></thead>
+          <tbody id="hist-estrategias"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}
@@ -95,11 +138,19 @@ async function cargar() {
         <span class="kpi__v" style="font-size:15px">${d.moda_bin}</span>
       </div>`;
 
-    const maxC = Math.max(...d.bins.map(b => b.count));
+    // Colores por zona de estrategia (mismos tonos ya usados en el módulo)
+    const ZONA_COLOR = {
+      base:        'rgba(74,111,165,.35)',  // < $200, fuera de estrategia
+      incrementar: '#f59e0b',               // $200–$400 → combos
+      meta:        '#16a34a',               // $401–$999 → acercar a $1,000
+      mantener:    '#6366f1'                // ≥ $1,000 → 1 invitado gratis
+    };
+    const ZONA_NOMBRE = { base: 'Ticket < $200', incrementar: 'Incrementar', meta: 'Alcanzar $1,000', mantener: 'Mantener' };
+
     if (apex) { apex.destroy(); apex = null; }
     apex = new ApexCharts(document.getElementById('chart-hist'), {
       chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: FONT },
-      title: { text: 'Frecuencia de tickets por rango de monto', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
+      title: { text: 'Frecuencia de tickets por rango · zonas de estrategia', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: [{ name: 'Comandas', data: d.bins.map(b => b.count) }],
       xaxis: {
         categories: d.bins.map(b => b.label),
@@ -110,6 +161,19 @@ async function cargar() {
         labels: { style: { colors: lblClr() } },
         title: { text: 'Número de comandas', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
+      annotations: {
+        xaxis: [{
+          x: '≥ $1,000',
+          borderColor: '#6366f1',
+          strokeDashArray: 4,
+          label: {
+            text: '🎁 $1,000 · 1 invitado gratis',
+            orientation: 'horizontal',
+            borderColor: '#6366f1',
+            style: { background: '#6366f1', color: '#fff', fontSize: '11px', fontFamily: FONT, padding: { left: 6, right: 6, top: 3, bottom: 3 } }
+          }
+        }]
+      },
       plotOptions: {
         bar: {
           columnWidth: '98%',
@@ -117,20 +181,67 @@ async function cargar() {
           distributed: true
         }
       },
-      colors: d.bins.map(b => b.count === maxC ? '#4A6FA5' : 'rgba(74,111,165,.35)'),
+      colors: d.bins.map(b => ZONA_COLOR[b.zona] || ZONA_COLOR.base),
       dataLabels: { enabled: false },
       grid: { borderColor: gridClr(), strokeDashArray: 3 },
       legend: { show: false },
-      tooltip: { y: { formatter: v => v + ' comandas' } }
+      tooltip: {
+        y: {
+          formatter: (v, { dataPointIndex }) => {
+            const zona = d.bins[dataPointIndex] ? ZONA_NOMBRE[d.bins[dataPointIndex].zona] : '';
+            return v + ' comandas · ' + zona;
+          }
+        }
+      }
     });
     apex.render();
 
     document.getElementById('hist-tabla').innerHTML = d.bins.map(b => `
       <tr>
-        <td class="is-key">${b.label}</td>
+        <td class="is-key" style="border-left:3px solid ${ZONA_COLOR[b.zona] || ZONA_COLOR.base}">${b.label}</td>
         <td class="is-num">${b.count}</td>
         <td class="is-num">${d.total > 0 ? (b.count / d.total * 100).toFixed(1) : 0}%</td>
       </tr>`).join('');
+
+    // ── Tabla de estrategias con conteos reales por zona ──
+    const porZona = z => d.bins.filter(b => b.zona === z).reduce((s, b) => s + b.count, 0);
+    const nInc = porZona('incrementar'), nMeta = porZona('meta'), nMant = porZona('mantener');
+    const pct = n => d.total > 0 ? (n / d.total * 100).toFixed(1) + '%' : '0%';
+
+    document.getElementById('hist-estrategias').innerHTML = `
+      <tr>
+        <td class="is-key" style="border-left:3px solid #f59e0b">$200–$400</td>
+        <td>Incrementar</td>
+        <td>Combos económicos y complementos</td>
+        <td class="is-num">${nInc.toLocaleString('es-MX')} <span style="font-size:11px;color:var(--ink-3)">(${pct(nInc)})</span></td>
+      </tr>
+      <tr>
+        <td class="is-key" style="border-left:3px solid #16a34a">$401–$999</td>
+        <td>Alcanzar $1,000</td>
+        <td>Combos de mayor valor y adicionales</td>
+        <td class="is-num">${nMeta.toLocaleString('es-MX')} <span style="font-size:11px;color:var(--ink-3)">(${pct(nMeta)})</span></td>
+      </tr>
+      <tr>
+        <td class="is-key" style="border-left:3px solid #6366f1">≥ $1,000</td>
+        <td>Mantener</td>
+        <td>🎁 1 invitado gratis</td>
+        <td class="is-num">${nMant.toLocaleString('es-MX')} <span style="font-size:11px;color:var(--ink-3)">(${pct(nMant)})</span></td>
+      </tr>`;
+
+    // ── Insight dinámico: solo si los datos reales lo justifican ──
+    const nCerca = d.bins.filter(b => b.min >= 800 && b.min < 1000).reduce((s, b) => s + b.count, 0);
+    const nBajo  = porZona('base') + nInc;
+    const insightEl = document.getElementById('hist-insight');
+    const insightTxt = document.getElementById('hist-insight-texto');
+    if (d.total > 0 && nCerca / d.total >= 0.08) {
+      insightTxt.innerHTML = `💡 <strong>Oportunidad:</strong> ${nCerca.toLocaleString('es-MX')} tickets (${pct(nCerca)}) están entre $800 y $999, muy cerca del umbral de la promoción. Sugerir un combo o complemento puede llevarlos a $1,000 y activar el invitado gratis.`;
+      insightEl.style.display = '';
+    } else if (d.total > 0 && nBajo / d.total >= 0.40) {
+      insightTxt.innerHTML = `💡 <strong>Oportunidad:</strong> ${nBajo.toLocaleString('es-MX')} tickets (${pct(nBajo)}) están en $400 o menos. La mayor palanca de ingreso hoy es incrementar el ticket bajo con combos y complementos.`;
+      insightEl.style.display = '';
+    } else {
+      insightEl.style.display = 'none';
+    }
 
   } catch(e) {
     document.getElementById('hist-loading').innerHTML =

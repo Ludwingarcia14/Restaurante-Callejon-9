@@ -38,7 +38,7 @@ class AnalyticsChartsService:
         }
 
     @staticmethod
-    def histograma(dias: int = 90, n_bins: int = 10) -> dict:
+    def histograma(dias: int = 90) -> dict:
         docs = list(db.comandas.find(
             {**_MATCH, "fecha_cierre": {"$gte": _hace(dias)}},
             {"total": 1, "_id": 0}
@@ -53,16 +53,32 @@ class AnalyticsChartsService:
         if len(totals) == 0:
             return {"success": True, "bins": [], "promedio": 0, "mediana": 0, "total": 0}
 
-        counts, edges = np.histogram(totals, bins=n_bins)
-        bins = [
-            {
-                "label": f"${int(edges[i])}–${int(edges[i+1])}",
+        # Bins alineados a las zonas de estrategia comercial (no equiespaciados
+        # sobre min–max como antes): cortes de $100 hasta $1,000 y un bin final
+        # abierto "≥ $1,000" (umbral de la promoción 1 invitado gratis).
+        # El corte en 401 (no 400) hace que un ticket de exactamente $400 caiga
+        # en la zona "incrementar" ($200–$400) y $401 en "alcanzar meta".
+        edges = [0, 100, 200, 300, 401, 500, 600, 700, 800, 900, 1000,
+                 max(1000.01, float(totals.max()))]
+        counts, edges = np.histogram(totals, bins=edges)
+
+        def _zona(lo):
+            if lo >= 1000: return "mantener"      # ≥ $1,000 → promoción
+            if lo >= 401:  return "meta"          # $401–$999 → acercar a $1,000
+            if lo >= 200:  return "incrementar"   # $200–$400 → combos
+            return "base"                         # < $200, fuera de estrategia
+
+        bins = []
+        for i in range(len(counts)):
+            lo, hi = float(edges[i]), float(edges[i + 1])
+            label = "≥ $1,000" if lo >= 1000 else f"${int(lo)}–${int(hi) - 1 if hi in (401,) else int(hi)}"
+            bins.append({
+                "label": label,
                 "count": int(counts[i]),
-                "min":   round(float(edges[i]), 2),
-                "max":   round(float(edges[i+1]), 2)
-            }
-            for i in range(len(counts))
-        ]
+                "min":   round(lo, 2),
+                "max":   round(hi, 2),
+                "zona":  _zona(lo)
+            })
         pico_idx = int(np.argmax(counts))
         return {
             "success":    True,
