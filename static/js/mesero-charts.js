@@ -10,7 +10,7 @@
       return [css('--bar-1'), css('--bar-2'), css('--bar-3'), css('--bar-4'), css('--bar-5')];
     },
     get clusters() {
-      return { VIP: css('--accent'), Regular: css('--info'), Ocasional: css('--ink-3') };
+    return { VIP: '#f59e0b', Regular: '#3b82f6', Ocasional: '#94a3b8' };
     },
 
     /* Aplica el tema global. Llamar una vez al cargar la página. */

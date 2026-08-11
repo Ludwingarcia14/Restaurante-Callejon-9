@@ -38,6 +38,11 @@
           <span class="card__note">Caja = Q1–Q3 · línea = mediana · bigotes = mín / máx</span>
         </div>
         <div id="chart-boxplot" style="margin-top:8px"></div>
+        <div style="margin-top:14px;padding:11px 14px;background:rgba(139,92,246,.06);border-radius:8px;border-left:3px solid #8b5cf6">
+          <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+          <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">La caja es el 50% central de los tickets — no los extremos. Una caja larga = gasto muy inconsistente en esa mesa (a veces mucho, a veces poco). Una caja corta y alta = comensales de perfil estable y de buen nivel. Los bigotes muy largos señalan consumos atípicos — grupos grandes o eventos especiales.</p>
+          <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#8b5cf6;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> las mesas con Q3 alto (borde superior de la caja alto) y Q1 no tan bajo son las de mayor potencial para sugerencias de platillos premium — el cliente ya demostró disposición a gastar.</p>
+        </div>
       </div>
 
       <div class="card">
@@ -105,6 +110,7 @@ async function cargar() {
     if (apex) { apex.destroy(); apex = null; }
     apex = new ApexCharts(document.getElementById('chart-boxplot'), {
       chart: { type: 'boxPlot', height: Math.max(260, d.mesas.length * 42), toolbar: { show: false }, fontFamily: FONT },
+      title: { text: 'Dispersión del ticket de consumo por mesa', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: [{
         type: 'boxPlot',
         data: d.mesas.map(m => ({
@@ -114,13 +120,15 @@ async function cargar() {
       }],
       plotOptions: {
         bar: { horizontal: true, borderRadius: 4 },
-        boxPlot: { colors: { upper: '#4A6FA5', lower: '#8b5cf6' } }
+        boxPlot: { colors: { upper: '#FF1AB5', lower: '#8b5cf6' } }
       },
       xaxis: {
-        labels: { formatter: v => fmtMXN(v), style: { colors: lblClr(), fontSize: '11px' } }
+        labels: { formatter: v => fmtMXN(v), style: { colors: lblClr(), fontSize: '11px' } },
+        title: { text: 'Monto del ticket (MXN)', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       yaxis: {
-        labels: { style: { colors: lblClr() } }
+        labels: { style: { colors: lblClr() } },
+        title: { text: 'Mesa', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       dataLabels: { enabled: false },
       grid: { borderColor: gridClr(), strokeDashArray: 3 },

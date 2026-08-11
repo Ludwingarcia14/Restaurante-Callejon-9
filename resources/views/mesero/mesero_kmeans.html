@@ -1,4 +1,4 @@
-{# resources/views/mesero/mesero_kmeans.html #}
+﻿{# resources/views/mesero/mesero_kmeans.html #}
 {% extends "layout/layout_mesero.html" %}
 
 {% block page_crumb %}<a href="{{ url_for('routes.mesero_analitica') }}" class="btn btn--ghost" style="font-size:12px;padding:3px 10px;margin-bottom:4px;display:inline-flex;align-items:center;gap:4px"><i class="bi bi-chevron-left" style="font-size:10px"></i> Analítica</a>{% endblock %}
@@ -20,6 +20,11 @@
         <p class="card__title" style="margin-bottom:4px">Proyección PCA</p>
         <p class="card__note" style="margin-bottom:18px" id="km-varianza">—</p>
         <div class="chart"><canvas id="chartPCA"></canvas></div>
+        <div style="margin-top:14px;padding:11px 14px;background:rgba(181,98,58,.06);border-radius:8px;border-left:3px solid var(--accent)">
+          <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+          <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">Cada punto es una mesa. PCA "aplana" las 4 variables a 2 ejes para que se puedan ver en un plano — la distancia entre puntos refleja qué tan diferentes son sus perfiles. Grupos bien separados = el modelo identificó diferencias reales, no ruido.</p>
+          <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--accent);margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> un Silhouette Score &gt; 0.5 con grupos visualmente separados aquí confirma que las estrategias diferenciadas por cluster tienen sentido — no sería arbitrario tratar a las mesas de forma distinta.</p>
+        </div>
       </div>
 
       <div class="card">
@@ -52,6 +57,11 @@
           <p class="card__title">Curva de codo</p>
           <p class="card__note" style="margin-bottom:16px">Donde la inercia deja de caer</p>
           <div class="chart chart--sm" style="height:120px"><canvas id="chartCodo"></canvas></div>
+          <div style="margin-top:12px;padding:10px 12px;background:rgba(74,111,165,.06);border-radius:8px;border-left:3px solid #4A6FA5">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">La curva baja fuerte al principio y se aplana — el "codo" es el punto de quiebre. Ahí es donde añadir más clusters deja de aportar valor real.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#4A6FA5;margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> k=3 es óptimo si el codo más pronunciado aparece en ese punto.</p>
+          </div>
         </div>
       </div>
 
@@ -76,8 +86,7 @@
           n_clusters, wcss_elbow[], pca{varianza_explicada[], varianza_acumulada, loadings[]}}, arbol } */
 
 const LABEL_MAP = { 'Mesas VIP':'VIP', 'Mesas Regulares':'Regular', 'Mesas Ocasionales':'Ocasional' };
-const COLOR     = { VIP:'var(--accent)', Regular:'var(--info)', Ocasional:'var(--ink-3)' };
-
+const COLOR = { VIP:'#f59e0b', Regular:'#B5623A', Ocasional:'#94a3b8' };
 function clrOf(label) { return COLOR[LABEL_MAP[label]] || 'var(--ink-3)'; }
 
 async function cargar(){

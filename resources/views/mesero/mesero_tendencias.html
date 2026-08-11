@@ -35,6 +35,11 @@
         <span class="card__note">Barras = pedidos (eje izq.) · Línea = ingresos (eje der.)</span>
       </div>
       <div id="chart-tendencias" style="margin-top:8px"></div>
+      <div style="margin-top:14px;padding:11px 14px;background:rgba(63,122,82,.06);border-radius:8px;border-left:3px solid #3F7A52">
+        <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+        <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">Las barras muestran cuántos pedidos hubo cada día; la línea verde muestra cuánto se cobró. Si la línea sube mientras las barras se mantienen, el ticket promedio está creciendo — señal positiva. Si ambas caen juntas, hay un problema de demanda.</p>
+        <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#3F7A52;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> los valles consecutivos son la alerta más importante — actúa antes de que se vuelvan tendencia.</p>
+      </div>
     </div>
 
   </div>
@@ -87,6 +92,7 @@ async function cargar() {
     if (apex) { apex.destroy(); apex = null; }
     apex = new ApexCharts(document.getElementById('chart-tendencias'), {
       chart: { type: 'line', height: 320, toolbar: { show: false }, fontFamily: FONT },
+      title: { text: 'Pedidos e ingresos diarios', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: [
         { name: 'Pedidos',  type: 'column', data: d.pedidos },
         { name: 'Ingresos', type: 'line',   data: d.ingresos }
@@ -94,7 +100,8 @@ async function cargar() {
       xaxis: {
         categories: d.labels,
         tickAmount: Math.min(12, d.labels.length),
-        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } }
+        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } },
+        title: { text: 'Fecha', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       yaxis: [
         { seriesName: 'Pedidos',  title: { text: 'Pedidos', style: { color: lblClr() } },

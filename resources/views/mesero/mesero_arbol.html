@@ -36,7 +36,12 @@
                 <span class="card__title"><i class="bi bi-bar-chart-horizontal" style="color:var(--ok);margin-right:6px;"></i><span data-i18n="ar_importancia">Importancia de Variables</span></span>
                 <span class="card__note" data-i18n="ar_imp_desc">¿Qué variable influye más en la clasificación de las mesas?</span>
             </div>
-            <div id="chart-importancias" style="margin-bottom:20px"></div>
+            <div id="chart-importancias" style="margin-bottom:12px"></div>
+            <div style="margin-bottom:16px;padding:11px 14px;background:rgba(16,185,129,.06);border-radius:8px;border-left:3px solid #10b981">
+              <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+              <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">La barra más larga es la variable que el bosque de 200 árboles consideró más decisiva para clasificar si una mesa es VIP, Regular u Ocasional. Una variable con barra muy dominante (más del 50%) significa que casi toda la clasificación depende de ese solo factor.</p>
+              <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#10b981;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> si "Frecuencia" domina, la estrategia es traer más veces al cliente; si "Ticket Promedio" domina, el foco es subir lo que gasta en cada visita — son acciones muy distintas.</p>
+            </div>
             <div id="importancias-detalle"></div>
         </div>
 
@@ -126,9 +131,12 @@ function renderImportancias(imp) {
     if (apexImp) { apexImp.destroy(); apexImp = null; }
     apexImp = new ApexCharts(document.getElementById('chart-importancias'), {
         chart: { type: 'bar', height: 180, toolbar: { show: false }, fontFamily: CHART_FONT },
+        title: { text: 'Peso de cada variable en la clasificación de mesas', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: lblColor() } },
         series: [{ name: 'Importancia', data: imp.map(f => parseFloat((f.importancia * 100).toFixed(1))) }],
-        xaxis: { categories: imp.map(f => f.feature), labels: { style: { colors: lblColor() } } },
-        yaxis: { labels: { formatter: v => v + '%', style: { colors: lblColor() } } },
+        xaxis: { categories: imp.map(f => f.feature), labels: { style: { colors: lblColor() } },
+                 title: { text: 'Variable', style: { color: lblColor(), fontFamily: CHART_FONT, fontSize: '11px' } } },
+        yaxis: { labels: { formatter: v => v + '%', style: { colors: lblColor() } },
+                 title: { text: 'Importancia (%)', style: { color: lblColor(), fontFamily: CHART_FONT, fontSize: '11px' } } },
         plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%' } },
         colors: ['#10b981'],
         dataLabels: { enabled: true, formatter: v => v.toFixed(1) + '%', style: { fontSize: '10px', colors: [lblColor()] } },

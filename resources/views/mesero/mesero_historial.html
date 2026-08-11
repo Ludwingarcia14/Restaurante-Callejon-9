@@ -100,6 +100,11 @@
         </div>
         <div style="padding:12px 16px 16px">
           <div id="grafica-ventas-hora" style="height:220px"></div>
+          <div style="margin-top:12px;padding:10px 13px;background:rgba(181,98,58,.06);border-radius:8px;border-left:3px solid var(--accent)">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">La tendencia general de la línea es lo más importante: si sube de izquierda a derecha en el período, el restaurante está creciendo. Un patrón "sierra" es normal — refleja diferencia entre días de semana y fines de semana.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--accent);margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> los valles aislados son días atípicos (festivos, cierres) — no confundirlos con una tendencia real a la baja.</p>
+          </div>
         </div>
       </div>
 
@@ -114,6 +119,11 @@
         </div>
         <div style="padding:12px 16px 16px">
           <div id="grafica-mesas" style="height:220px"></div>
+          <div style="margin-top:12px;padding:10px 13px;background:rgba(181,98,58,.06);border-radius:8px;border-left:3px solid var(--accent)">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">Las barras muestran el ingreso total acumulado por mesa en el período. Si siempre es la misma mesa la líder, puede ser preferencia de comensales o que el mesero asignado a esa mesa es más efectivo vendiendo.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--accent);margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> cruza esta vista con K-Means — si la mesa líder aquí es la misma que la VIP por frecuencia, hay consistencia real; si no coinciden, el período analizado podría ser atípico.</p>
+          </div>
         </div>
       </div>
 
@@ -143,6 +153,11 @@
         </div>
         <div style="padding:12px 16px 16px">
           <div id="grafica-propinas-hora" style="height:220px"></div>
+          <div style="margin-top:12px;padding:10px 13px;background:rgba(63,122,82,.06);border-radius:8px;border-left:3px solid var(--ok)">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">Las barras más altas son los días donde el equipo fue más generosamente recompensado. Mayor venta no siempre implica mayor propina — un día con pocas mesas pero muy bien atendidas puede superar en propinas a un día con todo lleno y servicio apresurado.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--ok);margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> compara los días de propina alta vs. los de venta alta — si no coinciden, la calidad del servicio importa más que el volumen de mesas.</p>
+          </div>
         </div>
       </div>
 
@@ -308,10 +323,13 @@ function graficaVentasPorHora(historial) {
 
   chartVentasHora = new ApexCharts(el, {
     chart:  { type:'area', height:220, toolbar:{show:false}, fontFamily:CHART_FONT },
+    title:  { text: 'Ventas diarias del período', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: lblColor() } },
     series: [{ name:'Ventas', data:sorted.map(e=>e[1]) }],
     xaxis:  { categories:sorted.map(e=>e[0]), labels:{ style:{ fontSize:'10px', colors:lblColor() }, maxHeight:30 },
-              axisBorder:{ show:false }, axisTicks:{ show:false } },
-    yaxis:  { labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:lblColor() } } },
+              axisBorder:{ show:false }, axisTicks:{ show:false },
+              title:{ text:'Fecha', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
+    yaxis:  { labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:lblColor() } },
+              title:{ text:'Ventas ($)', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
     colors: ['#B5623A'],
     stroke: { width:2.5, curve:'smooth' },
     fill:   { type:'gradient', gradient:{ opacityFrom:0.25, opacityTo:0.03 } },
@@ -338,10 +356,13 @@ function graficaMesasActivas(historial) {
 
   chartMesas = new ApexCharts(el, {
     chart:  { type:'bar', height:220, toolbar:{show:false}, fontFamily:CHART_FONT },
+    title:  { text: 'Ventas acumuladas por mesa', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: lblColor() } },
     series: [{ name:'Ventas', data:sorted.map(e=>e[1]) }],
     xaxis:  { categories:sorted.map(e=>e[0]), labels:{ style:{ fontSize:'10px', colors:lblColor() } },
-              axisBorder:{ show:false } },
-    yaxis:  { labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:lblColor() } } },
+              axisBorder:{ show:false },
+              title:{ text:'Mesa', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
+    yaxis:  { labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:lblColor() } },
+              title:{ text:'Ventas ($)', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
     colors: sorted.map((_,i) => i===0 ? '#B5623A' : 'rgba(181,98,58,0.25)'),
     plotOptions:{ bar:{ distributed:true, borderRadius:4, columnWidth:'60%' } },
     tooltip:{ y:{ formatter:v=>`$${(v||0).toFixed(2)}` } },
@@ -405,10 +426,13 @@ function graficaPropinasHora(historial) {
 
   chartPropinasHora = new ApexCharts(el, {
     chart:  { type:'bar', height:220, toolbar:{show:false}, fontFamily:CHART_FONT },
+    title:  { text: 'Propinas diarias del período', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: lblColor() } },
     series: [{ name:'Propinas', data:sorted.map(e=>e[1]) }],
     xaxis:  { categories:sorted.map(e=>e[0]), labels:{ style:{ fontSize:'10px', colors:lblColor() } },
-              axisBorder:{ show:false } },
-    yaxis:  { labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:lblColor() } } },
+              axisBorder:{ show:false },
+              title:{ text:'Fecha', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
+    yaxis:  { labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:lblColor() } },
+              title:{ text:'Propinas ($)', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
     colors: ['#3F7A52'],
     plotOptions:{ bar:{ borderRadius:4, columnWidth:'55%' } },
     tooltip:{ y:{ formatter:v=>`$${(v||0).toFixed(2)}` } },

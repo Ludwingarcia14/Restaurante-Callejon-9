@@ -88,6 +88,11 @@
         </div>
         <div style="padding:12px 16px 16px">
           <div id="grafica-propinas-linea" style="height:220px"></div>
+          <div style="margin-top:12px;padding:10px 13px;background:rgba(63,122,82,.06);border-radius:8px;border-left:3px solid var(--ok)">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">Los picos de la línea continua muestran las horas donde los comensales fueron más generosos hoy. La línea punteada es el acumulado — su pendiente indica si las propinas llegaron concentradas en pocas horas o distribuidas.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--ok);margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> el pico más alto es la hora donde más conviene estar atento al servicio — ese momento ya demostró generar propinas mayores.</p>
+          </div>
         </div>
       </div>
 
@@ -117,6 +122,11 @@
         </div>
         <div style="padding:12px 16px 16px">
           <div id="grafica-propina-mesa" style="height:220px"></div>
+          <div style="margin-top:12px;padding:10px 13px;background:rgba(181,98,58,.06);border-radius:8px;border-left:3px solid var(--accent)">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">La mesa con la barra más alta no es necesariamente la que más vendió — puede ser que sus comensales sean más generosos o que el mesero dio un servicio superior. Compara con K-Means para ver si la mesa VIP por propinas coincide con la VIP por volumen.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--accent);margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> si una mesa da propinas altas pero está en el cluster "Ocasional", hay potencial desaprovechado — ese comensal sí gasta cuando viene, solo hay que hacerlo venir más.</p>
+          </div>
         </div>
       </div>
 
@@ -145,6 +155,11 @@
         </div>
         <div style="padding:8px 16px 16px">
           <div id="grafica-rango" style="height:190px"></div>
+          <div style="margin-top:10px;padding:10px 13px;background:rgba(74,111,165,.06);border-radius:8px;border-left:3px solid var(--info)">
+            <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+            <p style="margin:0 0 5px;font-size:12px;line-height:1.5;color:var(--ink-2)">Una barra que sobresale mucho del promedio indica un día o semana excepcional — evento especial, grupo grande o un servicio extraordinario. Una barra muy corta señala un día difícil o de baja afluencia.</p>
+            <p style="margin:0;font-size:11.5px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:var(--info);margin-right:4px"></i><strong style="color:var(--ink-2)">Por ende:</strong> identifica qué hiciste diferente en las barras más altas y reprodúcelo — ese día tiene información valiosa sobre qué genera generosidad en el comensal.</p>
+          </div>
         </div>
       </div>
 
@@ -296,6 +311,7 @@ function graficaPropinasLinea(propinas) {
 
   chartPropinasLinea = new ApexCharts(el, {
     chart: { type:'line', height:220, toolbar:{show:false}, fontFamily:CHART_FONT, animations:{enabled:false} },
+    title: { text: 'Evolución de propinas por hora', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: labelColor() } },
     series: [
       { name:t('prop_lbl_hora'), data:montos    },
       { name:t('prop_lbl_acum'), data:acumulado }
@@ -303,9 +319,11 @@ function graficaPropinasLinea(propinas) {
     xaxis: {
       categories: horas.map(h => `${String(h).padStart(2,'0')}:00`),
       labels:{ style:{ fontSize:'10px', colors:labelColor() } },
-      axisBorder:{ show:false }, axisTicks:{ show:false }
+      axisBorder:{ show:false }, axisTicks:{ show:false },
+      title:{ text:'Hora', style:{ color:labelColor(), fontFamily:CHART_FONT, fontSize:'11px' } }
     },
-    yaxis:{ labels:{ formatter:v => `$${v.toFixed(0)}`, style:{ colors:labelColor() } } },
+    yaxis:{ labels:{ formatter:v => `$${v.toFixed(0)}`, style:{ colors:labelColor() } },
+            title:{ text:'Propina ($)', style:{ color:labelColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
     colors: ['#3F7A52','#B5623A'],
     stroke: { width:[2,2], curve:'smooth', dashArray:[0,5] },
     fill:   { type:['gradient','solid'], gradient:{ shadeIntensity:1, opacityFrom:0.25, opacityTo:0.03 } },
@@ -375,13 +393,16 @@ function graficaPropinaMesa(propinas) {
 
   chartPropinaMesa = new ApexCharts(el, {
     chart: { type:'bar', height:220, toolbar:{show:false}, fontFamily:CHART_FONT },
+    title: { text: 'Propina acumulada por mesa', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: labelColor() } },
     series:[{ name:'Propina', data:sorted.map(e=>e[1]) }],
     xaxis: {
       categories: sorted.map(e=>e[0]),
       labels:{ style:{ fontSize:'10px', colors:labelColor() } },
-      axisBorder:{ show:false }
+      axisBorder:{ show:false },
+      title:{ text:'Mesa', style:{ color:labelColor(), fontFamily:CHART_FONT, fontSize:'11px' } }
     },
-    yaxis:{ labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:labelColor() } } },
+    yaxis:{ labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:labelColor() } },
+            title:{ text:'Propina ($)', style:{ color:labelColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
     colors: sorted.map((_,i) => i===0 ? '#3F7A52' : 'rgba(63,122,82,0.28)'),
     plotOptions:{ bar:{ borderRadius:4, distributed:true, columnWidth:'60%' } },
     tooltip:{ y:{ formatter:v=>`$${(v||0).toFixed(2)}` } },
@@ -448,9 +469,11 @@ async function graficaRango(rango) {
         categories: etiquetas,
         labels:{ style:{ fontSize: rango === 'mes' ? '9px' : '10px', colors:labelColor() },
                  rotate: rango === 'mes' ? -45 : 0 },
-        axisBorder:{ show:false }, axisTicks:{ show:false }
+        axisBorder:{ show:false }, axisTicks:{ show:false },
+        title:{ text:'Fecha', style:{ color:labelColor(), fontFamily:CHART_FONT, fontSize:'11px' } }
       },
-      yaxis:{ labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:labelColor() } } },
+      yaxis:{ labels:{ formatter:v=>`$${v.toFixed(0)}`, style:{ colors:labelColor() } },
+              title:{ text:'Propina ($)', style:{ color:labelColor(), fontFamily:CHART_FONT, fontSize:'11px' } } },
       colors: esLinea ? ['#4A6FA5'] : barColors,
       plotOptions: esLinea ? {} : { bar:{ distributed:true, borderRadius:4, columnWidth:'55%' } },
       stroke:  esLinea ? { width:2, curve:'smooth' } : { show:false },

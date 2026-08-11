@@ -81,6 +81,11 @@
           <i class="bi bi-arrow-repeat" style="font-size:20px"></i>
         </div>
         <div id="chartPareto" style="display:none"></div>
+        <div style="margin-top:14px;padding:11px 14px;background:rgba(217,119,6,.06);border-radius:8px;border-left:3px solid #d97706">
+          <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+          <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">Las barras naranjas son el ingreso de cada platillo ordenado de mayor a menor. La línea roja es el acumulado. El punto donde la línea cruza el 80% (marcado implícitamente en la tabla) separa los platillos clave del resto — a la derecha de ese punto están los que apenas mueven la aguja.</p>
+          <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#d97706;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> las barras marcadas con ⭐ en la tabla son los únicos platillos que el equipo necesita dominar, conocer y sugerir activamente — el resto puede ser bueno, pero no mueve el ingreso del restaurante.</p>
+        </div>
       </div>
     </div>
 
@@ -192,6 +197,7 @@ function renderGrafico(d) {
 
   apexPareto = new ApexCharts(el, {
     chart: { type:'line', height:320, toolbar:{show:false}, fontFamily:CHART_FONT },
+    title: { text: 'Curva de Pareto — ingresos por platillo', align: 'left', style: { fontSize: '12px', fontFamily: CHART_FONT, fontWeight: '500', color: lblColor() } },
     series: [
       { name:'Ingreso ($)', type:'column', data:top.map(p=>p.ingreso) },
       { name:'Acumulado (%)', type:'line', data:top.map(p=>p.pct_acumulado) }
@@ -199,7 +205,8 @@ function renderGrafico(d) {
     xaxis: {
       categories: labels,
       labels:{ style:{ fontSize:'9px', colors:lblColor() }, rotate:-40, minHeight:60 },
-      axisBorder:{ show:false }
+      axisBorder:{ show:false },
+      title:{ text:'Platillo', style:{ color:lblColor(), fontFamily:CHART_FONT, fontSize:'11px' } }
     },
     yaxis: [
       { labels:{ formatter:v=>'$'+v.toFixed(0), style:{ colors:lblColor() } }, title:{ text:'Ingreso', style:{ color:lblColor() } } },

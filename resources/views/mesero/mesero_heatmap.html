@@ -34,6 +34,11 @@
         <span class="card__note">Celdas más oscuras = más comandas en ese momento</span>
       </div>
       <div id="chart-heatmap" style="margin-top:8px"></div>
+      <div style="margin-top:14px;padding:11px 14px;background:rgba(181,98,58,.06);border-radius:8px;border-left:3px solid #B5623A">
+        <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+        <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">Las celdas más oscuras son los momentos donde el restaurante está más ocupado. Una franja oscura vertical = hay un día de la semana siempre intenso. Una franja horizontal = hay una hora que siempre es pico, sin importar el día.</p>
+        <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#B5623A;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> asigna al mesero de mayor experiencia exactamente en la celda más oscura — ese cruce de día + hora es donde el servicio tiene mayor impacto en la propina y en la reseña.</p>
+      </div>
     </div>
 
   </div>
@@ -81,12 +86,15 @@ async function cargar() {
         toolbar: { show: false },
         fontFamily: FONT
       },
+      title: { text: 'Comandas por día de la semana y hora', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: d.series,
       xaxis: {
-        labels: { style: { colors: lblClr(), fontSize: '11px' } }
+        labels: { style: { colors: lblClr(), fontSize: '11px' } },
+        title: { text: 'Hora del día', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       yaxis: {
-        labels: { style: { colors: lblClr() } }
+        labels: { style: { colors: lblClr() } },
+        title: { text: 'Día de la semana', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       dataLabels: { enabled: false },
       colors: ['#B5623A'],

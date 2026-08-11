@@ -67,6 +67,11 @@
       <i class="bi bi-arrow-repeat animate-spin"></i> Cargando…
     </div>
     <div id="chart-prediccion" style="padding:0 16px 16px;display:none;"></div>
+    <div style="margin:0 16px 16px;padding:11px 14px;background:rgba(14,165,233,.06);border-radius:8px;border-left:3px solid #0ea5e9">
+      <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+      <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">La línea sólida es el historial real de los últimos 90 días; la línea punteada es lo que el modelo predice. Donde la proyección sube, el modelo anticipa más demanda — prepara más personal e ingredientes. Si el MAE (error promedio) es bajo, las predicciones son confiables para planear el turno del día.</p>
+      <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#0ea5e9;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> revisa la proyección la noche anterior al turno — si el modelo anticipa un día pico, activa al equipo completo antes de que empiece el servicio, no durante.</p>
+    </div>
   </div>
 
   <!-- Two-column: predictions table + ingredients table -->
@@ -318,6 +323,7 @@ function renderGrafico(d){
   if(apexPred){ apexPred.destroy(); apexPred = null; }
   apexPred = new ApexCharts(el, {
     chart: { type:'area', height:260, toolbar:{show:false}, fontFamily:FONT },
+    title: { text: 'Pedidos diarios — historial y proyección', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblColor() } },
     series: [
       { name: t('pred_ped_reales'), data: histSeries },
       { name: t('pred_pred_lbl'),   data: predSeries }
@@ -325,9 +331,11 @@ function renderGrafico(d){
     xaxis: {
       categories: allLabels,
       labels: { style:{fontSize:'9px', colors:lblColor()}, rotate:-40, minHeight:50 },
-      axisBorder: { show:false }
+      axisBorder: { show:false },
+      title: { text: 'Fecha', style: { color: lblColor(), fontFamily: FONT, fontSize: '11px' } }
     },
-    yaxis: { labels: { style:{ colors:lblColor() } }, min:0 },
+    yaxis: { labels: { style:{ colors:lblColor() } }, min:0,
+             title: { text: 'Pedidos', style: { color: lblColor(), fontFamily: FONT, fontSize: '11px' } } },
     colors: ['#0ea5e9', '#f59e0b'],
     stroke: { width:[2,2], dashArray:[0,5], curve:'smooth' },
     fill:   { opacity:[0.12, 0.06] },

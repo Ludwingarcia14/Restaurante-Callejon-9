@@ -36,6 +36,11 @@
           <span class="card__note">Cada barra = número de comandas en ese rango</span>
         </div>
         <div id="chart-hist" style="margin-top:8px"></div>
+        <div style="margin-top:14px;padding:11px 14px;background:rgba(74,111,165,.06);border-radius:8px;border-left:3px solid #4A6FA5">
+          <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+          <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">La barra más alta es el rango de ticket más frecuente. Si la "montaña" se inclina a la izquierda, la mayoría gasta poco — hay margen para subir el ticket con sugerencias. Si hay una cola larga a la derecha, existen comensales de alto valor que conviene retener.</p>
+          <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#4A6FA5;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> el rango donde empieza la caída brusca marca el techo psicológico del ticket — ahí es donde una sugerencia oportuna puede cruzar la barrera.</p>
+        </div>
       </div>
 
       <div class="card">
@@ -94,12 +99,17 @@ async function cargar() {
     if (apex) { apex.destroy(); apex = null; }
     apex = new ApexCharts(document.getElementById('chart-hist'), {
       chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: FONT },
+      title: { text: 'Frecuencia de tickets por rango de monto', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: [{ name: 'Comandas', data: d.bins.map(b => b.count) }],
       xaxis: {
         categories: d.bins.map(b => b.label),
-        labels: { rotate: -35, style: { colors: lblClr(), fontSize: '11px' } }
+        labels: { rotate: -35, style: { colors: lblClr(), fontSize: '11px' } },
+        title: { text: 'Rango de ticket (MXN)', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
-      yaxis: { labels: { style: { colors: lblClr() } } },
+      yaxis: {
+        labels: { style: { colors: lblClr() } },
+        title: { text: 'Número de comandas', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
+      },
       plotOptions: {
         bar: {
           columnWidth: '98%',

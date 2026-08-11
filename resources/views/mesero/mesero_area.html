@@ -35,6 +35,11 @@
         <span class="card__note">Área = ingresos semanales · Línea = acumulado total</span>
       </div>
       <div id="chart-area" style="margin-top:8px"></div>
+      <div style="margin-top:14px;padding:11px 14px;background:rgba(22,163,74,.06);border-radius:8px;border-left:3px solid #16a34a">
+        <p style="margin:0 0 3px;font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase">La gráfica indica</p>
+        <p style="margin:0 0 6px;font-size:12.5px;line-height:1.55;color:var(--ink-2)">El área verde muestra el ingreso de cada semana individual; la línea azul es el acumulado que nunca debería bajar. Si el área de una semana es mucho más pequeña que sus vecinas, esa semana fue atípicamente floja — revisa qué pasó (día festivo, cierre temporal, evento externo).</p>
+        <p style="margin:0;font-size:12px;color:var(--ink-3)"><i class="bi bi-arrow-right-circle-fill" style="color:#16a34a;margin-right:5px"></i><strong style="color:var(--ink-2)">Por ende:</strong> si la línea acumulada crece de forma constante y sin aplanarse, el negocio tiene tracción sostenida — las semanas récord son el nuevo piso a defender.</p>
+      </div>
     </div>
 
     <div class="card">
@@ -97,16 +102,19 @@ async function cargar() {
     if (apex) { apex.destroy(); apex = null; }
     apex = new ApexCharts(document.getElementById('chart-area'), {
       chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: FONT },
+      title: { text: 'Ingresos semanales y tendencia acumulada', align: 'left', style: { fontSize: '12px', fontFamily: FONT, fontWeight: '500', color: lblClr() } },
       series: [
         { name: 'Ingresos semanales', data: d.ingresos },
         { name: 'Acumulado',          data: d.acumulado }
       ],
       xaxis: {
         categories: d.labels,
-        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } }
+        labels: { rotate: -30, style: { colors: lblClr(), fontSize: '11px' } },
+        title: { text: 'Semana', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       yaxis: {
-        labels: { formatter: v => fmtMXN(v), style: { colors: lblClr() } }
+        labels: { formatter: v => fmtMXN(v), style: { colors: lblClr() } },
+        title: { text: 'Ingresos (MXN)', style: { color: lblClr(), fontFamily: FONT, fontSize: '11px' } }
       },
       colors: ['#16a34a', '#4A6FA5'],
       stroke: { curve: 'smooth', width: [2, 2] },
